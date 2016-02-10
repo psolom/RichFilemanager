@@ -1199,7 +1199,7 @@ private function is_valid_path($path) {
 	
 	// return $this->startsWith($givenpath, $rootpath);
 	
-	$this->__log('substr path_to_files : ' . substr(realpath($path) . DIRECTORY_SEPARATOR, 0, strlen($this->path_to_files)));
+	$this->__log('substr path_to_files : ' . substr(realpath($path) . DIRECTORY_SEPARATOR, 0, strlen($this->path_to_files)) . DIRECTORY_SEPARATOR);
 	$this->__log('path_to_files : ' . realpath($this->path_to_files) . DIRECTORY_SEPARATOR);
 	
 	return (substr(realpath($path) . DIRECTORY_SEPARATOR, 0, strlen(realpath($this->path_to_files))) . DIRECTORY_SEPARATOR) == (realpath($this->path_to_files) . DIRECTORY_SEPARATOR);
