@@ -1,0 +1,75 @@
+// VARIABLES
+@code-background-color: #efecf4;
+@code-border-color: #e1e1e1;
+@code-border-radius: 4px;
+@code-font-color: #585260;
+
+h1.title {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.blurb {
+    background: @code-background-color;
+    border: 1px dashed @code-border-color;
+    border-radius: @code-border-radius;
+    color: @code-font-color;
+    max-width: 100%;
+    padding: 5px;
+    padding-left: 10px;
+    margin-bottom: 25px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    &:empty {
+        padding: 0;
+        border: 0;
+    }
+
+    &.selected-file {
+        max-height: 25px;
+        white-space: nowrap;
+    }
+}
+
+.row {
+    margin-bottom: 25px;
+
+    &:nth-child(n+3) {
+        background: rgb(246, 246, 246);
+        padding: 10px;
+    }
+}
+
+.container {
+    width: 95%; // use more space when the screen is small
+}
+
+.top {
+    padding-right: 20px;
+}
+
+/* only apply to screens larger than mobile */
+@media (min-width: 550px) {
+    .container {
+        width: 85%; // default
+    }
+    .row {
+
+        &:nth-child(n+3) {
+            padding: 20px 0 20px 0;
+        }
+    }
+}
+
+code {
+    border: 1px dashed @code-border-color;
+}
+
+input,  textarea, select, fieldset {
+    margin-bottom: inherit;
+}
+
+li {
+    margin-bottom: .3rem;
+}

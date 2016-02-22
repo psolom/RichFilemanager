@@ -1,0 +1,19 @@
+@model IEnumerable<FileTreeViewModel>
+
+<ul class="jqueryFileTree">
+    @foreach (var item in Model)
+    { 
+        if (item.IsDirectory) {
+        <li class="directory collapsed">
+            <a href="#" rel="@item.PathAltSeparator()">@item.Name</a>
+        </li>    
+        }
+    else
+    {
+        <li class="file ext_@item.Ext">
+            <a href="#" rel="@item.PathAltSeparator()">@item.Name</a>
+        </li>
+        }
+    
+    }
+</ul>

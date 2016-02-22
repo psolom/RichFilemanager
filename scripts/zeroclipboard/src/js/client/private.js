@@ -41,10 +41,17 @@ var _clientConstructor = function(elements) {
  * @private
  */
 var _clientOn = function(eventType, listener) {
+  /*jshint maxstatements:26 */
+
   // add user event handler for event
   var i, len, events,
       added = {},
-      handlers = _clientMeta[this.id] && _clientMeta[this.id].handlers;
+      meta = _clientMeta[this.id],
+      handlers = meta && meta.handlers;
+
+  if (!meta) {
+    throw new Error("Attempted to add new listener(s) to a destroyed ZeroClipboard client instance");
+  }
 
   if (typeof eventType === "string" && eventType) {
     events = eventType.toLowerCase().split(/\s+/);
@@ -78,16 +85,23 @@ var _clientOn = function(eventType, listener) {
       });
     }
     if (added.error) {
-      var errorTypes = ["disabled", "outdated", "unavailable", "deactivated", "overdue"];
-      for (i = 0, len = errorTypes.length; i < len; i++) {
-        if (_flashState[errorTypes[i]]) {
+      for (i = 0, len = _flashStateErrorNames.length; i < len; i++) {
+        if (_flashState[_flashStateErrorNames[i].replace(/^flash-/, "")]) {
           this.emit({
             type: "error",
-            name: "flash-" + errorTypes[i],
+            name: _flashStateErrorNames[i],
             client: this
           });
           break;
         }
+      }
+      if (_zcSwfVersion !== undefined && ZeroClipboard.version !== _zcSwfVersion) {
+        this.emit({
+          type: "error",
+          name: "version-mismatch",
+          jsVersion: ZeroClipboard.version,
+          swfVersion: _zcSwfVersion
+        });
       }
     }
   }
@@ -101,7 +115,13 @@ var _clientOn = function(eventType, listener) {
  */
 var _clientOff = function(eventType, listener) {
   var i, len, foundIndex, events, perEventHandlers,
-      handlers = _clientMeta[this.id] && _clientMeta[this.id].handlers;
+      meta = _clientMeta[this.id],
+      handlers = meta && meta.handlers;
+
+  if (!handlers) {
+    return this;
+  }
+
   if (arguments.length === 0) {
     // Remove ALL of the handlers for ALL event types
     events = _keys(handlers);
@@ -183,6 +203,10 @@ var _clientEmit = function(event) {
  * @private
  */
 var _clientClip = function(elements) {
+  if (!_clientMeta[this.id]) {
+    throw new Error("Attempted to clip element(s) to a destroyed ZeroClipboard client instance");
+  }
+
   elements = _prepClip(elements);
 
   for (var i = 0; i < elements.length ; i++) {
@@ -275,6 +299,10 @@ var _clientElements = function() {
  * @private
  */
 var _clientDestroy = function() {
+  if (!_clientMeta[this.id]) {
+    return;
+  }
+
   // Unclip all the elements
   this.unclip();
 
@@ -309,13 +337,15 @@ var _clientShouldEmit = function(event) {
 
   // If this event's targeted element(s) is/are not clipped by this client, bail out
   // unless the event's `client` was specifically set to this client.
-  var clippedEls = _clientMeta[this.id] && _clientMeta[this.id].elements;
+  var meta = _clientMeta[this.id];
+  var clippedEls = meta && meta.elements;
   var hasClippedEls = !!clippedEls && clippedEls.length > 0;
   var goodTarget = !event.target || (hasClippedEls && clippedEls.indexOf(event.target) !== -1);
   var goodRelTarget = event.relatedTarget && hasClippedEls && clippedEls.indexOf(event.relatedTarget) !== -1;
   var goodClient = event.client && event.client === this;
+
   // At least one of these must be true....
-  if (!(goodTarget || goodRelTarget || goodClient)) {
+  if (!meta || !(goodTarget || goodRelTarget || goodClient)) {
     return false;
   }
 
@@ -327,19 +357,21 @@ var _clientShouldEmit = function(event) {
 /**
  * Handle the actual dispatching of events to a client instance.
  *
- * @returns `this`
+ * @returns `undefined`
  * @private
  */
 var _clientDispatchCallbacks = function(event) {
-  if (!(typeof event === "object" && event && event.type)) {
+  var meta = _clientMeta[this.id];
+
+  if (!(typeof event === "object" && event && event.type && meta)) {
     return;
   }
 
   var async = _shouldPerformAsync(event);
 
   // User defined handlers for events
-  var wildcardTypeHandlers = (_clientMeta[this.id] && _clientMeta[this.id].handlers["*"]) || [];
-  var specificTypeHandlers = (_clientMeta[this.id] && _clientMeta[this.id].handlers[event.type]) || [];
+  var wildcardTypeHandlers = (meta && meta.handlers["*"]) || [];
+  var specificTypeHandlers = (meta && meta.handlers[event.type]) || [];
   // Execute wildcard handlers before type-specific handlers
   var handlers = wildcardTypeHandlers.concat(specificTypeHandlers);
 
@@ -365,7 +397,6 @@ var _clientDispatchCallbacks = function(event) {
       }
     }
   }
-  return this;
 };
 
 

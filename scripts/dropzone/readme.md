@@ -1,37 +1,36 @@
-<h1 align="center">
-  <img alt="Dropzone.js" src="http://www.dropzonejs.com/images/logo.png" />
-</h1>
+<img alt="Dropzone.js" src="http://www.dropzonejs.com/images/new-logo.svg" />
 
-*Version 3.10.2*
-
-![Build status](https://travis-ci.org/enyo/dropzone.png?branch=master)  
+[ ![Codeship Status for enyo/dropzone](https://codeship.com/projects/3fc90800-74e0-0132-38ce-22ab3bab314c/status?branch=master)](https://codeship.com/projects/55087)
 
 Dropzone.js is a light weight JavaScript library that turns an HTML element into a dropzone.
 This means that a user can drag and drop a file onto it, and the file gets uploaded to the server via AJAX.
 
 * * *
 
-> If you want support, please use [stackoverflow](http://stackoverflow.com/) with the `dropzone.js` tag and not the
-> GitHub issues tracker. Only post an issue here if you think you discovered a bug or have a feature request.
+_If you want support, please use [stackoverflow](http://stackoverflow.com/) with the `dropzone.js` tag and not the
+GitHub issues tracker. Only post an issue here if you think you discovered a bug or have a feature request._
 
 * * *
 
 **Please read the [contributing guidelines](CONTRIBUTING.md) before you start working on Dropzone!**
 
+<br>
 <div align="center">
-  <a href="https://github.com/enyo/dropzone/releases/latest"><img src="https://raw.github.com/enyo/dropzone/master/download.png" alt="Download" /></a>
+  <a href="https://github.com/enyo/dropzone/releases/latest"><strong>&gt;&gt; Download &lt;&lt;</strong></a>
 </div>
+<br>
+<br>
 
 
 Starting with version 2.0.0 this library does no longer depend on jQuery (but
 it still works as a jQuery module).
 
-It is written as a [component](https://github.com/component/component) but
-there's a standalone version, and an [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD)
+Dropzone is compatible with [component](https://github.com/component/component),
+there's a standalone version and an [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD)
 module that's compatible with [RequireJS](http://requirejs.org) in the downloads
 folder.
 
-![Screenshot](http://i.imgur.com/zXyTjMp.png)
+<img slt="Dropzone Screenshot" width="585" src="http://i.imgur.com/Xf7QvVG.png" />
 
 
 
@@ -90,7 +89,7 @@ or at the [source](https://github.com/enyo/dropzone/blob/master/src/dropzone.cof
 
 ### Register for events
 
-I use [emitter](https://github.com/component/emitter) to manage events. If you want to register to some event you can do so on the `dropzone` object itself:
+If you want to register to some event you can do so on the `dropzone` object itself:
 
 ```js
 Dropzone.options.myDropzone({
@@ -104,7 +103,7 @@ myDropzone.on("error", function(file, message) { alert(message); });
 ```
 
 For a list of all events, please look at the chapter 
-[»listen to events«](http://www.dropzonejs.com/#listen_to_events) in the documentation
+[»Events«](http://www.dropzonejs.com/#events) in the documentation
 or at the [source](src/dropzone.coffee#L43).
 
 
@@ -129,31 +128,7 @@ I realize that there [are](http://valums.com/ajax-upload/) [already](http://tuto
 - I want to use the latest API of browsers. I don't care if it falls back to the normal upload form if the browser is too old.
 - I don't think that it's necessary anymore to depend on libraries such as jQuery (especially when providing functionality that isn't available in old browsers anyway).
 
-## Other projects
+MIT License
+-----------
 
-You might also be interested in my [open source tooltip library Opentip](http://www.opentip.org/).
-![Opentip](http://i.imgur.com/Zubpo.png)
-
-License
--------
-(The MIT License)
-
-Copyright (c) 2012 Matias Meno &lt;m@tias.me&gt;<br>
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
-of the Software, and to permit persons to whom the Software is furnished to do
-so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+See LICENSE file

@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">  
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"> 
+	<head> 
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+		<title>jQuery Impromptu States Example - Loan Calculator</title>
+		
+		<link rel="stylesheet" media="all" type="text/css" href="../jquery-impromptu.css" />			
+		
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+		<script type="text/javascript" src="../jquery-impromptu.js"></script>
+
+		<style type="text/css">
+			.jqi .errorBlock{ background-color: #FFC6A5; border: solid 1px #ff0000; color: #ff0000; padding: 5px 10px; font-weight: bold; }
+			.jqi .field{ margin: 4px 0; font-size: 11px; }
+			.jqi .field label{ font-weight: bold; display: block; width: 100px; float: left; clear: left; }
+			.jqi .field input { border: solid 1px #777777; width: 100px; }
+		</style>
+	
+		<script type="text/javascript">
+			function openLoanCalculatorPrompt(o){
+				o = jQuery.extend({},{ amount:100000, down: 1500, years:15, rate:5 },o);
+				
+				var formstr = '<div class="field"><label for="intamount">Amount</label><input type="text" name="intamount" id="intamount" value="'+ o.amount +'" /></div>'+
+					'<div class="field"><label for="intdown">Down Payment</label><input type="text" name="intdown" id="intdown" value="'+ o.down +'" /></div>'+
+					'<div class="field"><label for="intyears">Years</label><input type="text" name="intyears" id="intyears" value="'+ o.years +'" /></div>'+
+					'<div class="field"><label for="intrate">Rate</label><input type="text" name="intrate" id="intrate" value="'+ o.rate +'" /></div>';
+					
+				jqistates = {
+					state0: {
+						title: 'Calculate Monthly Payment',
+						html: formstr,
+						focus: 1,
+						buttons: { Cancel: false, Calculate: true },
+						submit: function(e, v, m, f){
+							var e = "";
+							m.find('.errorBlock').hide('fast',function(){ jQuery(this).remove(); });
+							
+							if (v) {
+								
+								if(isNaN(f.intamount))
+									e += "Please enter a numeric amount (No commas)<br />";
+									
+								if(isNaN(f.intdown))
+									e += "Please enter a numeric down payment (No commas)<br />";
+									
+								if(isNaN(f.intyears))
+									e += "Please enter a numeric number of years<br />";
+									
+								if(isNaN(f.intrate))
+									e += "Please enter a numeric interest rate<br />";
+								
+								if (e == "") {
+																	
+									var interest = f.intrate/100;
+									var years = f.intyears;
+									var amount = f.intamount-f.intdown;
+									var n = years * 12;
+									
+									if(f.intrate == 0){
+										var m = amount / n;
+									}
+									else{
+										var i = interest / 12;
+										var i_to_n = Math.pow((i + 1), n);
+									
+										var p = amount * ((i * i_to_n) / (i_to_n - 1));
+										var m = Math.round(p * 100) / 100;
+									}
+																		
+									jQuery.prompt.getState('state1').find('#intmonthlypayment').text(m);									
+									jQuery.prompt.goToState('state1',true);
+									
+								}
+								else{
+									jQuery('<div class="errorBlock" style="display: none;">'+ e +'</div>').prependTo(m).show('slow');
+								}
+								return false;
+							}
+							else return true;
+						}
+					},
+					state1: {
+						html: 'Monthly Payment: $<span id="intmonthlypayment"></span>',
+						focus: 1,
+						buttons: { Back: false, Done: true },
+						submit: function(e,v,m,f){
+							if(v)
+								return true;
+								
+							jQuery.prompt.goToState('state0');
+							return false;
+						}
+					}
+				};
+				
+				$.prompt(jqistates);
+			}
+		</script>
+	</head>
+	
+	<body>
+		<a href="javascript:openLoanCalculatorPrompt({amount:150000, years:30, rate:5.25})">Test Impromptu Loan Calculator</a>
+	</body>
+</html>

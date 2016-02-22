@@ -14,6 +14,120 @@ describe "Dropzone", ->
   xhr = null
   beforeEach -> xhr = sinon.useFakeXMLHttpRequest()
 
+  describe "Emitter", ->
+
+    emitter = null
+    beforeEach -> emitter = new Dropzone::Emitter()
+
+
+    it ".on() should return the object itself", ->
+      (emitter.on "test", ->).should.equal emitter
+
+    it ".on() should properly register listeners", ->
+      (emitter._callbacks == undefined).should.be.true
+      callback = ->
+      callback2 = ->
+      emitter.on "test", callback
+      emitter.on "test", callback2
+      emitter.on "test2", callback
+      emitter._callbacks.test.length.should.equal 2
+      emitter._callbacks.test[0].should.equal callback
+      emitter._callbacks.test[1].should.equal callback2
+      emitter._callbacks.test2.length.should.equal 1
+      emitter._callbacks.test2[0].should.equal callback
+
+    it ".emit() should return the object itself", ->
+      emitter.emit('test').should.equal emitter
+
+    it ".emit() should properly invoke all registered callbacks with arguments", ->
+      callCount1 = 0
+      callCount12 = 0
+      callCount2 = 0
+      callback1 = (var1, var2) ->
+        callCount1++
+        var1.should.equal 'callback1 var1'
+        var2.should.equal 'callback1 var2'
+      callback12 = (var1, var2) ->
+        callCount12++
+        var1.should.equal 'callback1 var1'
+        var2.should.equal 'callback1 var2'
+      callback2 = (var1, var2) ->
+        callCount2++
+        var1.should.equal 'callback2 var1'
+        var2.should.equal 'callback2 var2'
+
+      emitter.on "test1", callback1
+      emitter.on "test1", callback12
+      emitter.on "test2", callback2
+
+      callCount1.should.equal 0
+      callCount12.should.equal 0
+      callCount2.should.equal 0
+
+      emitter.emit "test1", "callback1 var1", "callback1 var2"
+
+      callCount1.should.equal 1
+      callCount12.should.equal 1
+      callCount2.should.equal 0
+
+      emitter.emit "test2", "callback2 var1", "callback2 var2"
+
+      callCount1.should.equal 1
+      callCount12.should.equal 1
+      callCount2.should.equal 1
+
+      emitter.emit "test1", "callback1 var1", "callback1 var2"
+
+      callCount1.should.equal 2
+      callCount12.should.equal 2
+      callCount2.should.equal 1
+
+    describe ".off()", ->
+
+      callback1 = ->
+      callback2 = ->
+      callback3 = ->
+      callback4 = ->
+
+      beforeEach ->
+        emitter._callbacks =
+          'test1': [ callback1, callback2 ]
+          'test2': [ callback3 ]
+          'test3': [ callback1, callback4 ]
+          'test4': [ ]
+
+      it "should work without any listeners", ->
+        emitter._callbacks = undefined
+        emt = emitter.off()
+        emitter._callbacks.should.eql {}
+        emt.should.equal emitter
+
+      it "should properly remove all event listeners", ->
+        emt = emitter.off()
+        emitter._callbacks.should.eql {}
+        emt.should.equal emitter
+
+      it "should properly remove all event listeners for specific event", ->
+        emitter.off "test1"
+        (emitter._callbacks["test1"] == undefined).should.be.true
+        emitter._callbacks["test2"].length.should.equal 1
+        emitter._callbacks["test3"].length.should.equal 2
+        emt = emitter.off "test2"
+        (emitter._callbacks["test2"] == undefined).should.be.true
+        emt.should.equal emitter
+
+      it "should properly remove specific event listener", ->
+        emitter.off "test1", callback1
+        emitter._callbacks["test1"].length.should.equal 1
+        emitter._callbacks["test1"][0].should.equal callback2
+        emitter._callbacks["test3"].length.should.equal 2
+        emt = emitter.off "test3", callback4
+        emitter._callbacks["test3"].length.should.equal 1
+        emitter._callbacks["test3"][0].should.equal callback1
+        emt.should.equal emitter
+
+
+
 
   describe "static functions", ->
 
@@ -437,7 +551,7 @@ describe "Dropzone", ->
           file.previewElement.should.be.instanceof Element
 
           file.previewElement.querySelector("[data-dz-name]").innerHTML.should.eql "test name"
-          file.previewElement.querySelector("[data-dz-size]").innerHTML.should.eql "<strong>2</strong> MiB"
+          file.previewElement.querySelector("[data-dz-size]").innerHTML.should.eql "<strong>2.1</strong> MB"
 
       describe ".error()", ->
         it "should properly insert the error", ->
@@ -476,8 +590,8 @@ describe "Dropzone", ->
 
             info = dropzone.options.resize.call dropzone, file
 
-            info.optWidth.should.eql 100
-            info.optHeight.should.eql 100
+            info.optWidth.should.eql 120
+            info.optHeight.should.eql 120
 
         describe "with null thumbnail settings", ->
           it "should properly return target dimensions", ->
@@ -757,12 +871,30 @@ describe "Dropzone", ->
 
     describe ".filesize()", ->
 
-      it "should convert to KiloBytes, etc.. not KibiBytes", ->
+      it "should handle files with 0 size properly", ->
+        dropzone.filesize(0).should.eql "<strong>0</strong> b"
 
-        # dropzone.filesize(2 * 1000 * 1000).should.eql "<strong>1.9</strong> MiB"
-        dropzone.filesize(2 * 1024 * 1024).should.eql "<strong>2</strong> MiB"
-        dropzone.filesize(2 * 1000 * 1000 * 1000).should.eql "<strong>1.9</strong> GiB"
-        dropzone.filesize(2 * 1024 * 1024 * 1024).should.eql "<strong>2</strong> GiB"
+      it "should convert to KiloBytes, etc..", ->
+
+        dropzone.options.filesizeBase.should.eql 1000 # Just making sure the default config is correct
+
+        dropzone.filesize(2 * 1000 * 1000).should.eql "<strong>2</strong> MB"
+        dropzone.filesize(2 * 1024 * 1024).should.eql "<strong>2.1</strong> MB"
+
+        dropzone.filesize(2 * 1000 * 1000 * 1000).should.eql "<strong>2</strong> GB"
+        dropzone.filesize(2 * 1024 * 1024 * 1024).should.eql "<strong>2.1</strong> GB"
+
+        dropzone.filesize(2.5111 * 1000 * 1000 * 1000).should.eql "<strong>2.5</strong> GB"
+        dropzone.filesize(1.1 * 1000).should.eql "<strong>1.1</strong> KB"
+        dropzone.filesize(999 * 1000).should.eql "<strong>1</strong> MB"
+
+      it "should convert to KibiBytes, etc.. when the filesizeBase is changed to 1024", ->
+
+        dropzone.options.filesizeBase = 1024
+
+        dropzone.filesize(2 * 1024 * 1024).should.eql "<strong>2</strong> MB"
+        dropzone.filesize(2 * 1000 * 1000).should.eql "<strong>1.9</strong> MB"
+
 
     describe "._updateMaxFilesReachedClass()", ->
       it "should properly add the dz-max-files-reached class", ->
@@ -1193,6 +1325,31 @@ describe "Dropzone", ->
 
           # dropzone.addFile mock1
 
+        describe "when file is SVG", ->
+          it "should use the SVG image itself", (done) ->
+
+            createBlob = (data, type) ->
+              try
+                new Blob([data], type: type)
+              catch e
+                BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder ||
+                    window.MozBlobBuilder || window.MSBlobBuilder
+                builder = new BlobBuilder()
+                builder.append(data.buffer || data)
+                builder.getBlob(type)
+
+            blob = createBlob('foo', 'image/svg+xml')
+
+            dropzone.on "thumbnail", (file, dataURI) ->
+              file.should.equal blob
+              fileReader = new FileReader
+              fileReader.onload = ->
+                fileReader.result.should.equal dataURI
+                done()
+              fileReader.readAsDataURL(file)
+
+            dropzone.createThumbnail(blob)
+
     describe "enqueueFile()", ->
       it "should be wrapped by enqueueFiles()", ->
         sinon.stub dropzone, "enqueueFile"
@@ -1251,6 +1408,37 @@ describe "Dropzone", ->
 
         dropzone.uploadFiles.callCount.should.equal 1
         dropzone.uploadFiles.calledWith([ mockFile ]).should.be.ok
+
+      it "should use url options if strings", (done) ->
+
+        dropzone.addFile mockFile
+
+        setTimeout ->
+          expect(requests.length).to.equal 1
+          expect(requests[0].url).to.equal dropzone.options.url
+          expect(requests[0].method).to.equal dropzone.options.method
+          done()
+        , 10
+
+      it "should call url options if functions", (done) ->
+        method = "PUT"
+        url = "/custom/upload/url"
+
+        dropzone.options.method = sinon.stub().returns method
+        dropzone.options.url = sinon.stub().returns url
+
+        dropzone.addFile mockFile
+
+        setTimeout ->
+          dropzone.options.method.callCount.should.equal 1
+          dropzone.options.url.callCount.should.equal 1
+          sinon.assert.calledWith dropzone.options.method, [mockFile]
+          sinon.assert.calledWith dropzone.options.url, [mockFile]
+          expect(requests.length).to.equal 1
+          expect(requests[0].url).to.equal url
+          expect(requests[0].method).to.equal method
+          done()
+        , 10
 
       it "should ignore the onreadystate callback if readyState != 4", (done) ->
         dropzone.addFile mockFile
@@ -1398,6 +1586,11 @@ describe "Dropzone", ->
           dropzone.uploadFile mockFile
           requests[0].requestHeaders["Foo-Header"].should.eql 'foobar'
 
+        it "should not set headers on the xhr object that are empty", ->
+          dropzone.options.headers = {"X-Requested-With": null}
+          dropzone.uploadFile mockFile
+          Object.keys(requests[0].requestHeaders).should.not.contain("X-Requested-With")
+
         it "should properly use the paramName without [n] as file upload if uploadMultiple is false", (done) ->
           dropzone.options.uploadMultiple = false
           dropzone.options.paramName = "myName"
@@ -1460,6 +1653,25 @@ describe "Dropzone", ->
           , 10
 
 
+      it "should not change the file name if the options.renameFilename is not set", (done) ->
+        mockFilename = 'T3sT ;:_-.,!¨@&%&'
+
+        renamedFilename = dropzone._renameFilename(mockFilename)
+
+        setTimeout ->
+          renamedFilename.should.equal mockFilename
+          done()
+        , 10
+
+      it "should rename the file name if options.renamedFilename is set", (done) ->
+        dropzone.options.renameFilename = (name) ->
+          name.toLowerCase().replace(/[^\w]/gi, '')
+        renamedFilename = dropzone._renameFilename('T3sT ;:_-.,!¨@&%&')
+        setTimeout ->
+          renamedFilename.should.equal 't3st_'
+          done()
+        , 10
+
       describe "should properly set status of file", ->
         it "should correctly set `withCredentials` on the xhr object", (done) ->
           dropzone.addFile mockFile
@@ -1512,7 +1724,7 @@ describe "Dropzone", ->
             @_finished files, null, null
           ), 1
 
-        completedFiles = 0        
+        completedFiles = 0
         dropzone.on "complete", (file) ->
           completedFiles++
 

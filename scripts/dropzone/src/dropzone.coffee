@@ -25,12 +25,66 @@
 ###
 
 
-# Dependencies
-Em = Emitter ? require "emitter" # Can't be the same name because it will lead to a local variable
-
 noop = ->
 
-class Dropzone extends Em
+
+# The Emitter class provides the ability to call `.on()` on Dropzone to listen
+# to events.
+# It is strongly based on component's emitter class, and I removed the
+# functionality because of the dependency hell with different frameworks.
+class Emitter
+
+  # Add an event listener for given event
+  addEventListener: @::on
+  on: (event, fn) ->
+    @_callbacks = @_callbacks || {}
+    # Create namespace for this event
+    @_callbacks[event] = [] unless @_callbacks[event]
+    @_callbacks[event].push fn
+    return @
+
+
+  emit: (event, args...) ->
+    @_callbacks = @_callbacks || {}
+    callbacks = @_callbacks[event]
+
+    if callbacks
+      callback.apply @, args for callback in callbacks
+
+    return @
+
+  # Remove event listener for given event. If fn is not provided, all event
+  # listeners for that event will be removed. If neither is provided, all
+  # event listeners will be removed.
+  removeListener: @::off
+  removeAllListeners: @::off
+  removeEventListener: @::off
+  off: (event, fn) ->
+    if !@_callbacks || arguments.length == 0
+      @_callbacks = {}
+      return @
+
+    # specific event
+    callbacks = @_callbacks[event]
+    return @ unless callbacks
+
+    # remove all handlers
+    if arguments.length == 1
+      delete @_callbacks[event]
+      return @
+
+    # remove specific handler
+    for callback, i in callbacks
+      if callback == fn
+        callbacks.splice i, 1
+        break
+
+    return @
+
+class Dropzone extends Emitter
+
+  # Exposing the emitter class, mainly for tests
+  Emitter: Emitter
 
   ###
   This is a list of all available events you can register on a dropzone object.
@@ -48,6 +102,7 @@ class Dropzone extends Em
     "dragover"
     "dragleave"
     "addedfile"
+    "addedfiles"
     "removedfile"
     "thumbnail"
     "error"
@@ -67,6 +122,7 @@ class Dropzone extends Em
     "reset"
     "maxfilesexceeded"
     "maxfilesreached"
+    "queuecomplete"
   ]
 
 
@@ -81,8 +137,15 @@ class Dropzone extends Em
     paramName: "file" # The name of the file param that gets transferred.
     createImageThumbnails: true
     maxThumbnailFilesize: 10 # in MB. When the filename exceeds this limit, the thumbnail will not be generated.
-    thumbnailWidth: 100
-    thumbnailHeight: 100
+    thumbnailWidth: 120
+    thumbnailHeight: 120
+
+    # The base that is used to calculate the filesize. You can change this to
+    # 1024 if you would rather display kibibytes, mebibytes, etc...
+    # 1024 is technically incorrect,
+    # because `1024 bytes` are `1 kibibyte` not `1 kilobyte`.
+    # You can change this to `1024` if you don't care about validity.
+    filesizeBase: 1000
 
     # Can be used to limit the maximum number of files that will be handled
     # by this Dropzone
@@ -137,6 +200,20 @@ class Dropzone extends Em
     # If false, previews won't be rendered.
     previewsContainer: null
 
+    # Selector for hidden input container
+    hiddenInputContainer: "body"
+
+    # If null, no capture type will be specified
+    # If camera, mobile devices will skip the file selection and choose camera
+    # If microphone, mobile devices will skip the file selection and choose the microphone
+    # If camcorder, mobile devices will skip the file selection and choose the camera in video mode
+    # On apple devices multiple must be set to false.  AcceptedFiles may need to
+    # be set to an appropriate mime type (e.g. "image/*", "audio/*", or "video/*").
+    capture: null
+
+    # Before the file is appended to the formData, the function _renameFilename is performed for file.name
+    # which executes the function defined in renameFilename
+    renameFilename: null
 
     # Dictionary
 
@@ -204,7 +281,11 @@ class Dropzone extends Em
         @element.appendChild messageElement
 
       span = messageElement.getElementsByTagName("span")[0]
-      span.textContent = @options.dictFallbackMessage if span
+      if span
+        if span.textContent?
+          span.textContent = @options.dictFallbackMessage
+        else if span.innerText?
+          span.innerText = @options.dictFallbackMessage
 
       @element.appendChild @getFallbackForm()
 
@@ -302,7 +383,7 @@ class Dropzone extends Em
         file.previewTemplate = file.previewElement # Backwards compatibility
 
         @previewsContainer.appendChild file.previewElement
-        node.textContent = file.name for node in file.previewElement.querySelectorAll("[data-dz-name]")
+        node.textContent = @_renameFilename(file.name) for node in file.previewElement.querySelectorAll("[data-dz-name]")
         node.innerHTML = @filesize file.size for node in file.previewElement.querySelectorAll("[data-dz-size]")
 
         if @options.addRemoveLinks
@@ -333,11 +414,11 @@ class Dropzone extends Em
     thumbnail: (file, dataUrl) ->
       if file.previewElement
         file.previewElement.classList.remove "dz-file-preview"
-        file.previewElement.classList.add "dz-image-preview"
         for thumbnailElement in file.previewElement.querySelectorAll("[data-dz-thumbnail]")
           thumbnailElement.alt = file.name
           thumbnailElement.src = dataUrl
 
+        setTimeout (=> file.previewElement.classList.add "dz-image-preview"), 1
 
     # Called whenever an error occurs
     # Receives `file` and `message`
@@ -364,7 +445,11 @@ class Dropzone extends Em
     # To get the total number of bytes of the file, use `file.size`
     uploadprogress: (file, progress, bytesSent) ->
       if file.previewElement
-        node.style.width = "#{progress}%" for node in file.previewElement.querySelectorAll("[data-dz-uploadprogress]")
+        for node in file.previewElement.querySelectorAll("[data-dz-uploadprogress]")
+          if node.nodeName is 'PROGRESS'
+            node.value = progress
+          else
+            node.style.width = "#{progress}%"
 
     # Called whenever the total upload progress gets updated.
     # Called with totalUploadProgress (0-100), totalBytes and totalBytesSent
@@ -377,11 +462,10 @@ class Dropzone extends Em
 
     sendingmultiple: noop
 
-    # When the complete upload is finished and successfull
+    # When the complete upload is finished and successful
     # Receives `file`
     success: (file) ->
-      if file.previewElement
-        file.previewElement.classList.add "dz-success"
+      file.previewElement.classList.add "dz-success" if file.previewElement
 
     successmultiple: noop
 
@@ -394,6 +478,7 @@ class Dropzone extends Em
     # Receives `file`
     complete: (file) ->
       file._removeLink.textContent = @options.dictRemoveFile if file._removeLink
+      file.previewElement.classList.add "dz-complete" if file.previewElement
 
     completemultiple: noop
 
@@ -401,20 +486,41 @@ class Dropzone extends Em
 
     maxfilesreached: noop
 
+    queuecomplete: noop
+
+    addedfiles: noop
 
 
     # This template will be chosen when a new file is dropped.
     previewTemplate:  """
                       <div class="dz-preview dz-file-preview">
+                        <div class="dz-image"><img data-dz-thumbnail /></div>
                         <div class="dz-details">
+                          <div class="dz-size"><span data-dz-size></span></div>
                           <div class="dz-filename"><span data-dz-name></span></div>
-                          <div class="dz-size" data-dz-size></div>
-                          <img data-dz-thumbnail />
                         </div>
                         <div class="dz-progress"><span class="dz-upload" data-dz-uploadprogress></span></div>
-                        <div class="dz-success-mark"><span>✔</span></div>
-                        <div class="dz-error-mark"><span>✘</span></div>
                         <div class="dz-error-message"><span data-dz-errormessage></span></div>
+                        <div class="dz-success-mark">
+                          <svg width="54px" height="54px" viewBox="0 0 54 54" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+                            <title>Check</title>
+                            <defs></defs>
+                            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+                              <path d="M23.5,31.8431458 L17.5852419,25.9283877 C16.0248253,24.3679711 13.4910294,24.366835 11.9289322,25.9289322 C10.3700136,27.4878508 10.3665912,30.0234455 11.9283877,31.5852419 L20.4147581,40.0716123 C20.5133999,40.1702541 20.6159315,40.2626649 20.7218615,40.3488435 C22.2835669,41.8725651 24.794234,41.8626202 26.3461564,40.3106978 L43.3106978,23.3461564 C44.8771021,21.7797521 44.8758057,19.2483887 43.3137085,17.6862915 C41.7547899,16.1273729 39.2176035,16.1255422 37.6538436,17.6893022 L23.5,31.8431458 Z M27,53 C41.3594035,53 53,41.3594035 53,27 C53,12.6405965 41.3594035,1 27,1 C12.6405965,1 1,12.6405965 1,27 C1,41.3594035 12.6405965,53 27,53 Z" id="Oval-2" stroke-opacity="0.198794158" stroke="#747474" fill-opacity="0.816519475" fill="#FFFFFF" sketch:type="MSShapeGroup"></path>
+                            </g>
+                          </svg>
+                        </div>
+                        <div class="dz-error-mark">
+                          <svg width="54px" height="54px" viewBox="0 0 54 54" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+                            <title>Error</title>
+                            <defs></defs>
+                            <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+                              <g id="Check-+-Oval-2" sketch:type="MSLayerGroup" stroke="#747474" stroke-opacity="0.198794158" fill="#FFFFFF" fill-opacity="0.816519475">
+                                <path d="M32.6568542,29 L38.3106978,23.3461564 C39.8771021,21.7797521 39.8758057,19.2483887 38.3137085,17.6862915 C36.7547899,16.1273729 34.2176035,16.1255422 32.6538436,17.6893022 L27,23.3431458 L21.3461564,17.6893022 C19.7823965,16.1255422 17.2452101,16.1273729 15.6862915,17.6862915 C14.1241943,19.2483887 14.1228979,21.7797521 15.6893022,23.3461564 L21.3431458,29 L15.6893022,34.6538436 C14.1228979,36.2202479 14.1241943,38.7516113 15.6862915,40.3137085 C17.2452101,41.8726271 19.7823965,41.8744578 21.3461564,40.3106978 L27,34.6568542 L32.6538436,40.3106978 C34.2176035,41.8744578 36.7547899,41.8726271 38.3137085,40.3137085 C39.8758057,38.7516113 39.8771021,36.2202479 38.3106978,34.6538436 L32.6568542,29 Z M27,53 C41.3594035,53 53,41.3594035 53,27 C53,12.6405965 41.3594035,1 27,1 C12.6405965,1 1,12.6405965 1,27 C1,41.3594035 12.6405965,53 27,53 Z" id="Oval-2" sketch:type="MSShapeGroup"></path>
+                              </g>
+                            </g>
+                          </svg>
+                        </div>
                       </div>
                       """
 
@@ -503,6 +609,8 @@ class Dropzone extends Em
 
   getUploadingFiles: -> @getFilesWithStatus Dropzone.UPLOADING
 
+  getAddedFiles: -> @getFilesWithStatus Dropzone.ADDED
+
   # Files that are either queued or uploading
   getActiveFiles: -> file for file in @files when file.status == Dropzone.UPLOADING or file.status == Dropzone.QUEUED
 
@@ -516,13 +624,14 @@ class Dropzone extends Em
 
     if @clickableElements.length
       setupHiddenFileInput = =>
-        document.body.removeChild @hiddenFileInput if @hiddenFileInput
+        @hiddenFileInput.parentNode.removeChild @hiddenFileInput if @hiddenFileInput
         @hiddenFileInput = document.createElement "input"
         @hiddenFileInput.setAttribute "type", "file"
         @hiddenFileInput.setAttribute "multiple", "multiple" if !@options.maxFiles? || @options.maxFiles > 1
         @hiddenFileInput.className = "dz-hidden-input"
 
         @hiddenFileInput.setAttribute "accept", @options.acceptedFiles if @options.acceptedFiles?
+        @hiddenFileInput.setAttribute "capture", @options.capture if @options.capture?
 
         # Not setting `display="none"` because some browsers don't accept clicks
         # on elements that aren't displayed.
@@ -532,10 +641,11 @@ class Dropzone extends Em
         @hiddenFileInput.style.left = "0"
         @hiddenFileInput.style.height = "0"
         @hiddenFileInput.style.width = "0"
-        document.body.appendChild @hiddenFileInput
+        document.querySelector(@options.hiddenInputContainer).appendChild @hiddenFileInput
         @hiddenFileInput.addEventListener "change", =>
           files = @hiddenFileInput.files
           @addFile file for file in files if files.length
+          @emit "addedfiles", files
           setupHiddenFileInput()
       setupHiddenFileInput()
 
@@ -555,7 +665,7 @@ class Dropzone extends Em
 
     # Emit a `queuecomplete` event if all files finished uploading.
     @on "complete", (file) =>
-      if @getUploadingFiles().length == 0 and @getQueuedFiles().length == 0
+      if @getAddedFiles().length == 0 and @getUploadingFiles().length == 0 and @getQueuedFiles().length == 0
         # This needs to be deferred so that `queuecomplete` really triggers after `complete`
         setTimeout (=> @emit "queuecomplete"), 0
 
@@ -609,7 +719,7 @@ class Dropzone extends Em
             # Only the actual dropzone or the message element should trigger file selection
             if (clickableElement != @element) or (evt.target == @element or Dropzone.elementInside evt.target, @element.querySelector ".dz-message")
               @hiddenFileInput.click() # Forward the click
-
+            return true
 
     @enable()
 
@@ -649,6 +759,12 @@ class Dropzone extends Em
       @options.paramName n
     else
       "#{@options.paramName}#{if @options.uploadMultiple then "[#{n}]" else ""}"
+
+  # If @options.renameFilename is a function,
+  # the function will be used to rename the file.name before appending it to the formData
+  _renameFilename: (name) ->
+    return name unless typeof @options.renameFilename is "function"
+    @options.renameFilename name
 
   # Returns a form that can be used as fallback if the browser does not support DragnDrop
   #
@@ -706,22 +822,23 @@ class Dropzone extends Em
 
   # Returns a nicely formatted filesize
   filesize: (size) ->
-    if      size >= 1024 * 1024 * 1024 * 1024 / 10
-      size = size / (1024 * 1024 * 1024 * 1024 / 10)
-      string = "TiB"
-    else if size >= 1024 * 1024 * 1024 / 10
-      size = size / (1024 * 1024 * 1024 / 10)
-      string = "GiB"
-    else if size >= 1024 * 1024 / 10
-      size = size / (1024 * 1024 / 10)
-      string = "MiB"
-    else if size >= 1024 / 10
-      size = size / (1024 / 10)
-      string = "KiB"
-    else
-      size = size * 10
-      string = "b"
-    "<strong>#{Math.round(size)/10}</strong> #{string}"
+    selectedSize = 0
+    selectedUnit = "b"
+
+    if size > 0
+      units = [ 'TB', 'GB', 'MB', 'KB', 'b' ]
+
+      for unit, i in units
+        cutoff = Math.pow(@options.filesizeBase, 4 - i) / 10
+
+        if size >= cutoff
+          selectedSize = size / Math.pow(@options.filesizeBase, 4 - i)
+          selectedUnit = unit
+          break
+
+      selectedSize = Math.round(10 * selectedSize) / 10 # Cutting of digits
+
+    "<strong>#{selectedSize}</strong> #{selectedUnit}"
 
 
   # Adds or removes the `dz-max-files-reached` class from the form.
@@ -739,6 +856,7 @@ class Dropzone extends Em
     @emit "drop", e
 
     files = e.dataTransfer.files
+    @emit "addedfiles", files
 
     # Even if it's a folder, files.length will contain the folders.
     if files.length
@@ -781,18 +899,28 @@ class Dropzone extends Em
   _addFilesFromDirectory: (directory, path) ->
     dirReader = directory.createReader()
 
-    entriesReader = (entries) =>
-      for entry in entries
-        if entry.isFile
-          entry.file (file) =>
-            return if @options.ignoreHiddenFiles and file.name.substring(0, 1) is '.'
-            file.fullPath = "#{path}/#{file.name}"
-            @addFile file
-        else if entry.isDirectory
-          @_addFilesFromDirectory entry, "#{path}/#{entry.name}"
-      return
+    errorHandler = (error) -> console?.log? error
 
-    dirReader.readEntries entriesReader, (error) -> console?.log? error
+    readEntries = () =>
+      dirReader.readEntries (entries) =>
+        if entries.length > 0
+          for entry in entries
+            if entry.isFile
+              entry.file (file) =>
+                return if @options.ignoreHiddenFiles and file.name.substring(0, 1) is '.'
+                file.fullPath = "#{path}/#{file.name}"
+                @addFile file
+            else if entry.isDirectory
+              @_addFilesFromDirectory entry, "#{path}/#{entry.name}"
+
+          # Recursively call readEntries() again, since browser only handle
+          # the first 100 entries.
+          # See: https://developer.mozilla.org/en-US/docs/Web/API/DirectoryReader#readEntries
+          readEntries()
+        return null
+      , errorHandler
+
+    readEntries()
 
 
 
@@ -886,35 +1014,49 @@ class Dropzone extends Em
     fileReader = new FileReader
 
     fileReader.onload = =>
-      # Not using `new Image` here because of a bug in latest Chrome versions.
-      # See https://github.com/enyo/dropzone/pull/226
-      img = document.createElement "img"
 
-      img.onload = =>
-        file.width = img.width
-        file.height = img.height
-
-        resizeInfo = @options.resize.call @, file
-
-        resizeInfo.trgWidth ?= resizeInfo.optWidth
-        resizeInfo.trgHeight ?= resizeInfo.optHeight
-
-        canvas = document.createElement "canvas"
-        ctx = canvas.getContext "2d"
-        canvas.width = resizeInfo.trgWidth
-        canvas.height = resizeInfo.trgHeight
-
-        # This is a bugfix for iOS' scaling bug.
-        drawImageIOSFix ctx, img, resizeInfo.srcX ? 0, resizeInfo.srcY ? 0, resizeInfo.srcWidth, resizeInfo.srcHeight, resizeInfo.trgX ? 0, resizeInfo.trgY ? 0, resizeInfo.trgWidth, resizeInfo.trgHeight
-
-        thumbnail = canvas.toDataURL "image/png"
-
-        @emit "thumbnail", file, thumbnail
+      # Don't bother creating a thumbnail for SVG images since they're vector
+      if file.type == "image/svg+xml"
+        @emit "thumbnail", file, fileReader.result
         callback() if callback?
+        return
 
-      img.src = fileReader.result
+      @createThumbnailFromUrl file, fileReader.result, callback
 
     fileReader.readAsDataURL file
+
+  createThumbnailFromUrl: (file, imageUrl, callback, crossOrigin) ->
+    # Not using `new Image` here because of a bug in latest Chrome versions.
+    # See https://github.com/enyo/dropzone/pull/226
+    img = document.createElement "img"
+
+    img.crossOrigin = crossOrigin if crossOrigin
+
+    img.onload = =>
+      file.width = img.width
+      file.height = img.height
+
+      resizeInfo = @options.resize.call @, file
+
+      resizeInfo.trgWidth ?= resizeInfo.optWidth
+      resizeInfo.trgHeight ?= resizeInfo.optHeight
+
+      canvas = document.createElement "canvas"
+      ctx = canvas.getContext "2d"
+      canvas.width = resizeInfo.trgWidth
+      canvas.height = resizeInfo.trgHeight
+
+      # This is a bugfix for iOS' scaling bug.
+      drawImageIOSFix ctx, img, resizeInfo.srcX ? 0, resizeInfo.srcY ? 0, resizeInfo.srcWidth, resizeInfo.srcHeight, resizeInfo.trgX ? 0, resizeInfo.trgY ? 0, resizeInfo.trgWidth, resizeInfo.trgHeight
+
+      thumbnail = canvas.toDataURL "image/png"
+
+      @emit "thumbnail", file, thumbnail
+      callback() if callback?
+
+    img.onerror = callback if callback?
+
+    img.src = imageUrl
 
 
   # Goes through the queue and processes files if there aren't too many already.
@@ -980,6 +1122,11 @@ class Dropzone extends Em
 
     @processQueue() if @options.autoProcessQueue
 
+  resolveOption = (option, args...) ->
+    if typeof option == 'function'
+      return option.apply(@, args)
+    option
+
   # Wrapper for uploadFiles()
   uploadFile: (file) -> @uploadFiles [ file ]
 
@@ -989,7 +1136,9 @@ class Dropzone extends Em
     # Put the xhr object in the file objects to be able to reference it later.
     file.xhr = xhr for file in files
 
-    xhr.open @options.method, @options.url, true
+    method = resolveOption @options.method, files
+    url = resolveOption @options.url, files
+    xhr.open method, url, true
 
     # Has to be after `.open()`. See https://github.com/enyo/dropzone/issues/179
     xhr.withCredentials = !!@options.withCredentials
@@ -1064,7 +1213,8 @@ class Dropzone extends Em
 
     extend headers, @options.headers if @options.headers
 
-    xhr.setRequestHeader headerName, headerValue for headerName, headerValue of headers
+    for headerName, headerValue of headers
+      xhr.setRequestHeader headerName, headerValue if headerValue
 
     formData = new FormData()
 
@@ -1092,10 +1242,12 @@ class Dropzone extends Em
     # Finally add the file
     # Has to be last because some servers (eg: S3) expect the file to be the
     # last parameter
-    formData.append @_getParamName(i), files[i], files[i].name for i in [0..files.length-1]
+    formData.append @_getParamName(i), files[i], @_renameFilename(files[i].name) for i in [0..files.length-1]
 
+    @submitRequest xhr, formData, files
+
+  submitRequest: (xhr, formData, files) ->
     xhr.send formData
-
 
   # Called internally when processing is finished.
   # Individual callbacks have to be called in the appropriate sections.
@@ -1125,7 +1277,7 @@ class Dropzone extends Em
 
 
 
-Dropzone.version = "3.10.2"
+Dropzone.version = "4.3.0"
 
 
 # This is a map of options for your different dropzones. Add configurations
@@ -1332,8 +1484,6 @@ Dropzone.PROCESSING = Dropzone.UPLOADING # alias
 Dropzone.CANCELED = "canceled"
 Dropzone.ERROR = "error"
 Dropzone.SUCCESS = "success"
-
-
 
 
 

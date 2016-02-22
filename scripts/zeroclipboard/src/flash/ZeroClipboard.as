@@ -18,6 +18,12 @@ package {
   public class ZeroClipboard extends Sprite {
 
     /**
+     * ZeroClipboard library version number at the time this SWF was compiled.
+     */
+    public static const VERSION:String = "<%= version %>";
+
+
+    /**
      * Function through which JavaScript events are emitted. Accounts for scenarios
      * in which ZeroClipboard is used via AMD/CommonJS module loaders, too.
      */
@@ -70,86 +76,181 @@ package {
       // Remove the event listener, if any
       this.removeEventListener(Event.ADDED_TO_STAGE, this.init);
 
-      // Get the flashvars
-      var flashvars:Object;  // NOPMD
-      flashvars = XssUtils.filterToFlashVars(this.loaderInfo.parameters);
+      // Establish a communication line with JavaScript
+      this.jsProxy = new JsProxy();
 
-      // Configure the SWF object's ID
-      var swfObjectId:String = "global-zeroclipboard-flash-bridge";
-      if (flashvars.swfObjectId && typeof flashvars.swfObjectId === "string") {
-        var swfId = XssUtils.sanitizeString(flashvars.swfObjectId);
-
-        // Validate the ID against the HTML4 spec for `ID` tokens.
-        if (/^[A-Za-z][A-Za-z0-9_:\-\.]*$/.test(swfId)) {
-          swfObjectId = swfId;
-        }
-      }
+      // Collect the real FlashVars
+      var expectedFlashVars:Object;  // NOPMD
+      expectedFlashVars = this.getExpectedFlashVars();
 
       // Allow the SWF object to communicate with a page on a different origin than its own (e.g. SWF served from CDN)
-      if (flashvars.trustedOrigins && typeof flashvars.trustedOrigins === "string") {
-        var origins:Array = XssUtils.sanitizeString(flashvars.trustedOrigins).split(",");
-        Security.allowDomain.apply(Security, origins);
-      }
+      Security.allowDomain.apply(Security, expectedFlashVars.trustedOrigins);
 
-      // Enable use of the fancy "Desktop" clipboard, even on Linux where it is known to suck
-      var forceEnhancedClipboard:Boolean = false;
-      if (flashvars.forceEnhancedClipboard === "true" || flashvars.forceEnhancedClipboard === true) {
-        forceEnhancedClipboard = true;
-      }
+      var jsProxyObjectId:String = this.jsProxy.getObjectId();
+      var expectedObjectId:String = expectedFlashVars.swfObjectId;
 
       this.jsEmitter =
         "(function(eventObj) {\n" +
-        "  var objectId = '" + swfObjectId + "',\n" +
-        "      ZC = null,\n" +
-        "      swf = null;\n" +
-        "  if (typeof ZeroClipboard === 'function' && typeof ZeroClipboard.emit === 'function') {\n" +
-        "    \nZC = ZeroClipboard;\n" +
+        "  var objectId = '" + jsProxyObjectId + "',\n" +
+        "      swf = document[objectId] || document.getElementById(objectId),\n" +
+        "      ZC, result;\n\n" +
+        "  if (swf && typeof swf.ZeroClipboard === 'function' && typeof swf.ZeroClipboard.emit === 'function') {\n" +
+        "    ZC = swf.ZeroClipboard;\n" +
         "  }\n" +
-        "  else {\n" +
-        "    swf = document[objectId] || document.getElementById(objectId);\n" +
-        "    if (swf && typeof swf.ZeroClipboard === 'function' && typeof swf.ZeroClipboard.emit === 'function') {\n" +
-        "      ZC = swf.ZeroClipboard;\n" +
-        "    }\n" +
+        "  else if (typeof ZeroClipboard === 'function' && typeof ZeroClipboard.emit === 'function') {\n" +
+        "    ZC = ZeroClipboard;\n" +
         "  }\n" +
+        "  // Drop the element reference, if any\n" +
+        "  swf = null;\n" +
         "  if (!ZC) {\n" +
         "    throw new Error('ERROR: ZeroClipboard SWF could not locate ZeroClipboard JS object!\\n" +
                              "Expected element ID: ' + objectId);\n" +
-        "  }\n" +
-        "  return ZC.emit(eventObj);\n" +
+        "  }\n\n" +
+        "  result = ZC.emit(eventObj);\n\n" +
+        "  // Drop the reference\n" +
+        "  ZC = null;\n\n" +
+        "  return result;\n" +
         "})";
 
       // Create an invisible "button" and transparently fill the entire Stage
       var button:Sprite = this.prepareUI();
 
       // Configure the clipboard injector
-      this.clipboard = new ClipboardInjector(forceEnhancedClipboard);
-
-      // Establish a communication line with JavaScript
-      this.jsProxy = new JsProxy(swfObjectId);
+      this.clipboard = new ClipboardInjector(expectedFlashVars.forceEnhancedClipboard);
 
       // Only proceed if this SWF is hosted in the browser as expected
-      if (this.jsProxy.isComplete()) {
-
+      if (!this.jsProxy.isComplete()) {
+        // Signal to the browser that something is wrong
+        this.emit("error", {
+          name: "flash-unavailable"
+        });
+      }
+      else if (!this.jsProxy.isHighFidelity()) {
+        // Signal to the browser that data fidelity cannot be guaranteed
+        this.emit("error", {
+          name: "flash-degraded"
+        });
+      }
+      else if (!expectedFlashVars.jsVersion || !ZeroClipboard.VERSION || expectedFlashVars.jsVersion !== ZeroClipboard.VERSION) {
+        this.emit("error", {
+          name: "version-mismatch",
+          jsVersion: expectedFlashVars.jsVersion || null,
+          swfVersion: ZeroClipboard.VERSION || null
+        });
+      }
+      else if (!expectedObjectId || jsProxyObjectId !== expectedObjectId) {
+        // Signal to the browser that the expected ID does not match the actual ID
+        this.emit("error", {
+          name: "config-mismatch",
+          property: "swfObjectId",
+          configuredValue: expectedObjectId || null,
+          actualValue: jsProxyObjectId || null
+        });
+      }
+      else {
         // Add the MouseEvent listeners
         this.addMouseHandlers(button);
 
         // Expose the external functions
         this.jsProxy.addCallback(
           "setHandCursor",
-          function(enabled:Boolean) {
+          function(enabled:Boolean): void {
             button.useHandCursor = enabled === true;
           }
         );
 
         // Signal to the browser that we are ready
-        this.emit("ready");
-      }
-      else {
-        // Signal to the browser that something is wrong
-        this.emit("error", {
-          name: "flash-unavailable"
+        this.emit("ready", {
+          swfVersion: ZeroClipboard.VERSION
         });
       }
+    }
+
+
+    /**
+     * Get an accurate interpretation of the FlashVars for this SWF instance.
+     *
+     * IMPORTANT: This also serves the double purpose of reestablishing the correct FlashVars when
+     * the SWF is retrieved from the browser cache but originally hosted on an external domain.
+     *
+     * @return Object
+     */
+    private function getFlashVarsFromHtml(
+    ): Object {  // NOPMD
+      var flashVars:Object = null;  // NOPMD
+
+      if (this.jsProxy && this.jsProxy.isComplete() && this.jsProxy.isHighFidelity()) {
+        var rawFlashVars:String = this.jsProxy.call(
+          "(function() {\n" +
+          "  var objectId = '" + this.jsProxy.getObjectId() + "',\n" +
+          "      swf = document[objectId] || document.getElementById(objectId),\n" +
+          "      result, i, len, paramEl;\n\n" +
+          "  if (swf && swf.nodeName === 'OBJECT') {\n" +
+          "    for (i = 0, len = swf.children.length; i < len; i++) {\n" +
+          "      paramEl = swf.children[i];\n" +
+          "      if (paramEl && paramEl.nodeName === 'PARAM' && (paramEl.getAttribute('name') || '').toLowerCase() === 'flashvars') {\n" +
+          "        result = paramEl.getAttribute('value') || null;\n" +
+          "      }\n" +
+          "    }\n" +
+          "  }\n\n" +
+          "  // Drop the element references, if any\n" +
+          "  swf = paramEl = null;\n\n" +
+          "  return result;\n" +
+          "})"
+        );
+
+        flashVars = rawFlashVars ? XssUtils.sanitize(XssUtils.parseQuery("?" + rawFlashVars)) : null;
+      }
+
+      return flashVars;
+    }
+
+
+    /**
+     * Retrieve and transform (or default) the expected FlashVars values.
+     *
+     * @return Object
+     */
+    private function getExpectedFlashVars(
+    ): Object { // NOPMD
+      var expectedFlashVars:Object;  // NOPMD
+      expectedFlashVars = {
+        swfObjectId: "global-zeroclipboard-flash-bridge",
+        trustedOrigins: [],
+        forceEnhancedClipboard: false,
+        jsVersion: null
+      };
+
+      // Get the FlashVars
+      var flashVars:Object;  // NOPMD
+      flashVars = this.getFlashVarsFromHtml() || {};
+
+      // Configure the SWF object's ID
+      if (flashVars.swfObjectId && typeof flashVars.swfObjectId === "string") {
+        var swfId:String = flashVars.swfObjectId;
+
+        // Validate the ID against the HTML4 spec for `ID` tokens.
+        if (XssUtils.isValidHtmlId(swfId)) {
+          expectedFlashVars.swfObjectId = swfId;
+        }
+      }
+
+      // Allow the SWF object to communicate with a page on a different origin than its own (e.g. SWF served from CDN)
+      if (flashVars.trustedOrigins && typeof flashVars.trustedOrigins === "string") {
+        expectedFlashVars.trustedOrigins = flashVars.trustedOrigins.split(",");
+      }
+
+      // Enable use of the fancy "Desktop" clipboard, even on Linux where it is known to suck
+      if (flashVars.forceEnhancedClipboard === "true" || flashVars.forceEnhancedClipboard === true) {
+        expectedFlashVars.forceEnhancedClipboard = true;
+      }
+
+      // Get the version number of the ZeroClipboard JS side of the library
+      if (typeof flashVars.jsVersion === "string") {
+        expectedFlashVars.jsVersion = flashVars.jsVersion;
+      }
+
+      return expectedFlashVars;
     }
 
 
@@ -197,7 +298,7 @@ package {
      */
     private function onClick(event:MouseEvent): void {
       var clipData:Object;  // NOPMD
-      var clipInjectSuccess:Object = {};  // NOPMD
+      var clipInjectResults:Object = {};  // NOPMD
 
       // Allow for any "UI preparation" work before the "copy" event begins
       this.emit("beforecopy");
@@ -206,14 +307,15 @@ package {
       clipData = this.emit("copy");
 
       // Inject all pending data into the user's clipboard
-      clipInjectSuccess = this.clipboard.inject(clipData);
+      clipInjectResults = this.clipboard.inject(clipData);
 
       // Compose and serialize a results object, send it back to the page
       this.emit(
         "aftercopy",
         {
-          success: clipInjectSuccess,
-          data: clipData
+          success: clipInjectResults.success,
+          data: clipData,
+          errors: clipInjectResults.errors
         }
       );
     }
@@ -235,10 +337,10 @@ package {
 
       var result:Object = undefined;  // NOPMD
       if (this.jsProxy.isComplete()) {
-        result = this.jsProxy.call(this.jsEmitter, [eventObj]);
+        result = this.jsProxy.call(this.jsEmitter, eventObj);
       }
       else {
-        this.jsProxy.send(this.jsEmitter, [eventObj]);
+        this.jsProxy.send(this.jsEmitter, eventObj);
       }
       return result;
     }
@@ -267,7 +369,7 @@ package {
           "stageY": "_stageY"
         };
 
-        for (var prop in props) {
+        for (var prop:String in props) {
           if (event.hasOwnProperty(prop) && event[prop] != null) {
             evtData[props[prop]] = event[prop];
           }

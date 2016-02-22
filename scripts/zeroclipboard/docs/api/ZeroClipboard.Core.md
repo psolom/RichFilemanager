@@ -2,6 +2,8 @@
 
 This documents details the **ZeroClipboard.Core** API, including various types of properties, methods, and events. **ZeroClipboard.Core** is primarily intended for use in wrapping ZeroClipboard in 3rd party plugins, e.g. [jquery.zeroclipboard](https://github.com/zeroclipboard/jquery.zeroclipboard).
 
+Any entry that does not include an annotation similar to "Added in `v2.x.y`" should be assumed to have been available since `v2.0.0`.
+
 
 ## Static
 
@@ -82,6 +84,8 @@ _[`undefined`]_ Clear the pending data of ALL formats for clipboard injection.
 
 #### `ZeroClipboard.getData(...)`
 
+_Added in `v2.1.0`._
+
 ```js
 var text = ZeroClipboard.getData("text/plain");
 ```
@@ -98,6 +102,8 @@ _[`Object`]_ Get a copy of the pending data of ALL formats for clipboard injecti
 #### `ZeroClipboard.focus(...)`
 #### `ZeroClipboard.activate(...)`
 
+_The preferred alias `ZeroClipboard.focus(...)` was added in `v2.1.0`._
+
 ```js
 ZeroClipboard.focus(document.getElementById("d_clip_button"));
 ```
@@ -108,10 +114,14 @@ _[`undefined`]_ Focus/"activate" the provided element by moving the Flash SWF ob
 #### `ZeroClipboard.blur()`
 #### `ZeroClipboard.deactivate()`
 
+_The preferred alias `ZeroClipboard.blur()` was added in `v2.1.0`._
+
 _[`undefined`]_ Blur/"deactivate" the currently focused/"activated" element, moving the Flash SWF object off the screen. **NOTE:** The preferred method to use is `blur` but the alias `deactivate` is available for backward compatibility's sake.
 
 
 #### `ZeroClipboard.activeElement()`
+
+_Added in `v2.1.0`._
 
 ```js
 var el = document.getElementById("d_clip_button");
@@ -127,7 +137,7 @@ _[`HTMLElement` or `null`]_ Return the currently "activated" element that the Fl
 _[`Object`]_ Diagnostic method that describes the state of the browser, Flash Player, and ZeroClipboard.
 
 
-#### `ZeroClipboard.isFlashUnavailable()`
+#### `ZeroClipboard.isFlashUnusable()`
 
 _[`Boolean`]_ Indicates if Flash Player is **definitely** unusable (disabled, outdated, unavailable, or deactivated). _**IMPORTANT:**_ This method should be considered private.
 
@@ -260,7 +270,7 @@ ZeroClipboard.on("ready", function(e) {
 #### `"beforecopy"`
 
 On `click`, the Flash object will fire off a `beforecopy` event. This event is generally only
-used for "UI prepartion" if you want to alter anything before the `copy` event fires.
+used for "UI preparation" if you want to alter anything before the `copy` event fires.
 
 **IMPORTANT:** Handlers of this event are expected to operate synchronously if they intend to be
 finished before the "copy" event is triggered.
@@ -335,7 +345,17 @@ ZeroClipboard.on("aftercopy", function(e) {
       "text/plain": "Blah",
       "text/html": "<b>Blah</b>",
       "application/rtf": "{\\rtf1\\ansi\n{\\b Blah}}"
-    }
+    },
+    errors: [
+      {
+        name: "SecurityError",
+        message: "Clipboard security error OMG",
+        errorID: 7320,
+        stack: null,
+        format: "application/rtf",
+        clipboard: "desktop"
+      }
+    ]
   };
 */
 });
@@ -393,7 +413,7 @@ ZeroClipboard.on("error", function(e) {
   e = {
     type: "error",
     name: "flash-disabled",
-    messsage: "Flash is disabled or not installed",
+    messsage: "Flash is disabled or not installed. May also be attempting to run Flash in a sandboxed iframe, which is impossible.",
     target: null,
     relatedTarget: null,
     currentTarget: flashSwfObjectRef,
@@ -429,6 +449,29 @@ ZeroClipboard.on("error", function(e) {
 ```
 
 
+##### `error[name = "flash-sandboxed"]`
+
+This type of `error` event fires when the page is within a `sandbox`ed `iframe` element. It is impossible for Flash Player to run in such a sandbox.
+
+```js
+ZeroClipboard.on("error", function(e) {
+/*
+  e = {
+    type: "error",
+    name: "flash-sandboxed",
+    messsage: "Attempting to run Flash in a sandboxed iframe, which is impossible",
+    target: null,
+    relatedTarget: null,
+    currentTarget: flashSwfObjectRef,
+    timeStamp: Date.now(),
+    minimumVersion: "11.0.0",
+    version: "11.2.202"
+  };
+*/
+});
+```
+
+
 ##### `error[name = "flash-unavailable"]`
 
 This type of `error` event fires when the browser's installation of Flash Player cannot communicate bidirectionally with JavaScript.
@@ -452,6 +495,29 @@ ZeroClipboard.on("error", function(e) {
 ```
 
 
+##### `error[name = "flash-degraded"]`
+
+This type of `error` event fires when the browser's installation of Flash Player cannot communicate bidirectionally with JavaScript without losing data fidelity.
+
+```js
+ZeroClipboard.on("error", function(e) {
+/*
+  e = {
+    type: "error",
+    name: "flash-degraded",
+    messsage: "Flash is unable to preserve data fidelity when communicating with JavaScript",
+    target: null,
+    relatedTarget: null,
+    currentTarget: flashSwfObjectRef,
+    timeStamp: Date.now(),
+    minimumVersion: "11.0.0",
+    version: "11.2.202"
+  };
+*/
+});
+```
+
+
 ##### `error[name = "flash-deactivated"]`
 
 This type of `error` event fires when the browser's installation of Flash Player is either too old
@@ -459,13 +525,15 @@ for the browser [but _not_ too old for ZeroClipboard] or if Flash objects are co
 click-to-play and the user does not authorize it within `_globalConfig.flashLoadTimeout`
 milliseconds or does not authorize it at all.
 
+This event may also be fired in some browsers if the ZeroClipboard SWF object cannot be loaded at all. See [`error\[name = "swf-not-found"\]`](#error-name--swf-not-found) for more information.
+
 ```js
 ZeroClipboard.on("error", function(e) {
 /*
   e = {
     type: "error",
     name: "flash-deactivated",
-    messsage: "Flash is too outdated for your browser and/or is configured as click-to-activate",
+    messsage: "Flash is too outdated for your browser and/or is configured as click-to-activate. This may also mean that the ZeroClipboard SWF object could not be loaded, so please check your `swfPath` configuration and/or network connectivity. May also be attempting to run Flash in a sandboxed iframe, which is impossible.",
     target: null,
     relatedTarget: null,
     currentTarget: flashSwfObjectRef,
@@ -519,6 +587,137 @@ ZeroClipboard.on("error", function(e) {
 ```
 
 
+##### `error[name = "version-mismatch"]`
+
+_Added in `v2.2.0`._
+
+This type of `error` event fires when the JavaScript side's `ZeroClipboard.version` property value
+does not exactly match the `ZeroClipboard.VERSION` property value that was compiled into the SWF.
+While this is stricter than usually necessary, it helps avoid weird problems if you accidentally
+forget to copy all of the assets when updating your ZeroClipboard installation, or if you run into
+any weird caching issues afterward.  In those situations, this `error` event should save you a lot of
+time and confusion when you run into the occasional bidirectional API change that will fail to work
+unless both the JS and SWF assets are appropriate updated.
+
+```js
+ZeroClipboard.on("error", function(e) {
+/*
+  e = {
+    type: "error",
+    name: "version-mismatch",
+    messsage: "ZeroClipboard JS version number does not match ZeroClipboard SWF version number",
+    target: null,
+    relatedTarget: null,
+    currentTarget: flashSwfObjectRef,
+    timeStamp: Date.now(),
+    jsVersion: "2.2.1",
+    swfVersion: "2.2.0"
+  };
+*/
+});
+```
+
+
+##### `error[name = "clipboard-error"]`
+
+_Added in `v2.2.0`._
+
+This type of `error` event fires when any error occurs while the Flash layer is attempting to inject the pending clipboard data into the clipboard. This event is fired only if the injection of at least 1 data format into the clipboard threw an error but does **not** necessarily mean that the injection failed for _every_ data format.
+
+If it is fired at all, it is fired _after_ the `aftercopy` event and before the bubbled `click` event.
+
+```js
+ZeroClipboard.on("error", function(e) {
+/*
+  e = {
+    type: "error",
+    name: "clipboard-error",
+    messsage: "At least one error was thrown while ZeroClipboard was attempting to inject your data into the clipboard",
+    target: currentlyActivatedElementOrNull,
+    relatedTarget: dataClipboardElementTargetOfCurrentlyActivatedElementOrNull,
+    currentTarget: flashSwfObjectRef,
+    timeStamp: Date.now(),
+    data: {
+      "text/plain": "Blah",
+      "text/html": "<b>Blah</b>",
+      "application/rtf": "{\\rtf1\\ansi\n{\\b Blah}}"
+    },
+    errors: [
+      {
+        name: "SecurityError",
+        message: "Clipboard security error OMG",
+        errorID: 7320,
+        stack: null,
+        format: "application/rtf",
+        clipboard: "desktop"
+      }
+    ]
+  };
+*/
+});
+```
+
+
+##### `error[name = "config-mismatch"]`
+
+_Added in `v2.2.0`._
+
+This type of `error` event fires when the certain properties within the
+`ZeroClipboard.config` configured values do not match real values within
+Flash. For example, if the specified `swfObjectId` config property does
+not match the SWF's implicitly known element ID for the SWF object. This
+should be extremely rare unless the `swfPath` URL integrity is being
+compromised by attempted cross-site scripting (XSS) attacks.
+
+```js
+ZeroClipboard.on("error", function(e) {
+/*
+  e = {
+    type: "error",
+    name: "config-mismatch",
+    messsage: "ZeroClipboard configuration does not match Flash's reality",
+    target: null,
+    relatedTarget: null,
+    currentTarget: flashSwfObjectRef,
+    timeStamp: Date.now(),
+    property: "swfObjectId",
+    configuredValue: "my-zeroclipboard-object",
+    actualValue: "global-zeroclipboard-flash-bridge"
+  };
+*/
+});
+
+
+##### `error[name = "swf-not-found"]`
+
+_Added in `v2.2.0`._
+
+This type of `error` event fires when the ZeroClipboard SWF object cannot be loaded, which typically means one of the following:
+ 1. Your `swfPath` configuration is incorrect
+ 2. The server/domain hosting your SWF is down
+ 3. Your network connectivity has been lost
+
+Unfortunately, this event can only be supported in a limited sub-set of browsers at this time:
+ - Firefox
+ - IE10 (_specifically_; not IE9, not IE11)
+
+```js
+ZeroClipboard.on("error", function(e) {
+/*
+  e = {
+    type: "error",
+    name: "swf-not-found",
+    messsage: "The ZeroClipboard SWF object could not be loaded, so please check your `swfPath` configuration and/or network connectivity",
+    target: null,
+    relatedTarget: null,
+    currentTarget: flashSwfObjectRef,
+    timeStamp: Date.now()
+  };
+*/
+});
+```
+
+
 
 ## Configuration Options
 
@@ -554,13 +753,16 @@ var _globalConfig = {
   // Bubble synthetic events in JavaScript after they are received by the Flash object.
   bubbleEvents: true,
 
+  // Ensure OS-compliant line endings, i.e. "\r\n" on Windows, "\n" elsewhere
+  fixLineEndings: true,
+
   // Sets the ID of the `div` encapsulating the Flash object.
   // Value is validated against the [HTML4 spec for `ID` tokens][valid_ids].
   containerId: "global-zeroclipboard-html-bridge",
- 
+
   // Sets the class of the `div` encapsulating the Flash object.
   containerClass: "global-zeroclipboard-container",
- 
+
   // Sets the ID and name of the Flash `object` element.
   // Value is validated against the [HTML4 spec for `ID` and `Name` tokens][valid_ids].
   swfObjectId: "global-zeroclipboard-flash-bridge",
@@ -593,7 +795,9 @@ You can override the defaults by making calls like `ZeroClipboard.config({ swfPa
 before you create any clients.
 
 
-### SWF Inbound Scripting Access: The `trustedDomains` option
+### SWF Scripting Access
+
+#### SWF Inbound Scripting Access: The `trustedDomains` option
 
 This allows other SWF files and HTML pages from the allowed domains to access/call publicly
 exposed ActionScript code, e.g. functions shared via `ExternalInterface.addCallback`. In other
@@ -607,13 +811,13 @@ other domains (e.g. in `iframe`s or child windows).
 For more information about trusted domains, consult the [_official Flash documentation for `flash.system.Security.allowDomain(...)`_](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/system/Security.html#allowDomain\(\)).
 
 
-### SWF Outbound Scripting Access
+#### SWF Outbound Scripting Access
 
 The `allowScriptAccess` parameter (for Flash embedding markup) allows the SWF file to access/call
 JavaScript/HTML functionality of HTML pages on allowed domains, e.g. invoking functions via
 `ExternalInterface.call`. In other words, it controls the SWF outbound scripting access.
 
-As of version `v2.0.0-alpha.2`, the `allowScriptAccess` configuration option no longer exists. The
+As of version `v2.0.0`, the `allowScriptAccess` configuration option no longer exists. The
 appropriate value will be determined immediately before the Flash object is embedded on the page.
 The value is based on a relationship between the current domain (`window.location.host`) and the
 value of the `trustedDomains` configuration option.
@@ -621,28 +825,21 @@ value of the `trustedDomains` configuration option.
 For more information about `allowScriptAccess`, consult the [_official Flash documentation_](http://helpx.adobe.com/flash/kb/control-access-scripts-host-web.html).
 
 
+## Security Limitations
+
+### `sandbox`ed `iframe` Limitations
+
+The `sandbox` attribute of the `iframe` element (new in HTML5, supported in IE10+ and all other evergreen browsers) provides web developers with a way to instruct the browser to load a specific frame's content in a low-privilege environment, starting with the least privilege possible and then whitelisting the necessary subset of capabilities. However, that the `sandbox` attribute takes away some privileges from the framed content that **CANNOT** be whitelisted "back in", including the ability to run native plugins (e.g. Flash), ergo causing ZeroClipboard to be completely unusable. See [../instructions.md#sandboxed-iframe-limitations](../instructions.md#sandboxed-iframe-limitations) for an in-depth explanation of this limitation and _"naughty"_ workarounds.
+
+
 ### Cross-Protocol Limitations
 
-ZeroClipboard was intentionally configured to _not_ allow the SWF to be served from a secure domain (HTTPS) but scripted by an insecure domain (HTTP).
-
-If you find yourself in this situation (as in [Issue #170](https://github.com/zeroclipboard/zeroclipboard/issues/170)), please consider the following options:  
- 1. Serve the SWF over HTTP instead of HTTPS. If the page's protocol can vary (e.g. authorized/unauthorized, staging/production, etc.), you should include add the SWF with a relative protocol (`//s3.amazonaws.com/blah/ZeroClipboard.swf`) instead of an absolute protocol (`https://s3.amazonaws.com/blah/ZeroClipboard.swf`).
- 2. Serve the page over HTTPS instead of HTTP. If the page's protocol can vary, see the note on the previous option (1).
- 3. Update ZeroClipboard's ActionScript codebase to call the [`allowInsecureDomain`](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/system/Security.html#allowInsecureDomain\(\)) method, then recompile the SWF with your custom changes.
+ZeroClipboard was intentionally configured to _not_ allow the SWF to be served from a secure domain (HTTPS) but scripted by an insecure domain (HTTP). If you find yourself in this situation (as in [Issue #170](https://github.com/zeroclipboard/zeroclipboard/issues/170)), see [../instructions.md#cross-protocol-limitations](../instructions.md#cross-protocol-limitations) for an in-depth explanation of this limitation and how to proceed.
 
 
 ### `file://` Protocol Limitations
 
-If you want to host a page locally on the `file://` protocol, you must specifically configure
-ZeroClipboard to trust ALL domains for SWF interaction via a wildcard. This configuration must be
-set _before_ creating ZeroClipboard client instances as a typical consumer, or before calling
-`ZeroClipboard.create()` in a 3rd party wrapper:
-
-```js
-ZeroClipboard.config({ trustedDomains: ["*"] });
-```
-
-This wildcard configuration should _**NOT**_ be used in environments hosted over HTTP/HTTPS.
+If you want to either use ZeroClipboard on a page hosted via the `file://` protocol or serve ZeroClipboard's assets via the `file://` protocol, you are almost guaranteed to run into some roadblocks due to Flash Player security restrictions. See [../instructions.md#file-protocol-limitations](../instructions.md#file-protocol-limitations) for an in-depth explanation of this limitation and potential workarounds.
 
 
 ## Extending `ZeroClipboard`

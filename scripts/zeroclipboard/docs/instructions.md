@@ -4,7 +4,7 @@
 
 # Overview
 
-The ZeroClipboard library provides an easy way to copy text to the clipboard using an invisible [Adobe Flash](http://en.wikipedia.org/wiki/Adobe_Flash) movie and a [JavaScript](http://en.wikipedia.org/wiki/JavaScript) interface. The "Zero" signifies that the library is invisible and the user interface is left entirely up to you. 
+The ZeroClipboard library provides an easy way to copy text to the clipboard using an invisible [Adobe Flash](http://en.wikipedia.org/wiki/Adobe_Flash) movie and a [JavaScript](http://en.wikipedia.org/wiki/JavaScript) interface. The "Zero" signifies that the library is invisible and the user interface is left entirely up to you.
 
 This is achieved by automatically floating the invisible movie on top of a [DOM](http://en.wikipedia.org/wiki/Document_Object_Model) element of your choice. Standard mouse events are even propagated out to your DOM element, so you can still have rollover and mousedown effects.
 
@@ -23,12 +23,25 @@ If a handler of `copy` event intends to modify the pending data for clipboard
 injection, it _MUST_ operate synchronously in order to maintain the temporarily elevated
 permissions granted by the user's `click` event. The most common "gotcha" for this restriction is
 if someone wants to make an asynchronous XMLHttpRequest in response to the `copy` event to get the
-data to inject &mdash; this will not work. You must make it a _synchronous_ XMLHttpRequest instead, or do the
-work in advance before the `copy` event is fired.
+data to inject &mdash; this will not work. You must make it a _synchronous_ XMLHttpRequest instead,
+or do the work in advance before the `copy` event is fired.
+
+### Browser-Specific Limitations
+
+See [Support](#support) and [Browser-Specific Known Issues](#browser-specific-known-issues) below.
 
 ### OS-Specific Limitations
 
 See [OS Considerations](#os-considerations) below.
+
+### Sandboxing Limitations
+
+See [`sandbox`ed `iframe` Limitations](#sandboxed-iframe-limitations) below.
+
+### Protocol Limitations
+
+See [Cross-Protocol Limitations](#cross-protocol-limitations) and [`file://` Protocol Limitations](#file-protocol-limitations) below.
+
 
 
 ## Installation
@@ -49,6 +62,12 @@ bower install zeroclipboard
 
 ```shell
 spm install zeroclipboard
+```
+
+### [Component](https://github.com/componentjs/component) [![Component version](https://badge.fury.io/gh/zeroclipboard%2Fzeroclipboard.png)](http://component.github.io/?q=zeroclipboard)
+
+```shell
+component install zeroclipboard/zeroclipboard
 ```
 
 ### [PHP Composer](https://getcomposer.org/) [![PHP version](https://badge.fury.io/ph/zeroclipboard%2Fzeroclipboard.svg)](https://packagist.org/packages/zeroclipboard/zeroclipboard)
@@ -77,13 +96,40 @@ To use the library, simply include the following JavaScript file in your page:
 ```
 
 You also need to have the "`ZeroClipboard.swf`" file available to the browser.  If this file is
-located in the same directory as your web page, then it will work out of the box.  However, if the
+located in the same directory as your ZeroClipboard.js files, then it will work out of the box.  However, if the
 SWF file is hosted elsewhere, you need to set the URL like this (place this code _after_ the script
 tag):
 
 ```js
 ZeroClipboard.config( { swfPath: "http://YOURSERVER/path/ZeroClipboard.swf" } );
 ```
+
+### Using the Minified Library
+If you intend to use the minified version of ZeroClipboard, you will likely also want to do one of the following two things:
+ 1. Include the SourceMap file ("ZeroClipboard.min.map") in the same hosted directory in order to be able to debug as unminified JavaScript in your browser dev tools.
+ 2. Open the "ZeroClipboard.min.js" file and remove the last line. It is a comment that begins with `//# sourceMappingURL=`. Removing this line will prevent the browsers' dev tools from requesting the file.
+
+#### SourceMap Error Messages
+The SourceMap is not _required_ for normal operation and typically will not be requested by the browser unless the dev tools are open. If you _**do NOT**_ include the SourceMap in your hosted directory [or remove the `sourceMappingURL` comment], then you may see a variety of confusing warnings in your dev tools' JavaScript console:
+
+##### Safari
+```
+[Error] Failed to load resource: the server responded with a status of 404 (Not Found) (ZeroClipboard.min.map, line 0)
+```
+
+##### Firefox
+```
+http://YOURSERVER/path/ZeroClipboard.min.js is being assigned a //# sourceMappingURL, but already has one
+```
+
+##### Chrome
+You may not see any error message in Chrome's console. However, you will likely see 404 responses in the Network tab, e.g.
+```
+ZeroClipboard.min.map   404 (Not Found)
+```
+
+##### IE
+You will likely see an error message in the Debugger tab.
 
 
 ## Clients
@@ -114,7 +160,7 @@ see the [api/ZeroClipboard.Core.md](api/ZeroClipboard.Core.md) documentation ins
 
 ### Text To Copy
 
-Setting the clipboard text can be done in 4 ways:
+Setting the clipboard text can be done in a variety of ways:
 
 1. Add a `copy` event handler in which you call `event.clipboardData.setData` to set the appropriate data. This event is triggered every time ZeroClipboard tries to inject into the clipboard. Example:
 
@@ -302,6 +348,21 @@ Here is a more complete example which exercises many of the configuration option
 ```
 
 
+### "Starter Snippets" for Playground Sites
+
+**IMPORTANT:** ZeroClipboard will _NOT_ work on the "Edit" pages for any of the following online code playground sites due to [security limitations imposed by their use of `iframe` `sandbox`ing](#sandboxed-iframe-limitations). However, ZeroClipboard _will_ work on the "View" pages _if and only if_ you use the very specifically formatted URL patterns provided below.
+
+ - JSFiddle
+     - Edit: http://jsfiddle.net/JamesMGreene/k9psq1da/
+     - View: http://fiddle.jshell.net/JamesMGreene/k9psq1da/show/
+ - JSBin
+     - Edit: http://jsbin.com/lozuda/edit?html,js,css
+     - View: http://jsbin.com/lozuda/
+ - CodePen
+     - Edit: http://codepen.io/JamesMGreene/pen/zxorvW
+     - View: http://s.codepen.io/JamesMGreene/full/zxorvW/
+
+
 ## Namespacing ZeroClipboard
 
 ZeroClipboard creates DOM elements with pre-configured attributes, e.g. a `div` element with an ID of `"global-zeroclipboard-html-bridge"` to encapsulate the Flash object.
@@ -310,7 +371,7 @@ If you have a need to change the default values, they can be configured by passi
 
 Values for `containerId` and `swfObjectId` are validated against the [HTML4 spec for `ID` and `Name` tokens][valid_ids].
 
-  
+
 ## AMD
 
 If using [AMD](https://github.com/amdjs/amdjs-api/wiki/AMD) with a library such as [RequireJS](http://requirejs.org/), etc., you shouldn't need to do any special configuration for ZeroClipboard to work correctly as an AMD module.
@@ -396,6 +457,17 @@ choice. Standard mouse events are even propagated out to your DOM element, so yo
 can still have rollover and mousedown effects with just a _little_ extra effort.
 
 ZeroClipboard `v2.x` is expected to work in IE9+ and all of the evergreen browsers.
+Although support for IE7 & IE8 was officially dropped in `v2.0.0`, it was actually
+still _technically_ supported through `v2.0.2`.
+
+
+
+## Browser-Specific Known Issues
+
+### Opera
+ - [Issue #459](https://github.com/zeroclipboard/zeroclipboard/issues/459)
+     - **Problem:** Both the implicit observation of clipped elements' `cursor` CSS property and the `forceHandCursor: true` [Configuration Option](api/ZeroClipboard.md#configuration-options) cannot be honored in Opera's NPAPI Flash Player plugin.
+     - **Workaround:** End users must install both Opera 24+ **AND** the separate PPAPI Flash Player plugin that is currently only available in [Adobe Flash Player 16 Beta](http://labs.adobe.com/downloads/flashplayer.html) (look for the OS-specific download entitled "Download Flash Player for Opera and Chromium based applications – PPAPI"). Beginning with Opera 27 (currently in the alpha/dev channel cycle), Opera will automatically warn users that only have the NPAPI Flash Player plugin installed and guide them into installing the PPAPI Flash Player plugin from Adobe.
 
 
 
@@ -405,33 +477,136 @@ Because ZeroClipboard will be interacting with your users' system clipboards, th
 specific to the users' operating systems that you should be aware of. With this information, you can make informed
 decisions of how _your_ site should handle each of these situations.
 
- - **Windows:**
-     - If you want to ensure that your Windows users will be able to paste their copied text into Windows
-       Notepad and have it honor line breaks, you'll need to ensure that the text uses the sequence `\r\n` instead of
-       just `\n` for line breaks.  If the text to copy is based on user input (e.g. a `textarea`), then you can achieve
-       this transformation by utilizing the `copy` event handler, e.g.  
+### All OSs
+ - By default, ZeroClipboard will ensure OS-compliant line endings, i.e. `"\r\n"` on Windows, `"\n"` on all non-Windows operating systems. If this behavior is not desirable, you can disable it by setting the `fixLineEndings` [configuration option](api/ZeroClipboard.md#configuration-options) to `false`, i.e.:
 
-      ```js
-      client.on('copy', function(event) {
-          var text = document.getElementById('yourTextArea').value;
-          var windowsText = text.replace(/\n/g, '\r\n');
-          event.clipboardData.setData('text/plain', windowsText);
-      });
-      ```
+    ```js
+    ZeroClipboard.config({
+        fixLineEndings: false
+    });
+    ```
 
- - **Linux:**
-     - The Linux Clipboard system (a.k.a. "Selection Atoms" within the [X Consortium's Standard Inter-Client Communication Conventions Manual](http://www.x.org/docs/ICCCM/icccm.pdf)) is a complex but capable setup. However,
-     for normal end users, it stinks. Flash Player's Clipboard API can either:
-         1. Insert plain text into the "System Clipboard" and have it available everywhere; or
-         2. Insert plain, HTML, and RTF text into the "Desktop Clipboard" but it will only be available in applications whose UI are managed by the Desktop Manager System (e.g. GNOME, etc.). This, for example, means that a user on a typical Linux configuration would not be able to paste something copied with ZeroClipboard into a terminal shell but they may still be able to paste it into OpenOffice, the browser, etc.
+### Linux
+ - The Linux Clipboard system (a.k.a. "Selection Atoms" within the [X Consortium's Standard Inter-Client Communication Conventions Manual](http://www.x.org/docs/ICCCM/icccm.pdf)) is a complex but capable setup. However, for normal end users, it stinks. Flash Player's Clipboard API can either:
+     1. Insert plain text into the "System Clipboard" and have it available everywhere; or
+     2. Insert plain, HTML, and RTF text into the "Desktop Clipboard" but it will only be available in applications whose UI are managed by the Desktop Manager System (e.g. GNOME, etc.). This, for example, means that a user on a typical Linux configuration would not be able to paste something copied with ZeroClipboard into a terminal shell but they may still be able to paste it into OpenOffice, the browser, etc.
 
-      As such, the default behavior for ZeroClipboard while running on Linux is to only inject plain text into the "System Clipboard" to cover the most bases.  If you want to ignore that caution and use the "Desktop Clipboard" anyway, just set the `forceEnhancedClipboard` configuration option to `true`, i.e.:
+   As such, the default behavior for ZeroClipboard while running on Linux is to only inject plain text into the "System Clipboard" to cover the most bases.  If you want to ignore that caution and use the "Desktop Clipboard" anyway, just set the `forceEnhancedClipboard` [configuration option](api/ZeroClipboard.md#configuration-options) to `true`, i.e.:
 
       ```js
       ZeroClipboard.config({
         forceEnhancedClipboard: true
       });
       ```
+
+   Also, a final related behavioral caveat: if the pending clipboard data **ONLY** contains data of the
+   format `"text/plain"`, ZeroClipboard will intelligently choose to use the "System Clipboard" regardless
+   of the `forceEnhancedClipboard` configuration property value.
+
+
+
+## Security Limitations
+
+### `sandbox`ed `iframe` Limitations
+
+The `sandbox` attribute of the `iframe` element (new in HTML5, supported in IE10+ and all other evergreen browsers) provides web developers with a way tighten the restrictions on framed content beyond what Content Security Policy (CSP) provides for un`sandbox`ed cross-origin `iframe`s.  With the `sandbox` attribute, you can instruct the browser to load a specific frame's content in a low-privilege environment, starting with the least privilege possible and then whitelisting the necessary subset of capabilities.
+
+It is also very important to note, however, that the `sandbox` attribute takes away some privileges from the framed content that **CANNOT** be whitelisted "back in". For example, any framed page running in a sandbox absolutely _cannot_ run native plugins (e.g. Flash, Silverlight, Java, etc.). This decision was made because native plugins run unmanaged code that the browser cannot offer any further security verifications on, and are frequently sourced from third parties.
+
+As such, ZeroClipboard is completely unusable inside of a `sandbox`ed `iframe`. Best efforts have been taken to detect sandboxing and notify consumers via an `error` event (`error[name = "flash-sandboxed"]`) but, unfortunately, not all configurations of sandboxing can be reliably detected from within the framed content.
+
+This sandboxing is also why ZeroClipboard cannot be used as normal on many online code playground sites like JSFiddle, JSBin, CodePen, etc. However, we have put together a few ["starter snippets" for such sites](#starter-snippets-for-playground-sites) to get you up and running quickly.
+
+For a deeper analysis and a few _"naughty"_ workarounds (which only work in limited situations), check
+out the [sandblaster.js (JamesMGreene/sandblaster)](https://github.com/JamesMGreene/sandblaster) project.
+
+#### See Also
+
+ - [HTML5 Rocks :metal: article on `sandbox`ed `iframe`s](http://www.html5rocks.com/en/tutorials/security/sandboxed-iframes/)
+ - [HTML spec: `iframe` `sandbox` attribute](https://html.spec.whatwg.org/multipage/embedded-content.html#attr-iframe-sandbox)
+ - [HTML spec: Browser sandboxing](http://www.w3.org/TR/html/browsers.html#sandboxing)
+ - [HTML5 Rocks :metal: article on Content Security Policy (CSP)](http://www.html5rocks.com/en/tutorials/security/content-security-policy/)
+
+
+### Cross-Protocol Limitations
+
+ZeroClipboard was intentionally configured to _not_ allow the SWF to be served from a secure domain (HTTPS) but scripted by an insecure domain (HTTP).
+
+If you find yourself in this situation (as in [Issue #170](https://github.com/zeroclipboard/zeroclipboard/issues/170)), please consider the following options:
+ 1. Serve the SWF over HTTP instead of HTTPS. If the page's protocol can vary (e.g. authorized/unauthorized, staging/production, etc.), you should include add the SWF with a relative protocol (`//s3.amazonaws.com/blah/ZeroClipboard.swf`) instead of an absolute protocol (`https://s3.amazonaws.com/blah/ZeroClipboard.swf`).
+ 2. Serve the page over HTTPS instead of HTTP. If the page's protocol can vary, see the note on the previous option (1).
+ 3. Fork ZeroClipboard and update "src/flash/ZeroClipboard.as" to call the [`allowInsecureDomain`](http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/system/Security.html#allowInsecureDomain\(\)) method as needed, then recompile the SWF with your custom changes.
+
+
+### `file://` Protocol Limitations
+
+If you want to either use ZeroClipboard on a page hosted via the `file://` protocol or serve ZeroClipboard's assets via the `file://` protocol, you are almost guaranteed to run into some roadblocks due to Flash Player security restrictions. Whether you will be able to work around these roadblocks depends heavily on the specifics of the browser and Flash Player plugin being used.
+
+The various potential and/or partial workarounds are detailed below. We recommend trying them in the
+order they are listed, with the exception of any that are not applicable to your browser/Flash setup.
+
+#### Stop Hosting It Over The `file://` Protocol
+
+Do you really need to be hosting this via the `file://` protocol?  If not, please don't: it may turn into a neverending (or outright _losing_) security configuration battle for you.
+
+We recommend that you instead just get a simple HTTP server installed and use it.  Many HTTP server applications exist today that don't even require configuration or proper "installation", they are just executable files that can dynamically host the current working directory (or accept command line configuration options). Simple, easy, done.
+
+But, if you really do _need_ to be hosting this via the `file://` protocol, please read on... and we wish you much-needed luck.
+
+
+#### Tell ZeroClipboard To Trust Anyone & Everyone
+
+Rarely, for some browser/Flash setups, you can bypass this security restriction as easily as specifically
+configuring ZeroClipboard to trust ALL domains for SWF interaction via a wildcard. This
+configuration must be set _before_ creating ZeroClipboard client instances as a typical consumer,
+or before calling `ZeroClipboard.create()` in a 3rd party wrapper:
+
+```js
+ZeroClipboard.config({ trustedDomains: ["*"] });
+```
+
+This wildcard configuration should _**NOT**_ be used in environments hosted over HTTP/HTTPS.
+
+
+#### Tell Flash Player Local Settings Manager To Trust Your SWF URL
+
+If you are using any browser with the traditional NPAPI Flash Player plugin enabled **AND** _preferred_
+(i.e. PPAPI Flash Player plugins are not supported, are not installed, or are disabled for the browser
+instance in question) or using the PPAPI Flash Player plugin `v16.0.0` (or higher), you can edit your
+system-level Flash Player security settings to whitelist your SWF URL using the [Flash Player
+Local Settings Manager](http://www.macromedia.com/support/documentation/en/flashplayer/help/settings_manager.html):
+ 1. Open the Flash Player Local Settings Manager via your system's [OS-specific access procedure](http://www.macromedia.com/support/documentation/en/flashplayer/help/settings_manager.html#124401).
+ 2. Go to the ["Advanced" tab](http://help.adobe.com/en_US/FlashPlayer/LSM/WS6aa5ec234ff3f285139dc56112e3786b68c-7ff0.html).
+ 3. Locate the ["Developer Tools" subsection](http://help.adobe.com/en_US/FlashPlayer/LSM/WS6aa5ec234ff3f285139dc56112e3786b68c-7ff0.html#WS6aa5ec234ff3f285139dc56112e3786b68c-7feb) (may require you to scroll down).
+ 4. Click the ["Trusted Location Settings..." button](http://help.adobe.com/en_US/FlashPlayer/LSM/WS6aa5ec234ff3f285139dc56112e3786b68c-7ff0.html#WS6aa5ec234ff3f285139dc56112e3786b68c-7fea).
+ 5. Click "Add location" (may be represented as a `+` button).
+ 6. Add the absolute path of your local "ZeroClipboard.swf" file to the trusted files whitelist.
+
+This should work for all NPAPI Flash Player plugins. However, this _may_ **not** work for all PPAPI Flash Player plugins.
+
+
+#### Tell Flash Player Online Settings Manager To Trust Your SWF URL
+
+If you are using any browser with the traditional NPAPI Flash Player plugin enabled **AND** _preferred_
+(i.e. PPAPI Flash Player plugins are not supported, are not installed, or are disabled for the browser
+instance in question), you can edit your device-level NPAPI Flash Player security settings to whitelist
+your SWF URL using the [Flash Player Online Settings Manager](http://www.macromedia.com/support/documentation/en/flashplayer/help/settings_manager04a.html):
+ 1. Using the same browser, go to the [Adobe Flash Player Online Settings Manager page](http://www.macromedia.com/support/documentation/en/flashplayer/help/settings_manager04a.html).
+ 2. In the small embedded Flash app (which looks more like a screen capture rather than an interactive UI), click "Add location".  This may be inside of an "Edit locations..." dropdown menu.
+ 3. Add the absolute path of your local "ZeroClipboard.swf" file to the trusted files whitelist.
+
+Some versions of Flash also include an "allow all" option in the Global Settings Manager.
+
+This should work for all NPAPI Flash Player plugins. However, this **WILL NOT** work for _any_ PPAPI Flash Player plugins.
+
+
+#### Tell PPAPI Flash Player Plugins To Take A Hike
+
+If you are using a PPAPI Flash Player plugin and all of the aforementioned workarounds **combined** still didn't allow you to bypass this security restriction, you have officially run out of proper workarounds as you have almost certainly run into the [even more restrictive security model in Chromium's "Pepper" (PPAPI) Flash layer](https://code.google.com/p/chromium/issues/detail?id=137734). This elevated security will affect PPAPI Flash Player plugin usage in Chromium, Chrome Canary, Chrome, and possibly all Blink-based versions of Opera.
+
+At this point, your only remaining option is to disable your PPAPI Flash Player plugin and fallback to an NPAPI Flash Player plugin instead.
+
+If you are unwilling to disable your PPAPI Flash Player plugin, your goal has now officially been defeated by Flash Player's security restrictions.  You should now reconsider our earlier recommendation to [stop hosting it over the `file://` protocol](#stop-hosting-it-over-the-file-protocol)... we _tried_ to warn you!
 
 
 

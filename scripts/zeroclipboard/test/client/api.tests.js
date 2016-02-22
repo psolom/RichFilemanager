@@ -1,9 +1,9 @@
-/*global ZeroClipboard, _currentElement:true, _flashState:true, _extend, _clipData, _clipDataFormatMap */
+/*global ZeroClipboard, _currentElement:true, _flashState:true, _zcSwfVersion:true, _extend, _deepCopy, _clipData, _clipDataFormatMap:true, _copyTarget:true, _detectSandbox:true */
 
 (function(module, test) {
   "use strict";
 
-  var originalFlashState, originalConfig, originalFlashDetect;
+  var originalFlashState, originalConfig, originalFlashDetect, originalSandboxDetect;
 
 
   module("client/api.js unit tests - constructor and bridge", {
@@ -79,7 +79,7 @@
   });
 
 
-  test("`destroy` clears up the client", function(assert) {
+  test("`ZeroClipboard.destroy` clears up the clients", function(assert) {
     assert.expect(6);
 
     // Arrange
@@ -323,6 +323,7 @@
       originalFlashState = _extend({}, _flashState);
       originalConfig = ZeroClipboard.config();
       originalFlashDetect = ZeroClipboard.isFlashUnusable;
+      originalSandboxDetect = _detectSandbox;
       // Modify
       _currentElement = null;
       _flashState = {
@@ -330,10 +331,13 @@
         version: "0.0.0",
         disabled: null,
         outdated: null,
+        sandboxed: null,
         unavailable: null,
+        degraded: null,
         deactivated: null,
         ready: null
       };
+      _detectSandbox = function() {};
       //ZeroClipboard.config({ swfPath: originalConfig.swfPath.replace(/\/(?:src|test)\/.*$/i, "/dist/ZeroClipboard.swf") });
     },
     teardown: function() {
@@ -342,6 +346,7 @@
       _flashState = originalFlashState;
       ZeroClipboard.config(originalConfig);
       ZeroClipboard.isFlashUnusable = originalFlashDetect;
+      _detectSandbox = originalSandboxDetect;
     }
   });
 
@@ -838,12 +843,48 @@
   });
 
 
+  test("Test sandboxedFlash Event", function(assert) {
+    assert.expect(8);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = true;
+    _flashState.version = "11.0.0";
+    var client = new ZeroClipboard();
+    var id = client.id;
+    var currentEl = document.getElementById("d_clip_button");
+
+    // Act
+    client.on( "ready", function(/* event */) {
+      assert.ok(false, "The `ready` event should NOT have fired!");
+    } );
+    client.on( "error", function(event) {
+      // Assert
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      assert.strictEqual(_flashState.sandboxed, true);
+      assert.strictEqual(event.type, "error");
+      assert.strictEqual(event.name, "flash-sandboxed");
+      assert.strictEqual(event.target, null);
+      assert.strictEqual(event.version, "11.0.0");
+      assert.strictEqual(event.minimumVersion, "11.0.0");
+      QUnit.start();
+    } );
+    QUnit.stop();
+    client.clip(currentEl);
+  });
+
+
   test("Test deactivatedFlash Event", function(assert) {
     assert.expect(10);
 
     // Arrange
     _flashState.disabled = false;
     _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
     _flashState.version = "11.0.0";
     ZeroClipboard.config({ flashLoadTimeout: 2000 });
     var client = new ZeroClipboard();
@@ -880,8 +921,11 @@
     // Arrange
     _flashState.disabled = false;
     _flashState.outdated = false;
-    _flashState.version = "11.0.0";
+    _flashState.sandboxed = false;
     _flashState.deactivated = true;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
+    _flashState.version = "11.0.0";
     var client = new ZeroClipboard();
     var id = client.id;
     client.on( "ready", function(/* event */) {
@@ -906,12 +950,175 @@
   });
 
 
+  test("Test unavailableFlash Event", function(assert) {
+    assert.expect(9);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.version = "11.0.0";
+    var client = new ZeroClipboard();
+    var id = client.id;
+    client.on( "ready", function(/* event */) {
+      assert.ok(false, "The `ready` event should NOT have fired!");
+    } );
+    client.on( "error", function(event) {
+      // Assert
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      assert.strictEqual(_flashState.unavailable, true);
+      assert.strictEqual(_flashState.deactivated, false);
+      assert.strictEqual(_flashState.ready, false);
+      assert.strictEqual(event.type, "error");
+      assert.strictEqual(event.name, "flash-unavailable");
+      assert.strictEqual(event.target, null);
+      assert.strictEqual(event.version, "11.0.0");
+      QUnit.start();
+    } );
+
+    // Act
+    QUnit.stop();
+    ZeroClipboard.emit({ type: "error", name: "flash-unavailable" });
+  });
+
+
+  test("Test degradedFlash Event", function(assert) {
+    assert.expect(10);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
+    _flashState.version = "11.0.0";
+    var client = new ZeroClipboard();
+    var id = client.id;
+    client.on( "ready", function(/* event */) {
+      assert.ok(false, "The `ready` event should NOT have fired!");
+    } );
+    client.on( "error", function(event) {
+      // Assert
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      assert.strictEqual(_flashState.degraded, true);
+      assert.strictEqual(_flashState.unavailable, false);
+      assert.strictEqual(_flashState.deactivated, false);
+      assert.strictEqual(_flashState.ready, false);
+      assert.strictEqual(event.type, "error");
+      assert.strictEqual(event.name, "flash-degraded");
+      assert.strictEqual(event.target, null);
+      assert.strictEqual(event.version, "11.0.0");
+      QUnit.start();
+    } );
+
+    // Act
+    QUnit.stop();
+    ZeroClipboard.emit({ type: "error", name: "flash-degraded" });
+  });
+
+
+  test("Test versionMismatch Event", function(assert) {
+    assert.expect(11);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
+    _flashState.version = "11.9.0";
+    var client = new ZeroClipboard();
+    var currentEl = document.getElementById("d_clip_button");
+    var id = client.id;
+    client.clip(currentEl);
+    client.on( "ready", function(/* event */) {
+      assert.ok(false, "The `ready` event should NOT have fired!");
+    } );
+    client.on( "error", function(event) {
+      // Assert
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      assert.strictEqual(_flashState.degraded, false);
+      assert.strictEqual(_flashState.unavailable, false);
+      assert.strictEqual(_flashState.deactivated, false);
+      assert.strictEqual(_flashState.ready, false);
+      assert.strictEqual(event.type, "error");
+      assert.strictEqual(event.name, "version-mismatch");
+      assert.strictEqual(event.target, null);
+      assert.strictEqual(event.jsVersion, "2.0.1");
+      assert.strictEqual(event.swfVersion, "2.0.0");
+      QUnit.start();
+    } );
+
+    // Act
+    QUnit.stop();
+    ZeroClipboard.emit({
+      type: "error",
+      name: "version-mismatch",
+      jsVersion: "2.0.1",
+      swfVersion: "2.0.0"
+    });
+  });
+
+
+  test("Test versionMismatch Event after first resolution", function(assert) {
+    assert.expect(11);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
+    _flashState.ready = false;
+    _flashState.version = "11.9.0";
+    _zcSwfVersion = "2.1.0";
+    var client = new ZeroClipboard();
+    var currentEl = document.getElementById("d_clip_button");
+    var id = client.id;
+    client.clip(currentEl);
+    client.on( "ready", function(/* event */) {
+      assert.ok(false, "The `ready` event should NOT have fired!");
+    } );
+    client.on( "error", function(event) {
+      // Assert
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      assert.strictEqual(_flashState.degraded, false);
+      assert.strictEqual(_flashState.unavailable, false);
+      assert.strictEqual(_flashState.deactivated, false);
+      assert.strictEqual(_flashState.ready, false);
+      assert.strictEqual(event.type, "error");
+      assert.strictEqual(event.name, "version-mismatch");
+      assert.strictEqual(event.target, null);
+      assert.strictEqual(event.jsVersion, "<%= version %>");
+      assert.strictEqual(event.swfVersion, "2.1.0");
+      QUnit.start();
+    } );
+
+    // Act
+    QUnit.stop();
+    // The "versionMismatch" event will automatically fire in 0 seconds (when the event loop gets to it)
+  });
+
+
   test("Test ready Event", function(assert) {
     assert.expect(6);
 
     // Arrange
     _flashState.disabled = false;
     _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
     _flashState.version = "11.9.0";
     var client = new ZeroClipboard();
     var currentEl = document.getElementById("d_clip_button");
@@ -940,7 +1147,10 @@
     // Arrange
     _flashState.disabled = false;
     _flashState.outdated = false;
+    _flashState.sandboxed = false;
     _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
     _flashState.version = "11.9.0";
     _flashState.ready = true;
     _flashState.bridge = {};
@@ -968,6 +1178,9 @@
     // Arrange
     _flashState.disabled = false;
     _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
     _flashState.version = "11.0.0";
     _flashState.deactivated = true;
     var client = new ZeroClipboard();
@@ -1006,6 +1219,179 @@
       // Emit a "ready" event (as if from the SWF) to trigger an "overdueFlash" event
       ZeroClipboard.emit("ready");
     }, 1000);
+  });
+
+
+  test("Test 'error[name=clipboard-error]' Event triggered by 'aftercopy' event with errors", function(assert) {
+    assert.expect(8);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
+    _flashState.version = "11.9.0";
+    _flashState.ready = true;
+    _flashState.bridge = {};
+
+    var currentEl = document.getElementById("d_clip_button");
+    var client = new ZeroClipboard(currentEl);
+    var id = client.id;
+
+    _clipDataFormatMap = {
+      "text": "text/plain",
+      "html": "text/html"
+    };
+    var afterCopyEvent = {
+      type: "aftercopy",
+      data: {
+        text: "blah",
+        html: "<b>blah</b>"
+      },
+      success: {
+        text: true,
+        html: false
+      },
+      errors: [{
+        name: "SecurityError",
+        message: "Clipboard security error OMG",
+        errorID: 7320,
+        stack: null,
+        format: "html",
+        clipboard: "desktop"
+      }]
+    };
+    var expectedAfterCopyEvent = _deepCopy(afterCopyEvent);
+    _extend(expectedAfterCopyEvent, {
+      target: currentEl,
+      relatedTarget: null,
+      currentTarget: {},
+      client: client
+    });
+    expectedAfterCopyEvent.data["text/plain"] = expectedAfterCopyEvent.data.text;
+    expectedAfterCopyEvent.data["text/html"] = expectedAfterCopyEvent.data.html;
+    delete expectedAfterCopyEvent.data.text;
+    delete expectedAfterCopyEvent.data.html;
+    expectedAfterCopyEvent.success["text/plain"] = expectedAfterCopyEvent.success.text;
+    expectedAfterCopyEvent.success["text/html"] = expectedAfterCopyEvent.success.html;
+    delete expectedAfterCopyEvent.success.text;
+    delete expectedAfterCopyEvent.success.html;
+    expectedAfterCopyEvent.errors[0].format = "text/html";
+
+    var expectedClipboardErrorEvent = _deepCopy(expectedAfterCopyEvent);
+    delete expectedClipboardErrorEvent.success;
+    _extend(expectedClipboardErrorEvent, {
+      type: "error",
+      name: "clipboard-error",
+      message: "At least one error was thrown while ZeroClipboard was attempting to inject your data into the clipboard",
+      // This needs to be copied over again because `_deepCopy` loses the prototype reference
+      client: client
+    });
+    delete expectedClipboardErrorEvent.success;
+
+    client.on( "aftercopy", function(event) {
+      // Assert
+      assert.strictEqual(_clipDataFormatMap, null);
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      delete event.timeStamp;
+      assert.deepEqual(event, expectedAfterCopyEvent);
+    } );
+    client.on( "error", function(event) {
+      // Assert
+      assert.strictEqual(_clipDataFormatMap, null);
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      delete event.timeStamp;
+      assert.deepEqual(event, expectedClipboardErrorEvent);
+
+      QUnit.start();
+    } );
+
+    // Act
+    QUnit.stop();
+
+    ZeroClipboard.focus(currentEl);
+    _copyTarget = currentEl;
+    ZeroClipboard.emit(afterCopyEvent);
+  });
+
+
+  test("Test 'error[name=clipboard-error]' Event is NOT triggered by 'aftercopy' event without errors", function(assert) {
+    assert.expect(4);
+
+    // Arrange
+    _flashState.disabled = false;
+    _flashState.outdated = false;
+    _flashState.sandboxed = false;
+    _flashState.deactivated = false;
+    _flashState.unavailable = false;
+    _flashState.degraded = false;
+    _flashState.version = "11.9.0";
+    _flashState.ready = true;
+    _flashState.bridge = {};
+
+    var currentEl = document.getElementById("d_clip_button");
+    var client = new ZeroClipboard(currentEl);
+    var id = client.id;
+
+    _clipDataFormatMap = {
+      "text": "text/plain",
+      "html": "text/html"
+    };
+    var afterCopyEvent = {
+      type: "aftercopy",
+      data: {
+        text: "blah",
+        html: "<b>blah</b>"
+      },
+      success: {
+        text: true,
+        html: false
+      },
+      errors: []
+    };
+    var expectedAfterCopyEvent = _deepCopy(afterCopyEvent);
+    _extend(expectedAfterCopyEvent, {
+      target: currentEl,
+      relatedTarget: null,
+      currentTarget: {},
+      client: client
+    });
+    expectedAfterCopyEvent.data["text/plain"] = expectedAfterCopyEvent.data.text;
+    expectedAfterCopyEvent.data["text/html"] = expectedAfterCopyEvent.data.html;
+    delete expectedAfterCopyEvent.data.text;
+    delete expectedAfterCopyEvent.data.html;
+    expectedAfterCopyEvent.success["text/plain"] = expectedAfterCopyEvent.success.text;
+    expectedAfterCopyEvent.success["text/html"] = expectedAfterCopyEvent.success.html;
+    delete expectedAfterCopyEvent.success.text;
+    delete expectedAfterCopyEvent.success.html;
+
+    client.on( "aftercopy", function(event) {
+      // Assert
+      assert.strictEqual(_clipDataFormatMap, null);
+      assert.strictEqual(this, client);
+      assert.strictEqual(this.id, id);
+      delete event.timeStamp;
+      assert.deepEqual(event, expectedAfterCopyEvent);
+
+      setTimeout(function() {
+        QUnit.start();
+      }, 50);
+    } );
+    client.on( "error", function(/* event */) {
+      // Assert
+      assert.ok(false, "Should not receive any error events");
+    } );
+
+    // Act
+    QUnit.stop();
+
+    ZeroClipboard.focus(currentEl);
+    _copyTarget = currentEl;
+    ZeroClipboard.emit(afterCopyEvent);
   });
 
 
@@ -1059,7 +1445,7 @@
 
 
   test("Test for appropriate context inside of invoked event handlers", function(assert) {
-    assert.expect(12);
+    assert.expect(15);
 
     // Arrange
     var client = new ZeroClipboard();
@@ -1095,6 +1481,9 @@
     ZeroClipboard.emit("ready");
     ZeroClipboard.emit({"type":"error", "name":"flash-disabled"});
     ZeroClipboard.emit({"type":"error", "name":"flash-outdated"});
+    ZeroClipboard.emit({"type":"error", "name":"flash-sandboxed"});
+    ZeroClipboard.emit({"type":"error", "name":"flash-unavailable"});
+    ZeroClipboard.emit({"type":"error", "name":"flash-degraded"});
     ZeroClipboard.emit({"type":"error", "name":"flash-deactivated"});
     ZeroClipboard.emit({"type":"error", "name":"flash-overdue"});
     ZeroClipboard.emit("beforecopy");

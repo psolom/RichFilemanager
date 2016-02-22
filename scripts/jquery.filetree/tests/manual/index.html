@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+	<!-- Basic Page Needs
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<meta charset="utf-8">
+	<title>jQueryFileTree Demo</title>
+	<meta name="description" content="">
+	<meta name="author" content="">
+
+	<!-- Mobile Specific Metas
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<!-- FONT
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<link href='//fonts.googleapis.com/css?family=Raleway:400,300,600' rel='stylesheet' type='text/css'>
+
+	<!-- CSS
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<link rel="stylesheet" href="css/skeleton.css">
+	<link rel="stylesheet" href="jqueryFileTree.min.css">
+	<link rel="stylesheet" href="css/jqft-test.css">
+	<link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/styles/atelier-cave.light.min.css">
+
+	<!-- Favicon
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<!-- <link rel="icon" type="image/png" href="images/favicon.png" /> -->
+
+</head>
+
+<body>
+
+	<!-- Primary Page Layout
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<div class="container">
+		<div class="row">
+			<div class="twelve columns">
+				<h1 class="title"><b>jQueryFileTree Demo</b></h1>
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="six columns offset-by-two">
+				<h4>Example Use Cases</h4>
+				<p>These are some pretty straightforward examples of what you can do with jQueryFileTree</p>
+			</div>
+			<div class="four columns">
+				<ul>
+					<li><a href="#basic-file-tree">Basic File Tree</a></li>
+					<li><a href="#without-multifolder">Without <b>multiFolder</b></a></li>
+					<li><a href="#folders-only">Folders Only</a></li>
+					<li><a href="#custom-easing">Custom Easing</a></li>
+					<li><a href="#multiselect">Multiselect</a></li>
+					<li><a href="#events">Events</a></li>
+				</ul>
+			</div>
+		</div>
+
+		<!-- BASIC FILE TREE -->
+		<div class="row" id="basic-file-tree">
+			<div class="four columns offset-by-one filetree-block">
+				<div class="filetree-basic"></div>
+				<div class="filetree-multiFolder-off"></div>
+			</div>
+			<div class="six columns info-block">
+				<div>
+					<h4>Basic File Tree</h4>
+				</div>
+				<div>
+					<pre><code class="javascript">
+$('.filetree-basic').fileTree({
+   script: 'connectors/jqueryFileTree.php'
+}, function(file) {
+   console.log(file);
+   // do something with file
+   $('.selected-file').text( $('a[rel="'+file+'"]').text() );
+});
+					</code></pre>
+					<div class="blurb selected-file"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- WITHOUT MULTIFOLDER -->
+		<div class="row" id="without-multifolder">
+			<div class="four columns offset-by-one filetree-block">
+				<div class="filetree-without-multifolder"></div>
+			</div>
+			<div class="six columns info-block">
+				<div>
+					<h4>Without multiFolder</h4>
+				</div>
+				<div>
+					<pre><code class="javascript">
+$('.filetree-without-multifolder').fileTree({
+   script: 'connectors/jqueryFileTree.php',
+   multiFolder: false
+});
+					</code></pre>
+				</div>
+			</div>
+		</div>
+
+		<!-- FOLDERS ONLY -->
+		<div class="row" id="folders-only">
+			<div class="four columns offset-by-one filetree-block">
+				<div class="filetree-folders-only"></div>
+			</div>
+			<div class="six columns info-block">
+				<div>
+					<h4>Folders Only</h4>
+				</div>
+				<div>
+					<pre><code class="javascript">
+$('.filetree-folders-only').fileTree({
+   script: 'connectors/jqueryFileTree.php',
+   onlyFolders: true,
+   expandSpeed: 250,
+   collapseSpeed: 250
+});
+					</code></pre>
+					<div class="blurb">Alternatively, you can use <b>onlyFiles</b> to filter folders</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- CUSTOM EASING -->
+		<div class="row" id="custom-easing">
+			<div class="four columns offset-by-one filetree-block">
+				<div class="filetree-custom-easing"></div>
+			</div>
+			<div class="six columns info-block">
+				<div>
+					<h4>Custom Easing</h4>
+				</div>
+				<div>
+					<pre><code class="javascript">
+$('.filetree-custom-easing').fileTree({
+   script: 'connectors/jqueryFileTree.php',
+   expandEasing: 'easeOutBounce'
+});
+					</code></pre>
+					<div class="blurb">Any option other than the default 'swing' requires <a href="http://jqueryui.com" target="_blank">jQueryUI</a> or third party lib like <a href="https://github.com/gdsmith/jquery.easing" target="_blank">jquery.easing.js</a></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- MULTISELECT -->
+		<div class="row" id="multiselect">
+			<div class="four columns offset-by-one filetree-block">
+				<div class="filetree-multiselect"></div>
+			</div>
+			<div class="six columns info-block">
+				<div>
+					<h4>Multiselect</h4>
+				</div>
+				<div>
+					<pre><code class="javascript">
+$('.filetree-multiselect').fileTree({
+   script: 'connectors/jqueryFileTree.php',
+   multiSelect: true
+});
+					</code></pre>
+					<div class="blurb">Only tree items that have been loaded have the ability to be checked. If folder is checked but child elements have not been loaded, your server side script needs to have the logic to map the contents of the folder. <br>
+						<div style='text-align: center; margin-top: 5px;'>
+							<button>View Checked Elements</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- TRIGGERS -->
+		<div class="row" id="events">
+			<div class="four columns offset-by-one filetree-block">
+				<div class="filetree-events"></div>
+			</div>
+			<div class="six columns info-block">
+				<div>
+					<h4>Events</h4>
+				</div>
+				<div>
+					<pre><code class="javascript">
+$('.filetree-events')
+   .fileTree({
+      script: 'connectors/jqueryFileTree.php',
+   })
+   .on('filetreeexpanded filetreecollapsed filetreeclicked ...', function(e, data) {
+      console.log(data);
+   });
+					</code></pre>
+					<div class="blurb">jQueryFileTree triggers events for most unique actions: expand, expanded, collapse, collapsed, clicked</div>
+					<div class="blurb events-log"></div>
+				</div>
+			</div>
+		</div>
+
+		<!-- bottom -->
+		<div class="row">
+			<div class="twelve columns">
+				<a href="#" class="top u-pull-right">Back to Top</a>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- JS
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<!-- <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script> -->
+	<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/8.6/highlight.min.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+	<script src="jQueryFileTree.min.js"></script>
+	<script type="text/javascript">
+		hljs.initHighlightingOnLoad();
+		$(document).ready(function() {
+			// if title font is not Raleway, then we know Skeleton isn't compiled, error out
+			if( $('h1').css('font-family').indexOf("Raleway") === -1) {
+				$('body').html('<h1>Please install test page assets with Bower (see README)</h1>');
+			}
+
+			$('.filetree-basic').fileTree({
+				script: 'connectors/jqueryFileTree.php'
+			}, function(file) {
+				// do something with file
+				$('.selected-file').text( $('.filetree-basic a[rel="'+file+'"]').text() );
+			});
+
+			$('.filetree-without-multifolder').fileTree({
+				script: 'connectors/jqueryFileTree.php',
+				multiFolder: false
+			});
+
+			$('.filetree-folders-only').fileTree({
+				script: 'connectors/jqueryFileTree.php',
+				onlyFolders: true,
+				expandSpeed: 250,
+				collapseSpeed: 250
+			});
+
+			$('.filetree-custom-easing').fileTree({
+				script: 'connectors/jqueryFileTree.php',
+				expandEasing: 'easeOutBounce'
+			});
+
+			$('.filetree-multiselect').fileTree({
+			   script: 'connectors/jqueryFileTree.php',
+			   multiSelect: true
+			});
+
+			$('button').on('click', function(){
+				$el = $( ".filetree-multiselect input:checked" );
+
+				if( $el.length === 0 )
+				{
+					alert('No elements selected.')
+				}
+				else {
+					var checked = $el
+						.map(function() {
+							return $(this).parent().find('a:first').text();
+						})
+						.get()
+						.join(', ');
+					alert(checked);
+				}
+			});
+
+			$('.filetree-events')
+				.fileTree({
+				   script: 'connectors/jqueryFileTree.php'
+				})
+				.on('filetreeinitiated filetreeexpand filetreeexpanded filetreecollapse filetreecollapsed filetreeclicked', function(e, data) {
+					if( $('.events-log div').length >= 5 )
+						$('.events-log div:nth(0)').slideUp('slow', function(){
+							$(this).remove();
+							$('.events-log').append( '<div>'+data.value+' '+e.type.replace('filetree','')+'</div>');
+						});
+					else {
+						if( e.type == 'filetreeinitiated' )
+							$('.events-log').append( '<div>filetree-events initiated</div>');
+						else
+							$('.events-log').append( '<div>'+data.value+' '+e.type.replace('filetree','')+'</div>');
+					}
+				});
+
+			// when the screen is small, move the filetree elements to the bottom of their containers for better readability
+			$(window).on('load resize', function(event){
+				// screen is smaller than 550px, move info-block up so the heading is on top of filetree-block
+				// -> ONLY IF THE filetree-block IS ALREADY ON TOP
+				if( $(this).width() <= '550' && $('.filetree-block:first').index() === 0 )
+					moveUp();
+				// screen is larger than 550, move info back down the node tree, if
+				// -> ONLY IF filetree-block IS NOT ON TOP
+				else if( $(this).width() > '550' && $('.filetree-block:first').index() != 0 )
+					moveDown(); // move info block back down if screen resolution has enlarged
+			});
+
+			function moveUp() {
+				console.log('move up');
+
+				$('.info-block').map(function(){
+					$(this).after( $(this).parent().find('.filetree-block') );
+				});
+			}
+
+			function moveDown() {
+				console.log('move down');
+
+				$('.info-block').map(function(){
+					$(this).before( $(this).parent().find('.filetree-block') );
+				});
+			}
+
+			$('a.top').click(function() {
+				$('html, body').animate({ scrollTop: 0 }, 700, 'easeOutExpo');
+				return false;
+			});
+		});
+	</script>
+
+	<!-- End Document
+	–––––––––––––––––––––––––––––––––––––––––––––––––– -->
+</body>
+
+</html>

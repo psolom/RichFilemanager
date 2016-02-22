@@ -3,12 +3,41 @@
 
 
 # ZeroClipboard
-[![GitHub Latest Release](https://badge.fury.io/gh/zeroclipboard%2Fzeroclipboard.png)](https://github.com/zeroclipboard/zeroclipboard) [![Build Status](https://secure.travis-ci.org/zeroclipboard/zeroclipboard.png?branch=master)](https://travis-ci.org/zeroclipboard/zeroclipboard) [![Coverage Status](https://coveralls.io/repos/zeroclipboard/zeroclipboard/badge.png?branch=master)](https://coveralls.io/r/zeroclipboard/zeroclipboard?branch=master) [![Dependency Status](https://david-dm.org/zeroclipboard/zeroclipboard.png?theme=shields.io)](https://david-dm.org/zeroclipboard/zeroclipboard) [![Dev Dependency Status](https://david-dm.org/zeroclipboard/zeroclipboard/dev-status.png?theme=shields.io)](https://david-dm.org/zeroclipboard/zeroclipboard#info=devDependencies)
+[![GitHub Latest Release](https://badge.fury.io/gh/zeroclipboard%2Fzeroclipboard.svg)](https://github.com/zeroclipboard/zeroclipboard) [![Build Status](https://secure.travis-ci.org/zeroclipboard/zeroclipboard.svg?branch=master)](https://travis-ci.org/zeroclipboard/zeroclipboard) [![Coverage Status](https://coveralls.io/repos/zeroclipboard/zeroclipboard/badge.svg?branch=master)](https://coveralls.io/r/zeroclipboard/zeroclipboard?branch=master) [![Dependency Status](https://david-dm.org/zeroclipboard/zeroclipboard.svg?theme=shields.io)](https://david-dm.org/zeroclipboard/zeroclipboard) [![Dev Dependency Status](https://david-dm.org/zeroclipboard/zeroclipboard/dev-status.svg?theme=shields.io)](https://david-dm.org/zeroclipboard/zeroclipboard#info=devDependencies)
 
-The ZeroClipboard library provides an easy way to copy text to the clipboard using an invisible [Adobe Flash](http://en.wikipedia.org/wiki/Adobe_Flash) movie and a [JavaScript](http://en.wikipedia.org/wiki/JavaScript) interface. The "Zero" signifies that the library is invisible and the user interface is left entirely up to you. 
+The ZeroClipboard library provides an easy way to copy text to the clipboard using an invisible [Adobe Flash](http://en.wikipedia.org/wiki/Adobe_Flash) movie and a [JavaScript](http://en.wikipedia.org/wiki/JavaScript) interface. The "Zero" signifies that the library is invisible and the user interface is left entirely up to you.
 
 This is achieved by automatically floating the invisible movie on top of a [DOM](http://en.wikipedia.org/wiki/Document_Object_Model) element of your choice. Standard mouse events are even propagated out to your DOM element, so you can still have rollover and mousedown effects.
 
+Suggestions welcome read over the [contributing](/CONTRIBUTING.md) guidelines.
+
+## Setup
+
+To setup the project for local development start with these commands in your terminal.
+
+```sh
+$ git clone https://github.com/zeroclipboard/zeroclipboard.git
+$ cd zeroclipboard/
+$ npm install -g grunt-cli
+$ npm install
+$ grunt
+```
+
+## Development
+
+Before submitting a pull request you'll need to validate, build, and test your code. Run the default grunt task in your terminal.
+
+```sh
+$ grunt
+```
+
+## Testing
+
+If you just want to run the tests, run grunt test.
+
+```sh
+$ grunt test
+```
 
 ## Limitations
 
@@ -21,6 +50,8 @@ suffice as this would enable [clipboard poisoning](http://www.computerworld.com/
 ### Other Limitations
 
 For a complete list of limitations, see [docs/instructions.md#limitations](docs/instructions.md#limitations).
+
+On that page, you will also find an [explanation of why ZeroClipboard will _NOT_ work by default on code playground sites](docs/instructions.md#starter-snippets-for-playground-sites) like JSFiddle, JSBin, and CodePen, as well as the appropriate "View" URLs to use on those sites in order to allow ZeroClipboard to work.
 
 
 ## Simple Example
@@ -61,7 +92,6 @@ Here is a working [test page](http://zeroclipboard.org/#demo) where you can try 
 
 To test the page [demo page](http://zeroclipboard.org/#demo) locally, clone the [website repo](https://github.com/zeroclipboard/zeroclipboard.org).
 
-
 ## Support
 
 This library is fully compatible with Flash Player 11.0.0 and above, which requires
@@ -72,12 +102,8 @@ choice. Standard mouse events are even propagated out to your DOM element, so yo
 can still have rollover and mousedown effects with just a _little_ extra effort.
 
 ZeroClipboard `v2.x` is expected to work in IE9+ and all of the evergreen browsers.
-
-
-## Contributing
-
-see [CONTRIBUTING.md](CONTRIBUTING.md)
-
+Although support for IE7 & IE8 was officially dropped in `v2.0.0`, it was actually
+still _technically_ supported through `v2.0.2`.
 
 ## Releases
 
@@ -85,7 +111,11 @@ Starting with version [1.1.7](https://github.com/zeroclipboard/zeroclipboard/rel
 
 see [releases](https://github.com/zeroclipboard/zeroclipboard/releases)
 
+## Related
 
-## Roadmap
+* [jquery.zeroclipboard](https://github.com/zeroclipboard/jquery.zeroclipboard)
+* [zeroclipboard-rails](https://github.com/zeroclipboard/zeroclipboard-rails)
 
-see [roadmap.md](docs/roadmap.md)
+## License
+
+MIT &copy; [James M. Greene](http://greene.io/) [Jon Rohan](http://jonrohan.codes)

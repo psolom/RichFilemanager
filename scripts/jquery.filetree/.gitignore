@@ -1,0 +1,8 @@
+/tests/manual/connectors/
+/tests/manual/images/
+/tests/manual/jQueryFileTree.min.js
+/tests/manual/jQueryFileTree.min.css
+/tests/manual/bower_components/
+/tests/manual/css/jqft-test.css
+/tests/manual/css/skeleton.css
+node_modules

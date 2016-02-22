@@ -1,0 +1,176 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">  
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml"> 
+	<head> 
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+		<title>jQuery Impromptu States Example - Select Dropdown Option Search</title>
+		
+		<link rel="stylesheet" media="all" type="text/css" href="../jquery-impromptu.css" />			
+		
+		<script type="text/javascript" src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+		<script type="text/javascript" src="../jquery-impromptu.js"></script>
+
+		<style type="text/css">
+			#optionsearch{}
+			#optionsearch h3{ font-family: 'Arial',sans-serif; font-size: 14px; }
+			#optionsearch label{ display: block; }
+			#optionsearch label span{ font-weight: normal; color: #777; }
+			#optionsearch label #optionsearchstatus{ color: #ff0000; font-weight: bold; float: right; display:none;}
+			#optionsearch input[type='search']{ width: 100%; border: solid 1px #d4d4d4; padding: 3px;}
+			#optionsearch #searchoptionswrapper{ margin: 15px 0 15px 0; border: solid 1px #e2e8e6; height: 150px; max-height: 150px; overflow: auto; display: none;}
+
+			/* the styles to make the scrollable tables with radios */
+
+			.radioTable{ width: 100%; border-collapse: collapse; border-spacing: 0; }
+			.radioTable thead{ display: block; }
+			.radioTable tbody{  }
+			.radioTable tr{ display: block; }
+			.radioTable tbody tr:hover{ background-color: #e2e8e6; }
+			.radioTable th{ text-align: left; font-size: 12px; font-weight: bold; padding: 0 0 8px 0; color: #929896; }
+			.radioTable td{ text-align: left; font-size: 11px; font-weight: normal; padding: 3px 0;  }
+			.radioTable td.td-radio{ width: 40px; text-align: center; }
+			.radioTable td.td-label{ width: 400px; }
+			.radioTable td label{ font-size: 11px; line-height: 14px; font-weight: normal; display: block; width: 100%; }
+			.radioTable tbody tr.checked{ background-color: #F9B23C; font-weight: bold; }
+			.radioTable tbody tr.checked:hover{ background-color: #e9a22C; }
+			.radioTable tbody tr.checked label{ font-weight: bold; }
+		</style>
+	
+		<script type="text/javascript">
+			// ##################################################################################
+			//    a quick search routine for selects, fired on contextmenu event
+			// ##################################################################################
+			function showDropdownSearch(e){
+				var $t = $(this),
+					$o = $('option:enabled',$t),
+					tval = $t.val(),
+					html = '<div id="optionsearch">'+
+							'<div class="textinput"><label for="">Search <span>type your search term and press Enter</span><span id="optionsearchstatus">Searching, please wait..</span></label><input type="search" id="searchquery" name="searchquery" value="" placeholder="Search.."></div>'+
+							'<div id="searchoptionswrapper"><table id="searchoptions" class="radioTable" cellpadding="0" cellspacing="0"><tbody></tbody></table></div>'+
+						'</div>';
+						
+				e.preventDefault();
+				
+				var imp = $.prompt(html, {
+						title: 'Search Options',
+						buttons: { Ok:true,Cancel:false },
+						submit: function(e,v,m,f){
+							if(v){
+								$t.val(f.searchanswer).change();
+							}
+						}
+					});
+
+				var $so = $('#searchoptions', imp);
+
+				$so.delegate('input', 'click', function(){
+					$('tr.checked', $so).removeClass('checked');
+					$(this).parent().parent().addClass('checked');
+				});
+
+				$('#searchquery', imp).focus().keydown(function(event){
+					var $i = $(this),
+						query = $i.val(),
+						re = new RegExp(query,"i"),
+						html = "",
+						counter = 0,
+						$sos = $('#optionsearchstatus',imp);
+
+					if(event.which == 13 || event.keyCode == 13 && $.trim(query) !== ''){
+
+						$sos.css('display','inline');
+
+						$o.each(function(i,obj){
+							var $currt = $(this),
+								currval = $currt.attr('value'),
+								currtxt = $currt.text(),
+								currterm = currval + currtxt;
+
+							if(re.test(currterm) && currtxt !== '' && currval !== ''){
+								html += '<tr class="row'+ (counter++ % 2) + (currval == tval? ' checked':'')+'">'+
+										'<td class="td-radio"><input type="radio" name="searchanswer" id="searchanswer_'+ counter +'" value="'+ currval +'"'+ (currval == tval? ' checked':'') +'></td>'+
+										'<td class="td-label"><label for="searchanswer_'+ counter +'">'+ currtxt +'</label></td>'+
+									'</tr>';
+							}
+
+						});
+
+						$so.find('tbody').html(html);
+						$so.find('tr:eq(0)').addClass('checked').find('input').attr('checked',true);
+
+						$('#searchoptionswrapper',imp).slideDown('slow', function(){
+							$sos.hide();
+						});
+
+						event.preventDefault();
+						return false;
+					}// end if enter key
+
+				});
+				
+				return false;
+			}
+			
+			$(function(){
+				$('select').bind('contextmenu', showDropdownSearch);
+			});
+		</script>
+	</head>
+	
+	<body>
+		<p>Right click or ctrl click on the select for it to bring up a search for its options:</p>
+		
+		<select name="select1" id="select1">
+			<option value="Alabama, Montgomery">Yellowhammer State</option>
+			<option value="Alaska, Juneau">The Last Frontier</option>
+			<option value="Arizona, Phoenix">The Grand Canyon State</option>
+			<option value="Arkansas, Little Rock">The Natural State</option>
+			<option value="California, Sacramento">The Golden State</option>
+			<option value="Colorado, Denver">The Centennial State</option>
+			<option value="Connecticut, Hartford">The Constitution State</option>
+			<option value="Delaware, Dover">The First State</option>
+			<option value="Florida, Tallahassee">The Sunshine State</option>
+			<option value="Georgia, Atlanta">The Peach State</option>
+			<option value="Hawaii, Honolulu">The Aloha State</option>
+			<option value="Idaho, Boise">The Gem State</option>
+			<option value="Illinois, Springfield">Prairie State</option>
+			<option value="Indiana, Indianapolis">The Hoosier State</option>
+			<option value="Iowa, Des Moines">The Hawkeye State</option>
+			<option value="Kansas, Topeka">The Sunflower State</option>
+			<option value="Kentucky, Frankfort">The Bluegrass State</option>
+			<option value="Louisiana, Baton Rouge">The Pelican State</option>
+			<option value="Maine, Augusta">The Pine Tree State</option>
+			<option value="Maryland, Annapolis">The Old Line State</option>
+			<option value="Massachusetts, Boston">The Bay State</option>
+			<option value="Michigan, Lansing">The Great Lakes State</option>
+			<option value="Minnesota, St. Paul">The North Star State</option>
+			<option value="Mississippi, Jackson">The Magnolia State</option>
+			<option value="Missouri, Jefferson City">The Show Me State</option>
+			<option value="Montana, Helena">The Treasure State</option>
+			<option value="Nebraska, Lincoln">The Cornhusker State</option>
+			<option value="Nevada, Carson City">The Silver State</option>
+			<option value="New Hampshire, Concord">The Granite State</option>
+			<option value="New Jersey, Trenton">The Garden State</option>
+			<option value="New Mexico, Santa Fe">The Land of Enchantment</option>
+			<option value="New York, Albany">The Empire State</option>
+			<option value="North Carolina, Raleigh">The Tar Heel State</option>
+			<option value="North Dakota, Bismarck">The Peace Garden State</option>
+			<option value="Ohio, Columbus">The Buckeye State</option>
+			<option value="Oklahoma, Oklahoma City">The Sooner State</option>
+			<option value="Oregon, Salem">The Beaver State</option>
+			<option value="Pennsylvania, Harrisburg">The Keystone State</option>
+			<option value="Rhode Island, Providence">The Ocean State</option>
+			<option value="South Carolina, Columbia">The Palmetto State</option>
+			<option value="South Dakota, Pierre">Mount Rushmore State</option>
+			<option value="Tennessee, Nashville">The Volunteer State</option>
+			<option value="Texas, Austin">The Lone Star State</option>
+			<option value="Utah, Salt Lake City">The Beehive State</option>
+			<option value="Vermont, Montpelier">The Green Mountain State</option>
+			<option value="Virginia, Richmond">The Old Dominion State</option>
+			<option value="Washington, Olympia">The Evergreen State</option>
+			<option value="West Virginia, Charleston">The Mountain State</option>
+			<option value="Wisconsin, Madison">The Badger State</option>
+			<option value="Wyoming, Cheyenne">The Equality or Cowboy State</option>
+		</select>
+	</body>
+</html>

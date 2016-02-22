@@ -50,8 +50,8 @@ var _extend = function() {
 var _deepCopy = function(source) {
   var copy, i, len, prop;
 
-  // If not a non-null object, just return the original
-  if (typeof source !== "object" || source == null) {
+  // If not a non-null, non-element object, just return the original
+  if (typeof source !== "object" || source == null || typeof source.nodeType === "number") {
     copy = source;
   }
   // If an Array, iterate and recurse
@@ -73,7 +73,7 @@ var _deepCopy = function(source) {
       if (_hasOwn.call(source, prop)) {
         copy[prop] = _deepCopy(source[prop]);
       }
-    }    
+    }
   }
 
   return copy;
@@ -314,4 +314,20 @@ var _getUnanimousScriptParentDir = function() {
 var _getDefaultSwfPath = function() {
   var jsDir = _getDirPathOfUrl(_getCurrentScriptUrl()) || _getUnanimousScriptParentDir() || "";
   return jsDir + "ZeroClipboard.swf";
+};
+
+
+/**
+ * Is the client's operating system some version of Windows?
+ *
+ * @returns Boolean
+ * @private
+ */
+var _isWindows = function() {
+  var isWindowsRegex = /win(dows|[\s]?(nt|me|ce|xp|vista|[\d]+))/i;
+  return !!_navigator && (
+    isWindowsRegex.test(_navigator.appVersion || "") ||
+    isWindowsRegex.test(_navigator.platform   || "") ||
+    (_navigator.userAgent || "").indexOf("Windows") !== -1
+  );
 };

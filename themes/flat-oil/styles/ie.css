@@ -1,57 +1,57 @@
 <!--[if IE 9]>
-* {
+.fm-container * {
 	zoom: 1;
 }
 
-#filepath {
+.fm-container #filepath {
 	height: 27px;
 	line-height: 1.6em;
 }
 
-#file-input-container {
+.fm-container #file-input-container {
 	width: 205px;
 }
 
-#file-input-container * {
+.fm-container #file-input-container * {
 	box-sizing: border-box;
 	-ms-box-sizing: border-box;
 }
 
-#newfile {
+.fm-container #newfile {
 	width: 205px;
 }
 
-#uploader {
+.fm-container #uploader {
 	min-height: 32px;
 }
-#q {width:192px;}
+.fm-container #q {width:192px;}
 <![endif]-->
 
 <!--[if lte IE 8]>
-* {
+.fm-container * {
 	zoom: 1;
 }
 
-#filepath {
+.fm-container #filepath {
 	height: 27px;
 	line-height: 1.6em;
 }
 
-#file-input-container {
+.fm-container #file-input-container {
 	width: 205px;
 }
 
-#file-input-container * {
+.fm-container #file-input-container * {
 	box-sizing: border-box;
 	-ms-box-sizing: border-box;
 }
 
-#newfile {
+.fm-container #newfile {
 	width: 205px;
 }
 
-#uploader {
+.fm-container #uploader {
 	min-height: 32px;
 }
-#q { width:192px; height:1.8em}
+.fm-container #q { width:192px; height:1.8em}
 <![endif]-->

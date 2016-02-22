@@ -11,6 +11,7 @@ Highly customizable custom scrollbar jQuery plugin. Features include:
 * Option parameters for full control of scrollbar functionality 
 * Methods for triggering actions like scroll-to, update, destroy etc. 
 * User-defined callbacks 
+* Selectable/searchable content
 
 #### Installation
 
@@ -21,6 +22,12 @@ npm: `npm install malihu-custom-scrollbar-plugin`
 #### Usage 
 
 `$(selector).mCustomScrollbar();` 
+
+###### Using with [Browserify](http://browserify.org/)
+
+    var $ = require('jquery');
+    require('malihu-custom-scrollbar-plugin')($);
+
 
 #### For more information 
 

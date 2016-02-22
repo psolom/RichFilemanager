@@ -30,7 +30,6 @@ module.exports = function(grunt) {
         jshintrc: true
       },
       gruntfile: ["Gruntfile.js"],
-      component: ["index.js"],
       js: ["src/js/**/*.js", "!src/js/start.js", "!src/js/end.js"],
       test: ["test/**/*.js"],
       dist: ["dist/*.js", "!dist/*.min.js"]
@@ -41,15 +40,16 @@ module.exports = function(grunt) {
       }
     },
     clean: {
-      dist: ["ZeroClipboard.*", "dist/ZeroClipboard.*"],
-      flash: {
+      jsDist: ["ZeroClipboard.*", "dist/ZeroClipboard.*", "!ZeroClipboard.swf", "!dist/ZeroClipboard.swf"],
+      flashDist: ["ZeroClipboard.swf", "dist/ZeroClipboard.swf"],
+      flashTemp: {
         options: {
           // Force is required when trying to clean outside of the project dir
           force: true
         },
         src: [flashTmpDir]
       },
-      meta: ["bower.json", "composer.json", "LICENSE"],
+      meta: ["bower.json", "component.json", "composer.json", "LICENSE"],
       coveralls: ["tmp/", "coverage/"]
     },
     concat: {
@@ -181,7 +181,7 @@ module.exports = function(grunt) {
     },
     mxmlc: {
       options: {
-        rawConfig: "-target-player=11.0.0 -static-link-runtime-shared-libraries=true"
+        rawConfig: "-target-player=11.0.0 -static-link-runtime-shared-libraries=true -actionscript-file-encoding=UTF-8"
       },
       swf: {
         files: {
@@ -198,6 +198,11 @@ module.exports = function(grunt) {
           "bower.json": ["src/meta/bower.json.tmpl"]
         }
       },
+      component: {
+        files: {
+          "component.json": ["src/meta/component.json.tmpl"]
+        }
+      },
       composer: {
         files: {
           "composer.json": ["src/meta/composer.json.tmpl"]
@@ -209,12 +214,27 @@ module.exports = function(grunt) {
         }
       }
     },
+    "json-format": {
+      options: {
+        indent: 2
+      },
+      meta: {
+        files: [
+          {
+            expand: true,
+            cwd: "./",
+            src: ["./*.json"],
+            dest: "./"
+          }
+        ]
+      }
+    },
     chmod: {
       options: {
         mode: "444"
       },
       dist: ["dist/ZeroClipboard.*"],
-      meta: ["bower.json", "composer.json", "LICENSE"]
+      meta: ["bower.json", "component.json", "composer.json", "LICENSE"]
     },
     connect: {
       server: {
@@ -316,17 +336,22 @@ module.exports = function(grunt) {
 
 
   // Task aliases and chains
-  grunt.registerTask("jshint-prebuild", ["jshint:gruntfile", "jshint:component", "jshint:js", "jshint:test"]);
-  grunt.registerTask("prep-flash",      ["clean:flash", "concat:flash"]);
+  grunt.registerTask("jshint-prebuild", ["jshint:gruntfile", "jshint:js", "jshint:test"]);
+  grunt.registerTask("prep-flash",      ["clean:flashTemp", "concat:flash"]);
   grunt.registerTask("validate",        ["jshint-prebuild", "prep-flash", "flexpmd"]);
-  grunt.registerTask("build",           ["clean", "concat", "jshint:dist", "uglify", "mxmlc", "template", "chmod"]);
+  grunt.registerTask("build",           ["clean", "concat", "jshint:dist", "uglify", "mxmlc", "template", "json-format", "chmod"]);
   grunt.registerTask("build-travis",    ["clean", "concat", "jshint:dist", "mxmlc", "chmod:dist"]);
   grunt.registerTask("test",            ["connect", "qunit:file", "qunit:http"]);
 
-  // Default task
+  // Default task //grunt concat
   grunt.registerTask("default", ["validate", "build", "test"]);
 
   // Travis CI task
   grunt.registerTask("travis",  ["validate", "build-travis", "test", "qunit:coveralls", "coveralls"]);
+
+  // Local development tasks
+  grunt.registerTask("jsdev-build", ["jshint-prebuild", "clean:jsDist", "concat:core", "concat:client", "jshint:dist", "uglify:js"]);
+  grunt.registerTask("jsdev",       ["jsdev-build", "test"]);
+  grunt.registerTask("swfdev",      ["prep-flash", "flexpmd", "clean:flashDist", "mxmlc", "chmod:dist"]);
 
 };

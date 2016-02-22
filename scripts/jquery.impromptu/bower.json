@@ -1,0 +1,15 @@
+{
+	"name": "jquery-impromptu",
+	"main": [
+		"dist/jquery-impromptu.css",
+		"dist/jquery-impromptu.js"
+	],
+	"keywords": ["impromptu","prompt","alert","modal","overlay","confirm"],
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/trentrichardson/jQuery-Impromptu.git"
+	},
+	"dependencies": {
+		"jquery": ">=1.6"
+	}
+}

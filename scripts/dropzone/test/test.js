@@ -16,6 +16,121 @@
     beforeEach(function() {
       return xhr = sinon.useFakeXMLHttpRequest();
     });
+    describe("Emitter", function() {
+      var emitter;
+      emitter = null;
+      beforeEach(function() {
+        return emitter = new Dropzone.prototype.Emitter();
+      });
+      it(".on() should return the object itself", function() {
+        return (emitter.on("test", function() {})).should.equal(emitter);
+      });
+      it(".on() should properly register listeners", function() {
+        var callback, callback2;
+        (emitter._callbacks === void 0).should.be["true"];
+        callback = function() {};
+        callback2 = function() {};
+        emitter.on("test", callback);
+        emitter.on("test", callback2);
+        emitter.on("test2", callback);
+        emitter._callbacks.test.length.should.equal(2);
+        emitter._callbacks.test[0].should.equal(callback);
+        emitter._callbacks.test[1].should.equal(callback2);
+        emitter._callbacks.test2.length.should.equal(1);
+        return emitter._callbacks.test2[0].should.equal(callback);
+      });
+      it(".emit() should return the object itself", function() {
+        return emitter.emit('test').should.equal(emitter);
+      });
+      it(".emit() should properly invoke all registered callbacks with arguments", function() {
+        var callCount1, callCount12, callCount2, callback1, callback12, callback2;
+        callCount1 = 0;
+        callCount12 = 0;
+        callCount2 = 0;
+        callback1 = function(var1, var2) {
+          callCount1++;
+          var1.should.equal('callback1 var1');
+          return var2.should.equal('callback1 var2');
+        };
+        callback12 = function(var1, var2) {
+          callCount12++;
+          var1.should.equal('callback1 var1');
+          return var2.should.equal('callback1 var2');
+        };
+        callback2 = function(var1, var2) {
+          callCount2++;
+          var1.should.equal('callback2 var1');
+          return var2.should.equal('callback2 var2');
+        };
+        emitter.on("test1", callback1);
+        emitter.on("test1", callback12);
+        emitter.on("test2", callback2);
+        callCount1.should.equal(0);
+        callCount12.should.equal(0);
+        callCount2.should.equal(0);
+        emitter.emit("test1", "callback1 var1", "callback1 var2");
+        callCount1.should.equal(1);
+        callCount12.should.equal(1);
+        callCount2.should.equal(0);
+        emitter.emit("test2", "callback2 var1", "callback2 var2");
+        callCount1.should.equal(1);
+        callCount12.should.equal(1);
+        callCount2.should.equal(1);
+        emitter.emit("test1", "callback1 var1", "callback1 var2");
+        callCount1.should.equal(2);
+        callCount12.should.equal(2);
+        return callCount2.should.equal(1);
+      });
+      return describe(".off()", function() {
+        var callback1, callback2, callback3, callback4;
+        callback1 = function() {};
+        callback2 = function() {};
+        callback3 = function() {};
+        callback4 = function() {};
+        beforeEach(function() {
+          return emitter._callbacks = {
+            'test1': [callback1, callback2],
+            'test2': [callback3],
+            'test3': [callback1, callback4],
+            'test4': []
+          };
+        });
+        it("should work without any listeners", function() {
+          var emt;
+          emitter._callbacks = void 0;
+          emt = emitter.off();
+          emitter._callbacks.should.eql({});
+          return emt.should.equal(emitter);
+        });
+        it("should properly remove all event listeners", function() {
+          var emt;
+          emt = emitter.off();
+          emitter._callbacks.should.eql({});
+          return emt.should.equal(emitter);
+        });
+        it("should properly remove all event listeners for specific event", function() {
+          var emt;
+          emitter.off("test1");
+          (emitter._callbacks["test1"] === void 0).should.be["true"];
+          emitter._callbacks["test2"].length.should.equal(1);
+          emitter._callbacks["test3"].length.should.equal(2);
+          emt = emitter.off("test2");
+          (emitter._callbacks["test2"] === void 0).should.be["true"];
+          return emt.should.equal(emitter);
+        });
+        return it("should properly remove specific event listener", function() {
+          var emt;
+          emitter.off("test1", callback1);
+          emitter._callbacks["test1"].length.should.equal(1);
+          emitter._callbacks["test1"][0].should.equal(callback2);
+          emitter._callbacks["test3"].length.should.equal(2);
+          emt = emitter.off("test3", callback4);
+          emitter._callbacks["test3"].length.should.equal(1);
+          emitter._callbacks["test3"][0].should.equal(callback1);
+          return emt.should.equal(emitter);
+        });
+      });
+    });
     describe("static functions", function() {
       describe("Dropzone.createElement()", function() {
         var element;
@@ -657,7 +772,7 @@
           return it("should properly create the previewElement", function() {
             file.previewElement.should.be["instanceof"](Element);
             file.previewElement.querySelector("[data-dz-name]").innerHTML.should.eql("test name");
-            return file.previewElement.querySelector("[data-dz-size]").innerHTML.should.eql("<strong>2</strong> MiB");
+            return file.previewElement.querySelector("[data-dz-size]").innerHTML.should.eql("<strong>2.1</strong> MB");
           });
         });
         describe(".error()", function() {
@@ -699,8 +814,8 @@
             return it("should properly return target dimensions", function() {
               var info;
               info = dropzone.options.resize.call(dropzone, file);
-              info.optWidth.should.eql(100);
-              return info.optHeight.should.eql(100);
+              info.optWidth.should.eql(120);
+              return info.optHeight.should.eql(120);
             });
           });
           return describe("with null thumbnail settings", function() {
@@ -1004,10 +1119,23 @@
         });
       });
       describe(".filesize()", function() {
-        return it("should convert to KiloBytes, etc.. not KibiBytes", function() {
-          dropzone.filesize(2 * 1024 * 1024).should.eql("<strong>2</strong> MiB");
-          dropzone.filesize(2 * 1000 * 1000 * 1000).should.eql("<strong>1.9</strong> GiB");
-          return dropzone.filesize(2 * 1024 * 1024 * 1024).should.eql("<strong>2</strong> GiB");
+        it("should handle files with 0 size properly", function() {
+          return dropzone.filesize(0).should.eql("<strong>0</strong> b");
+        });
+        it("should convert to KiloBytes, etc..", function() {
+          dropzone.options.filesizeBase.should.eql(1000);
+          dropzone.filesize(2 * 1000 * 1000).should.eql("<strong>2</strong> MB");
+          dropzone.filesize(2 * 1024 * 1024).should.eql("<strong>2.1</strong> MB");
+          dropzone.filesize(2 * 1000 * 1000 * 1000).should.eql("<strong>2</strong> GB");
+          dropzone.filesize(2 * 1024 * 1024 * 1024).should.eql("<strong>2.1</strong> GB");
+          dropzone.filesize(2.5111 * 1000 * 1000 * 1000).should.eql("<strong>2.5</strong> GB");
+          dropzone.filesize(1.1 * 1000).should.eql("<strong>1.1</strong> KB");
+          return dropzone.filesize(999 * 1000).should.eql("<strong>1</strong> MB");
+        });
+        return it("should convert to KibiBytes, etc.. when the filesizeBase is changed to 1024", function() {
+          dropzone.options.filesizeBase = 1024;
+          dropzone.filesize(2 * 1024 * 1024).should.eql("<strong>2</strong> MB");
+          return dropzone.filesize(2 * 1000 * 1000).should.eql("<strong>1.9</strong> MB");
         });
       });
       describe("._updateMaxFilesReachedClass()", function() {
@@ -1397,7 +1525,7 @@
           return dropzone.removeFile.callCount.should.eql(2);
         });
         return describe("thumbnails", function() {
-          return it("should properly queue the thumbnail creation", function(done) {
+          it("should properly queue the thumbnail creation", function(done) {
             var ct_callback, ct_file, doneFunction, mock1, mock2, mock3;
             doneFunction = null;
             dropzone.accept = function(file, done) {
@@ -1435,6 +1563,37 @@
               mock3.should.equal(ct_file);
               return done();
             }), 10);
+          });
+          return describe("when file is SVG", function() {
+            return it("should use the SVG image itself", function(done) {
+              var blob, createBlob;
+              createBlob = function(data, type) {
+                var BlobBuilder, builder, e;
+                try {
+                  return new Blob([data], {
+                    type: type
+                  });
+                } catch (_error) {
+                  e = _error;
+                  BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+                  builder = new BlobBuilder();
+                  builder.append(data.buffer || data);
+                  return builder.getBlob(type);
+                }
+              };
+              blob = createBlob('foo', 'image/svg+xml');
+              dropzone.on("thumbnail", function(file, dataURI) {
+                var fileReader;
+                file.should.equal(blob);
+                fileReader = new FileReader;
+                fileReader.onload = function() {
+                  fileReader.result.should.equal(dataURI);
+                  return done();
+                };
+                return fileReader.readAsDataURL(file);
+              });
+              return dropzone.createThumbnail(blob);
+            });
           });
         });
       });
@@ -1495,6 +1654,33 @@
           dropzone.uploadFile(mockFile);
           dropzone.uploadFiles.callCount.should.equal(1);
           return dropzone.uploadFiles.calledWith([mockFile]).should.be.ok;
+        });
+        it("should use url options if strings", function(done) {
+          dropzone.addFile(mockFile);
+          return setTimeout(function() {
+            expect(requests.length).to.equal(1);
+            expect(requests[0].url).to.equal(dropzone.options.url);
+            expect(requests[0].method).to.equal(dropzone.options.method);
+            return done();
+          }, 10);
+        });
+        it("should call url options if functions", function(done) {
+          var method, url;
+          method = "PUT";
+          url = "/custom/upload/url";
+          dropzone.options.method = sinon.stub().returns(method);
+          dropzone.options.url = sinon.stub().returns(url);
+          dropzone.addFile(mockFile);
+          return setTimeout(function() {
+            dropzone.options.method.callCount.should.equal(1);
+            dropzone.options.url.callCount.should.equal(1);
+            sinon.assert.calledWith(dropzone.options.method, [mockFile]);
+            sinon.assert.calledWith(dropzone.options.url, [mockFile]);
+            expect(requests.length).to.equal(1);
+            expect(requests[0].url).to.equal(url);
+            expect(requests[0].method).to.equal(method);
+            return done();
+          }, 10);
         });
         it("should ignore the onreadystate callback if readyState != 4", function(done) {
           dropzone.addFile(mockFile);
@@ -1608,6 +1794,13 @@
             dropzone.uploadFile(mockFile);
             return requests[0].requestHeaders["Foo-Header"].should.eql('foobar');
           });
+          it("should not set headers on the xhr object that are empty", function() {
+            dropzone.options.headers = {
+              "X-Requested-With": null
+            };
+            dropzone.uploadFile(mockFile);
+            return Object.keys(requests[0].requestHeaders).should.not.contain("X-Requested-With");
+          });
           it("should properly use the paramName without [n] as file upload if uploadMultiple is false", function(done) {
             var formData, mock1, mock2, sendingCount;
             dropzone.options.uploadMultiple = false;
@@ -1662,6 +1855,26 @@
               return done();
             }, 10);
           });
+        });
+        it("should not change the file name if the options.renameFilename is not set", function(done) {
+          var mockFilename, renamedFilename;
+          mockFilename = 'T3sT ;:_-.,!¨@&%&';
+          renamedFilename = dropzone._renameFilename(mockFilename);
+          return setTimeout(function() {
+            renamedFilename.should.equal(mockFilename);
+            return done();
+          }, 10);
+        });
+        it("should rename the file name if options.renamedFilename is set", function(done) {
+          var renamedFilename;
+          dropzone.options.renameFilename = function(name) {
+            return name.toLowerCase().replace(/[^\w]/gi, '');
+          };
+          renamedFilename = dropzone._renameFilename('T3sT ;:_-.,!¨@&%&');
+          return setTimeout(function() {
+            renamedFilename.should.equal('t3st_');
+            return done();
+          }, 10);
         });
         return describe("should properly set status of file", function() {
           return it("should correctly set `withCredentials` on the xhr object", function(done) {
