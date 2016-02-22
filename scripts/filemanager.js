@@ -119,7 +119,7 @@ smartPath = function(url, path) {
 	// separator is not found
 	// this can happen when not set dynamically with setFileRoot function - see  : https://github.com/simogeo/Filemanager/issues/354
 	if(pos == -1) {
-		 rvalue = url + path;
+		rvalue = url + path;
 	} else {
 		rvalue = url + path.substring(pos + separator.length);
 	}
@@ -635,27 +635,29 @@ var setCurrentPath = function(path) {
 	$('#currentpath').val(path);
 };
 
-// Returns filetree container
-var getFileTreeContainer = function() {
-	if ($('#filetree .mCSB_container').length > 0) {
-		return $('#filetree .mCSB_container');
+// Returns container for filetree or fileinfo section based on scrollbar plugin state
+var getSectionContainer = function($section) {
+	// if scrollbar plugin is enabled
+	if ($section.find('.mCSB_container').length > 0) {
+		return $section.find('.mCSB_container');
 	} else {
-		return $('#filetree');
+		return $section;
 	}
 };
 
 // Apply actions after manipulating with filetree or its single node
 var adjustFileTree = function() {
 	// apply context menu
-	$('#filetree').find('li a').each(function () {
-		$(this).contextMenu(
-			{menu: getContextMenuOptions($(this))},
-			function (action, el, pos) {
-				var path = $(el).attr('data-path');
-				setMenus(action, path);
-			}
-		);
+	$('#filetree').contextMenu({
+		selector: 'li a',
+		appendTo: '.fm-container',
+		items: getContextMenuItems(),
+		callback: function(itemKey, opt) {
+			var path = opt.$trigger.attr('data-path');
+			setMenus(itemKey, path);
+		}
 	});
+
 	// search function
 	if (config.options.searchBox == true) {
 		$('#q').liveUpdate('#filetree ul').blur();
@@ -666,7 +668,7 @@ var adjustFileTree = function() {
 
 // Create FileTree and bind events
 var createFileTree = function() {
-	var $treeNode = getFileTreeContainer(),
+	var $treeNode = getSectionContainer($('#filetree')),
 		slideAnimation = false;
 
 	// rebuild root folder if filetree plugin already initiated
@@ -946,8 +948,7 @@ var renameItem = function(data) {
 
 // Replace the current file and keep the same name.
 // Called by clicking the "Replace" button in detail views
-// or choosing the "Replace" contextual menu option in
-// list views.
+// or choosing the "Replace" contextual menu option in list views.
 var replaceItem = function(data) {
     // auto-submit form when user filled it up
     $('#fileR').bind('change', function () {
@@ -1024,8 +1025,7 @@ var replaceItem = function(data) {
 
 // Move the current item to specified dir and returns the new name.
 // Called by clicking the "Move" button in detail views
-// or choosing the "Move" contextual menu option in
-// list views.
+// or choosing the "Move" contextual menu option in list views.
 var moveItem = function(data) {
 	var finalName = '';
 	var msg  = lg.move + ' : <input id="rname" name="rname" type="text" value="" />';
@@ -1215,13 +1215,13 @@ var removeDomItem = function(path, speed) {
             $(this).remove();
         });
 
-    // from main window - grid case
+    // from main window - grid view
     if ($('#fileinfo').data('view') == 'grid') {
         $('#contents img[data-path="' + path + '"]').parent().parent()
             .fadeOut(speed, function() {
                 $(this).remove();
             });
-    // from main window - list case
+    // from main window - list view
     } else {
         $('table#contents')
             .find('td[data-path="' + path + '"]')
@@ -1343,8 +1343,7 @@ var addFolder = function(parent, name) {
   Functions to Retrieve File and Folder Details
 ---------------------------------------------------------*/
 
-// Decides whether to retrieve file or folder info based on
-// the path provided.
+// Decides whether to retrieve file or folder info based on the path provided.
 var getDetailView = function(path) {
 	if(path.lastIndexOf('/') == path.length - 1){
 		getFolderInfo(path);
@@ -1354,32 +1353,40 @@ var getDetailView = function(path) {
 	}
 };
 
-function getContextMenuOptions(elem) {
-	var optionsID = elem.attr('class').replace(/ /g, '_');
-	if (optionsID == "") return 'itemOptions';
-	if (!($('#' + optionsID).length)) {
-		// Create a clone to itemOptions with menus specific to this element
-		var newOptions = $('#itemOptions').clone().attr('id', optionsID);
-		if (!elem.hasClass('cap_select')) $('.select', newOptions).remove();
-		if (!elem.hasClass('cap_download')) $('.download', newOptions).remove();
-		if (!elem.hasClass('cap_rename')) $('.rename', newOptions).remove();
-		if (!elem.hasClass('cap_move')) $('.move', newOptions).remove();
-		$('.replace', newOptions).remove(); // remove replace since it is not implemented on Opera + Chrome and works only if #preview panel is on on FF
-		if (!elem.hasClass('cap_delete')) $('.delete', newOptions).remove();
-		$('#itemOptions').after(newOptions);
-	}
-	return optionsID;
+// Options for context menu plugin
+function getContextMenuItems() {
+	var contextMenuItems = {
+		select: {name: lg.select, className: 'select'},
+		download: {name: lg.download, className: 'download'},
+		rename: {name: lg.rename, className: 'rename'},
+		move: {name: lg.move, className: 'move'},
+		replace: {name: lg.replace, className: 'replace'},
+		separator1: "-----",
+		delete: {name: lg.del, className: 'delete'}
+	};
+
+	if($.inArray('download', capabilities) === -1) delete contextMenuItems.download;
+	if($.inArray('rename', capabilities) === -1 || config.options.browseOnly === true) delete contextMenuItems.rename;
+	if($.inArray('move', capabilities) === -1 || config.options.browseOnly === true) delete contextMenuItems.move;
+	if($.inArray('delete', capabilities) === -1 || config.options.browseOnly === true) delete contextMenuItems.delete;
+	// remove 'select' if there is no window.opener
+	if($.inArray('select', capabilities)  === -1 || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
+	// remove 'replace' since it is implemented on #preview panel only (for FF and Chrome, need to check in Opera)
+	delete contextMenuItems.replace;
+
+	return contextMenuItems
 }
 
 // Binds contextual menus to items in list and grid views.
 var setMenus = function(action, path) {
 	var d = new Date(); // to prevent IE cache issues
 	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data){
-		if($('#fileinfo').data('view') == 'grid'){
-			var item = $('#fileinfo').find('img[data-path="' + data['Path'] + '"]').parent();
-		} else {
-			var item = $('#fileinfo').find('td[data-path="' + data['Path'] + '"]').parent();
-		}
+		// TODO: remove
+		//if($('#fileinfo').data('view') == 'grid'){
+		//	var item = $('#fileinfo').find('img[data-path="' + data['Path'] + '"]').parent();
+		//} else {
+		//	var item = $('#fileinfo').find('td[data-path="' + data['Path'] + '"]').parent();
+		//}
 
 		switch(action){
 			case 'select':
@@ -1416,23 +1423,25 @@ var setMenus = function(action, path) {
 // clicked in the file tree or list views.
 var getFileInfo = function(file) {
 
-	//Hide context menu
-	$('.contextMenu').hide();
+	// hide context menu
+	$('.context-menu-root').hide();
 
-	// Update location for status, upload, & new folder functions.
-	var currentpath = file.substr(0, file.lastIndexOf('/') + 1);
+	var $fileinfo = $('#fileinfo'),
+		currentpath = file.substr(0, file.lastIndexOf('/') + 1);
+
+	// update location for status, upload, & new folder functions
 	setUploader(currentpath);
 
-	// Include the template.
+	// include the template
 	var template = '<div id="preview"><img /><div id="main-title"><h1></h1><div id="tools"></div></div><dl></dl></div>';
 	template += '<form id="toolbar">';
 	template += '<button id="parentfolder" type="button" value="ParentFolder">' + lg.parentfolder + '</button>';
-	if($.inArray('select', capabilities)  != -1 && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId'))) template += '<button id="select" name="select" type="button" value="Select">' + lg.select + '</button>';
-	if($.inArray('download', capabilities)  != -1) template += '<button id="download" name="download" type="button" value="Download">' + lg.download + '</button>';
-	if($.inArray('rename', capabilities)  != -1 && config.options.browseOnly != true) template += '<button id="rename" name="rename" type="button" value="Rename">' + lg.rename + '</button>';
-	if($.inArray('move', capabilities)  != -1 && config.options.browseOnly != true) template += '<button id="move" name="move" type="button" value="Move">' + lg.move + '</button>';
-	if($.inArray('delete', capabilities)  != -1 && config.options.browseOnly != true) template += '<button id="delete" name="delete" type="button" value="Delete">' + lg.del + '</button>';
-	if($.inArray('replace', capabilities)  != -1 && config.options.browseOnly != true)  {
+	if($.inArray('select', capabilities) != -1 && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId'))) template += '<button id="select" name="select" type="button" value="Select">' + lg.select + '</button>';
+	if($.inArray('download', capabilities) != -1) template += '<button id="download" name="download" type="button" value="Download">' + lg.download + '</button>';
+	if($.inArray('rename', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="rename" name="rename" type="button" value="Rename">' + lg.rename + '</button>';
+	if($.inArray('move', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="move" name="move" type="button" value="Move">' + lg.move + '</button>';
+	if($.inArray('delete', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="delete" name="delete" type="button" value="Delete">' + lg.del + '</button>';
+	if($.inArray('replace', capabilities) != -1 && config.options.browseOnly != true) {
 		template += '<button id="replace" name="replace" type="button" value="Replace">' + lg.replace + '</button>';
 		template += '<div class="hidden-file-input"><input id="fileR" name="fileR" type="file" /></div>';
 		template += '<input id="mode" name="mode" type="hidden" value="replace" /> ';
@@ -1440,12 +1449,8 @@ var getFileInfo = function(file) {
 	}
 	template += '</form>';
 
-	// test if scrollbar plugin is enabled
-	if ($('#fileinfo .mCSB_container').length > 0) {
-		$('#fileinfo .mCSB_container').html(template);
-	} else {
-		$('#fileinfo').html(template);
-	}
+	// add the new markup to the DOM
+	getSectionContainer($fileinfo).html(template);
 
 	$('#parentfolder').click(function(e) {
 		getFolderInfo(currentpath);
@@ -1455,9 +1460,9 @@ var getFileInfo = function(file) {
 	var d = new Date(); // to prevent IE cache issues
 	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file)  + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data){
 		if(data['Code'] == 0){
-			$('#fileinfo').find('h1').text(data['Filename']).attr('title', file);
+			$fileinfo.find('h1').text(data['Filename']).attr('title', file);
 
-			$('#fileinfo').find('img').attr('src',data['Preview']);
+			$fileinfo.find('img').attr('src',data['Preview']);
 			if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 				getVideoPlayer(data);
 			}
@@ -1481,7 +1486,7 @@ var getFileInfo = function(file) {
 				var url = data['Path'];
 			}
 			if(data['Protected']==0) {
-				$('#fileinfo').find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
+				$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
 
 				// zeroClipboard code
 				ZeroClipboard.config({swfPath: config.globals.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
@@ -1493,7 +1498,7 @@ var getFileInfo = function(file) {
 				});
 
 				$('#copy-button').click(function () {
-					$('#fileinfo').find('div#tools').append('<span id="copied">' + lg.copied + '</span>');
+					$fileinfo.find('div#tools').append('<span id="copied">' + lg.copied + '</span>');
 					$('#copied').delay(500).fadeOut(1000, function() { $(this).remove(); });
 				});
 			}
@@ -1504,7 +1509,7 @@ var getFileInfo = function(file) {
 			if(data['Properties']['Date Created'] && data['Properties']['Date Created'] != '') properties += '<dt>' + lg.created + '</dt><dd>' + data['Properties']['Date Created'] + '</dd>';
 			if(data['Properties']['Date Modified'] && data['Properties']['Date Modified'] != '') properties += '<dt>' + lg.modified + '</dt><dd>' + data['Properties']['Date Modified'] + '</dd>';
 			if(data['Properties']['Size'] || parseInt(data['Properties']['Size'])==0) properties += '<dt>' + lg.size + '</dt><dd>' + formatBytes(data['Properties']['Size']) + '</dd>';
-			$('#fileinfo').find('dl').html(properties);
+			$fileinfo.find('dl').html(properties);
 
 			// Bind toolbar functions.
 			bindToolbar(data);
@@ -1520,18 +1525,14 @@ var getFileInfo = function(file) {
 // TODO: consider stylesheet switching to switch between grid
 // and list views with sorting options.
 var getFolderInfo = function(path) {
-	// Update location for status, upload, & new folder functions.
+	// update location for status, upload, & new folder functions
 	setUploader(path);
 
-	// Display an activity indicator.
-	var loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />';
+	var $fileinfo = $('#fileinfo'),
+		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />';
 
-	// test if scrollbar plugin is enabled
-	if ($('#fileinfo .mCSB_container').length > 0) {
-		$('#fileinfo .mCSB_container').html(loading);
-	} else {
-		$('#fileinfo').html(loading);
-	}
+	// display an activity indicator
+	getSectionContainer($fileinfo).html(loading);
 
 	$('#loading-wrap').fadeOut(800); // remove loading screen div
 
@@ -1549,7 +1550,7 @@ var getFolderInfo = function(path) {
 	if(data){
 		var counter = 0;
 		var totalSize = 0;
-		if($('#fileinfo').data('view') == 'grid'){
+		if($fileinfo.data('view') == 'grid'){
 			result += '<ul id="contents" class="grid">';
 
 			for(key in data){
@@ -1627,48 +1628,42 @@ var getFolderInfo = function(path) {
 		result += '<h1>' + lg.could_not_retrieve_folder + '</h1>';
 	}
 
-	// Add the new markup to the DOM.
-	// test if scrollbar plugin is enabled
-	if ($('#fileinfo .mCSB_container').length > 0) {
-		$('#fileinfo .mCSB_container').html(result);
-	} else {
-		$('#fileinfo').html(result);
-	}
+	// add the new markup to the DOM
+	getSectionContainer($fileinfo).html(result);
 
 	// update #folder-info
 	$('#items-counter').text(counter);
 	$('#items-size').text(Math.round(totalSize / 1024 /1024 * 100) / 100);
 
-	// Bind click events to create detail views and add
-	// contextual menu options.
-	if($('#fileinfo').data('view') == 'grid') {
-		$('#fileinfo').find('#contents li').click(function(){
+	// add context menu and bind click events to create detail views
+	if($fileinfo.data('view') == 'grid') {
+		$fileinfo.find('#contents').contextMenu({
+			selector: 'li',
+			appendTo: '.fm-container',
+			items: getContextMenuItems(),
+			callback: function(itemKey, opt) {
+				var path = opt.$trigger.find('img').attr('data-path');
+				setMenus(itemKey, path);
+			}
+		}).find('li').click(function(){
 			var path = $(this).find('img').attr('data-path');
 			getDetailView(path);
-		}).each(function() {
-			$(this).contextMenu(
-				{ menu: getContextMenuOptions($(this)) },
-				function(action, el, pos){
-					var path = $(el).find('img').attr('data-path');
-					setMenus(action, path);
-				}
-			);
 		});
 	} else {
-		$('#fileinfo tbody tr').click(function(){
+		$fileinfo.find('tbody').contextMenu({
+			selector: 'tr',
+			appendTo: '.fm-container',
+			items: getContextMenuItems(),
+			callback: function(itemKey, opt) {
+				var path = $('td:first-child', opt.$trigger).attr('data-path');
+				setMenus(itemKey, path);
+			}
+		}).find('tr').click(function(){
 			var path = $('td:first-child', this).attr('data-path');
 			getDetailView(path);
-		}).each(function() {
-			$(this).contextMenu(
-				{ menu: getContextMenuOptions($(this)) },
-				function(action, el, pos){
-					var path = $('td:first-child', el).attr('data-path');
-					setMenus(action, path);
-				}
-			);
 		});
 
-		$('#fileinfo').find('table').tablesorter({
+		$fileinfo.find('table').tablesorter({
 			textExtraction: function(node){
 				if($(node).find('abbr').size()){
 					return $(node).find('abbr').attr('title');
@@ -1677,10 +1672,8 @@ var getFolderInfo = function(path) {
 				}
 			}
 		});
-		// Calling display_icons() function
-		// to get icons from filteree
-		// Necessary to fix bug #170
-		// https://github.com/simogeo/Filemanager/issues/170
+		// Calling display_icons() function to get icons from filteree
+		// Necessary to fix bug https://github.com/simogeo/Filemanager/issues/170
 		var timer = setInterval(function() {display_icons(timer)}, 300);
 	}
 };
@@ -1843,12 +1836,6 @@ $(function(){
 		$('#grid').attr('title', lg.grid_view);
 		$('#list').attr('title', lg.list_view);
 		$('#fileinfo h1').append(lg.select_from_left);
-		$('#itemOptions a[href$="#select"]').append(lg.select);
-		$('#itemOptions a[href$="#download"]').append(lg.download);
-		$('#itemOptions a[href$="#rename"]').append(lg.rename);
-		$('#itemOptions a[href$="#move"]').append(lg.move);
-		$('#itemOptions a[href$="#replace"]').append(lg.replace);
-		$('#itemOptions a[href$="#delete"]').append(lg.del);
 	}
 
 	/** Adding a close button triggering callback function if CKEditorCleanUpFuncNum passed */
@@ -2136,18 +2123,12 @@ $(function(){
 		createFileTree();
 	}
 
-	// Disable select function if no window.opener
-	if(! (window.opener || window.tinyMCEPopup || $.urlParam('field_name')) ) $('#itemOptions a[href$="#select"]').remove();
-	// Keep only browseOnly features if needed
+	// keep only browseOnly features if needed
 	if(config.options.browseOnly == true) {
 		$('#file-input-container').remove();
 		$('#upload').remove();
 		$('#newfolder').remove();
 		$('#toolbar').remove('#rename');
-		$('.contextMenu .rename').remove();
-		$('.contextMenu .move').remove();
-		$('.contextMenu .replace').remove();
-		$('.contextMenu .delete').remove();
 	}
 
 	// Adjust layout.

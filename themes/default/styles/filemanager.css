@@ -467,31 +467,43 @@ x:-o-prefocus,
 	margin: 100px auto;
 }
 
-.fm-container .contextMenu {
+.fm-container .context-menu-list {
+	min-width: 150px;
 	background-color:#F4F1ED;
 }
 
-.fm-container .contextMenu li.hover a {
+.fm-container .context-menu-item {
+	font-size: 11px;
+	margin: 2px 0;
+	background-color: #F4F1ED;
+}
+
+.fm-container .context-menu-item.context-menu-hover {
 	background-color: #BDF;
 }
 
-.fm-container .contextMenu a {
-	font-size: 11px;
+.fm-container .context-menu-item:before {
+	content: " ";
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	left: 6px;
+	top: 0;
 }
 
-/* these apply to the contextual menus as well as the buttons */
+/* these apply to the context menus as well as the buttons */
 .fm-container #select span,
-.fm-container .contextMenu li.select a { background-image: url(../images/accept.png); }
+.fm-container .context-menu-item.select:before { background-image: url(../images/accept.png); }
 .fm-container #download span,
-.fm-container .contextMenu li.download a { background-image: url(../images/download.png); }
+.fm-container .context-menu-item.download:before { background-image: url(../images/download.png); }
 .fm-container #rename span,
-.fm-container .contextMenu li.rename a { background-image: url(../images/tag.png); }
+.fm-container .context-menu-item.rename:before { background-image: url(../images/tag.png); }
 .fm-container #move span,
-.fm-container .contextMenu li.move a { background-image: url(../images/move.png); }
+.fm-container .context-menu-item.move:before { background-image: url(../images/move.png); }
 .fm-container #replace span,
-.fm-container .contextMenu li.replace a { background-image: url(../images/replace.png); }
+.fm-container .context-menu-item.replace:before { background-image: url(../images/replace.png); }
 .fm-container #delete span,
-.fm-container .contextMenu li.delete a { background-image: url(../images/bin_closed.png); }
+.fm-container .context-menu-item.delete:before { background-image: url(../images/bin_closed.png); }
 .fm-container #upload span { background-image: url(../images/upload.png); }
 .fm-container #upload span.loading { background-image: url(../images/ajax-loader.gif);color:#555555;font-size:0.9em; }
 .fm-container #parentfolder span { background-image: url(../images/parentfolder.png); }
