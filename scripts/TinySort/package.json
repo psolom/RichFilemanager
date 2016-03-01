@@ -1,0 +1,53 @@
+{
+  "name": "tinysort",
+  "filename": "tinysort.min.js",
+  "version": "2.2.5",
+  "description": "TinySort is a small script that sorts HTML elements. It sorts by text- or attribute value, or by that of one of it's children.",
+  "main": "dist/tinysort.js",
+  "license": "MIT",
+  "author": "Ron Valstar <ron@ronvalstar.nl> (http://www.ronvalstar.nl/)",
+  "homepage": "http://tinysort.sjeiti.com/",
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Sjeiti/TinySort.git"
+  },
+  "keywords": [
+    "sort",
+    "element",
+    "HTMLElement",
+    "Node",
+    "list",
+    "table",
+    "dom",
+    "html"
+  ],
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-contrib": "~0.7.0",
+    "grunt-contrib-clean": "~0.6.0",
+    "grunt-contrib-connect": "~0.10.1",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-jshint": "~0.6.2",
+    "grunt-contrib-qunit": "~0.7.0",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-jscs": "~1.6.0",
+    "grunt-version-git": "~0.3.1",
+    "jsdoc": "~3.3.0-alpha11",
+    "jsdoc-parse": "^1.2.1",
+    "load-grunt-tasks": "~1.0.0",
+    "mkdirp": "~0.5.0",
+    "time-grunt": "~1.0.0"
+  },
+  "autoupdate": {
+    "source": "git",
+    "target": "git://github.com/Sjeiti/TinySort.git",
+    "basePath": "dist",
+    "files": [
+      "tinysort.js",
+      "tinysort.min.js",
+      "tinysort.charorder.js",
+      "tinysort.charorder.min.js"
+    ]
+  }
+}

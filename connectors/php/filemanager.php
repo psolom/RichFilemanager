@@ -98,8 +98,7 @@ if(!isset($_GET)) {
         break;
 
       case 'move':
-        // allow "../"
-        if($fm->getvar('old') && $fm->getvar('new') && $fm->getvar('root')) {
+        if($fm->getvar('old') && $fm->getvar('new')) {
           $response = $fm->move();
         }
         break;

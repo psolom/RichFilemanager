@@ -78,11 +78,11 @@ class Filemanager {
 			$this->config['options']['logfile'] = sys_get_temp_dir(). '/filemanager.log';
 
 		$this->properties = array(
-			'Date Created'=>null,
-			'Date Modified'=>null,
-			'Height'=>null,
-			'Width'=>null,
-			'Size'=>null
+			'Date Created' => null,
+			'Date Modified' => null,
+			'Height' => null,
+			'Width' => null,
+			'Size' => null
 		);
 
 		// Log actions or not?
@@ -100,7 +100,7 @@ class Filemanager {
 			if($this->config['options']['serverRoot'] === true) {
 				$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
 				$this->separator = basename($this->config['options']['fileRoot']);
-				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] .'/' . $this->config['options']['fileRoot'];
+				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] . '/' . $this->config['options']['fileRoot'];
 			} else {
 				$this->doc_root = $this->config['options']['fileRoot'];
 				$this->separator = basename($this->config['options']['fileRoot']);
@@ -110,6 +110,8 @@ class Filemanager {
 			$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
 			$this->path_to_files = $this->root_path . '/' . $this->separator . '/' ;
 		}
+		// remove multiple slashes
+		$this->path_to_files = str_replace("//", "/", $this->path_to_files);
 
 		$this->__log(__METHOD__ . ' $this->root_path value ' . $this->root_path);
 		$this->__log(__METHOD__ . ' $this->path_to_files ' . $this->path_to_files);
@@ -136,7 +138,7 @@ class Filemanager {
 
     /**
      * Allow Filemanager to be used with dynamic folders
-     * @param string $path
+     * @param string $path - i.e '/var/www/'
      * @param bool $mkdir
      */
 	public function setFileRoot($path, $mkdir = false)
@@ -147,16 +149,17 @@ class Filemanager {
 		// [2] $this->dynamic_fileroot. The second part of the path : '/Filemanager/assets/' ( doc_root - $_SERVER['DOCUMENT_ROOT'])
 		// [3] $this->path_to_files or $this->doc_root. The full path : '/var/www/Filemanager/assets/'
 
-		$path = rtrim($path, '/') . '/';
 		if($this->config['options']['serverRoot'] === true) {
-			$this->doc_root = $_SERVER['DOCUMENT_ROOT']. '/'.  $path; // i.e  '/var/www/'
+			$this->doc_root = $_SERVER['DOCUMENT_ROOT'] . '/' . $path . '/';
 		} else {
-			$this->doc_root =  $path; // i.e  '/var/www/'
+			$this->doc_root = $path . '/';
 		}
+		// remove multiple slashes
+		$this->doc_root = str_replace("//", "/", $this->doc_root);
 
 		// necessary for retrieving path when set dynamically with $fm->setFileRoot() method
 		// https://github.com/simogeo/Filemanager/issues/258 @todo to explore deeper
-		$this->dynamic_fileroot = str_replace("//","/",str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->doc_root));
+		$this->dynamic_fileroot = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->doc_root);
 		$this->path_to_files = $this->doc_root;
 		$this->separator = basename($this->doc_root);
 
@@ -180,9 +183,9 @@ class Filemanager {
 	public function error($string, $textarea = false)
     {
 		$array = array(
-			'Error'=>$string,
-			'Code'=>'-1',
-			'Properties'=>$this->properties
+			'Error' => $string,
+			'Code' => '-1',
+			'Properties' => $this->properties
 		);
 
 		$this->__log( __METHOD__ . ' - error message : ' . $string);
@@ -250,28 +253,49 @@ class Filemanager {
      */
 	public function getinfo()
     {
-		$this->item = array();
-		$this->item['properties'] = $this->properties;
-		$this->get_file_info('', false);
-
-		// handle path when set dynamically with $fm->setFileRoot() method
+		// handle path when set dynamically with setFileRoot() method
 		if($this->dynamic_fileroot != '') {
-			$path = $this->dynamic_fileroot. $this->get['path'];
+			$path = $this->dynamic_fileroot . $this->get['path'];
 			// $path = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->path_to_files) . $this->get['path']; // instruction could replace the line above
-			$path = preg_replace('~/+~', '/', $path); // remove multiple slashes
+			$path = preg_replace('#/+#', '/', $path); // remove multiple slashes
 		} else {
 			$path = $this->get['path'];
 		}
 
+		$current_path = $this->getFullPath($path);
+		$filename = basename($current_path);
+
+		if(!$this->is_valid_path($current_path)) {
+			$this->error("No way.");
+		}
+
+		if(!file_exists($current_path)) {
+			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'), $path));
+		}
+
+		// check if file is readable
+		if(!$this->has_system_permission($current_path, array('r'))) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+		}
+
+		// check if file is allowed regarding the security Policy settings
+		if(in_array($filename, $this->config['exclude']['unallowed_files']) || preg_match( $this->config['exclude']['unallowed_files_REGEXP'], $filename)) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+		}
+
+		$this->item = array();
+		$this->item['properties'] = $this->properties;
+		$this->get_file_info('', false);
+
 		$array = array(
-			'Path'=> $this->formatPath($path),
-			'Filename'=>$this->item['filename'],
-			'File Type'=>$this->item['filetype'],
-			'Protected'=>$this->item['protected'],
-			'Preview'=>$this->item['preview'],
-			'Properties'=>$this->item['properties'],
-			'Error'=>"",
-			'Code'=>0
+			'Path' => $this->formatPath($path),
+			'Filename' => $this->item['filename'],
+			'File Type' => $this->item['filetype'],
+			'Protected' => $this->item['protected'],
+			'Preview' => $this->item['preview'],
+			'Properties' => $this->item['properties'],
+			'Error' => "",
+			'Code' => 0
 		);
 		return $array;
 	}
@@ -329,25 +353,25 @@ class Filemanager {
 							$previewPath = $iconsFolder . $this->config['icons']['directory'];
 						}
 
-						$array[$this->get['path'] . $file .'/'] = array(
-							'Path'=> $this->get['path'] . $file .'/',
-							'Filename'=>$file,
-							'File Type'=>'dir',
-							'Protected'=>$protected,
-							'Preview'=> $previewPath,
-							'Properties'=>array(
-								'Date Created'=> date($this->config['options']['dateFormat'], filectime($this->getFullPath($this->get['path'] . $file .'/'))),
-								'Date Modified'=> date($this->config['options']['dateFormat'], filemtime($this->getFullPath($this->get['path'] . $file .'/'))),
-								'filemtime'=> filemtime($this->getFullPath($this->get['path'] . $file .'/')),
-								'Height'=>null,
-								'Width'=>null,
-								'Size'=>null
+						$array[$this->get['path'] . $file . '/'] = array(
+							'Path' => $this->get['path'] . $file . '/',
+							'Filename' => $file,
+							'File Type' => 'dir',
+							'Protected' => $protected,
+							'Preview' => $previewPath,
+							'Properties' => array(
+								'Date Created' => date($this->config['options']['dateFormat'], filectime($this->getFullPath($this->get['path'] . $file . '/'))),
+								'Date Modified' => date($this->config['options']['dateFormat'], filemtime($this->getFullPath($this->get['path'] . $file . '/'))),
+								'filemtime' => filemtime($this->getFullPath($this->get['path'] . $file . '/')),
+								'Height' => null,
+								'Width' => null,
+								'Size' => null
 							),
-							'Error'=>"",
-							'Code'=>0
+							'Error' => "",
+							'Code' => 0
 						);
 					}
-				} else if (!in_array($file, $this->config['exclude']['unallowed_files'])  && !preg_match( $this->config['exclude']['unallowed_files_REGEXP'], $file)) {
+				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match( $this->config['exclude']['unallowed_files_REGEXP'], $file)) {
 					$this->item = array();
 					$this->item['properties'] = $this->properties;
 					$this->get_file_info($this->get['path'] . $file, true);
@@ -356,14 +380,14 @@ class Filemanager {
 					if(!isset($this->params['type']) || (isset($this->params['type']) && strtolower($this->params['type'])=='images' && in_array(strtolower($this->item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
 						if($this->config['upload']['imagesOnly']== false || ($this->config['upload']['imagesOnly']== true && in_array(strtolower($this->item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
 							$array[$this->get['path'] . $file] = array(
-								'Path'=>$this->get['path'] . $file,
-								'Filename'=>$this->item['filename'],
-								'File Type'=>$this->item['filetype'],
-								'Protected'=>$this->item['protected'],
-								'Preview'=>$this->item['preview'],
-								'Properties'=>$this->item['properties'],
-								'Error'=>"",
-								'Code'=>0
+								'Path' => $this->get['path'] . $file,
+								'Filename' => $this->item['filename'],
+								'File Type' => $this->item['filetype'],
+								'Protected' => $this->item['protected'],
+								'Preview' => $this->item['preview'],
+								'Properties' => $this->item['properties'],
+								'Error' => "",
+								'Code' => 0
 							);
 						}
 					}
@@ -403,10 +427,10 @@ class Filemanager {
 		}
 
 		$array = array(
-			'Error'=>"",
-			'Code'=>0,
-			'Path'=>$this->get['path'],
-			'Content'=>$this->formatPath($content)
+			'Error' => "",
+			'Code' => 0,
+			'Path' => $this->get['path'],
+			'Content' => $this->formatPath($content)
 		);
 
 		return $array;
@@ -437,9 +461,9 @@ class Filemanager {
 		}
 
 		$array = array(
-			'Error'=>"",
-			'Code'=>0,
-			'Path'=>$this->formatPath($this->post['path'])
+			'Error' => "",
+			'Code' => 0,
+			'Path' => $this->formatPath($this->post['path'])
 		);
 
 		return $array;
@@ -511,12 +535,12 @@ class Filemanager {
 		}
 
 		$array = array(
-			'Error'=>"",
-			'Code'=>0,
-			'Old Path'=>$this->formatPath($this->get['old'].$suffix),
-			'Old Name'=>$filename,
-			'New Path'=>$this->formatPath($path . '/' . $this->get['new'].$suffix),
-			'New Name'=>$this->get['new']
+			'Error' => "",
+			'Code' => 0,
+			'Old Path' => $this->formatPath($this->get['old'] . $suffix),
+			'Old Name' => $filename,
+			'New Path' => $this->formatPath($path . '/' . $this->get['new'] . $suffix),
+			'New Name' => $this->get['new']
 		);
 		return $array;
 	}
@@ -526,22 +550,24 @@ class Filemanager {
      */
 	public function move()
     {
+		$newPath = $this->get['new'] . '/';
 		// dynamic fileroot dir must be used when enabled
 		if($this->dynamic_fileroot != '') {
-			$rootDir = $this->dynamic_fileroot;
+			$newPath = $this->dynamic_fileroot . '/' . $newPath;
+//			$rootDir = $this->dynamic_fileroot;
 			//$rootDir = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->path_to_files); // instruction could replace the line above
-		} else {
-			$rootDir = $this->get['root'];
 		}
+//		} else {
+//			$rootDir = $this->get['root'];
+//		}
 
-		$rootDir = str_replace('//', '/', $rootDir);
+//		$rootDir = str_replace('//', '/', $rootDir);
 		$oldPath = $this->getFullPath($this->get['old']);
 
 		// check if file is writable
 		if(!$this->has_system_permission($oldPath, array('w'))) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')),true);
 		}
-
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($oldPath)) {
@@ -553,13 +579,13 @@ class Filemanager {
 		$fileName = array_pop($tmp); // file name or new dir name
 		$path = '/' . implode('/', $tmp) . '/';
 
-		// new path
-		if (substr($this->get['new'], 0, 1) != "/") {
-			// make path relative from old dir
-			$newPath = $path . '/' . $this->get['new'] . '/';
-		} else {
-			$newPath = $rootDir . '/' . $this->get['new'] . '/';
-		}
+//		// new path
+//		if (substr($this->get['new'], 0, 1) != "/") {
+//			// make path relative from old dir
+//			$newPath = $path . '/' . $this->get['new'] . '/';
+//		} else {
+//			$newPath = $rootDir . '/' . $this->get['new'] . '/';
+//		}
 
 		$newPath = preg_replace('#/+#', '/', $newPath);
 		$newPath = $this->expandPath($newPath, true);
@@ -590,7 +616,7 @@ class Filemanager {
 		// move
 		$this->__log(__METHOD__ . ' - moving '. $oldPath. ' to directory ' . $newPath);
 
-		if(!rename($oldPath,$newPath . $fileName)) {
+		if(!rename($oldPath, $newPath . $fileName)) {
 			if(is_dir($oldPath)) {
 				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'),$path,$this->get['new']));
 			} else {
@@ -599,12 +625,13 @@ class Filemanager {
 		}
 
 		$array = array(
-			'Error'=>"",
-			'Code'=>0,
-			'Old Path'=>$this->formatPath($path),
-			'Old Name'=>$fileName,
-			'New Path'=>$this->formatPath($newRelativePath),
-			'New Name'=>$fileName,
+			'Error' => "",
+			'Code' => 0,
+			'Old Path' => $this->formatPath($path),
+			'Old Name' => $fileName,
+			'New Path' => $this->formatPath($newRelativePath),
+			'New Name' => $fileName,
+			'Type' => is_dir($oldPath) ? 'dir' : 'file',
 		);
 		return $array;
 	}
@@ -641,9 +668,9 @@ class Filemanager {
 			$this->unlinkRecursive($thumbnail_path);
 
 			$array = array(
-				'Error'=>"",
-				'Code'=>0,
-				'Path'=>$this->formatPath($this->get['path'])
+				'Error' => "",
+				'Code' => 0,
+				'Path' => $this->formatPath($this->get['path'])
 			);
 
 			$this->__log(__METHOD__ . ' - deleting folder '. $current_path);
@@ -658,9 +685,9 @@ class Filemanager {
 			if(file_exists($thumbnail_path)) unlink($thumbnail_path);
 
 			$array = array(
-				'Error'=>"",
-				'Code'=>0,
-				'Path'=>$this->formatPath($this->get['path'])
+				'Error' => "",
+				'Code' => 0,
+				'Path' => $this->formatPath($this->get['path'])
 			);
 
 			$this->__log(__METHOD__ . ' - deleting file '. $current_path);
@@ -716,10 +743,10 @@ class Filemanager {
 		chmod($current_path, 0644);
 
 		$response = array(
-			'Path'=>dirname($this->post['newfilepath']),
-			'Name'=>basename($this->post['newfilepath']),
-			'Error'=>"",
-			'Code'=>0
+			'Path' => dirname($this->post['newfilepath']),
+			'Name' => basename($this->post['newfilepath']),
+			'Error' => "",
+			'Code' => 0
 		);
 
 		$this->__log(__METHOD__ . ' - replacing file '. $current_path);
@@ -763,10 +790,10 @@ class Filemanager {
 		chmod($current_path . $_FILES['newfile']['name'], 0644);
 
 		$response = array(
-			'Path'=>$this->post['currentpath'],
-			'Name'=>$_FILES['newfile']['name'],
-			'Error'=>"",
-			'Code'=>0
+			'Path' => $this->post['currentpath'],
+			'Name' => $_FILES['newfile']['name'],
+			'Error' => "",
+			'Code' => 0
 		);
 
 		$this->__log(__METHOD__ . ' - adding file '. $_FILES['newfile']['name']. ' into '. $current_path);
@@ -795,10 +822,10 @@ class Filemanager {
 			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'),$newdir));
 		}
 		$array = array(
-			'Parent'=>$this->get['path'],
-			'Name'=>$this->get['name'],
-			'Error'=>"",
-			'Code'=>0
+			'Parent' => $this->get['path'],
+			'Name' => $this->get['name'],
+			'Error' => "",
+			'Code' => 0
 		);
 		$this->__log(__METHOD__ . ' - adding folder '. $current_path . $newdir);
 
@@ -946,7 +973,7 @@ class Filemanager {
 			exit();
 
 		} else {
-			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'),$current_path));
+			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'), $current_path));
 		}
 	}
 
@@ -1014,24 +1041,26 @@ class Filemanager {
      */
 	protected function get_file_info($path = '', $thumbnail = false)
     {
-		// DO NOT  rawurlencode() since $current_path it
+		// DO NOT  rawurlencode() since $relative_path it
 		// is used for displaying name file
 		if($path=='') {
-			$current_path = $this->get['path'];
+			$relative_path = $this->get['path'];
 		} else {
-			$current_path = $path;
+			$relative_path = $path;
 		}
-		$tmp = explode('/',$current_path);
+		$current_path = $this->getFullPath($relative_path);
+
+		$tmp = explode('/', $relative_path);
 		$this->item['filename'] = $tmp[(sizeof($tmp)-1)];
 
 		$tmp = explode('.',$this->item['filename']);
 		$this->item['filetype'] = $tmp[(sizeof($tmp)-1)];
-		$this->item['filemtime'] = filemtime($this->getFullPath($current_path));
-		$this->item['filectime'] = filectime($this->getFullPath($current_path));
+		$this->item['filemtime'] = filemtime($current_path);
+		$this->item['filectime'] = filectime($current_path);
 		$iconsFolder = $this->getUrl($this->config['icons']['path']);
 
 		// check if file is writable and readable
-		if(!$this->has_system_permission($this->getFullPath($current_path), array('w', 'r'))) {
+		if(!$this->has_system_permission($current_path, array('w', 'r'))) {
 			$this->item['protected'] = 1;
 			$this->item['preview'] = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			// prevent Internal Server Error HTTP_CODE 500 on non readable files/folders
@@ -1051,34 +1080,34 @@ class Filemanager {
 
 			// svg should not be previewed as raster formats images
 			if($this->item['filetype'] == 'svg') {
-				$this->item['preview'] = $current_path;
+				$this->item['preview'] = $relative_path;
 			} else {
-				$this->item['preview'] = $this->connector_script_url . '?mode=preview&path='. rawurlencode($current_path).'&'. time();
+				$this->item['preview'] = $this->connector_script_url . '?mode=preview&path='. rawurlencode($relative_path).'&'. time();
 				if($thumbnail) $this->item['preview'] .= '&thumbnail=true';
 			}
 			//if(isset($get['getsize']) && $get['getsize']=='true') {
-			$this->item['properties']['Size'] = filesize($this->getFullPath($current_path));
+			$this->item['properties']['Size'] = filesize($current_path);
 			if ($this->item['properties']['Size']) {
-				list($width, $height, $type, $attr) = getimagesize($this->getFullPath($current_path));
+				list($width, $height, $type, $attr) = getimagesize($current_path);
 			} else {
 				$this->item['properties']['Size'] = 0;
 				list($width, $height) = array(0, 0);
 			}
 			$this->item['properties']['Height'] = $height;
 			$this->item['properties']['Width'] = $width;
-			$this->item['properties']['Size'] = filesize($this->getFullPath($current_path));
+			$this->item['properties']['Size'] = filesize($current_path);
 			//}
 
 		} else if(file_exists($this->root_path . '/' . $this->config['icons']['path'] . strtolower($this->item['filetype']) . '.png')) {
 
 			$this->item['preview'] = $iconsFolder . strtolower($this->item['filetype']) . '.png';
-			$this->item['properties']['Size'] = filesize($this->getFullPath($current_path));
+			$this->item['properties']['Size'] = filesize($current_path);
 			if (!$this->item['properties']['Size']) $this->item['properties']['Size'] = 0;
 
 		}
 
 		$this->item['properties']['Date Modified'] = date($this->config['options']['dateFormat'], $this->item['filemtime']);
-		$this->item['properties']['filemtime'] = filemtime($this->getFullPath($current_path));
+		$this->item['properties']['filemtime'] = filemtime($current_path);
 		//$return['properties']['Date Created'] = $this->config['options']['dateFormat'], $return['filectime']); // PHP cannot get create timestamp
 	}
 
@@ -1479,7 +1508,7 @@ class Filemanager {
      */
 	protected function is_root_folder($path)
     {
-		return rtrim($this->path_to_files,"/") == rtrim($path,"/");
+		return rtrim($this->path_to_files, '/') == rtrim($path, '/');
 	}
 
     /**
@@ -1632,7 +1661,7 @@ class Filemanager {
 	protected function getUrl($path)
 	{
 		if(isset($this->config['root_url']) && strpos($path, '/') !== 0 && $this->config['root_url']) {
-			return $this->config['root_url'] . "/" . $path;
+			return str_replace('//', '/', $this->config['root_url'] . '/' . $path);
 		}
 		return $path;
 	}

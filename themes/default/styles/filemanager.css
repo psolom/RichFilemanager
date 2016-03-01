@@ -366,18 +366,27 @@ x:-o-prefocus,
 
 .fm-container #contents.grid li:hover {
 	border: 1px solid #E5E5E5;
-	background-color:#F7F7F7;
+	background-color: #F7F7F7;
 	cursor: pointer;
 }
 
-.fm-container div.clip {
+.fm-container #contents.grid li.file div.clip,
+.fm-container #contents.grid li.directory div.clip {
 	width: 64px;
 	height: 64px;
 	margin: 10px auto;
 	overflow: hidden;
 }
 
-.fm-container #contents.grid li img {
+.fm-container #contents.grid li.directory-parent div.clip {
+	width: 128px;
+	height: 128px;
+	margin: 0 auto;
+}
+
+.fm-container #contents.grid li.drop-hover,
+.fm-container #contents.list tr.drop-hover {
+	background-color: #e0e0e0;
 }
 
 .fm-container #contents.grid p {
@@ -572,6 +581,20 @@ x:-o-prefocus,
 	margin:2em auto;
 }
 
+.fm-container ul.jqueryFileTree a {
+	width: 100%;
+}
+
+.fm-container ul.jqueryFileTree a:hover,
+.fm-container ul.jqueryFileTree a.drop-hover {
+	background-color: #e0e0e0;
+}
+
+.fm-container ul.jqueryFileTree li.selected > a {
+	font-weight: normal;
+}
+
+
 /* IE10-11 styles */
 html[data-useragent*='MSIE 10.0'] .fm-container #uploader button,
 html[data-useragent*='MSIE 11.0'] .fm-container #uploader button {
@@ -706,6 +729,14 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 	text-align: center;
 	color: #5A5A5A;
 	font-weight: bold;
+}
+
+.fm-modal-container .dropzone .dz-preview .dz-error-message {
+	top: 150px;
+}
+
+.fm-modal-container .dropzone .dz-preview.dz-error .dz-image {
+	border: 1px solid #FF0000;
 }
 
 .fm-modal-container .dropzone .dz-preview .dz-details {

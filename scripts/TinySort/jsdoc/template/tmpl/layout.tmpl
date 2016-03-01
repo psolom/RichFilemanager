@@ -1,0 +1,111 @@
+<?js var that = this; ?>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+	<title><?js= this.navOptions.systemName ?> <?js= title ?></title>
+	<!--[if lt IE 9]><script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script><![endif]-->
+	<link type="text/css" rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+	<link type="text/css" rel="stylesheet" href="styles/site.<?js= this.navOptions.theme ?>.css">
+	<!--<link rel="icon" type="image/svg+xml" sizes="any" href="styles/logo.svg">-->
+	<link rel="icon" type="image/png" href="styles/logo.svg" sizes="16x16">
+	<!--<link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">-->
+	<!--<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">-->
+</head>
+<body>
+<nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+	<div class="container">
+		<div class="navbar-header">
+			<button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+				<span class="sr-only">Toggle navigation</span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+				<span class="icon-bar"></span>
+			</button>
+			<a class="navbar-brand" href="<?js= this.nav.index.link ?>"><?js= this.nav.index.title ?></a>
+		</div>
+		<div id="navbar" class="navbar-collapse collapse">
+			<ul class="nav navbar-nav">
+				<?js this.nav.topLevelNav.forEach(function(entry){ ?>
+				<li class="dropdown">
+					<a href="<?js= entry.link ?>" class="dropdown-toggle" data-toggle="dropdown"><?js= entry.title ?><b
+						class="caret"></b></a>
+
+					<ul class="dropdown-menu <?js= that.navOptions.navType ==='inline' ? 'inline' : '' ?>" role="menu">
+						<?js entry.members.forEach(function(member){ ?>
+						<li>
+							<?js= member ?>
+						</li>
+						<?js	}); ?>
+
+					</ul>
+				</li>
+				<?js }); ?>
+			</ul>
+		</div>
+	</div>
+</nav>
+<div class="container">
+	<!--<div class="row-fluid">-->
+
+		<?js if(docs && docs[0].kind !== "source"){ ?>
+		<div class="span8">
+			<?js }else{ ?>
+			<div class="span12">
+				<?js } ?>
+				<div id="main">
+					<?js= content ?>
+				</div>
+
+				<div class="clearfix"></div>
+			</div>
+
+			<?js if(docs && docs[0].kind !== "source"){ ?>
+			<div class="span3">
+				<div id="toc"></div>
+			</div>
+			<?js } ?>
+			<br clear="both">
+		</div>
+
+	<!--</div>-->
+	<footer id="colophon">
+		<?js if (that.navOptions.footer.length > 0){ ?>
+		<?js= that.navOptions.footer ?>
+		<br />
+		<?js } ?>
+		<?js if (that.navOptions.copyright.length > 0){ ?>
+		<span class="copyright"><?js= that.navOptions.copyright ?></span>
+		<?js } ?>
+		<span class="jsdoc-message"><?js= (new Date()) ?></span>
+	</footer>
+</div>
+
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+<!--<script src="scripts/jquery.scrollTo.js"></script>-->
+<!--<script src="scripts/jquery.localScroll.js"></script>-->
+<!--<script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>-->
+
+<!-- bower:js -->
+<script src="vendor/es6-promise-polyfill/promise.js"></script>
+<script src="vendor/iddqd/src/iddqd.js"></script>
+<script src="vendor/iddqd/src/iddqd.pattern.js"></script>
+<script src="vendor/iddqd/src/iddqd.internal.js"></script>
+<script src="vendor/iddqd/src/iddqd.internal.native.string.js"></script>
+<script src="vendor/iddqd/src/iddqd.internal.native.number.js"></script>
+<script src="vendor/iddqd/src/iddqd.network.xhttp.js"></script>
+<script src="vendor/rainbow/js/rainbow.js"></script>
+<script src="vendor/rainbow/js/language/generic.js"></script>
+<script src="vendor/rainbow/js/language/html.js"></script>
+<script src="vendor/rainbow/js/language/css.js"></script>
+<script src="vendor/rainbow/js/language/javascript.js"></script>
+<script src="vendor/rainbow.linenumbers/js/rainbow.linenumbers.min.js"></script>
+<script src="vendor/zenjs/dist/zen.js"></script>
+<!-- endbower -->
+
+<script src="scripts/jsdoc.js"></script>
+<script>jsdoc.init();</script>
+</body>
+</html>

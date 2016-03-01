@@ -1,0 +1,13 @@
+{
+  "name": "Sjeiti JSDoc template",
+  "version": "0.0.1",
+  "dependencies": {
+    "es5-shim": "*",
+    "es6-promise-polyfill": "~1.0.0",
+    "iddqd": "git://github.com/Sjeiti/iddqd.git",
+    "rainbow": "~1.1.9",
+    "rainbow.linenumbers": "~1.1.2",
+    "zenjs": "~0.1.7",
+    "bootstrap": "~3.3.1"
+  }
+}

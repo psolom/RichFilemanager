@@ -1,0 +1,10 @@
+node_modules/
+src/vendor/
+src/style/*.css
+web/
+temp/
+doc/
+test/*.html
+jsdoc/template/static/
+.idea/workspace.xml
+.idea/tasks.xml

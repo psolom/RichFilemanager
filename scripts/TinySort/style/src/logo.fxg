@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Graphic version="2.0" viewHeight="256" viewWidth="256" ATE:version="1.0.0" flm:version="1.0.0" d:id="1" d:using="" xmlns="http://ns.adobe.com/fxg/2008" xmlns:ATE="http://ns.adobe.com/ate/2009" xmlns:d="http://ns.adobe.com/fxg/2008/dt" xmlns:flm="http://ns.adobe.com/flame/2008">
+  <Library/>
+  <Group blendMode="normal" d:type="layer" d:userLabel="Layer 1">
+    <Group flm:isDrawingObject="false">
+      <Path data="M199.6 142.9 186.35 94.5 237.8 124.55 253.9 175.15Z">
+        <fill>
+          <RadialGradient x="210.8" y="125" scaleX="132.15" scaleY="132.15">
+            <GradientEntry ratio="0" color="#FBEEBF"/>
+            <GradientEntry ratio="0.80784314" color="#F6DC6F"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+      <Path data="M199.6 142.9 148.55 194 135.3 145.45 186.35 94.5Z">
+        <fill>
+          <RadialGradient x="146.05" y="184.75" scaleX="197.7" scaleY="197.7">
+            <GradientEntry ratio="0" color="#F6DC6F"/>
+            <GradientEntry ratio="1" color="#F3CE3F"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+      <Path data="M148.55 194 199.6 142.9 253.9 175.15 205.85 223.25Z">
+        <fill>
+          <RadialGradient x="174.5" y="78.4" scaleX="263.15" scaleY="263.15" focalPointRatio="-0.019607843">
+            <GradientEntry ratio="0" color="#F6DC6F"/>
+            <GradientEntry ratio="1" color="#D0A90D"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+      <Path data="M76.15 14.85 125.1 124.3 55.4 89.55Z">
+        <fill>
+          <RadialGradient x="86.1" y="98.3" scaleX="548.57225" scaleY="304.57679" rotation="15.000517">
+            <GradientEntry ratio="0" color="#217B06"/>
+            <GradientEntry ratio="1" color="#8ABE0E"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+      <Path data="M2.1 158.65 2.05 158.6Q-0.05 154.85 8.85 146.05 17.75 137.25 32.6 128.6 47.4 120.05 59.5 116.7 71.55 113.55 73.8 117.15L73.85 117.25Q75.75 120.95 67.05 129.65 58.1 138.5 43.3 147.05 28.45 155.65 16.3 159 4.35 162.25 2.1 158.65Z">
+        <fill>
+          <RadialGradient x="32.4" y="164.8" scaleX="172.77905" scaleY="97.476696" rotation="330.00252" spreadMethod="reflect">
+            <GradientEntry ratio="0" color="#55D0DD"/>
+            <GradientEntry ratio="1" color="#29769A"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+      <Path data="M73.85 117.25 120.6 198.2Q122.7 202.05 113.8 210.75 104.8 219.55 90 228.1 75.15 236.7 63.1 240.1 51.15 243.35 48.9 239.6L2.1 158.65Q4.35 162.25 16.3 159 28.45 155.65 43.3 147.05 58.1 138.5 67.05 129.65 75.75 120.95 73.85 117.25Z">
+        <fill>
+          <RadialGradient x="45.7" y="144.85" scaleX="97.138551" scaleY="273.55807" rotation="330.01859" spreadMethod="reflect" focalPointRatio="0.43529412">
+            <GradientEntry ratio="0" color="#55D0DD"/>
+            <GradientEntry ratio="1" color="#29769A"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+      <Path data="M125.1 124.3 76.15 14.85 180.95 35.65Z">
+        <fill>
+          <RadialGradient x="160.85" y="137.3" scaleX="308.36072" scaleY="886.74273" rotation="59.858798">
+            <GradientEntry ratio="0" color="#217B06"/>
+            <GradientEntry ratio="0.66666667" color="#8ABE0E"/>
+            <GradientEntry ratio="1" color="#CDF471"/>
+          </RadialGradient>
+        </fill>
+      </Path>
+    </Group>
+  </Group>
+  <Private>
+      <xfl:PrivateElement d:ref="#1" xmlns:xfl="http://ns.adobe.com/xfl/2008/">
+        <xfl:publishSettings xfl:source=""/>
+        <xfl:mobileSettings xfl:source=""/>
+        <xfl:as3ExportItems/>
+      </xfl:PrivateElement>
+    </Private>
+  </Graphic>

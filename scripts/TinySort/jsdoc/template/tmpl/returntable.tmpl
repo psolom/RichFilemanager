@@ -1,0 +1,28 @@
+<table class="returns table table-striped">
+	<thead>
+	<tr>
+		<th><h5>Returns</h5></th>
+		<th>Description</th>
+	</tr></thead>
+	<tbody>
+		<?js
+		var data = obj
+			,that = this;
+		data.forEach(function(entry) {
+    	?><tr>
+			<td class="type">
+				<?js if (entry.type && entry.type.names) { ?>
+					<code><?js= that.partial('type.tmpl', entry.type.names) ?></code>
+					<!--<code><?js= entry.type.names ?></code>-->
+				<?js } ?>
+			</td>
+
+			<td>
+				<?js if (entry.description) { ?>
+					<?js= entry.description ?>
+				<?js } ?>
+			</td>
+		</tr>
+	<?js }) ?>
+	</tbody>
+</table>

@@ -1,0 +1,34 @@
+{
+  "name": "Sjeiti_JSDoc_template",
+  "version": "0.4.13",
+  "description": "Sjeiti JSDoc template",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "load-grunt-tasks": "~0.4.0",
+    "time-grunt": "~0.3.1",
+    "grunt": "~0.4.2",
+    "glob": "~3.2.7",
+    "node-zip": "~1.1.0",
+    "adm-zip": "~0.4.4",
+    "grunt-contrib-watch": "~0.6.1",
+    "grunt-contrib-jshint": "~0.8.0",
+    "grunt-contrib-copy": "~0.4.1",
+    "grunt-contrib-clean": "~0.6.0",
+    "grunt-contrib-less": "~0.8.3",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-uglify": "~0.2.7",
+    "grunt-contrib-rename": "0.0.3",
+    "uglify-files": "~0.1.1",
+    "grunt-version-git": "~0.1.7",
+    "mkdirp": "~0.5.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Ron Valstar (http://ronvalstar.nl/)",
+  "license": "none"
+}
