@@ -72,7 +72,7 @@ var config = loadConfigFile();
 if (config !== null) delete config.version;
 
 // merge default config and user config file
-var config = $.extend({}, configd, config);
+var config = $.extend(true, {}, configd, config);
 
 if(config.options.logger) var start = new Date().getTime();
 
