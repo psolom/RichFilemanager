@@ -25,7 +25,7 @@ $.urlParam = function(name){
   Setup, Layout, and Status Functions
 ---------------------------------------------------------*/
 
-// Retrieves config settings from filemanager.config.js
+// Retrieves config settings from filemanager.config.json
 var loadConfigFile = function (type) {
 	var json = null,
 		pluginPath = ".";
@@ -40,11 +40,11 @@ var loadConfigFile = function (type) {
 			var url = pluginPath + '/scripts/' + $.urlParam('config');
 			userconfig = $.urlParam('config');
 		} else {
-			var url = pluginPath + '/scripts/filemanager.config.js';
-			userconfig = 'filemanager.config.js';
+			var url = pluginPath + '/scripts/filemanager.config.json';
+			userconfig = 'filemanager.config.json';
 		}
 	} else {
-		var url = pluginPath + '/scripts/filemanager.config.js.default';
+		var url = pluginPath + '/scripts/filemanager.config.default.json';
 	}
 
     $.ajax({
@@ -1893,7 +1893,11 @@ var getFolderInfo = function(path) {
 		// bind click event to load and display detail view
 		$fileinfo.find('li').click(function(){
 			var path = $(this).find('img').attr('data-path');
-			getDetailView(path);
+			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
+				selectItem(data[path]);
+			} else {
+				getDetailView(path);
+			}
 		});
 	} else {
 		// context menu
@@ -1924,7 +1928,11 @@ var getFolderInfo = function(path) {
 		// bind click event to load and display detail view
 		$fileinfo.find('tr').click(function(){
 			var path = $('td:first-child', this).attr('data-path');
-			getDetailView(path);
+			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
+				selectItem(data[path]);
+			} else {
+				getDetailView(path);
+			}
 		});
 
 		// Calling display_icons() function to get icons from filteree

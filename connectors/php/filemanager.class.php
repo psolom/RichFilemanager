@@ -38,7 +38,7 @@ class Filemanager {
 		$this->root_path = isset($extraConfig['root_path']) ? $extraConfig['root_path'] : dirname(dirname(dirname(__FILE__)));
 
 		// getting default config file
-		$content = file_get_contents($this->root_path . "/scripts/filemanager.config.js.default");
+		$content = file_get_contents($this->root_path . "/scripts/filemanager.config.default.json");
 		$config_default = json_decode($content, true);
 
 		// getting user config file
@@ -52,7 +52,7 @@ class Filemanager {
 				$this->error("Given config file (".basename($this->get['config']).") does not exist !");
 			}
 		}	else {
-			$content = file_get_contents($this->root_path . "/scripts/filemanager.config.js");
+			$content = file_get_contents($this->root_path . "/scripts/filemanager.config.json");
 		}
 		$config = json_decode($content, true);
 
@@ -487,7 +487,7 @@ class Filemanager {
 		$new_file = $this->getFullPath($path . '/' . $this->get['new']). $suffix;
 		$old_file = $this->getFullPath($this->get['old']) . $suffix;
 
-		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file)) {
+		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file) || !$this->is_valid_path($new_file)) {
 			$this->error("No way.");
 		}
 
@@ -815,8 +815,8 @@ class Filemanager {
 		}
 		if(is_dir($current_path . $this->get['name'])) {
 			$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'),$this->get['name']));
-
 		}
+
 		$newdir = $this->cleanString($this->get['name']);
 		if(!mkdir($current_path . $newdir,0755)) {
 			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'),$newdir));
@@ -953,6 +953,10 @@ class Filemanager {
 	public function preview($thumbnail)
     {
 		$current_path = $this->getFullPath();
+
+		if(!$this->is_valid_path($current_path)) {
+			$this->error("No way.");
+		}
 
 		if(isset($this->get['path']) && file_exists($current_path)) {
 
@@ -1216,6 +1220,12 @@ class Filemanager {
     {
         $rp_substr = substr(realpath($path) . DIRECTORY_SEPARATOR, 0, strlen(realpath($this->path_to_files))) . DIRECTORY_SEPARATOR;
         $rp_files = realpath($this->path_to_files) . DIRECTORY_SEPARATOR;
+
+		// handle better symlinks & network path - issue #448
+		$pattern = array('/\\\\+/', '/\/+/');
+		$replacement = array('\\\\', '/');
+		$rp_substr = preg_replace($pattern, $replacement, $rp_substr);
+		$rp_files = preg_replace($pattern, $replacement, $rp_files);
 
 		$this->__log('substr path_to_files : ' . $rp_substr);
 		$this->__log('path_to_files : ' . $rp_files);
