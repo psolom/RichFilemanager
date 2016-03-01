@@ -23,8 +23,6 @@
         "dateFormat": "d M Y H:i",
         "serverRoot": true,
         "fileRoot": false,
-        "fileConnector": false,
-        "pluginPath": false,
         "baseUrl": false,
         "logger": false,
         "capabilities": ["select", "download", "rename", "delete", "replace"],
@@ -34,7 +32,6 @@
         "allowFolderDownload": false,
         "allowChangeExtensions": false,
         "allowNoExtension": false,
-        "normalizeFilename": true,
         "uploadPolicy": "DISALLOW_ALL",
         "uploadRestrictions": [
             "jpg",
