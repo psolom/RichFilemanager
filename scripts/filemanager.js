@@ -13,7 +13,7 @@
 (function($) {
 
 // function to retrieve GET params
-$.urlParam = function(name){
+$.urlParam = function(name) {
 	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
 	if (results)
 		return results[1];
@@ -183,7 +183,7 @@ $.prompt.setDefaults({
 
 // Forces columns to fill the layout vertically.
 // Called on initial page load and on resize.
-var setDimensions = function(){
+var setDimensions = function() {
 	var bheight = 0,
 		$uploader = $('#uploader'),
 		$container = $('.fm-container'),
@@ -338,8 +338,8 @@ var formatBytes = function(bytes) {
 	var c = 0;
 	var u = [lg.bytes,lg.kb,lg.mb,lg.gb];
 
-	while(true){
-		if(n < d){
+	while(true) {
+		if(n < d) {
 			n = Math.round(n * 100) / 100;
 			return n + u[c];
 		} else {
@@ -526,7 +526,7 @@ var getPdfReader = function(data) {
 // retrieving them from filetree
 // Called using SetInterval
 var display_icons = function(timer) {
-	$('#fileinfo').find('tr.file, tr.directory').find('td:first').each(function(){
+	$('#fileinfo').find('tr.file, tr.directory').find('td:first').each(function() {
 		var path = $(this).attr('data-path');
 		var treenode = $('#filetree').find('a[data-path="' + path + '"]').parent();
 
@@ -543,19 +543,19 @@ var display_icons = function(timer) {
 var setUploader = function(path) {
 	setCurrentPath(path);
 
-	$('#newfolder').unbind().click(function(){
+	$('#newfolder').unbind().click(function() {
 		var foldername =  lg.default_foldername;
 		var msg = lg.prompt_foldername + ' : <input id="fname" name="fname" type="text" value="' + foldername + '" />';
 
-		var getFolderName = function(e, value, message, formVals){
+		var getFolderName = function(e, value, message, formVals) {
 			if(!value) return;
 			var fname = message.children('#fname').val();
 
-			if(fname != ''){
+			if(fname != '') {
 				foldername = cleanString(fname);
 				var d = new Date(); // to prevent IE cache issues
-				$.getJSON(fileConnector + '?mode=addfolder&path=' + getCurrentPath() + '&config=' + userconfig + '&name=' + encodeURIComponent(foldername) + '&time=' + d.getMilliseconds(), function(result){
-					if(result['Code'] == 0){
+				$.getJSON(fileConnector + '?mode=addfolder&path=' + getCurrentPath() + '&config=' + userconfig + '&name=' + encodeURIComponent(foldername) + '&time=' + d.getMilliseconds(), function(result) {
+					if(result['Code'] == 0) {
 						addFolder(result['Parent']);
 						getFolderInfo(result['Parent']);
 					} else {
@@ -602,7 +602,7 @@ var bindToolbar = function(data) {
 	if (!has_capability(data, 'rename')) {
 		$fileinfo.find('button#rename').hide();
 	} else {
-		$fileinfo.find('button#rename').click(function(){
+		$fileinfo.find('button#rename').click(function() {
 			renameItem(data);
 		}).show();
 	}
@@ -610,7 +610,7 @@ var bindToolbar = function(data) {
 	if (!has_capability(data, 'move')) {
 		$fileinfo.find('button#move').hide();
 	} else {
-		$fileinfo.find('button#move').click(function(){
+		$fileinfo.find('button#move').click(function() {
 			moveItemPrompt(data);
 		}).show();
 	}
@@ -618,7 +618,7 @@ var bindToolbar = function(data) {
 	if (!has_capability(data, 'replace')) {
 		$fileinfo.find('button#replace').hide();
 	} else {
-		$fileinfo.find('button#replace').click(function(){
+		$fileinfo.find('button#replace').click(function() {
 			replaceItem(data);
 		}).show();
 	}
@@ -626,7 +626,7 @@ var bindToolbar = function(data) {
 	if (!has_capability(data, 'delete')) {
 		$fileinfo.find('button#delete').hide();
 	} else {
-		$fileinfo.find('button#delete').click(function(){
+		$fileinfo.find('button#delete').click(function() {
 			deleteItem(data);
 		}).show();
 	}
@@ -634,7 +634,7 @@ var bindToolbar = function(data) {
 	if (!has_capability(data, 'download')) {
 		$fileinfo.find('button#download').hide();
 	} else {
-		$fileinfo.find('button#download').click(function(){
+		$fileinfo.find('button#download').click(function() {
 			window.location = fileConnector + '?mode=download&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig;
 		}).show();
 	}
@@ -784,7 +784,7 @@ var createFileTree = function() {
 			multiFolder: true,
 			expandSpeed: 300,
 			collapseSpeed: 300
-		}, function(file){
+		}, function(file) {
 			getFileInfo(file);
 		});
 };
@@ -808,7 +808,7 @@ var selectItem = function(data) {
 	}
 
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
-	 	if(window.tinyMCEPopup){
+	 	if(window.tinyMCEPopup) {
         	// use TinyMCE > 3.0 integration method
             var win = tinyMCEPopup.getWindowArg("window");
 			win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = url;
@@ -825,7 +825,7 @@ var selectItem = function(data) {
 			return;
 		}
 		// tinymce 4 and colorbox
-	 	if($.urlParam('field_name')){
+	 	if($.urlParam('field_name')) {
 	 		parent.document.getElementById($.urlParam('field_name')).value = url;
 
 	 		if(typeof parent.tinyMCE !== "undefined") {
@@ -836,7 +836,7 @@ var selectItem = function(data) {
 		 	}
 	 	}
 
-		else if($.urlParam('ImperaviElementId')){
+		else if($.urlParam('ImperaviElementId')) {
 			// use Imperavi Redactor I, tested on v.10.x.x
 			if (window.opener) {
 				// Popup
@@ -857,7 +857,7 @@ var selectItem = function(data) {
 				}
 			}
 		}
-		else if($.urlParam('CKEditor')){
+		else if($.urlParam('CKEditor')) {
 			// use CKEditor 3.0 + integration method
 			if (window.opener) {
 				// Popup
@@ -869,7 +869,7 @@ var selectItem = function(data) {
 			}
 		} else {
 			// use FCKEditor 2.0 integration method
-			if(data['Properties']['Width'] != ''){
+			if(data['Properties']['Width'] != '') {
 				var p = url;
 				var w = data['Properties']['Width'];
 				var h = data['Properties']['Height'];
@@ -894,7 +894,7 @@ var renameItem = function(data) {
 	var fileName = config.security.allowChangeExtensions ? data['Filename'] : getFilename(data['Filename']);
 	var msg = lg.new_filename + ' : <input id="rname" name="rname" type="text" value="' + fileName + '" />';
 
-	var getNewName = function(e, value, message, formVals){
+	var getNewName = function(e, value, message, formVals) {
 		if(!value) return;
 		var rname = message.children('#rname').val();
 
@@ -930,8 +930,8 @@ var renameItem = function(data) {
 				url: connectString,
 				dataType: 'json',
 				async: false,
-				success: function(result){
-					if(result['Code'] == 0){
+				success: function(result) {
+					if(result['Code'] == 0) {
 						var newPath = result['New Path'];
 						var newName = result['New Name'];
 						var oldPath = result['Old Path'];
@@ -1076,7 +1076,7 @@ var moveItemPrompt = function(data) {
 	var msg  = lg.move + ' : <input id="rname" name="rname" type="text" value="" />';
 		msg += '<div class="prompt-info">' + lg.help_move + '</div>';
 
-	var doMove = function(e, value, message, formVals){
+	var doMove = function(e, value, message, formVals) {
 		if(!value) return;
 		var newPath = message.children('#rname').val();
 
@@ -1104,8 +1104,8 @@ var moveItem = function(oldPath, newPath) {
 		url: connectString,
 		dataType: 'json',
 		async: false,
-		success: function(result){
-			if(result['Code'] == 0){
+		success: function(result) {
+			if(result['Code'] == 0) {
 				var newPath = result['New Path'];
 				var newName = result['New Name'];
 
@@ -1127,7 +1127,7 @@ var deleteItem = function(data) {
 	var isDeleted = false;
 	var msg = lg.confirmation_delete;
 
-	var doDelete = function(e, value, message, formVals){
+	var doDelete = function(e, value, message, formVals) {
 		if(!value) return;
 		var d = new Date(), // to prevent IE cache issues
 			connectString = fileConnector + '?mode=delete&path=' + encodeURIComponent(data['Path'])  + '&time=' + d.getMilliseconds() + '&config=' + userconfig;
@@ -1312,7 +1312,7 @@ var addNode = function(path) {
 
 // Rename the specified node with a new name.
 // Called after a successful rename operation.
-var renameNode = function(oldPath, newPath, newName){
+var renameNode = function(oldPath, newPath, newName) {
 	var $filetree = $('#filetree'),
 		$oldNodeLink = $filetree.find('a[data-path="' + oldPath + '"]');
 
@@ -1482,17 +1482,17 @@ var sortViewItems = function() {
 		$contents.find('li.file, li.directory').tsort({selector: 'p', order: 'asc', natural: true});
 		$contents.find('li.directory').appendTo($contents);
 	} else {
-		// retrieving current sort settings
-		var $th = $contents.find('th.sorted'),
+		var data = $fileinfo.data('list-sort'),
+			$headers = $contents.find('th'),
 			columnIndex, order;
 
-		if($th.length) {
-			columnIndex = $th.index();
-			order = $th.data('order');
-		} else {
-			columnIndex = 0;
-			order = 'asc';
-		}
+		// retrieve stored sort settings or use defaults
+		columnIndex = data ? data.column : 0;
+		order = data ? data.order : 'asc';
+
+		// apply sort classes to table headers
+		$headers.removeClass('sorted sorted-asc sorted-desc');
+		$headers.eq(columnIndex).addClass('sorted sorted-' + order);
 
 		$contents.find('tr.file, tr.directory').tsort({selector: 'td:nth-child('+(columnIndex+1)+')', data: 'sort', order: order, natural: true});
 		$contents.find('tr.directory').appendTo($contents);
@@ -1598,8 +1598,8 @@ function getContextMenuItems() {
 // Binds contextual menus to items in list and grid views.
 var setMenus = function(action, path) {
 	var d = new Date(); // to prevent IE cache issues
-	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data){
-		switch(action){
+	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data) {
+		switch(action) {
 			case 'select':
 				selectItem(data);
 				break;
@@ -1665,8 +1665,8 @@ var getFileInfo = function(file) {
 
 	// Retrieve the data & populate the template.
 	var d = new Date(); // to prevent IE cache issues
-	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data){
-		if(data['Code'] == 0){
+	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data) {
+		if(data['Code'] == 0) {
 			$fileinfo.find('#main-title').find('h1').text(data['Filename']).attr('title', file);
 
 			$fileinfo.find('img').attr('src',data['Preview']);
@@ -1737,7 +1737,6 @@ var getFolderInfo = function(path) {
 	setUploader(path);
 
 	var $fileinfo = $('#fileinfo'),
-		$contents = $fileinfo.find('#contents'),
 		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />';
 
 	// display an activity indicator
@@ -1756,10 +1755,10 @@ var getFolderInfo = function(path) {
 
 	setDimensions(); //fix dimensions before all images load
 
-	if(data){
+	if(data) {
 		var counter = 0;
 		var totalSize = 0;
-		if($fileinfo.data('view') == 'grid'){
+		if($fileinfo.data('view') == 'grid') {
 			result += '<ul id="contents" class="grid">';
 
 			if(!isFile(path) && path !== fileRoot) {
@@ -1768,14 +1767,14 @@ var getFolderInfo = function(path) {
 				result += '</li>';
 			}
 
-			for(key in data){
+			for(var key in data) {
 				counter++;
 				var props = data[key]['Properties'];
 				var typeClass = (data[key]['File Type'] == 'dir') ? 'directory' : 'file';
 				var cap_classes = "";
 
-				for (cap in capabilities) {
-					if (has_capability(data[key], capabilities[cap])) {
+				for(var cap in capabilities) {
+					if(has_capability(data[key], capabilities[cap])) {
 						cap_classes += " cap_" + capabilities[cap];
 					}
 				}
@@ -1815,16 +1814,15 @@ var getFolderInfo = function(path) {
 				result += '</tr>';
 			}
 
-			for(key in data){
+			for(var key in data) {
 				counter++;
-				var path = data[key]['Path'];
 				var props = data[key]['Properties'];
 				var typeClass = (data[key]['File Type'] == 'dir') ? 'directory' : 'file';
 				var cap_classes = "";
 
 				config.options.showTitleAttr ? title = ' title="' + data[key]['Path'] + '"' : title = '';
 
-				for (cap in capabilities) {
+				for(var cap in capabilities) {
 					if (has_capability(data[key], capabilities[cap])) {
 						cap_classes += " cap_" + capabilities[cap];
 					}
@@ -1832,21 +1830,21 @@ var getFolderInfo = function(path) {
 				result += '<tr class="' + typeClass + cap_classes + '">';
 				result += '<td data-sort="' + data[key]['Filename'] + '" data-path="' + data[key]['Path'] + '"' + title + '>' + data[key]['Filename'] + '</td>';
 
-				if(props['Width'] && props['Width'] != ''){
+				if(props['Width'] && props['Width'] != '') {
 					var dimensions = props['Width'] + 'x' + props['Height'];
 					result += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
 				} else {
 					result += '<td data-sort=""></td>';
 				}
 
-				if(props['Size'] && props['Size'] != ''){
+				if(props['Size'] && props['Size'] != '') {
 					result += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
 					totalSize += props['Size'];
 				} else {
 					result += '<td data-sort=""></td>';
 				}
 
-				if(props['Date Modified'] && props['Date Modified'] != ''){
+				if(props['Date Modified'] && props['Date Modified'] != '') {
 					result += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
 				} else {
 					result += '<td data-sort=""></td>';
@@ -1864,6 +1862,11 @@ var getFolderInfo = function(path) {
 
 	// add the new markup to the DOM
 	getSectionContainer($fileinfo).html(result);
+	// apply client-side sorting, required for persistent list view sorting
+	sortViewItems();
+
+	var $contents = $fileinfo.find('#contents');
+	// updatefolderSummary(); TODO
 
 	// update #folder-info
 	$('#items-counter').text(counter + ' ' + lg.items);
@@ -1897,7 +1900,7 @@ var getFolderInfo = function(path) {
 			}
 		});
 		// bind click event to load and display detail view
-		$contents.find('li').click(function(){
+		$contents.find('li').click(function() {
 			var path = $(this).find('img').attr('data-path');
 			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
 				selectItem(data[path]);
@@ -1943,13 +1946,12 @@ var getFolderInfo = function(path) {
 		// bind click event to table header to implement sorting
 		$contents.find('.rowHeader > th').click(function(e) {
 			var $th = $(this);
-			var isAscending = $th.data('order') !== 'desc';
+			var index = $th.index();
+			var isAscending = !$th.hasClass('sorted-desc');
 			var order = isAscending ? 'desc' : 'asc';
 
-			$th.siblings().removeClass('sorted sorted-asc sorted-desc');
-			$th.addClass('sorted sorted-' + order);
-			$th.data('order', order);
-
+			// stores sorting settings as container data to retrieve them on sorting
+			$fileinfo.data('list-sort', {column: index, order: order});
 			sortViewItems();
 		});
 
@@ -1958,7 +1960,6 @@ var getFolderInfo = function(path) {
 		var timer = setInterval(function() {display_icons(timer)}, 300);
 	}
 };
-
 
 // Retrieve data (file/folder listing) for jqueryFileTree and list/grid view from server
 var getFolderData = function(path) {
@@ -1984,7 +1985,6 @@ var getFolderData = function(path) {
 	}
 	return loadedFolderData[path].data;
 };
-
 
 // Retrieves data (file/folder listing) and build html for jqueryFileTree
 var buildFileTreeBranch = function(options, itemPath) {
@@ -2015,7 +2015,6 @@ var buildFileTreeBranch = function(options, itemPath) {
 	return result;
 };
 
-
 // Builds html node for filetree branch
 var buildFileTreeItem = function(item) {
 	var html = "",
@@ -2023,7 +2022,7 @@ var buildFileTreeItem = function(item) {
 		cap_classes = "";
 
 	for(var cap in capabilities) {
-		if (has_capability(item, capabilities[cap])) {
+		if(has_capability(item, capabilities[cap])) {
 			cap_classes += " cap_" + capabilities[cap];
 		}
 	}
@@ -2046,7 +2045,7 @@ var buildFileTreeItem = function(item) {
   Initialization
 ---------------------------------------------------------*/
 
-$(function(){
+$(function() {
 
 	if(config.extras.extra_js) {
 		for(var i=0; i< config.extras.extra_js.length; i++) {
@@ -2387,21 +2386,33 @@ $(function(){
 		var csTheme = config.customScrollbar.theme != undefined ? config.customScrollbar.theme : 'inset-2-dark';
 		var csButton = config.customScrollbar.button != undefined ? config.customScrollbar.button : true;
 
-		$(window).load(function(){
+		$(window).load(function() {
 			$("#filetree").append('<div style="height:3000px"></div>'); // because if #filetree has height equal to 0, mCustomScrollbar is not applied
 			$("#filetree").mCustomScrollbar({
-				theme:csTheme,
-				scrollButtons:{enable:csButton},
-				advanced:{ autoExpandHorizontalScroll:true, updateOnContentResize: true },
-				callbacks:{
-					onInit:function(){ createFileTree(); }
+				theme: csTheme,
+				scrollButtons: {
+					enable:csButton
+				},
+				advanced: {
+					autoExpandHorizontalScroll: true,
+					updateOnContentResize: true
+				},
+				callbacks: {
+					onInit: function() {
+						createFileTree();
+					}
 				},
 				axis: "yx"
-				});
+			});
 			$("#fileinfo").mCustomScrollbar({
-				theme:csTheme,
-				scrollButtons:{enable:csButton},
-				advanced:{ autoExpandHorizontalScroll:true, updateOnContentResize: true },
+				theme: csTheme,
+				scrollButtons: {
+					enable:csButton
+				},
+				advanced: {
+					autoExpandHorizontalScroll:true,
+					updateOnContentResize: true
+				},
 				axis: "y",
 				alwaysShowScrollbar: 1
 			});
