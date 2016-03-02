@@ -72,7 +72,7 @@ var config = loadConfigFile();
 if (config !== null) delete config.version;
 
 // merge default config and user config file
-var config = $.extend(true, {}, configd, config);
+var config = $.extend({}, configd, config);
 
 if(config.options.logger) var start = new Date().getTime();
 
@@ -1469,12 +1469,8 @@ var actualizeChildrenItems = function(oldPath, newPath, $items) {
 
 // Sorts children of specified filetree node
 var sortFileTreeItems = function($node) {
-	//$node.find('ul:first > li').tsort('a').filter('.directory').tsort();
-	$node.children('li.file, li.directory').tsort({sortFunction: function (a, b) {
-		a = $(a.elm).children('a').text();
-		b = $(b.elm).children('a').text();
-		return naturalSort(a, b);
-	}}).filter('.directory').tsort();
+	$node.find('> li').tsort({selector: 'a', order: 'asc', natural: true});
+	$node.find('> li.directory').appendTo($node);
 };
 
 // Sorts children of specified filetree node
@@ -1484,19 +1480,11 @@ var sortViewItems = function() {
 
 	// set selector based on view mode
 	if($fileinfo.data('view') == 'grid') {
-		//$container.find('li.file, li.directory').tsort('p').filter('.directory').tsort();
-		$container.find('li.file, li.directory').tsort({sortFunction: function (a, b) {
-			a = $(a.elm).children('p').text();
-			b = $(b.elm).children('p').text();
-			return naturalSort(a, b);
-		}}).filter('.directory').tsort();
+		$container.find('li.file, li.directory').tsort({selector: 'p', order: 'asc', natural: true});
+		$container.find('li.directory').appendTo($container);
 	} else {
-		//$container.find('tr.file, tr.directory').tsort('td:first-child').filter('.directory').tsort();
-		$container.find('tr.file, tr.directory').tsort({sortFunction: function (a, b) {
-			a = $(a.elm).children('td:first').text();
-			b = $(b.elm).children('td:first').text();
-			return naturalSort(a, b);
-		}}).filter('.directory').tsort();
+		$container.find('tr.file, tr.directory').tsort({selector: 'td:first-child', order: 'asc', natural: true});
+		$container.find('tr.directory').appendTo($container);
 	}
 };
 
@@ -1786,7 +1774,7 @@ var getFolderInfo = function(path) {
 
 				config.options.showTitleAttr ? title = ' title="' + data[key]['Path'] + '"' : title = '';
 
-				result += '<li class="' + typeClass + cap_classes + '"' + title + '"><div class="clip"><img src="' + data[key]['Preview'] + '" width="' + scaledWidth + '" alt="' + data[key]['Path'] + '" data-path="' + data[key]['Path'] + '" /></div><p>' + data[key]['Filename'] + '</p>';
+				result += '<li class="' + typeClass + cap_classes + '"' + title + '><div class="clip"><img src="' + data[key]['Preview'] + '" width="' + scaledWidth + '" alt="' + data[key]['Path'] + '" data-path="' + data[key]['Path'] + '" /></div><p>' + data[key]['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') result += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') result += '<span class="meta size">' + props['Size'] + '</span>';
 				if(props['Size'] && props['Size'] != '') totalSize += props['Size'];

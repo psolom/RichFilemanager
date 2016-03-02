@@ -51,7 +51,7 @@ class Filemanager {
 				$this->__log($this->get['config'] . ' config file does not exists.');
 				$this->error("Given config file (".basename($this->get['config']).") does not exist !");
 			}
-		}	else {
+		} else {
 			$content = file_get_contents($this->root_path . "/scripts/filemanager.config.json");
 		}
 		$config = json_decode($content, true);
@@ -484,10 +484,12 @@ class Filemanager {
 		$filename = $tmp[(sizeof($tmp)-1)];
 		$path = str_replace('/' . $filename,'',$this->get['old']);
 
-		$new_file = $this->getFullPath($path . '/' . $this->get['new']). $suffix;
 		$old_file = $this->getFullPath($this->get['old']) . $suffix;
+		$new_file = $this->getFullPath($path . '/' . $this->get['new']). $suffix;
+		// it is possible to check only the folder of new file, not the non-existent file itself
+		$new_file_dir = substr($new_file, 0, strrpos($new_file, '/') + 1);
 
-		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file) || !$this->is_valid_path($new_file)) {
+		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file) || !$this->is_valid_path($new_file_dir)) {
 			$this->error("No way.");
 		}
 

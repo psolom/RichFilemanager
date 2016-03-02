@@ -34,28 +34,22 @@
 		,criteriumIndex = 0
 		,defaults = {				// default settings
 
-			selector: nll			// order: asc, desc or rand
-
+			selector: nll			// CSS selector to select the element to sort to
 			,order: 'asc'			// order: asc, desc or rand
-
 			,attr: nll				// order by attribute value
 			,data: nll				// use the data attribute for sorting
 			,useVal: fls			// use element value instead of text
-
 			,place: 'org'			// place ordered elements at position: start, end, org (original position), first, last
 			,returns: fls			// return all elements or only the sorted ones (true/false)
-
 			,cases: fls				// a case sensitive sort orders [aB,aa,ab,bb]
+			,natural: fls			// use natural sort order
 			,forceStrings:fls		// if false the string '2' will sort with the value 2, not the string '2'
-
 			,ignoreDashes:fls		// ignores dashes when looking for numerals
-
 			,sortFunction: nll		// override the default sort function
-
 			,useFlex:fls
 			,emptyEnd:fls
 		}
-	;
+		;
 
 	/**
 	 * TinySort is a small and simple script that will sort any nodeElment by it's text- or attribute value, or by that of one of it's children.
@@ -70,6 +64,7 @@
 	 * @param {String} [options.place='org'] Determines the placement of the ordered elements in respect to the unordered elements. Possible values 'start', 'end', 'first', 'last' or 'org'.
 	 * @param {Boolean} [options.useVal=false] Use element value instead of text.
 	 * @param {Boolean} [options.cases=false] A case sensitive sort (orders [aB,aa,ab,bb])
+	 * @param {Boolean} [options.natural=false] Use natural sort order.
 	 * @param {Boolean} [options.forceStrings=false] If false the string '2' will sort with the value 2, not the string '2'.
 	 * @param {Boolean} [options.ignoreDashes=false] Ignores dashes when looking for numerals.
 	 * @param {Function} [options.sortFunction=null] Override the default sort function. The parameters are of a type {elementObject}.
@@ -84,25 +79,25 @@
 		}
 
 		var fragment = doc.createDocumentFragment()
-			/** both sorted and unsorted elements
-			 * @type {elementObject[]} */
+		/** both sorted and unsorted elements
+		 * @type {elementObject[]} */
 			,elmObjsAll = []
-			/** sorted elements
-			 * @type {elementObject[]} */
+		/** sorted elements
+		 * @type {elementObject[]} */
 			,elmObjsSorted = []
-			/** unsorted elements
-			 * @type {elementObject[]} */
+		/** unsorted elements
+		 * @type {elementObject[]} */
 			,elmObjsUnsorted = []
-			/** sorted elements before sort
-			 * @type {elementObject[]} */
+		/** sorted elements before sort
+		 * @type {elementObject[]} */
 			,elmObjsSortedInitial
-			/** @type {criteriumIndex[]} */
+		/** @type {criteriumIndex[]} */
 			,criteria = []
-			/** @type {HTMLElement} */
+		/** @type {HTMLElement} */
 			,parentNode
 			,isSameParent = true
 			,isFlex = nodeList.length&&(options===undef||options.useFlex!==false)&&getComputedStyle(nodeList[0].parentNode,null).display.indexOf('flex')!==-1
-		;
+			;
 
 		initCriteria.apply(nll,Array.prototype.slice.call(arguments,1));
 		initSortList();
@@ -134,6 +129,7 @@
 		 * @property {String} place - place ordered elements at position: start, end, org (original position), first
 		 * @property {Boolean} returns - return all elements or only the sorted ones (true/false)
 		 * @property {Boolean} cases - a case sensitive sort orders [aB,aa,ab,bb]
+		 * @property {Boolean} natural - use natural sort order
 		 * @property {Boolean} forceStrings - if false the string '2' will sort with the value 2, not the string '2'
 		 * @property {Boolean} ignoreDashes - ignores dashes when looking for numerals
 		 * @property {Function} sortFunction - override the default sort function
@@ -154,7 +150,7 @@
 			var hasSelector = !!options.selector
 				,hasFilter = hasSelector&&options.selector[0]===':'
 				,allOptions = extend(options||{},defaults)
-			;
+				;
 			criteria.push(extend({
 				// has find, attr or data
 				hasSelector: hasSelector
@@ -194,7 +190,7 @@
 						,pos: i
 						,posn: listPartial.length
 					}
-				;
+					;
 				elmObjsAll.push(elementObject);
 				listPartial.push(elementObject);
 			});
@@ -206,6 +202,37 @@
 		 */
 		function sort(){
 			elmObjsSorted.sort(sortFunction);
+		}
+
+		/**
+		 * Compare strings using natural sort order
+		 * http://web.archive.org/web/20130826203933/http://my.opera.com/GreyWyvern/blog/show.dml/1671288
+		 */
+		function naturalCompare(a, b) {
+			function chunkify(t) {
+				var tz = [], x = 0, y = -1, n = 0, i, j;
+				while (i = (j = t.charAt(x++)).charCodeAt(0)) {
+					var m = (i == 46 || (i >=48 && i <= 57));
+					if (m !== n) {
+						tz[++y] = "";
+						n = m;
+					}
+					tz[y] += j;
+				}
+				return tz;
+			}
+
+			var aa = chunkify(a);
+			var bb = chunkify(b);
+			for (var x = 0; aa[x] && bb[x]; x++) {
+				if (aa[x] !== bb[x]) {
+					var c = Number(aa[x]), d = Number(bb[x]);
+					if (c == aa[x] && d == bb[x]) {
+						return c - d;
+					} else return (aa[x] > bb[x]) ? 1 : -1;
+				}
+			}
+			return aa.length - bb.length;
 		}
 
 		/**
@@ -235,12 +262,12 @@
 					sortReturnNumber = Math.random()<0.5?1:-1;
 				} else { // regular sort
 					var isNumeric = fls
-						// prepare sort elements
+					// prepare sort elements
 						,valueA = getSortBy(a,criterium)
 						,valueB = getSortBy(b,criterium)
 						,noA = valueA===''||valueA===undef
 						,noB = valueB===''||valueB===undef
-					;
+						;
 					if (valueA===valueB) {
 						sortReturnNumber = 0;
 					} else if (criterium.emptyEnd&&(noA||noB)) {
@@ -250,7 +277,7 @@
 							// cast to float if both strings are numeral (or end numeral)
 							var  valuesA = isString(valueA)?valueA&&valueA.match(regexLast):fls// todo: isString superfluous because getSortBy returns string|undefined
 								,valuesB = isString(valueB)?valueB&&valueB.match(regexLast):fls
-							;
+								;
 							if (valuesA&&valuesB) {
 								var  previousA = valueA.substr(0,valueA.length-valuesA[0].length)
 									,previousB = valueB.substr(0,valueB.length-valuesB[0].length);
@@ -264,7 +291,11 @@
 						if (valueA===undef||valueB===undef) {
 							sortReturnNumber = 0;
 						} else {
-							sortReturnNumber = valueA<valueB?-1:(valueA>valueB?1:0);
+							if(!criterium.natural) {
+								sortReturnNumber = valueA<valueB?-1:(valueA>valueB?1:0);
+							} else {
+								sortReturnNumber = naturalCompare(valueA, valueB);
+							}
 						}
 					}
 				}
@@ -303,7 +334,7 @@
 					,placeEnd = place==='end'
 					,placeFirst = place==='first'
 					,placeLast = place==='last'
-				;
+					;
 				if (placeOrg) {
 					elmObjsSorted.forEach(addGhost);
 					elmObjsSorted.forEach(function(elmObj,i) {
@@ -347,7 +378,7 @@
 		function addGhost(elmObj){
 			var element = elmObj.elm
 				,ghost = doc.createElement('div')
-			;
+				;
 			elmObj.ghost = ghost;
 			element.parentNode.insertBefore(ghost,element);
 			return elmObj;
@@ -402,13 +433,13 @@
 		}
 
 		/*function memoize(fnc) {
-			var oCache = {}
-				, sKeySuffix = 0;
-			return function () {
-				var sKey = sKeySuffix + JSON.stringify(arguments); // todo: circular dependency on Nodes
-				return (sKey in oCache)?oCache[sKey]:oCache[sKey] = fnc.apply(fnc,arguments);
-			};
-		}*/
+		 var oCache = {}
+		 , sKeySuffix = 0;
+		 return function () {
+		 var sKey = sKeySuffix + JSON.stringify(arguments); // todo: circular dependency on Nodes
+		 return (sKey in oCache)?oCache[sKey]:oCache[sKey] = fnc.apply(fnc,arguments);
+		 };
+		 }*/
 
 		/**
 		 * Test if an object is a string
@@ -471,17 +502,17 @@
 	// matchesSelector shim
 	win.Element&&(function(ElementPrototype) {
 		ElementPrototype.matchesSelector = ElementPrototype.matchesSelector
-		||ElementPrototype.mozMatchesSelector
-		||ElementPrototype.msMatchesSelector
-		||ElementPrototype.oMatchesSelector
-		||ElementPrototype.webkitMatchesSelector
-		||function (selector) {
-			var that = this, nodes = (that.parentNode || that.document).querySelectorAll(selector), i = -1;
-			//jscs:disable requireCurlyBraces
-			while (nodes[++i] && nodes[i] != that);
-			//jscs:enable requireCurlyBraces
-			return !!nodes[i];
-		};
+			||ElementPrototype.mozMatchesSelector
+			||ElementPrototype.msMatchesSelector
+			||ElementPrototype.oMatchesSelector
+			||ElementPrototype.webkitMatchesSelector
+			||function (selector) {
+				var that = this, nodes = (that.parentNode || that.document).querySelectorAll(selector), i = -1;
+				//jscs:disable requireCurlyBraces
+				while (nodes[++i] && nodes[i] != that);
+				//jscs:enable requireCurlyBraces
+				return !!nodes[i];
+			};
 	})(Element.prototype);
 
 	// extend the plugin to expose stuff

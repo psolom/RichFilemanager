@@ -33,6 +33,7 @@
         "allowFolderDownload": false,
         "allowChangeExtensions": false,
         "allowNoExtension": false,
+        "normalizeFilename": true,
         "uploadPolicy": "DISALLOW_ALL",
         "uploadRestrictions": [
             "jpg",
