@@ -438,8 +438,8 @@ x:-o-prefocus,
 	cursor: pointer;
 }
 
-.fm-container #contents.list th.tablesorter-headerAsc,
-.fm-container #contents.list th.tablesorter-headerDesc {
+.fm-container #contents.list th.sorted-asc,
+.fm-container #contents.list th.sorted-desc {
 	background: rgb(214,212,209); /* Old browsers */
 	background: -moz-linear-gradient(top, rgba(214,212,209,1) 0%, rgba(244,241,237,1) 100%); /* FF3.6+ */
 	background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(214,212,209,1)), color-stop(100%,rgba(244,241,237,1))); /* Chrome,Safari4+ */
@@ -449,7 +449,7 @@ x:-o-prefocus,
 	background: linear-gradient(to bottom, rgba(214,212,209,1) 0%,rgba(244,241,237,1) 100%); /* W3C */
 }
 
-.fm-container #contents.list th.tablesorter-headerAsc span {
+.fm-container #contents.list th.sorted-asc span {
 	display: block;
 	width: 100%;
 	padding-right: 20px;
@@ -458,7 +458,7 @@ x:-o-prefocus,
 	background-position: right center;
 }
 
-.fm-container #contents.list th.tablesorter-headerDesc span {
+.fm-container #contents.list th.sorted-desc span {
 	display: block;
 	width: 100%;
 	padding-right: 20px;

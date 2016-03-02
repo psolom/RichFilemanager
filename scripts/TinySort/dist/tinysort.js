@@ -222,8 +222,8 @@
 				return tz;
 			}
 
-			var aa = chunkify(a);
-			var bb = chunkify(b);
+			var aa = chunkify(a.toString());
+			var bb = chunkify(b.toString());
 			for (var x = 0; aa[x] && bb[x]; x++) {
 				if (aa[x] !== bb[x]) {
 					var c = Number(aa[x]), d = Number(bb[x]);
@@ -291,7 +291,7 @@
 						if (valueA===undef||valueB===undef) {
 							sortReturnNumber = 0;
 						} else {
-							if(!criterium.natural) {
+							if(!criterium.natural||(!isNaN(valueA)&&!isNaN(valueB))) {
 								sortReturnNumber = valueA<valueB?-1:(valueA>valueB?1:0);
 							} else {
 								sortReturnNumber = naturalCompare(valueA, valueB);

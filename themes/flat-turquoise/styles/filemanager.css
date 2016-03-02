@@ -431,8 +431,8 @@ x:-o-prefocus,
 	cursor: pointer;
 }
 
-.fm-container #contents.list th.tablesorter-headerAsc,
-.fm-container #contents.list th.tablesorter-headerDesc {
+.fm-container #contents.list th.sorted-asc,
+.fm-container #contents.list th.sorted-desc {
     background: #a4bcb3; /* Old browsers */
     background: -moz-linear-gradient(top,  #a4bcb3 0%, #bad3c6 100%); /* FF3.6+ */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#a4bcb3), color-stop(100%,#bad3c6)); /* Chrome,Safari4+ */
@@ -443,7 +443,7 @@ x:-o-prefocus,
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a4bcb3', endColorstr='#bad3c6',GradientType=0 ); /* IE6-9 */
 }
 
-.fm-container #contents.list th.tablesorter-headerAsc span {
+.fm-container #contents.list th.sorted-asc {
 	display: block;
 	width: 100%;
 	padding-right: 20px;
@@ -452,7 +452,7 @@ x:-o-prefocus,
 	background-position: right center;
 }
 
-.fm-container #contents.list th.tablesorter-headerDesc span {
+.fm-container #contents.list th.sorted-desc span {
 	display: block;
 	width: 100%;
 	padding-right: 20px;

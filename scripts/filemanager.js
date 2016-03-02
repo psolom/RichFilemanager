@@ -1446,8 +1446,7 @@ var	actualizeViewItem = function(oldPath, newPath, newName) {
 		$item.attr('data-path', newPath).attr('alt', newPath);
 	} else {
 		$item = $fileinfo.find('td[data-path="' + oldPath + '"]');
-		$item.text(newName);
-		$item.attr('data-path', newPath);
+		$item.attr('data-path', newPath).attr('data-sort', newName).text(newName);
 	}
 };
 
@@ -1476,15 +1475,27 @@ var sortFileTreeItems = function($node) {
 // Sorts children of specified filetree node
 var sortViewItems = function() {
 	var $fileinfo = $('#fileinfo'),
-		$container = $fileinfo.find('#contents');
+		$contents = $fileinfo.find('#contents');
 
-	// set selector based on view mode
+	// sorting based on view mode
 	if($fileinfo.data('view') == 'grid') {
-		$container.find('li.file, li.directory').tsort({selector: 'p', order: 'asc', natural: true});
-		$container.find('li.directory').appendTo($container);
+		$contents.find('li.file, li.directory').tsort({selector: 'p', order: 'asc', natural: true});
+		$contents.find('li.directory').appendTo($contents);
 	} else {
-		$container.find('tr.file, tr.directory').tsort({selector: 'td:first-child', order: 'asc', natural: true});
-		$container.find('tr.directory').appendTo($container);
+		// retrieving current sort settings
+		var $th = $contents.find('th.sorted'),
+			columnIndex, order;
+
+		if($th.length) {
+			columnIndex = $th.index();
+			order = $th.data('order');
+		} else {
+			columnIndex = 0;
+			order = 'asc';
+		}
+
+		$contents.find('tr.file, tr.directory').tsort({selector: 'td:nth-child('+(columnIndex+1)+')', data: 'sort', order: order, natural: true});
+		$contents.find('tr.directory').appendTo($contents);
 	}
 };
 
@@ -1726,6 +1737,7 @@ var getFolderInfo = function(path) {
 	setUploader(path);
 
 	var $fileinfo = $('#fileinfo'),
+		$contents = $fileinfo.find('#contents'),
 		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />';
 
 	// display an activity indicator
@@ -1786,7 +1798,12 @@ var getFolderInfo = function(path) {
 			result += '</ul>';
 		} else {
 			result += '<table id="contents" class="list">';
-			result += '<thead><tr><th class="headerSortDown"><span>' + lg.name + '</span></th><th><span>' + lg.dimensions + '</span></th><th><span>' + lg.size + '</span></th><th><span>' + lg.modified + '</span></th></tr></thead>';
+			result += '<thead><tr class="rowHeader">';
+			result += '<th><span>' + lg.name + '</span></th>';
+			result += '<th><span>' + lg.dimensions + '</span></th>';
+			result += '<th><span>' + lg.size + '</span></th>';
+			result += '<th><span>' + lg.modified + '</span></th>';
+			result += '</tr></thead>';
 			result += '<tbody>';
 
 			if(!isFile(path) && path !== fileRoot) {
@@ -1813,25 +1830,26 @@ var getFolderInfo = function(path) {
 					}
 				}
 				result += '<tr class="' + typeClass + cap_classes + '">';
-				result += '<td data-path="' + data[key]['Path'] + '"' + title + '>' + data[key]['Filename'] + '</td>';
+				result += '<td data-sort="' + data[key]['Filename'] + '" data-path="' + data[key]['Path'] + '"' + title + '>' + data[key]['Filename'] + '</td>';
 
 				if(props['Width'] && props['Width'] != ''){
-					result += ('<td>' + props['Width'] + 'x' + props['Height'] + '</td>');
+					var dimensions = props['Width'] + 'x' + props['Height'];
+					result += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
 				} else {
-					result += '<td></td>';
+					result += '<td data-sort=""></td>';
 				}
 
 				if(props['Size'] && props['Size'] != ''){
-					result += '<td><abbr title="' + props['Size'] + '">' + formatBytes(props['Size']) + '</abbr></td>';
+					result += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
 					totalSize += props['Size'];
 				} else {
-					result += '<td></td>';
+					result += '<td data-sort=""></td>';
 				}
 
 				if(props['Date Modified'] && props['Date Modified'] != ''){
-					result += '<td>' + props['Date Modified'] + '</td>';
+					result += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
 				} else {
-					result += '<td></td>';
+					result += '<td data-sort=""></td>';
 				}
 
 				result += '</tr>';
@@ -1854,7 +1872,7 @@ var getFolderInfo = function(path) {
 	// add context menu, init drag-and-drop and bind events
 	if($fileinfo.data('view') == 'grid') {
 		// context menu
-		$fileinfo.contextMenu({
+		$contents.contextMenu({
 			selector: 'li.file, li.directory',
 			appendTo: '.fm-container',
 			items: getContextMenuItems(),
@@ -1864,12 +1882,12 @@ var getFolderInfo = function(path) {
 			}
 		});
 		// drag-and-drop
-		$fileinfo.find('li.file, li.directory').draggable({
+		$contents.find('li.file, li.directory').draggable({
 			distance: 10,
 			cursor: "move",
 			helper: "clone"
 		});
-		$fileinfo.find('li.directory-parent, li.directory').droppable({
+		$contents.find('li.directory-parent, li.directory').droppable({
 			accept: "li.file, li.directory",
 			hoverClass: "drop-hover",
 			drop: function(event, ui) {
@@ -1879,7 +1897,7 @@ var getFolderInfo = function(path) {
 			}
 		});
 		// bind click event to load and display detail view
-		$fileinfo.find('li').click(function(){
+		$contents.find('li').click(function(){
 			var path = $(this).find('img').attr('data-path');
 			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
 				selectItem(data[path]);
@@ -1889,7 +1907,7 @@ var getFolderInfo = function(path) {
 		});
 	} else {
 		// context menu
-		$fileinfo.contextMenu({
+		$contents.contextMenu({
 			selector: 'tr.file, tr.directory',
 			appendTo: '.fm-container',
 			items: getContextMenuItems(),
@@ -1899,12 +1917,12 @@ var getFolderInfo = function(path) {
 			}
 		});
 		// drag-and-drop
-		$fileinfo.find('tr.file, tr.directory').draggable({
+		$contents.find('tr.file, tr.directory').draggable({
 			distance: 10,
 			cursor: "move",
 			helper: "clone"
 		});
-		$fileinfo.find('tr.directory-parent, tr.directory').droppable({
+		$contents.find('tr.directory-parent, tr.directory').droppable({
 			accept: "tr.file, tr.directory",
 			hoverClass: "drop-hover",
 			drop: function(event, ui) {
@@ -1914,13 +1932,25 @@ var getFolderInfo = function(path) {
 			}
 		});
 		// bind click event to load and display detail view
-		$fileinfo.find('tr').click(function(){
+		$contents.find('tr:has(td)').click(function() {
 			var path = $('td:first-child', this).attr('data-path');
 			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
 				selectItem(data[path]);
 			} else {
 				getDetailView(path);
 			}
+		});
+		// bind click event to table header to implement sorting
+		$contents.find('.rowHeader > th').click(function(e) {
+			var $th = $(this);
+			var isAscending = $th.data('order') !== 'desc';
+			var order = isAscending ? 'desc' : 'asc';
+
+			$th.siblings().removeClass('sorted sorted-asc sorted-desc');
+			$th.addClass('sorted sorted-' + order);
+			$th.data('order', order);
+
+			sortViewItems();
 		});
 
 		// Calling display_icons() function to get icons from filteree
