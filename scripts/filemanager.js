@@ -665,6 +665,35 @@ var getSectionContainer = function($section) {
 	}
 };
 
+// Updates folder summary info
+var updateFolderSummary = function(itemsTotal, sizeTotal) {
+	var $fileinfo = $('#fileinfo'),
+		$contents = $fileinfo.find('#contents'),
+		isGridView = $fileinfo.data('view') == 'grid';
+
+	if(!itemsTotal) {
+		var selector = isGridView ? 'li' : 'tr';
+		var items = $contents.find(selector + '.file, ' + selector + '.directory');
+		itemsTotal = items.length;
+	}
+	if(!sizeTotal) {
+		sizeTotal = 0;
+		if(isGridView) {
+			$contents.find('li.file').find('span.meta.size').each(function() {
+				sizeTotal += Number($(this).text());
+			});
+		} else {
+			var columnIndex = $contents.find('th.column-size').index();
+			$contents.find('tr.file').find('td:eq('+columnIndex+')').each(function() {
+				sizeTotal += Number($(this).data('sort'));
+			});
+		}
+	}
+
+	$('#items-counter').text(itemsTotal + ' ' + lg.items);
+	$('#items-size').text(lg.size + ': ' + Math.round(sizeTotal / 1024 /1024 * 100) / 100 + ' ' + lg.mb);
+};
+
 // Apply actions after manipulating with filetree or its single node
 var adjustFileTree = function($node) {
 	$node = $node || $('#filetree');
@@ -974,6 +1003,7 @@ var renameItem = function(data) {
 							}
 						}
 						sortViewItems();
+						updateFolderSummary();
 
 						if(config.options.showConfirmation) $.prompt(lg.successful_rename);
 					} else {
@@ -1111,6 +1141,7 @@ var moveItem = function(oldPath, newPath) {
 
 				moveNode(newPath, newName, oldPath);
 				sortViewItems();
+				updateFolderSummary();
 
 				if(config.options.showConfirmation) $.prompt(lg.successful_moved);
 			} else {
@@ -1753,7 +1784,8 @@ var getFolderInfo = function(path) {
 		return;
 	}
 
-	setDimensions(); //fix dimensions before all images load
+	// fix dimensions before all images load
+	setDimensions();
 
 	if(data) {
 		var counter = 0;
@@ -1798,10 +1830,10 @@ var getFolderInfo = function(path) {
 		} else {
 			result += '<table id="contents" class="list">';
 			result += '<thead><tr class="rowHeader">';
-			result += '<th><span>' + lg.name + '</span></th>';
-			result += '<th><span>' + lg.dimensions + '</span></th>';
-			result += '<th><span>' + lg.size + '</span></th>';
-			result += '<th><span>' + lg.modified + '</span></th>';
+			result += '<th class="column-name"><span>' + lg.name + '</span></th>';
+			result += '<th class="column-dimensions"><span>' + lg.dimensions + '</span></th>';
+			result += '<th class="column-size"><span>' + lg.size + '</span></th>';
+			result += '<th class="column-modified"><span>' + lg.modified + '</span></th>';
 			result += '</tr></thead>';
 			result += '<tbody>';
 
@@ -1864,13 +1896,9 @@ var getFolderInfo = function(path) {
 	getSectionContainer($fileinfo).html(result);
 	// apply client-side sorting, required for persistent list view sorting
 	sortViewItems();
+	updateFolderSummary(counter, totalSize);
 
 	var $contents = $fileinfo.find('#contents');
-	// updatefolderSummary(); TODO
-
-	// update #folder-info
-	$('#items-counter').text(counter + ' ' + lg.items);
-	$('#items-size').text(lg.size + ': ' + Math.round(totalSize / 1024 /1024 * 100) / 100 + ' ' + lg.mb);
 
 	// add context menu, init drag-and-drop and bind events
 	if($fileinfo.data('view') == 'grid') {
