@@ -1797,7 +1797,7 @@ var getFolderInfo = function(path) {
 
 			if(!isFile(path) && path !== fileRoot) {
 				result += '<li class="directory-parent" oncontextmenu="return false;">';
-				result += '<div class="clip"><img src="' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
+				result += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
 				result += '</li>';
 			}
 
