@@ -85,6 +85,7 @@ HEAD_included_files = new Array();
  * if not already included
  */
 loadCSS = function(href) {
+	href = config.globals.pluginPath + href;
 	// check if already included
 	if($.inArray(href, HEAD_included_files) == -1) {
 		var cssLink = $("<link rel='stylesheet' type='text/css' href='" + href + "'>");
@@ -98,6 +99,7 @@ loadCSS = function(href) {
 * if not already included
 */
 loadJS = function(src) {
+	src = config.globals.pluginPath + src;
 	// check if already included
 	if($.inArray(src, HEAD_included_files) == -1) {
 		var jsLink = $("<script type='text/javascript' src='" + src + "'>");
@@ -300,7 +302,7 @@ var cleanString = function(str, allowed) {
 		return str;
 	}
 
-	loadJS(config.globals.pluginPath + '/scripts/speakingurl/speakingurl.min.js');
+	loadJS('/scripts/speakingurl/speakingurl.min.js');
 	if (typeof allowed == "undefined") {
 		allowed = [];
 	}
@@ -2089,7 +2091,7 @@ $(function() {
 	$('div.version').html(config.version);
 
 	// Loading theme
-	loadCSS(config.globals.pluginPath + '/themes/' + config.options.theme + '/styles/filemanager.css');
+	loadCSS('/themes/' + config.options.theme + '/styles/filemanager.css');
 	$.ajax({
 	    url: config.globals.pluginPath + '/themes/' + config.options.theme + '/styles/ie.css',
 	    async: false,
@@ -2100,17 +2102,17 @@ $(function() {
 	});
 
 	// loading zeroClipboard
-	loadJS(config.globals.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.js');
+	loadJS('/scripts/zeroclipboard/dist/ZeroClipboard.js');
 
 	// Loading CodeMirror if enabled for online edition
 	if(config.edit.enabled) {
-		loadCSS(config.globals.pluginPath + '/scripts/CodeMirror/lib/codemirror.css');
-		loadCSS(config.globals.pluginPath + '/scripts/CodeMirror/theme/' + config.edit.theme + '.css');
-		loadJS(config.globals.pluginPath + '/scripts/CodeMirror/lib/codemirror.js');
-		loadJS(config.globals.pluginPath + '/scripts/CodeMirror/addon/selection/active-line.js');
-		loadCSS(config.globals.pluginPath + '/scripts/CodeMirror/addon/display/fullscreen.css');
-		loadJS(config.globals.pluginPath + '/scripts/CodeMirror/addon/display/fullscreen.js');
-		loadJS(config.globals.pluginPath + '/scripts/CodeMirror/dynamic-mode.js');
+		loadCSS('/scripts/CodeMirror/lib/codemirror.css');
+		loadCSS('/scripts/CodeMirror/theme/' + config.edit.theme + '.css');
+		loadJS('/scripts/CodeMirror/lib/codemirror.js');
+		loadJS('/scripts/CodeMirror/addon/selection/active-line.js');
+		loadCSS('/scripts/CodeMirror/addon/display/fullscreen.css');
+		loadJS('/scripts/CodeMirror/addon/display/fullscreen.js');
+		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
 
 	if(!config.options.fileRoot) {
@@ -2172,7 +2174,7 @@ $(function() {
 
 	/** load searchbox */
 	if(config.options.searchBox === true)  {
-		loadJS(config.globals.pluginPath + '/scripts/filemanager.liveSearch.min.js');
+		loadJS('/scripts/filemanager.liveSearch.min.js');
 	} else {
 		$('#search').remove();
 	}
@@ -2220,8 +2222,8 @@ $(function() {
 	if(config.upload.multiple) {
 
 		// load dropzone library
-		loadCSS(config.globals.pluginPath + '/scripts/dropzone/dist/min/dropzone.min.css');
-		loadJS(config.globals.pluginPath + '/scripts/dropzone/dist/min/dropzone.min.js');
+		loadCSS('/scripts/dropzone/dist/min/dropzone.min.css');
+		loadJS('/scripts/dropzone/dist/min/dropzone.min.js');
 		Dropzone.autoDiscover = false;
 
 		// remove simple file upload element
@@ -2408,8 +2410,8 @@ $(function() {
 	// Loading CustomScrollbar if enabled
 	// Important, the script should be called after calling createFileTree() to prevent bug
 	if(config.customScrollbar.enabled) {
-		loadCSS(config.globals.pluginPath + '/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
-		loadJS(config.globals.pluginPath + '/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+		loadCSS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
+		loadJS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
 
 		var csTheme = config.customScrollbar.theme != undefined ? config.customScrollbar.theme : 'inset-2-dark';
 		var csButton = config.customScrollbar.button != undefined ? config.customScrollbar.button : true;
