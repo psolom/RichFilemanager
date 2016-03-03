@@ -474,23 +474,28 @@ class Filemanager {
      */
 	public function rename()
     {
-		$suffix='';
+		$suffix = '';
 
-		if(substr($this->get['old'],-1,1)=='/') {
-			$this->get['old'] = substr($this->get['old'],0,(strlen($this->get['old'])-1));
-			$suffix='/';
+		if(substr($this->get['old'], -1, 1) == '/') {
+			$this->get['old'] = substr($this->get['old'], 0, (strlen($this->get['old'])-1));
+			$suffix = '/';
 		}
-		$tmp = explode('/',$this->get['old']);
+		$tmp = explode('/', $this->get['old']);
 		$filename = $tmp[(sizeof($tmp)-1)];
-		$path = str_replace('/' . $filename,'',$this->get['old']);
+
+		$newPath = str_replace('/' . $filename, '', $this->get['old']);
+		$newName = $this->cleanString($this->get['new'], array('.', '-'));
 
 		$old_file = $this->getFullPath($this->get['old']) . $suffix;
-		$new_file = $this->getFullPath($path . '/' . $this->get['new']). $suffix;
-		// it is possible to check only the folder of new file, not the non-existent file itself
-		$new_file_dir = substr($new_file, 0, strrpos($new_file, '/') + 1);
+		$new_file = $this->getFullPath($newPath . '/' . $newName). $suffix;
 
-		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file) || !$this->is_valid_path($new_file_dir)) {
+		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file)) {
 			$this->error("No way.");
+		}
+
+		// forbid to change path during rename
+		if(strrpos($this->get['new'], '/') !== false) {
+			$this->error(sprintf($this->lang('FORBIDDEN_CHAR_SLASH')));
 		}
 
 		// check if file is writable
@@ -508,22 +513,22 @@ class Filemanager {
 			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
 		}
 
-		$this->__log(__METHOD__ . ' - renaming '. $old_file. ' to ' . $new_file);
+		$this->__log(__METHOD__ . ' - renaming ' . $old_file . ' to ' . $new_file);
 
 		if(file_exists ($new_file)) {
 			if($suffix=='/' && is_dir($new_file)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'),$this->get['new']));
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $newName));
 			}
 			if($suffix=='' && is_file($new_file)) {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'),$this->get['new']));
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), $newName));
 			}
 		}
 
-		if(!rename($old_file,$new_file)) {
+		if(!rename($old_file, $new_file)) {
 			if(is_dir($old_file)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'),$filename,$this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $newName));
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'),$filename,$this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $newName));
 			}
 		} else {
 			// For image only - rename thumbnail if original image was successfully renamed
@@ -541,8 +546,8 @@ class Filemanager {
 			'Code' => 0,
 			'Old Path' => $this->formatPath($this->get['old'] . $suffix),
 			'Old Name' => $filename,
-			'New Path' => $this->formatPath($path . '/' . $this->get['new'] . $suffix),
-			'New Name' => $this->get['new']
+			'New Path' => $this->formatPath($newPath . '/' . $newName . $suffix),
+			'New Name' => $newName
 		);
 		return $array;
 	}
@@ -556,14 +561,8 @@ class Filemanager {
 		// dynamic fileroot dir must be used when enabled
 		if($this->dynamic_fileroot != '') {
 			$newPath = $this->dynamic_fileroot . '/' . $newPath;
-//			$rootDir = $this->dynamic_fileroot;
-			//$rootDir = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->path_to_files); // instruction could replace the line above
 		}
-//		} else {
-//			$rootDir = $this->get['root'];
-//		}
 
-//		$rootDir = str_replace('//', '/', $rootDir);
 		$oldPath = $this->getFullPath($this->get['old']);
 
 		// check if file is writable
@@ -581,48 +580,53 @@ class Filemanager {
 		$fileName = array_pop($tmp); // file name or new dir name
 		$path = '/' . implode('/', $tmp) . '/';
 
-//		// new path
-//		if (substr($this->get['new'], 0, 1) != "/") {
-//			// make path relative from old dir
-//			$newPath = $path . '/' . $this->get['new'] . '/';
-//		} else {
-//			$newPath = $rootDir . '/' . $this->get['new'] . '/';
-//		}
-
 		$newPath = preg_replace('#/+#', '/', $newPath);
 		$newPath = $this->expandPath($newPath, true);
 
-		$newRelativePath = str_replace('./', '',$newPath);
+		$newRelativePath = str_replace('./', '', $newPath);
 		$newPath = $this->getFullPath($newPath);
+		$newFullPath = $newPath . $fileName;
 
 		if(!$this->has_permission('move') || !$this->is_valid_path($oldPath) || !$this->is_valid_path($newPath)) {
 			$this->error("No way.");
 		}
 
 		// check if file already exists
-		if (file_exists($newPath.$fileName)) {
-			if(is_dir($newPath.$fileName)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'),rtrim($this->get['new'], '/').'/'.$fileName));
+		if (file_exists($newFullPath)) {
+			if(is_dir($newFullPath)) {
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $fileName));
 			} else {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'),rtrim($this->get['new'], '/').'/'.$fileName));
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $fileName));
 			}
 		}
 
 		// create dir if not exists
 		if (!file_exists($newPath)) {
 			if(!mkdir($newPath,0755, true)) {
-				$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'),$newPath));
+				$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $newPath));
 			}
 		}
 
-		// move
-		$this->__log(__METHOD__ . ' - moving '. $oldPath. ' to directory ' . $newPath);
+		// should be retrieved before rename operation
+		$old_thumbnail = $this->get_thumbnail_path($oldPath);
 
-		if(!rename($oldPath, $newPath . $fileName)) {
+		// move file or folder
+		if(!rename($oldPath, $newFullPath)) {
 			if(is_dir($oldPath)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'),$path,$this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $path, $this->get['new']));
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'),$path . $fileName,$this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $path . $fileName, $this->get['new']));
+			}
+		} else {
+			// move thumbnail file or thumbnails folder if exists
+			if(file_exists($old_thumbnail)) {
+				$new_thumbnail = $this->get_thumbnail_path($newFullPath);
+				// delete old thumbnail(s) if destination folder does not exist
+				if(file_exists(dirname($new_thumbnail))) {
+					rename($old_thumbnail, $new_thumbnail);
+				} else {
+					is_dir($old_thumbnail) ? $this->unlinkRecursive($old_thumbnail) : unlink($old_thumbnail);
+				}
 			}
 		}
 
@@ -765,7 +769,7 @@ class Filemanager {
 		$this->setParams();
 		$this->validateUploadedFile('newfile');
 
-		$_FILES['newfile']['name'] = $this->cleanString($_FILES['newfile']['name'],array('.','-'));
+		$_FILES['newfile']['name'] = $this->cleanString($_FILES['newfile']['name'], array('.', '-'));
 
 		$current_path = $this->getFullPath($this->post['currentpath']);
 
@@ -1383,14 +1387,16 @@ class Filemanager {
 
 		$path_parts = pathinfo($path);
 
-		$thumbnail_path = $a[0].$this->separator.'/'.$this->cachefolder.dirname(end($a)).'/';
+		$thumbnail_path = $a[0] . $this->separator . '/' . $this->cachefolder . '/';
 		if(!is_dir($path)) $thumbnail_name = $path_parts['filename'] . '_' . $this->thumbnail_width . 'x' . $this->thumbnail_height . 'px.' . $path_parts['extension'];
 
 		if(is_dir($path)) {
-			$thumbnail_fullpath = $thumbnail_path;
+			$thumbnail_fullpath = $thumbnail_path . end($a) . '/';
 		} else {
-			$thumbnail_fullpath = $thumbnail_path.$thumbnail_name;
+			$thumbnail_fullpath = $thumbnail_path . dirname(end($a)) . '/' . $thumbnail_name;
 		}
+		// remove multiple slashes
+		$thumbnail_fullpath = preg_replace('#/+#', '/', $thumbnail_fullpath);
 
 		return $thumbnail_fullpath;
 	}
