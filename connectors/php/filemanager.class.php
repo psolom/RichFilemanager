@@ -1309,13 +1309,13 @@ class Filemanager {
     {
 		$allow = null;
 
-		if (!empty($allowed)) {
+		if(!empty($allowed)) {
 			foreach ($allowed as $value) {
 				$allow .= "\\$value";
 			}
 		}
 
-		if (is_array($string)) {
+		if(is_array($string)) {
 			$cleaned = array();
 			foreach ($string as $key => $clean) {
 				$cleaned[$key] = $this->transliterateString($clean, $allow);
@@ -1346,17 +1346,15 @@ class Filemanager {
 			'û'=>'u', 'ü'=>'u', 'ý'=>'y', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y', 'Ŕ'=>'R', 'ŕ'=>'r',
 		);
 
-		if (extension_loaded('intl') === true) {
-			$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
-			$clean = transliterator_transliterate($options, $string);
-		} else {
-			$clean = strtr($string, $mapping);
-		}
-
+		$clean = strtr($string, $mapping);
 		// replace chars which are not related to any language
 		$clean = strtr($clean, array(' '=>'_', "'"=>'_', '/'=>''));
 
 		if($this->config['options']['chars_only_latin'] == true) {
+			if(extension_loaded('intl') === true) {
+				$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
+				$clean = transliterator_transliterate($options, $string);
+			}
 			$clean = preg_replace("/[^{$allowed}_a-zA-Z0-9]/u", '', $clean);
 			// $clean = preg_replace("/[^{$allow}_a-zA-Z0-9\x{0430}-\x{044F}\x{0410}-\x{042F}]/u", '', $clean); // allow only latin alphabet with cyrillic
 		}
