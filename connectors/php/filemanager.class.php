@@ -8,6 +8,7 @@
  *	@license	MIT License
  *	@author		Riaan Los <mail (at) riaanlos (dot) nl>
  *	@author		Simon Georget <simon (at) linea21 (dot) com>
+ *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
 
