@@ -267,35 +267,6 @@ function file_exists (url) {
     return false;
 }
 
-// natural sort function
-// https://gist.github.com/devinus/453520#file-gistfile1-js
-var naturalSort = function (a, b) {
-	var NUMBER_GROUPS = /(-?\d*\.?\d+)/g,
-		aa = String(a).split(NUMBER_GROUPS),
-		bb = String(b).split(NUMBER_GROUPS),
-		min = Math.min(aa.length, bb.length);
-
-	for (var i = 0; i < min; i++) {
-		var x = parseFloat(aa[i]) || aa[i].toLowerCase(),
-			y = parseFloat(bb[i]) || bb[i].toLowerCase();
-		if (x < y) return -1;
-		else if (x > y) return 1;
-	}
-	return 0;
-};
-
-// preg_replace
-// http://xuxu.fr/2006/05/20/preg-replace-javascript/
-var preg_replace = function(array_pattern, array_pattern_replace, str) {
-	var new_str = String (str);
-		for (i=0; i<array_pattern.length; i++) {
-			var reg_exp= RegExp(array_pattern[i], "g");
-			var val_to_replace = array_pattern_replace[i];
-			new_str = new_str.replace (reg_exp, val_to_replace);
-		}
-		return new_str;
-	};
-
 // Sanitize and transliterate file/folder name as server side (connector) way
 var cleanString = function(str, allowed) {
 	if(!config.security.normalizeFilename) {
@@ -1507,12 +1478,17 @@ var sortFileTreeItems = function($node) {
 
 // Sorts children of specified filetree node
 var sortViewItems = function() {
-	var $fileinfo = $('#fileinfo'),
+	var $items,
+		$fileinfo = $('#fileinfo'),
 		$contents = $fileinfo.find('#contents');
 
 	// sorting based on view mode
 	if($fileinfo.data('view') == 'grid') {
-		$contents.find('li.file, li.directory').tsort({selector: 'p', order: 'asc', natural: true});
+		$items = $contents.find('li.file, li.directory');
+		// prevent sorting if there are no items
+		if($items.length === 0) return;
+
+		$items.tsort({selector: 'p', order: 'asc', natural: true});
 		$contents.find('li.directory').appendTo($contents);
 	} else {
 		var data = $fileinfo.data('list-sort'),
@@ -1527,7 +1503,11 @@ var sortViewItems = function() {
 		$headers.removeClass('sorted sorted-asc sorted-desc');
 		$headers.eq(columnIndex).addClass('sorted sorted-' + order);
 
-		$contents.find('tr.file, tr.directory').tsort({selector: 'td:nth-child('+(columnIndex+1)+')', data: 'sort', order: order, natural: true});
+		$items = $contents.find('tr.file, tr.directory');
+		// prevent sorting if there are no items
+		if($items.length === 0) return;
+
+		$items.tsort({selector: 'td:nth-child('+(columnIndex+1)+')', data: 'sort', order: order, natural: true});
 		$contents.find('tr.directory').appendTo($contents);
 	}
 };
