@@ -1090,7 +1090,7 @@ class Filemanager {
 
 			$this->item['preview'] = $iconsFolder . $this->config['icons']['directory'];
 
-		} else if($this->config['showThumbs'] && in_array(strtolower($this->item['filetype']), array_map('strtolower', $this->config['images']['imagesExt']))) {
+		} else if($this->config['options']['showThumbs'] && in_array(strtolower($this->item['filetype']), array_map('strtolower', $this->config['images']['imagesExt']))) {
 
 			// svg should not be previewed as raster formats images
 			if($this->item['filetype'] == 'svg') {
