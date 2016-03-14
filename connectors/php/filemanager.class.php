@@ -111,8 +111,7 @@ class Filemanager {
 			$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
 			$this->path_to_files = $this->root_path . '/' . $this->separator . '/' ;
 		}
-		// remove multiple slashes
-		$this->path_to_files = str_replace("//", "/", $this->path_to_files);
+		$this->cleanPath($this->path_to_files);
 
 		$this->__log(__METHOD__ . ' $this->root_path value ' . $this->root_path);
 		$this->__log(__METHOD__ . ' $this->path_to_files ' . $this->path_to_files);
@@ -155,8 +154,7 @@ class Filemanager {
 		} else {
 			$this->doc_root = $path . '/';
 		}
-		// remove multiple slashes
-		$this->doc_root = str_replace("//", "/", $this->doc_root);
+		$this->cleanPath($this->doc_root);
 
 		// necessary for retrieving path when set dynamically with $fm->setFileRoot() method
 		// https://github.com/simogeo/Filemanager/issues/258 @todo to explore deeper
@@ -258,7 +256,7 @@ class Filemanager {
 		if($this->dynamic_fileroot != '') {
 			$path = $this->dynamic_fileroot . $this->get['path'];
 			// $path = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->path_to_files) . $this->get['path']; // instruction could replace the line above
-			$path = preg_replace('#/+#', '/', $path); // remove multiple slashes
+			$this->cleanPath($path);
 		} else {
 			$path = $this->get['path'];
 		}
@@ -509,18 +507,18 @@ class Filemanager {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		// For file only - we check if the new given extension is allowed regarding the security Policy settings
+		// for file only - we check if the new given extension is allowed regarding the security Policy settings
 		if(is_file($old_file) && $this->config['security']['allowChangeExtensions'] && !$this->is_allowed_file_type($new_file)) {
 			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
 		}
 
 		$this->__log(__METHOD__ . ' - renaming ' . $old_file . ' to ' . $new_file);
 
-		if(file_exists ($new_file)) {
-			if($suffix=='/' && is_dir($new_file)) {
+		if(file_exists($new_file)) {
+			if($suffix == '/' && is_dir($new_file)) {
 				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $newName));
 			}
-			if($suffix=='' && is_file($new_file)) {
+			if($suffix == '' && is_file($new_file)) {
 				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), $newName));
 			}
 		}
@@ -581,7 +579,7 @@ class Filemanager {
 		$fileName = array_pop($tmp); // file name or new dir name
 		$path = '/' . implode('/', $tmp) . '/';
 
-		$newPath = preg_replace('#/+#', '/', $newPath);
+		$this->cleanPath($newPath);
 		$newPath = $this->expandPath($newPath, true);
 
 		$newRelativePath = str_replace('./', '', $newPath);
@@ -651,7 +649,6 @@ class Filemanager {
 		$current_path = $this->getFullPath();
 		$thumbnail_path = $this->get_thumbnail_path($current_path);
 
-
 		if(!$this->has_permission('delete') || !$this->is_valid_path($current_path)) {
 			$this->error("No way.");
 		}
@@ -670,9 +667,11 @@ class Filemanager {
 
 			$this->unlinkRecursive($current_path);
 
-			// we remove thumbnails if needed
+			// delete thumbnails if exists
 			$this->__log(__METHOD__ . ' - deleting thumbnails folder '. $thumbnail_path);
-			$this->unlinkRecursive($thumbnail_path);
+			if(file_exists($thumbnail_path)) {
+				$this->unlinkRecursive($thumbnail_path);
+			}
 
 			$array = array(
 				'Error' => "",
@@ -687,9 +686,11 @@ class Filemanager {
 
 			unlink($current_path);
 
-			// delete thumbail if exists
+			// delete thumbnails if exists
 			$this->__log(__METHOD__ . ' - deleting thumbnail file '. $thumbnail_path);
-			if(file_exists($thumbnail_path)) unlink($thumbnail_path);
+			if(file_exists($thumbnail_path)) {
+				unlink($thumbnail_path);
+			}
 
 			$array = array(
 				'Error' => "",
@@ -778,9 +779,11 @@ class Filemanager {
 			$this->error("No way.");
 		}
 
+		// unless we are in overwrite mode, we need a unique file name
 		if(!$this->config['upload']['overwrite']) {
 			$_FILES['newfile']['name'] = $this->checkFilename($current_path,$_FILES['newfile']['name']);
 		}
+
 		move_uploaded_file($_FILES['newfile']['tmp_name'], $current_path . $_FILES['newfile']['name']);
 
 		// automatically resize image if it's too big
@@ -1087,7 +1090,7 @@ class Filemanager {
 
 			$this->item['preview'] = $iconsFolder . $this->config['icons']['directory'];
 
-		} else if(in_array(strtolower($this->item['filetype']),array_map('strtolower', $this->config['images']['imagesExt']))) {
+		} else if($this->config['showThumbs'] && in_array(strtolower($this->item['filetype']), array_map('strtolower', $this->config['images']['imagesExt']))) {
 
 			// svg should not be previewed as raster formats images
 			if($this->item['filetype'] == 'svg') {
@@ -1143,8 +1146,7 @@ class Filemanager {
 		} else {
 			$full_path = $this->doc_root . rawurldecode($path);
 		}
-
-		$full_path = str_replace("//", "/", $full_path);
+		$this->cleanPath($full_path);
 
 		// $this->__log("getFullPath() returned path : " . $full_path);
 
@@ -1279,9 +1281,9 @@ class Filemanager {
 		$path_parts = pathinfo($file);
 
 		// if there is no extension
-		if (! isset ( $path_parts ['extension'] )) {
+		if (!isset($path_parts['extension'])) {
 			// we check if no extension file are allowed
-			return (bool) $this->config['security']['allowNoExtension'];
+			return (bool)$this->config['security']['allowNoExtension'];
 		}
 
 		$exts = array_map('strtolower', $this->config['security']['uploadRestrictions']);
@@ -1326,6 +1328,17 @@ class Filemanager {
 		}
 
 		return $cleaned;
+	}
+
+	/**
+	 * Clean path string to remove multiple slashes, etc.
+	 * @param string $string
+	 */
+	protected function cleanPath(&$string)
+    {
+		// remove multiple slashes
+		$string = preg_replace('#/+#', '/', $string);
+		//str_replace("//", "/", $string);
 	}
 
     /**
@@ -1385,17 +1398,15 @@ class Filemanager {
 		$a[1] = substr($path,$pos+strlen($this->separator));
 
 		$path_parts = pathinfo($path);
-
 		$thumbnail_path = $a[0] . $this->separator . '/' . $this->cachefolder . '/';
-		if(!is_dir($path)) $thumbnail_name = $path_parts['filename'] . '_' . $this->thumbnail_width . 'x' . $this->thumbnail_height . 'px.' . $path_parts['extension'];
 
 		if(is_dir($path)) {
 			$thumbnail_fullpath = $thumbnail_path . end($a) . '/';
 		} else {
+			$thumbnail_name = $path_parts['filename'] . '_' . $this->thumbnail_width . 'x' . $this->thumbnail_height . 'px.' . $path_parts['extension'];
 			$thumbnail_fullpath = $thumbnail_path . dirname(end($a)) . '/' . $thumbnail_name;
 		}
-		// remove multiple slashes
-		$thumbnail_fullpath = preg_replace('#/+#', '/', $thumbnail_fullpath);
+		$this->cleanPath($thumbnail_fullpath);
 
 		return $thumbnail_fullpath;
 	}
@@ -1452,14 +1463,14 @@ class Filemanager {
 			return $filename;
 		} else {
 			$_i = $i;
-			$tmp = explode(/*$this->config['upload']['suffix'] . */$i . '.',$filename);
+			$tmp = explode(/*$this->config['upload']['suffix'] . */$i . '.', $filename);
 			if($i=='') {
 				$i=1;
 			} else {
 				$i++;
 			}
-			$filename = str_replace($_i . '.' . $tmp[(sizeof($tmp)-1)],$i . '.' . $tmp[(sizeof($tmp)-1)],$filename);
-			return $this->checkFilename($path,$filename,$i);
+			$filename = str_replace($_i . '.' . $tmp[(sizeof($tmp)-1)],$i . '.' . $tmp[(sizeof($tmp)-1)], $filename);
+			return $this->checkFilename($path, $filename, $i);
 		}
 	}
 
@@ -1678,7 +1689,9 @@ class Filemanager {
 	protected function getUrl($path)
 	{
 		if(isset($this->config['root_url']) && strpos($path, '/') !== 0 && $this->config['root_url']) {
-			return str_replace('//', '/', $this->config['root_url'] . '/' . $path);
+			$url = $this->config['root_url'] . '/' . $path;
+			$this->cleanPath($url);
+			return $url;
 		}
 		return $path;
 	}
