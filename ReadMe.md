@@ -16,10 +16,11 @@ Main features
 
 * A Filemanager relying on jquery.
 * Available in more than 20 languages.
-* [Highly customizable](https://github.com/simogeo/Filemanager/wiki/Filemanager-configuration-file)
+* [Highly customizable](https://github.com/servocoder/Filemanager/wiki/Filemanager-configuration-file)
 * Can work as standalone application
 * Easy integration with RTE like CKEditor, TinyMCE, Imperavi Redactor and so on.
-* Easy integration with [colorbox jquery plugin](https://github.com/simogeo/Filemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/simogeo/Filemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
+* Easy integration with [AWS S3 storage](https://github.com/servocoder/Filemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
+* Easy integration with [colorbox jquery plugin](https://github.com/servocoder/Filemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/Filemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
 * Several computer language connectors available. **PHP is up-to-date**
 * Ability to upload, delete, modify, download and move files
 * Ability to create folders
@@ -29,10 +30,10 @@ Main features
 * Multiple uploads support - based on [dropzonejs](http://www.dropzonejs.com)
 * Online text / code edition - based on [codeMirror](http://codemirror.net/)
 * Online documents viewer - based on [viewerJS](http://viewerjs.org/)
-* [Opening a given folder](https://github.com/simogeo/Filemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
-* [Opening exclusively a given folder](https://github.com/simogeo/Filemanager/wiki/How-to-open-%28exclusively%29-a-given-subfolder)
-* [Passing parameters to the FM](https://github.com/simogeo/Filemanager/wiki/Passing-parameters-to-the-FM)
-* [File types restriction](https://github.com/simogeo/Filemanager/wiki/Set-up-upload-restriction-on-file-type)
+* [Opening a given folder](https://github.com/servocoder/Filemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
+* [Opening exclusively a given folder](https://github.com/servocoder/Filemanager/wiki/How-to-open-%28exclusively%29-a-given-subfolder)
+* [Passing parameters to the FM](https://github.com/servocoder/Filemanager/wiki/Passing-parameters-to-the-FM)
+* [File types restriction](https://github.com/servocoder/Filemanager/wiki/Set-up-upload-restriction-on-file-type)
 * Video and audio player relying on web browser capabilities
 * Textbox Search filter
 * Thumbnails generation
@@ -43,7 +44,7 @@ Main features
 * Prevent files overwriting (or not)
 * Switch from list to grid view and vice-versa
 * Copy direct file URL
-* [CSS Themes](https://github.com/simogeo/Filemanager/wiki/Create-your-own-theme) - **Please, share your themes with others !**
+* [CSS Themes](https://github.com/servocoder/Filemanager/wiki/Create-your-own-theme) - **Please, share your themes with others !**
 * and more ...
 
 
@@ -56,7 +57,7 @@ Screenshot
 Documentation
 -------------
 
-Filemanager is highly documented on the [wiki pages](https://github.com/simogeo/Filemanager/wiki). API, see below.
+Filemanager is highly documented on the [wiki pages](https://github.com/servocoder/Filemanager/wiki). API, see below.
 
 
 Installation and Setup
@@ -66,7 +67,7 @@ Installation and Setup
 
 Since many changes have been done recently, only PHP and MVC connectors are now available. You can try the latest version for others connectors, but with no warranty they implement all features and work correctly.
 
-To use other connectors, please download v0.8 version from https://github.com/simogeo/Filemanager/archive/v0.8.zip
+To use other connectors, please download v0.8 version from https://github.com/servocoder/Filemanager/archive/v0.8.zip
 (PHP, ASHX, ASP, CFM, lasso, PL and JSP connectors are available)
 
 A JSP/Java connector implementation is available at : https://github.com/th-schwarz/C5Connector.Java 
@@ -75,14 +76,14 @@ A JSP/Java connector implementation is available at : https://github.com/th-schw
 
 **(1)** Check out a copy of the FileManager from the repository using Git :
 
-git clone http://github.com/simogeo/Filemanager.git
+git clone http://github.com/servocoder/Filemanager.git
 
-or download the archive from Github : https://github.com/simogeo/Filemanager/archive/master.zip
+or download the archive from Github : https://github.com/servocoder/Filemanager/archive/master.zip
 
 You can place the FileManager anywhere within your web serving root directory.
 
-**(2)** Make a copy of the default configuration file ("filemanager.config.default.json" located in the scripts directory), removing the '.default' from the end of the filename, and edit the options according to the following wiki page : https://github.com/simogeo/Filemanager/wiki/Filemanager-configuration-file
-   Having a look on configuration cases study may also be helpful to you : https://github.com/simogeo/Filemanager/wiki/Specify-user-folder%2C-configuration-cases
+**(2)** Make a copy of the default configuration file ("filemanager.config.default.json" located in the scripts directory), removing the '.default' from the end of the filename, and edit the options according to the following wiki page : https://github.com/servocoder/Filemanager/wiki/Filemanager-configuration-file
+   Having a look on configuration cases study may also be helpful to you : https://github.com/servocoder/Filemanager/wiki/Specify-user-folder%2C-configuration-cases
 
 **(3a)** If you are integrating the FileManager with FCKEditor, open your fckconfig.js file and find the lines which specify what file browser to use for images, links, etc. Look toward the bottom of the file. You will need to change lines such as this:
 
@@ -107,7 +108,7 @@ CKEDITOR.replace('instancename', {
 });
 ```
 
-If you want to use the **modal dialog mode** (instead of pop-up), please refer to [the dedicated wiki page](https://github.com/simogeo/Filemanager/wiki/How-to-open-the-Filemanager-from-CKEditor-in-a-modal-window).
+If you want to use the **modal dialog mode** (instead of pop-up), please refer to [the dedicated wiki page](https://github.com/servocoder/Filemanager/wiki/How-to-open-the-Filemanager-from-CKEditor-in-a-modal-window).
 
 **(3c)** If you are integrating the FileManager with TinyMCE (>= 3.0), you should:
 
@@ -115,13 +116,13 @@ Create a Javascript callback function that will open the FileManager index.html 
 Add a line like: "file_browser_callback : 'name_of_callback_function'" in the tinyMCE.init command
 See http://www.tinymce.com/wiki.php/TinyMCE3x:How-to_implement_a_custom_file_browser for more details.
 
-See also the dedicated wiki page, with TinyMCE 4 sample : https://github.com/simogeo/Filemanager/wiki/How-to-use-the-Filemanager-with-tinyMCE-3-or-4
+See also the dedicated wiki page, with TinyMCE 4 sample : https://github.com/servocoder/Filemanager/wiki/How-to-use-the-Filemanager-with-tinyMCE-3-or-4
 
 
 **(4)** Last but not least, **worry about security**!
 
 For **PHP connector** : setup `/connectors/php/filemanager.php` to define your own authentication function.
-To do so, you will find an example on the [dedicated wiki page](https://github.com/simogeo/Filemanager/wiki/Security-concern).
+To do so, you will find an example on the [dedicated wiki page](https://github.com/servocoder/Filemanager/wiki/Security-concern).
 (optional) Check `/connectors/php/filemanager.config.php` to enable desired plugin or setup some server-side related settings.
 
 **jQuery dependency and compatibility**
@@ -135,7 +136,7 @@ Set-up & security
 -----------------
 
 **Important** : The Filemanager is designed to work without any special configuration but **using it without any configuration is VERY unsafe**.
-Please set-up your own **authentication function**, based on [default file](https://github.com/simogeo/Filemanager/blob/master/connectors/php/filemanager.php) and refering to the [dedicated wiki page](https://github.com/simogeo/Filemanager/wiki/Security-concern).
+Please set-up your own **authentication function**, based on [default file](https://github.com/servocoder/Filemanager/blob/master/connectors/php/filemanager.php) and refering to the [dedicated wiki page](https://github.com/servocoder/Filemanager/wiki/Security-concern).
 
 
 API
