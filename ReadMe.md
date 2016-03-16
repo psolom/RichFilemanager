@@ -120,8 +120,9 @@ See also the dedicated wiki page, with TinyMCE 4 sample : https://github.com/sim
 
 **(4)** Last but not least, **worry about security**!
 
-For **PHP connector** : copy/paste the `/connectors/php/default.config.php` to `/connectors/php/user.config.php` to define your own authentication function.
+For **PHP connector** : setup `/connectors/php/filemanager.php` to define your own authentication function.
 To do so, you will find an example on the [dedicated wiki page](https://github.com/simogeo/Filemanager/wiki/Security-concern).
+(optional) Check `/connectors/php/filemanager.config.php` to enable desired plugin or setup some server-side related settings.
 
 **jQuery dependency and compatibility**
 
@@ -134,7 +135,7 @@ Set-up & security
 -----------------
 
 **Important** : The Filemanager is designed to work without any special configuration but **using it without any configuration is VERY unsafe**.
-Please set-up your own **authentication function**, based on [default file](https://github.com/simogeo/Filemanager/blob/master/connectors/php/default.config.php) and refering to the [dedicated wiki page](https://github.com/simogeo/Filemanager/wiki/Security-concern).
+Please set-up your own **authentication function**, based on [default file](https://github.com/simogeo/Filemanager/blob/master/connectors/php/filemanager.php) and refering to the [dedicated wiki page](https://github.com/simogeo/Filemanager/wiki/Security-concern).
 
 
 API

@@ -3,7 +3,7 @@
  *	Filemanager PHP class
  *
  *	filemanager.class.php
- *	class for the filemanager.php connector
+ *	Class for the filemanager.php connector
  *
  *	@license	MIT License
  *	@author		Riaan Los <mail (at) riaanlos (dot) nl>
@@ -12,87 +12,29 @@
  *	@copyright	Authors
  */
 
-class Filemanager {
+require_once('filemanager.base.php');
 
-	protected $config = array();
-	protected $language = array();
-	protected $get = array();
-	protected $post = array();
-	protected $properties = array();
-	protected $item = array();
+class Filemanager extends FilemanagerBase
+{
+	protected $refParams = array();
 	protected $languages = array();
 	protected $allowed_actions = array();
-	protected $root_path = ''; // Filemanager root folder
 	protected $doc_root = '';		// root folder known by JS : $this->config['options']['fileRoot'] (filepath or '/') or $_SERVER['DOCUMENT_ROOT'] - overwritten by setFileRoot() method
 	protected $dynamic_fileroot = ''; // Only set if setFileRoot() is called. Second part of the path : '/Filemanager/assets/' ( doc_root - $_SERVER['DOCUMENT_ROOT'])
 	protected $path_to_files = ''; // path to FM userfiles folder - automatically computed by the PHP class, something like '/var/www/Filemanager/userfiles'
-	protected $logger = false;
-	protected $logfile = '';
 	protected $cachefolder = '_thumbs/';
 	protected $thumbnail_width = 64;
 	protected $thumbnail_height = 64;
 	protected $separator = 'userfiles'; // @todo fix keep it or not?
 	protected $connector_script_url = 'connectors/php/filemanager.php';
 
-	public function __construct($extraConfig = '')
+	public function __construct($extraConfig = array())
     {
-		$this->root_path = isset($extraConfig['root_path']) ? $extraConfig['root_path'] : dirname(dirname(dirname(__FILE__)));
-
-		// getting default config file
-		$content = file_get_contents($this->root_path . "/scripts/filemanager.config.default.json");
-		$config_default = json_decode($content, true);
-
-		// getting user config file
-		if(isset($_REQUEST['config'])) {
-			$this->getvar('config');
-			if (file_exists($this->root_path . "/scripts/" . $_REQUEST['config'])) {
-				$this->__log('Loading ' . basename($this->get['config']) . ' config file.');
-				$content = file_get_contents($this->root_path . "/scripts/" . basename($this->get['config']));
-			} else {
-				$this->__log($this->get['config'] . ' config file does not exists.');
-				$this->error("Given config file (".basename($this->get['config']).") does not exist !");
-			}
-		} else {
-			$content = file_get_contents($this->root_path . "/scripts/filemanager.config.json");
-		}
-		$config = json_decode($content, true);
-
-		// Prevent following bug https://github.com/simogeo/Filemanager/issues/398
-		$config_default['security']['uploadRestrictions'] = array();
-
-		if(!$config) {
-			$this->error("Error parsing the settings file! Please check your JSON syntax.");
-		}
-		$this->config = array_replace_recursive ($config_default, $config);
-
-		// override config options if needed
-		if(!empty($extraConfig)) {
-			$this->setup($extraConfig);
-		}
+		parent::__construct($extraConfig);
 
         if($this->config['options']['fileConnector']) {
             $this->connector_script_url = $this->config['options']['fileConnector'];
         }
-
-		// set logfile path according to system if not set into config file
-		if(!isset($this->config['options']['logfile']))
-			$this->config['options']['logfile'] = sys_get_temp_dir(). '/filemanager.log';
-
-		$this->properties = array(
-			'Date Created' => null,
-			'Date Modified' => null,
-			'Height' => null,
-			'Width' => null,
-			'Size' => null
-		);
-
-		// Log actions or not?
-		if ($this->config['options']['logger'] == true ) {
-			if(isset($this->config['options']['logfile'])) {
-				$this->logfile = $this->config['options']['logfile'];
-			}
-			$this->enableLog();
-		}
 
 		// if fileRoot is set manually, $this->doc_root takes fileRoot value
 		// for security check in is_valid_path() method
@@ -109,11 +51,11 @@ class Filemanager {
 			}
 		} else {
 			$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
-			$this->path_to_files = $this->root_path . '/' . $this->separator . '/' ;
+			$this->path_to_files = $this->fm_path . '/' . $this->separator . '/' ;
 		}
 		$this->cleanPath($this->path_to_files);
 
-		$this->__log(__METHOD__ . ' $this->root_path value ' . $this->root_path);
+		$this->__log(__METHOD__ . ' $this->fm_path value ' . $this->fm_path);
 		$this->__log(__METHOD__ . ' $this->path_to_files ' . $this->path_to_files);
 		$this->__log(__METHOD__ . ' $this->doc_root value ' . $this->doc_root);
 		$this->__log(__METHOD__ . ' $this->separator value ' . $this->separator);
@@ -122,18 +64,6 @@ class Filemanager {
 		$this->setPermissions();
 		$this->availableLanguages();
 		$this->loadLanguageFile();
-	}
-
-    /**
-     * Extend config from file
-     * @param array $extraconfig Should be formatted as json config array.
-     */
-	public function setup($extraconfig)
-    {
-		// Prevent following bug https://github.com/simogeo/Filemanager/issues/398
-		$config_default['security']['uploadRestrictions'] = array();
-
-		$this->config = array_replace_recursive($this->config, $extraconfig);
 	}
 
     /**
@@ -175,80 +105,7 @@ class Filemanager {
 	}
 
     /**
-     * Echo error message and terminate the application
-     * @param $string
-     * @param bool $textarea
-     */
-	public function error($string, $textarea = false)
-    {
-		$array = array(
-			'Error' => $string,
-			'Code' => '-1',
-			'Properties' => $this->properties
-		);
-
-		$this->__log( __METHOD__ . ' - error message : ' . $string);
-
-		if($textarea) {
-			echo '<textarea>' . json_encode($array) . '</textarea>';
-		} else {
-			echo json_encode($array);
-		}
-		die();
-	}
-
-	public function lang($string)
-    {
-		if(isset($this->language[$string]) && $this->language[$string]!='') {
-			return $this->language[$string];
-		} else {
-			return 'Language string error on ' . $string;
-		}
-	}
-
-    /**
-     * Retrieve data from $_GET global var
-     * @param string $var
-     * @param bool $sanitize
-     * @return bool
-     */
-	public function getvar($var, $sanitize = true)
-    {
-		if(!isset($_GET[$var]) || $_GET[$var]=='') {
-			$this->error(sprintf($this->lang('INVALID_VAR'),$var));
-		} else {
-			if($sanitize) {
-				$this->get[$var] = $this->sanitize($_GET[$var]);
-			} else {
-				$this->get[$var] = $_GET[$var];
-			}
-			return true;
-		}
-	}
-
-    /**
-     * Retrieve data from $_POST global var
-     * @param string $var
-     * @param bool $sanitize
-     * @return bool
-     */
-	public function postvar($var, $sanitize = true)
-    {
-		if(!isset($_POST[$var]) || ($var != 'content' && $_POST[$var]=='')) {
-			$this->error(sprintf($this->lang('INVALID_VAR'),$var));
-		} else {
-			if($sanitize) {
-				$this->post[$var] = $this->sanitize($_POST[$var]);
-			} else {
-				$this->post[$var] = $_POST[$var];
-			}
-			return true;
-		}
-	}
-
-    /**
-     * Returns file info - filemanager action
-     * @return array
+     * @inheritdoc
      */
 	public function getinfo()
     {
@@ -282,27 +139,24 @@ class Filemanager {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$this->item = array();
-		$this->item['properties'] = $this->properties;
-		$this->get_file_info('', false);
+		$item = $this->get_file_info('', false);
 
 		$array = array(
 			'Path' => $this->formatPath($path),
-			'Filename' => $this->item['filename'],
-			'File Type' => $this->item['filetype'],
-			'Protected' => $this->item['protected'],
-			'Preview' => $this->item['preview'],
-			'Properties' => $this->item['properties'],
+			'Filename' => $item['filename'],
+			'File Type' => $item['filetype'],
+			'Protected' => $item['protected'],
+			'Preview' => $item['preview'],
+			'Properties' => $item['properties'],
 			'Error' => "",
 			'Code' => 0
 		);
 		return $array;
 	}
 
-    /**
-     * Open specified folder - filemanager action
-     * @return array
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function getfolder()
     {
 		$array = array();
@@ -324,7 +178,7 @@ class Filemanager {
 		}
 
 		if(!$handle = @opendir($current_path)) {
-			$this->error(sprintf($this->lang('UNABLE_TO_OPEN_DIRECTORY'),$this->get['path']));
+			$this->error(sprintf($this->lang('UNABLE_TO_OPEN_DIRECTORY'), $this->get['path']));
 		} else {
 			while (false !== ($file = readdir($handle))) {
 				if($file != "." && $file != "..") {
@@ -371,20 +225,17 @@ class Filemanager {
 						);
 					}
 				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match( $this->config['exclude']['unallowed_files_REGEXP'], $file)) {
-					$this->item = array();
-					$this->item['properties'] = $this->properties;
-					$this->get_file_info($this->get['path'] . $file, true);
+					$item = $this->get_file_info($this->get['path'] . $file, true);
 
-
-					if(!isset($this->params['type']) || (isset($this->params['type']) && strtolower($this->params['type'])=='images' && in_array(strtolower($this->item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
-						if($this->config['upload']['imagesOnly']== false || ($this->config['upload']['imagesOnly']== true && in_array(strtolower($this->item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
+					if(!isset($this->refParams['type']) || (isset($this->refParams['type']) && strtolower($this->refParams['type'])=='images' && in_array(strtolower($item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
+						if($this->config['upload']['imagesOnly']== false || ($this->config['upload']['imagesOnly']== true && in_array(strtolower($item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
 							$array[$this->get['path'] . $file] = array(
 								'Path' => $this->get['path'] . $file,
-								'Filename' => $this->item['filename'],
-								'File Type' => $this->item['filetype'],
-								'Protected' => $this->item['protected'],
-								'Preview' => $this->item['preview'],
-								'Properties' => $this->item['properties'],
+								'Filename' => $item['filename'],
+								'File Type' => $item['filetype'],
+								'Protected' => $item['protected'],
+								'Preview' => $item['preview'],
+								'Properties' => $item['properties'],
 								'Error' => "",
 								'Code' => 0
 							);
@@ -399,10 +250,9 @@ class Filemanager {
 		return $array;
 	}
 
-    /**
-     * Open and edit file - filemanager action
-     * @return array
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function editfile()
     {
 		$current_path = $this->getFullPath();
@@ -435,9 +285,9 @@ class Filemanager {
 		return $array;
 	}
 
-    /**
-     * Save data to file after editing - filemanager action
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function savefile()
     {
 		$current_path = $this->getFullPath($this->post['path']);
@@ -468,9 +318,9 @@ class Filemanager {
 		return $array;
 	}
 
-    /**
-     * Rename file or folder - filemanager action
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function rename()
     {
 		$suffix = '';
@@ -551,9 +401,9 @@ class Filemanager {
 		return $array;
 	}
 
-    /**
-     * Move file or folder - filemanager action
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function move()
     {
 		$newPath = $this->get['new'] . '/';
@@ -641,9 +491,9 @@ class Filemanager {
 		return $array;
 	}
 
-    /**
-     * Delete existed file or folder - filemanager action
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function delete()
     {
 		$current_path = $this->getFullPath();
@@ -706,9 +556,9 @@ class Filemanager {
 		}
 	}
 
-    /**
-     * Replace existed file - filemanager action
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function replace()
     {
 		$this->setParams();
@@ -763,9 +613,9 @@ class Filemanager {
 		die();
 	}
 
-    /**
-     * Upload new file - filemanager action
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function add()
     {
 		$this->setParams();
@@ -812,10 +662,9 @@ class Filemanager {
 		die();
 	}
 
-    /**
-     * Create new folder - filemanager action
-     * @return array
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function addfolder()
     {
 		$current_path = $this->getFullPath();
@@ -843,62 +692,8 @@ class Filemanager {
 	}
 
 	/**
-	 * Creates a zip file from source to destination
-	 * @param  string $source Source path for zip
-	 * @param  string $destination Destination path for zip
-	 * @param  string|boolean $flag OPTIONAL If true includes the folder also
-	 * @return boolean
-	 * @link 	 http://stackoverflow.com/questions/17584869/zip-main-folder-with-sub-folder-inside
+	 * @inheritdoc
 	 */
-	public function zipFile($source, $destination, $flag = '')
-	{
-		if (!extension_loaded('zip') || !file_exists($source)) {
-			return false;
-		}
-
-		$zip = new ZipArchive();
-		if (!$zip->open($destination, ZIPARCHIVE::CREATE)) {
-			return false;
-		}
-
-		$source = str_replace('\\', '/', realpath($source));
-		if($flag)
-		{
-			$flag = basename($source) . '/';
-			//$zip->addEmptyDir(basename($source) . '/');
-		}
-
-		if (is_dir($source) === true)
-		{
-			// add file to prevent empty archive error on download
-			$zip->addFromString('fm', "This archive has been generated by simogeo's Filemanager : https://github.com/simogeo/Filemanager/");
-
-			$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
-			foreach ($files as $file)
-			{
-				$file = str_replace('\\', '/', realpath($file));
-
-				if (is_dir($file) === true)
-				{
-					$zip->addEmptyDir(str_replace($source . '/', '', $flag.$file . '/'));
-				}
-				else if (is_file($file) === true)
-				{
-					$zip->addFromString(str_replace($source . '/', '', $flag.$file), file_get_contents($file));
-				}
-			}
-		}
-		else if (is_file($source) === true)
-		{
-			$zip->addFromString($flag.basename($source), file_get_contents($source));
-		}
-
-		return $zip->close();
-	}
-
-    /**
-     * Download file - filemanager action
-     */
 	public function download()
     {
 		$current_path = $this->getFullPath();
@@ -956,10 +751,9 @@ class Filemanager {
 		}
 	}
 
-    /**
-     * Preview file - filemanager action
-     * @param bool $thumbnail Whether to generate image thumbnail
-     */
+	/**
+	 * @inheritdoc
+	 */
 	public function preview($thumbnail)
     {
 		$current_path = $this->getFullPath();
@@ -991,6 +785,60 @@ class Filemanager {
 		}
 	}
 
+	/**
+	 * Creates a zip file from source to destination
+	 * @param  string $source Source path for zip
+	 * @param  string $destination Destination path for zip
+	 * @param  string|boolean $flag OPTIONAL If true includes the folder also
+	 * @return boolean
+	 * @link 	 http://stackoverflow.com/questions/17584869/zip-main-folder-with-sub-folder-inside
+	 */
+	public function zipFile($source, $destination, $flag = '')
+	{
+		if (!extension_loaded('zip') || !file_exists($source)) {
+			return false;
+		}
+
+		$zip = new ZipArchive();
+		if (!$zip->open($destination, ZIPARCHIVE::CREATE)) {
+			return false;
+		}
+
+		$source = str_replace('\\', '/', realpath($source));
+		if($flag)
+		{
+			$flag = basename($source) . '/';
+			//$zip->addEmptyDir(basename($source) . '/');
+		}
+
+		if (is_dir($source) === true)
+		{
+			// add file to prevent empty archive error on download
+			$zip->addFromString('fm', "This archive has been generated by simogeo's Filemanager : https://github.com/simogeo/Filemanager/");
+
+			$files = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source), RecursiveIteratorIterator::SELF_FIRST);
+			foreach ($files as $file)
+			{
+				$file = str_replace('\\', '/', realpath($file));
+
+				if (is_dir($file) === true)
+				{
+					$zip->addEmptyDir(str_replace($source . '/', '', $flag.$file . '/'));
+				}
+				else if (is_file($file) === true)
+				{
+					$zip->addFromString(str_replace($source . '/', '', $flag.$file), file_get_contents($file));
+				}
+			}
+		}
+		else if (is_file($source) === true)
+		{
+			$zip->addFromString($flag.basename($source), file_get_contents($source));
+		}
+
+		return $zip->close();
+	}
+
 	public function getMaxUploadFileSize()
     {
 		$max_upload = (int) ini_get('upload_max_filesize');
@@ -1006,7 +854,7 @@ class Filemanager {
 
 	protected function setParams()
     {
-		$tmp = (isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/');
+		$tmp = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
 		$tmp = explode('?',$tmp);
 		$params = array();
 		if(isset($tmp[1]) && $tmp[1]!='') {
@@ -1020,7 +868,7 @@ class Filemanager {
 				}
 			}
 		}
-		$this->params = $params;
+		$this->refParams = $params;
 	}
 
     protected function setPermissions()
@@ -1052,77 +900,79 @@ class Filemanager {
      * Create array with file properties
      * @param string $path
      * @param bool $thumbnail
+	 * @return array|void
      */
 	protected function get_file_info($path = '', $thumbnail = false)
     {
 		// DO NOT  rawurlencode() since $relative_path it
 		// is used for displaying name file
-		if($path=='') {
+		if($path == '') {
 			$relative_path = $this->get['path'];
 		} else {
 			$relative_path = $path;
 		}
 		$current_path = $this->getFullPath($relative_path);
 
+		$item = $this->defaultInfo;
 		$tmp = explode('/', $relative_path);
-		$this->item['filename'] = $tmp[(sizeof($tmp)-1)];
+		$item['filename'] = $tmp[(sizeof($tmp)-1)];
 
-		$tmp = explode('.',$this->item['filename']);
-		$this->item['filetype'] = $tmp[(sizeof($tmp)-1)];
-		$this->item['filemtime'] = filemtime($current_path);
-		$this->item['filectime'] = filectime($current_path);
+		$tmp = explode('.', $item['filename']);
+		$item['filetype'] = $tmp[(sizeof($tmp)-1)];
+		$item['filemtime'] = filemtime($current_path);
+		$item['filectime'] = filectime($current_path);
 		$iconsFolder = $this->getUrl($this->config['icons']['path']);
 
 		// check if file is writable and readable
 		if(!$this->has_system_permission($current_path, array('w', 'r'))) {
-			$this->item['protected'] = 1;
-			$this->item['preview'] = $iconsFolder . 'locked_' . $this->config['icons']['default'];
+			$item['protected'] = 1;
+			$item['preview'] = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			// prevent Internal Server Error HTTP_CODE 500 on non readable files/folders
 			// without returning errors
 			return;
-
-		}	else {
-			$this->item['protected'] = 0;
-			$this->item['preview'] = $iconsFolder . $this->config['icons']['default'];
+		} else {
+			$item['protected'] = 0;
+			$item['preview'] = $iconsFolder . $this->config['icons']['default'];
 		}
 
 		if(is_dir($current_path)) {
 
-			$this->item['preview'] = $iconsFolder . $this->config['icons']['directory'];
+			$item['preview'] = $iconsFolder . $this->config['icons']['directory'];
 
-		} else if($this->config['options']['showThumbs'] && in_array(strtolower($this->item['filetype']), array_map('strtolower', $this->config['images']['imagesExt']))) {
+		} else if($this->config['options']['showThumbs'] && in_array(strtolower($item['filetype']), array_map('strtolower', $this->config['images']['imagesExt']))) {
 
 			// svg should not be previewed as raster formats images
-			if($this->item['filetype'] == 'svg') {
-				$this->item['preview'] = $relative_path;
+			if($item['filetype'] == 'svg') {
+				$item['preview'] = $relative_path;
 			} else {
-				$this->item['preview'] = $this->connector_script_url . '?mode=preview&path='. rawurlencode($relative_path).'&'. time();
-				if($thumbnail) $this->item['preview'] .= '&thumbnail=true';
+				$item['preview'] = $this->connector_script_url . '?mode=preview&path='. rawurlencode($relative_path).'&'. time();
+				if($thumbnail) $item['preview'] .= '&thumbnail=true';
 			}
 			//if(isset($get['getsize']) && $get['getsize']=='true') {
-			$this->item['properties']['Size'] = filesize($current_path);
-			if ($this->item['properties']['Size']) {
+			$item['properties']['Size'] = filesize($current_path);
+			if ($item['properties']['Size']) {
 				list($width, $height, $type, $attr) = getimagesize($current_path);
 			} else {
-				$this->item['properties']['Size'] = 0;
+				$item['properties']['Size'] = 0;
 				list($width, $height) = array(0, 0);
 			}
-			$this->item['properties']['Height'] = $height;
-			$this->item['properties']['Width'] = $width;
-			$this->item['properties']['Size'] = filesize($current_path);
+			$item['properties']['Height'] = $height;
+			$item['properties']['Width'] = $width;
+			$item['properties']['Size'] = filesize($current_path);
 			//}
 
-		} else if(file_exists($this->root_path . '/' . $this->config['icons']['path'] . strtolower($this->item['filetype']) . '.png')) {
+		} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($item['filetype']) . '.png')) {
 
-			$this->item['preview'] = $iconsFolder . strtolower($this->item['filetype']) . '.png';
-			$this->item['properties']['Size'] = filesize($current_path);
-			if (!$this->item['properties']['Size']) $this->item['properties']['Size'] = 0;
-
+			$item['preview'] = $iconsFolder . strtolower($item['filetype']) . '.png';
+			$item['properties']['Size'] = filesize($current_path);
+			if (!$item['properties']['Size']) $item['properties']['Size'] = 0;
 		}
 
-		$this->item['properties']['Date Modified'] = date($this->config['options']['dateFormat'], $this->item['filemtime']);
-		$this->item['properties']['filemtime'] = filemtime($current_path);
+		$item['properties']['Date Modified'] = date($this->config['options']['dateFormat'], $item['filemtime']);
+		$item['properties']['filemtime'] = filemtime($current_path);
 		//$return['properties']['Date Created'] = $this->config['options']['dateFormat'], $return['filectime']); // PHP cannot get create timestamp
+
+		return $item;
 	}
 
     /**
@@ -1302,6 +1152,17 @@ class Filemanager {
 		return true;
 	}
 
+	/**
+	 * Clean path string to remove multiple slashes, etc.
+	 * @param string $string
+	 */
+	protected function cleanPath(&$string)
+	{
+		// remove multiple slashes
+		$string = preg_replace('#/+#', '/', $string);
+		//str_replace("//", "/", $string);
+	}
+
     /**
      * Clean string to retrieve correct filename
      * @param string|array $string
@@ -1328,17 +1189,6 @@ class Filemanager {
 		}
 
 		return $cleaned;
-	}
-
-	/**
-	 * Clean path string to remove multiple slashes, etc.
-	 * @param string $string
-	 */
-	protected function cleanPath(&$string)
-    {
-		// remove multiple slashes
-		$string = preg_replace('#/+#', '/', $string);
-		//str_replace("//", "/", $string);
 	}
 
     /**
@@ -1436,21 +1286,6 @@ class Filemanager {
 	}
 
     /**
-     * Sanitize global vars: $_GET, $_POST
-     * @param string $var
-     * @return mixed|string
-     */
-	protected function sanitize($var)
-    {
-		$sanitized = strip_tags($var);
-		$sanitized = str_replace('http://', '', $sanitized);
-		$sanitized = str_replace('https://', '', $sanitized);
-		$sanitized = str_replace('../', '', $sanitized);
-
-		return $sanitized;
-	}
-
-    /**
      * Check whether filename is unique, otherwise build unique one
      * @param string $path
      * @param string $filename
@@ -1481,19 +1316,21 @@ class Filemanager {
 	protected function loadLanguageFile()
     {
 		$lang = $this->config['options']['culture'];
-		if(isset($this->params['langCode']) && in_array($this->params['langCode'], $this->languages)) $lang = $this->params['langCode'];
+		if(isset($this->refParams['langCode']) && in_array($this->refParams['langCode'], $this->languages)) {
+			$lang = $this->refParams['langCode'];
+		}
 
-		if(file_exists($this->root_path . '/scripts/languages/'.$lang.'.js')) {
-			$stream =file_get_contents($this->root_path . '/scripts/languages/'.$lang.'.js');
+		if(file_exists($this->fm_path . '/scripts/languages/'.$lang.'.js')) {
+			$stream =file_get_contents($this->fm_path . '/scripts/languages/'.$lang.'.js');
 			$this->language = json_decode($stream, true);
 		} else {
 			$l = substr($lang,0,2); // we try with 2 chars language file
-			if(file_exists($this->root_path. '/scripts/languages/'.$l.'.js')) {
-				$stream = file_get_contents($this->root_path . '/scripts/languages/'.$l.'.js');
+			if(file_exists($this->fm_path. '/scripts/languages/'.$l.'.js')) {
+				$stream = file_get_contents($this->fm_path . '/scripts/languages/'.$l.'.js');
 				$this->language = json_decode($stream, true);
 			} else {
 				// we include default language file
-				$stream = file_get_contents($this->root_path . '/scripts/languages/'.$this->config['options']['culture'].'.js');
+				$stream = file_get_contents($this->fm_path . '/scripts/languages/'.$this->config['options']['culture'].'.js');
 				$this->language = json_decode($stream, true);
 			}
 		}
@@ -1504,7 +1341,7 @@ class Filemanager {
      */
 	protected function availableLanguages()
     {
-		if ($handle = opendir($this->root_path . '/scripts/languages/')) {
+		if ($handle = opendir($this->fm_path . '/scripts/languages/')) {
 			while (false !== ($file = readdir($handle))) {
 				if ($file != "." && $file != "..") {
 					array_push($this->languages, pathinfo($file, PATHINFO_FILENAME));
@@ -1550,64 +1387,6 @@ class Filemanager {
 		$exts = array_map('strtolower', $this->config['edit']['editExt']);
 
 		return in_array($path_parts['extension'], $exts);
-	}
-
-    /**
-     * Return user IP address
-     * @return mixed
-     */
-	protected function get_user_ip()
-	{
-		$client  = @$_SERVER['HTTP_CLIENT_IP'];
-		$forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
-		$remote  = $_SERVER['REMOTE_ADDR'];
-
-		if(filter_var($client, FILTER_VALIDATE_IP))
-		{
-			$ip = $client;
-		}
-		elseif(filter_var($forward, FILTER_VALIDATE_IP))
-		{
-			$ip = $forward;
-		}
-		else
-		{
-			$ip = $remote;
-		}
-
-		return $ip;
-	}
-
-    /**
-     * Write log to file
-     * @param string $msg
-     */
-	protected function __log($msg)
-    {
-		if($this->logger == true) {
-			$fp = fopen($this->logfile, "a");
-			$str = "[" . date("d/m/Y h:i:s", time()) . "]#".  $this->get_user_ip() . "#" . $msg;
-			fwrite($fp, $str . PHP_EOL);
-			fclose($fp);
-		}
-	}
-
-	public function enableLog($logfile = '')
-    {
-		$this->logger = true;
-
-		if($logfile != '') {
-			$this->logfile = $logfile;
-		}
-
-		$this->__log(__METHOD__ . ' - Log enabled (in '. $this->logfile. ' file)');
-	}
-
-	public function disableLog()
-    {
-		$this->logger = false;
-
-		$this->__log(__METHOD__ . ' - Log disabled');
 	}
 
 	/**
@@ -1671,7 +1450,7 @@ class Filemanager {
 		}
 
 		// we check if only images are allowed
-		if($this->config['upload']['imagesOnly'] || (isset($this->params['type']) && strtolower($this->params['type'])=='images')) {
+		if($this->config['upload']['imagesOnly'] || (isset($this->refParams['type']) && strtolower($this->refParams['type'])=='images')) {
 			if(!($size = @getimagesize($_FILES[$uploadName]['tmp_name']))){
 				$this->error(sprintf($this->lang('UPLOAD_IMAGES_ONLY')),true);
 			}
@@ -1688,14 +1467,20 @@ class Filemanager {
 	 */
 	protected function getUrl($path)
 	{
-		if(isset($this->config['root_url']) && strpos($path, '/') !== 0 && $this->config['root_url']) {
-			$url = $this->config['root_url'] . '/' . $path;
+		if(isset($this->config['fmUrl']) && !empty($this->config['fmUrl']) && strpos($path, '/') !== 0) {
+			$url = $this->config['fmUrl'] . '/' . $path;
 			$this->cleanPath($url);
 			return $url;
 		}
 		return $path;
 	}
 
+	/**
+	 * Resizes original image to dimensions defined in the config file
+	 * @param $imagePath
+	 * @param $width
+	 * @param $height
+	 */
 	protected function resizeImage($imagePath, $width, $height)
 	{
 		require_once('./inc/wideimage/lib/WideImage.php');
@@ -1705,6 +1490,12 @@ class Filemanager {
 		$resized->saveToFile($imagePath);
 	}
 
+	/**
+	 * Creates thumbnail from the original image
+	 * @param $imagePath
+	 * @param $width
+	 * @param $height
+	 */
 	protected function createThumbnail($imagePath, $thumbnailPath, $width, $height)
 	{
 		require_once('./inc/wideimage/lib/WideImage.php');
