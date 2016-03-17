@@ -712,9 +712,7 @@ class Filemanager extends FilemanagerBase
 			if(!$this->is_allowed_file_type(basename($current_path))) {
 				$this->error(sprintf($this->lang('INVALID_FILE_TYPE')),true);
 			}
-
 		} else {
-
 			// check if permission is granted
 			if(is_dir($current_path) && $this->config['security']['allowFolderDownload'] == false ) {
 				$this->error(sprintf($this->lang('NOT_ALLOWED')),true);
@@ -1064,7 +1062,6 @@ class Filemanager extends FilemanagerBase
 				array_multisort($modified_order_array, SORT_DESC, $array);
 			}
 			return $array;
-
 		}
 
 		return $array;

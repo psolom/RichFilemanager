@@ -95,6 +95,10 @@ class S3StorageHelper
         ]);
 
         $this->client = new S3Client($args);
+
+        // to use PHP functions like copy(), rename() etc.
+        // https://docs.aws.amazon.com/aws-sdk-php/v3/guide/service/s3-stream-wrapper.html
+        $this->client->registerStreamWrapper();
     }
 
     /**
@@ -108,11 +112,11 @@ class S3StorageHelper
     /**
      * @inheritDoc
      */
-    public function put($filename, $data, $acl = null, array $options = [])
+    public function put($key, $data, $acl = null, array $options = [])
     {
         $args = $this->prepareArgs($options, [
             'Bucket' => $this->bucket,
-            'Key' => $filename,
+            'Key' => $key,
             'Body' => $data,
             'ACL' => !empty($acl) ? $acl : $this->defaultAcl,
         ]);
@@ -123,11 +127,11 @@ class S3StorageHelper
     /**
      * @inheritDoc
      */
-    public function get($filename, $saveAs = null)
+    public function get($key, $saveAs = null)
     {
         $args = $this->prepareArgs([
             'Bucket' => $this->bucket,
-            'Key' => $filename,
+            'Key' => $key,
             'SaveAs' => $saveAs,
         ]);
 
@@ -137,36 +141,36 @@ class S3StorageHelper
     /**
      * @inheritDoc
      */
-    public function exist($filename, array $options = [])
+    public function exist($key, array $options = [])
     {
-        return $this->getClient()->doesObjectExist($this->bucket, $filename, $options);
+        return $this->getClient()->doesObjectExist($this->bucket, $key, $options);
     }
 
     /**
      * @inheritDoc
      */
-    public function delete($filename)
+    public function delete($key)
     {
         return $this->execute('DeleteObject', [
             'Bucket' => $this->bucket,
-            'Key' => $filename,
+            'Key' => $key,
         ]);
     }
 
     /**
      * @inheritDoc
      */
-    public function getUrl($filename)
+    public function getUrl($key)
     {
-        return $this->getClient()->getObjectUrl($this->bucket, $filename);
+        return $this->getClient()->getObjectUrl($this->bucket, $key);
     }
 
     /**
      * @inheritDoc
      */
-    public function getPresignedUrl($filename, $expires)
+    public function getPresignedUrl($key, $expires)
     {
-        $command = $this->getClient()->getCommand('GetObject', ['Bucket' => $this->bucket, 'Key' => $filename]);
+        $command = $this->getClient()->getCommand('GetObject', ['Bucket' => $this->bucket, 'Key' => $key]);
         $request = $this->getClient()->createPresignedRequest($command, $expires);
 
         return (string)$request->getUri();
@@ -175,9 +179,9 @@ class S3StorageHelper
     /**
      * @inheritDoc
      */
-    public function getCdnUrl($filename)
+    public function getCdnUrl($key)
     {
-        return $this->cdnHostname . '/' . $filename;
+        return $this->cdnHostname . '/' . $key;
     }
 
     /**
@@ -196,11 +200,11 @@ class S3StorageHelper
     /**
      * @inheritDoc
      */
-    public function upload($filename, $source, $acl = null, array $options = [])
+    public function upload($key, $source, $acl = null, array $options = [])
     {
         return $this->getClient()->upload(
             $this->bucket,
-            $filename,
+            $key,
             $this->toStream($source),
             !empty($acl) ? $acl : $this->defaultAcl,
             $options
@@ -211,7 +215,7 @@ class S3StorageHelper
      * @inheritDoc
      */
     public function uploadAsync(
-        $filename,
+        $key,
         $source,
         $concurrency = null,
         $partSize = null,
@@ -225,7 +229,7 @@ class S3StorageHelper
 
         return $this->getClient()->uploadAsync(
             $this->bucket,
-            $filename,
+            $key,
             $this->toStream($source),
             !empty($acl) ? $acl : $this->defaultAcl,
             $args
@@ -275,15 +279,15 @@ class S3StorageHelper
     }
 
     /**
-     * @param $filename
+     * @param $key
      * @param bool $handle - returns FALSE if object doesn't exists or access is denied
      * @return \Aws\ResultInterface|bool
      */
-    public function head($filename, $handle = false)
+    public function head($key, $handle = false)
     {
         $args = [
             'Bucket' => $this->bucket,
-            'Key' => $filename,
+            'Key' => $key,
         ];
 
         if(!$handle) {
@@ -304,17 +308,17 @@ class S3StorageHelper
     }
 
     /**
-     * @param $filename
+     * @param $key
      * @param $destination
      * @param $acl
      * @param $options
      * @return \Aws\ResultInterface|bool
      */
-    public function copy($filename, $destination, $acl = null, array $options = [])
+    public function copy($key, $destination, $acl = null, array $options = [])
     {
         return $this->getClient()->copy(
             $this->bucket,
-            $filename,
+            $key,
             $this->bucket,
             $destination,
             !empty($acl) ? $acl : $this->defaultAcl,
@@ -323,16 +327,38 @@ class S3StorageHelper
     }
 
     /**
-     * @param $filename
+     * @param $key
      */
-    public function batchDelete($filename)
+    public function batchDelete($key)
     {
-        $this->getClient()->deleteMatchingObjects($this->bucket, $filename);
+        $this->getClient()->deleteMatchingObjects($this->bucket, $key);
     }
 
-    public function rename($filename, $destination)
+    /**
+     * @param $key
+     * @param $destination
+     * @return bool
+     */
+    public function rename($key, $destination)
     {
-        $this->getClient()->registerStreamWrapper();
-        $res = rename("s3://{$this->bucket}/{$filename}", "s3://{$this->bucket}/{$destination}");
+        $bucket = $this->bucket;
+        $isDir = is_dir("s3://{$bucket}/{$key}");
+
+        if($isDir) {
+            $result = $this->getList($key);
+
+            if(!isset($result['Contents'])) {
+                return false;
+            }
+
+            foreach ($result['Contents'] as $object) {
+                $newPath = str_replace($key, $destination, $object['Key']);
+                rename("s3://{$bucket}/{$object['Key']}", "s3://{$bucket}/{$newPath}");
+            }
+        } else {
+            rename("s3://{$bucket}/{$key}", "s3://{$bucket}/{$destination}");
+        }
+
+        return true;
     }
 }

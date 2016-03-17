@@ -17,7 +17,24 @@ $config = array();
  * Whether to store images thumbnails locally (save traffic and requests)
  * @var string|null
  */
-$config['s3']['localThumbsPath'] = null; // example: "userfilesS3"
+$config['s3']['localThumbsPath'] = 'userfilesS3';
+
+/**
+ * Whether to perform bulk operations on "folders" (rename/move/copy)
+ * NOTE: S3 is not a filesystem, it operates with "objects" and it has no such thing as "folder".
+ * When you are performing operations like delete/rename/move/copy on "directory" the plugin actually performs
+ * your action for each object prefixed with the "directory" name in the background. The more objects you have
+ * in your "directory", the more requests will be sent to simulate the "recursive mode". Also be aware that each
+ * rename/move/copy operation requires at least 2 requests: COPY and DELETE of the old object then.
+ *
+ * Links with some explanations:
+ * http://stackoverflow.com/a/12523414/1789808
+ * http://stackoverflow.com/questions/33363254/aws-s3-rename-directory-object
+ * http://stackoverflow.com/questions/33000329/cost-of-renaming-a-folder-in-aws-s3-bucket
+ *
+ * @var boolean
+ */
+$config['s3']['allowBulk'] = true;
 
 /**
  * Image preview obtain/send mode.
@@ -39,14 +56,14 @@ $config['s3']['localThumbsPath'] = null; // example: "userfilesS3"
 $config['s3']['thumbsRetrieveMode'] = FilemanagerS3::RETRIEVE_MODE_SERVER;
 
 /**
- * Whether to presign url - for non-public S3 objects.
+ * Presign url for non-public S3 objects.
  * Currently used only for thumbnails if "thumbsRetrieveMode" === FilemanagerS3::RETRIEVE_MODE_BROWSER
  * @var boolean
  */
 $config['s3']['presignUrl'] = true;
 
 /**
- * Whether to check if S3 object exists before performing PUT request
+ * Check if S3 object exists before performing PUT request
  * Set to false to put an object without checking. This might force object overwriting.
  * @var boolean
  */

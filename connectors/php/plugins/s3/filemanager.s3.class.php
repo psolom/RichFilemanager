@@ -90,9 +90,6 @@ class FilemanagerS3 extends Filemanager
 		}
 		$storage->init();
 
-		// to use PHP functions like copy(), rename() etc.
-		$storage->getClient()->registerStreamWrapper();
-
 		return $storage;
 	}
 
@@ -243,12 +240,11 @@ class FilemanagerS3 extends Filemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$this->deleteObject($current_path);
-		$isExist = $this->isObjectExists($current_path, true);
+		$isDeleted = $this->deleteObject($current_path);
 
 		return array(
-			'Error' => !$isExist ? '' : $this->lang('INVALID_DIRECTORY_OR_FILE'),
-			'Code' => !$isExist ? 0 : -1,
+			'Error' => !$isDeleted ? '' : $this->lang('INVALID_DIRECTORY_OR_FILE'),
+			'Code' => !$isDeleted ? 0 : -1,
 			'Path' => $this->getDynamicPath($current_path),
 		);
 	}
@@ -258,22 +254,44 @@ class FilemanagerS3 extends Filemanager
 	 */
 	public function download()
 	{
-		$fileInfo = $this->get_file_info($this->getFullPath());
-		$url      = 'http:'.$fileInfo['Preview'];
-		$fileName = basename($fileInfo['Filename']);
-		$fileSize = $fileInfo['Size'];
+		$current_path = $this->getFullPath();
+
+		if($this->isDir($current_path)) {
+			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')),true);
+		}
+
+		$response = $this->s3->get($this->getFullPath());
+		$metadata = $response['@metadata']['headers'];
+		$content = $response['Body']->getContents();
+
+
+//		$fileInfo = $this->get_file_info($this->getFullPath());
+//		$url      = 'http:'.$fileInfo['Preview'];
+//		$fileName = basename($fileInfo['Filename']);
+//		$fileSize = $fileInfo['Size'];
+//		header('Content-Description: File Transfer');
+//		header('Content-Type: application/octet-stream');
+//		header("Content-Disposition: attachment; filename={$fileName}");
+//		header('Content-Transfer-Encoding: binary');
+//		header('Expires: 0');
+//		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+//		header('Pragma: public');
+//		header("Content-Length: {$fileSize}");
+//		ob_clean();
+//		flush();
+//		readfile($url);
+
 		header('Content-Description: File Transfer');
 		header('Content-Type: application/octet-stream');
-		header("Content-Disposition: attachment; filename={$fileName}");
+		header('Content-Disposition: attachment; filename=' . basename($current_path));
 		header('Content-Transfer-Encoding: binary');
-		header('Expires: 0');
+		header('Content-Length: ' . $metadata['content-length']);
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 		header('Pragma: public');
-		header("Content-Length: {$fileSize}");
-		ob_clean();
-		flush();
-		readfile($url);
-		exit;
+		header('Expires: 0');
+
+		echo($content);
+		exit();
 	}
 
 	/**
@@ -310,7 +328,7 @@ class FilemanagerS3 extends Filemanager
 					readfile($local_path);
 					exit();
 				}
-				// get preview from S3 storage
+			// get preview from S3 storage
 			} else {
 				$response = $this->s3->get($returned_path);
 				$metadata = $response['@metadata']['headers'];
@@ -447,6 +465,11 @@ class FilemanagerS3 extends Filemanager
 			$this->error("No way.");
 		}
 
+		// forbid bulk rename of objects
+		if($suffix == '/' && !$this->config['s3']['allowBulk']) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+		}
+
 		// forbid to change path during rename
 		if(strrpos($this->get['new'], '/') !== false) {
 			$this->error(sprintf($this->lang('FORBIDDEN_CHAR_SLASH')));
@@ -465,32 +488,18 @@ class FilemanagerS3 extends Filemanager
 			}
 		}
 
-		$bucket = $this->s3->bucket;
-		$isExist = file_exists("s3://{$bucket}/{$old_file}");
-		$isExist2 = file_exists("s3://{$bucket}/{$new_file}");
-		rename("s3://{$bucket}/{$old_file}", "s3://{$this->bucket}/{$new_file}");
-
-		// should be done in 2 steps as far as S3 has no native support of move/rename operations:
-		// step 1: copy old object(s) to the new location
-		$a = 1;
-
-		$this->s3->rename($old_file, $new_file);
-
-		if($suffix == '/') {
-			$this->s3->bulkCopy($old_file, $new_file);
-		} else {
-			$this->s3->copy($old_file, $new_file);
+		if(!$this->s3->rename($old_file, $new_file)) {
+			$this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE'), $newName));
 		}
+		$this->deleteThumbnail($old_file);
 
-		// step 2: delete old objects(s) if it was successfully copied
+		// check if the object was successfully renamed
 		if(!$this->s3->exist($new_file)) {
 			if($suffix == '/') {
 				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $newName));
 			} else {
 				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $newName));
 			}
-		} else {
-			$this->deleteObject($old_file);
 		}
 
 		$array = array(
@@ -685,11 +694,16 @@ class FilemanagerS3 extends Filemanager
 	 * S3 differs directory by slash (/) in the end of path.
 	 * @link http://stackoverflow.com/questions/22312833/how-can-you-tell-if-an-object-is-a-folder-on-aws-s3
 	 * @param string $objectName
+	 * @param boolean $verify
 	 * @return  boolean
 	 */
-	protected function isDir($objectName)
+	protected function isDir($objectName, $verify = false)
 	{
-		return substr($objectName, -1) == '/';
+		if($verify === true) {
+			return is_dir("s3://{$this->s3->bucket}/{$objectName}");
+		} else {
+			return substr($objectName, -1) == '/';
+		}
 	}
 
 	/**
@@ -756,26 +770,37 @@ class FilemanagerS3 extends Filemanager
 
 	/**
 	 * Deletes S3 object
+	 * @param $key string
+	 * @return bool
+	 */
+	public function deleteObject($key)
+	{
+		if($this->isDir($key)) {
+			$this->s3->batchDelete($key);
+			$isDeleted = !$this->isObjectExists($key, true);
+		} else {
+			$isDeleted = unlink("s3://bucket/{$key}");
+		}
+		$this->deleteThumbnail($key);
+		return $isDeleted;
+	}
+
+	/**
+	 * Deletes thumbnail from S3 storage or locally
 	 * @param string $key
 	 */
-	protected function deleteObject($key)
+	protected function deleteThumbnail($key)
 	{
 		$thumbnail_path = $this->get_thumbnail_path($key);
 		$localPath = $this->getLocalPath($thumbnail_path);
 
 		if($this->isDir($key)) {
-			$this->s3->batchDelete($key);
-
-			// remove thumbnails
 			if(!$this->config['s3']['localThumbsPath']) {
 				$this->s3->batchDelete($thumbnail_path);
 			} elseif(file_exists($localPath)) {
 				$this->unlinkRecursive($localPath);
 			}
 		} else {
-			$this->s3->delete($key);
-
-			// remove thumbnails
 			if(!$this->config['s3']['localThumbsPath']) {
 				$this->s3->delete($thumbnail_path);
 			} elseif(file_exists($localPath)) {
