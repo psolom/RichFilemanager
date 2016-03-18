@@ -331,16 +331,18 @@ var handleError = function(errMsg) {
 	$('#newfolder').attr("disabled", "disabled");
 };
 
-// Test if Data structure has the 'cap' capability
-// 'cap' is one of 'select', 'rename', 'delete', 'download', move
+// Test if item has the 'cap' capability
+// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'move'
 function has_capability(data, cap) {
+	if(capabilities.indexOf(cap) === -1) return false;
 	if (data['File Type'] == 'dir' && cap == 'replace') return false;
 	if (data['File Type'] == 'dir' && cap == 'download') {
-		if(config.security.allowFolderDownload == true) return true;
-		else return false;
+		return (config.security.allowFolderDownload === true);
 	}
-	if (typeof(data['Capabilities']) == "undefined") return true;
-	else return $.inArray(cap, data['Capabilities']) > -1;
+	if (typeof(data['Capabilities']) !== "undefined") {
+		return $.inArray(cap, data['Capabilities']) > -1
+	}
+	return true;
 }
 
 // Test if file is authorized
@@ -674,11 +676,16 @@ var adjustFileTree = function($node) {
 	// apply context menu
 	$node.contextMenu({
 		selector: 'li a',
-		appendTo: '.fm-container',
-		items: getContextMenuItems(),
-		callback: function(itemKey, opt) {
-			var path = opt.$trigger.attr('data-path');
-			setMenus(itemKey, path);
+		// wrap options with "build" allows to get item element
+		build: function($triggerElement, e) {
+			return {
+				appendTo: '.fm-container',
+				items: getContextMenuItems($triggerElement),
+				callback: function(itemKey, opt) {
+					var path = opt.$trigger.attr('data-path');
+					setMenus(itemKey, path);
+				}
+			}
 		}
 	});
 
@@ -1516,7 +1523,7 @@ var sortViewItems = function() {
 // Use when a filetree item was changed and should be reloaded from server ("renameNode" action)
 var updateNodeItem = function(branchPath, nodePathOld, nodePathNew) {
 	var $oldNode = $('#filetree').find('a[data-path="' + nodePathOld + '"]').parent();
-	var $newNode = $(buildFileTreeBranch({dir: getDirname(branchPath)}, nodePathNew));
+	var $newNode = buildFileTreeBranch({dir: getDirname(branchPath)}, nodePathNew);
 	$oldNode.replaceWith($newNode);
 	adjustFileTree($newNode.parent());
 };
@@ -1536,7 +1543,7 @@ var reloadFileTreeNode = function(targetPath) {
 
 	// if target path is root or target node is expanded
 	if(isRoot || $targetNode.parent().hasClass('expanded')) {
-		var $newNode = $(buildFileTreeBranch({dir: targetPath}));
+		var $newNode = buildFileTreeBranch({dir: targetPath});
 
 		// easier way but it replaces the whole node and closes all expanded descendant nodes
 		//$targetNode.replaceWith($newNode.show());
@@ -1585,7 +1592,7 @@ var getDetailView = function(path) {
 };
 
 // Options for context menu plugin
-function getContextMenuItems() {
+function getContextMenuItems($item) {
 	var contextMenuItems = {
 		select: {name: lg.select, className: 'select'},
 		download: {name: lg.download, className: 'download'},
@@ -1596,12 +1603,14 @@ function getContextMenuItems() {
 		delete: {name: lg.del, className: 'delete'}
 	};
 
-	if($.inArray('download', capabilities) === -1) delete contextMenuItems.download;
-	if($.inArray('rename', capabilities) === -1 || config.options.browseOnly === true) delete contextMenuItems.rename;
-	if($.inArray('move', capabilities) === -1 || config.options.browseOnly === true) delete contextMenuItems.move;
-	if($.inArray('delete', capabilities) === -1 || config.options.browseOnly === true) delete contextMenuItems.delete;
+	var data = $item.data('itemdata');
+
+	if(!has_capability(data, 'download')) delete contextMenuItems.download;
+	if(!has_capability(data, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
+	if(!has_capability(data, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
+	if(!has_capability(data, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
 	// remove 'select' if there is no window.opener
-	if($.inArray('select', capabilities)  === -1 || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
+	if(!has_capability(data, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
 	// remove 'replace' since it is implemented on #preview panel only (for FF and Chrome, need to check in Opera)
 	delete contextMenuItems.replace;
 
@@ -1750,10 +1759,12 @@ var getFolderInfo = function(path) {
 	setUploader(path);
 
 	var $fileinfo = $('#fileinfo'),
-		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />';
+		container = getSectionContainer($fileinfo),
+		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />',
+		item, parentItem, props;
 
 	// display an activity indicator
-	getSectionContainer($fileinfo).html(loading);
+	container.html(loading);
 
 	$('#loading-wrap').fadeOut(800); // remove loading screen div
 
@@ -1773,109 +1784,106 @@ var getFolderInfo = function(path) {
 		var counter = 0;
 		var totalSize = 0;
 		if($fileinfo.data('view') == 'grid') {
-			result += '<ul id="contents" class="grid">';
+			var $ul = $('<ul>', {id: "contents", class: "grid"});
 
 			if(!isFile(path) && path !== fileRoot) {
-				result += '<li class="directory-parent" oncontextmenu="return false;">';
-				result += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
-				result += '</li>';
+				parentItem = '<li class="directory-parent" oncontextmenu="return false;">';
+				parentItem += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
+				parentItem += '</li>';
+				$ul.append(parentItem);
 			}
 
 			for(var key in data) {
 				counter++;
-				var props = data[key]['Properties'];
-				var typeClass = (data[key]['File Type'] == 'dir') ? 'directory' : 'file';
-				var cap_classes = "";
-
-				for(var cap in capabilities) {
-					if(has_capability(data[key], capabilities[cap])) {
-						cap_classes += " cap_" + capabilities[cap];
-					}
-				}
+				props = data[key]['Properties'];
 
 				var scaledWidth = 64;
 				var actualWidth = props['Width'];
 				if(actualWidth > 1 && actualWidth < scaledWidth) scaledWidth = actualWidth;
 
-				config.options.showTitleAttr ? title = ' title="' + data[key]['Path'] + '"' : title = '';
+				var $li = $('<li>', {
+					class: (data[key]['File Type'] == 'dir') ? 'directory' : 'file',
+					title: config.options.showTitleAttr ? data[key]['Path'] : null
+				}).data('itemdata', data[key]);
 
-				result += '<li class="' + typeClass + cap_classes + '"' + title + '><div class="clip"><img src="' + data[key]['Preview'] + '" width="' + scaledWidth + '" alt="' + data[key]['Path'] + '" data-path="' + data[key]['Path'] + '" /></div><p>' + data[key]['Filename'] + '</p>';
-				if(props['Width'] && props['Width'] != '') result += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
-				if(props['Size'] && props['Size'] != '') result += '<span class="meta size">' + props['Size'] + '</span>';
+				item = '<div class="clip"><img src="' + data[key]['Preview'] + '" width="' + scaledWidth + '" alt="' + data[key]['Path'] + '" data-path="' + data[key]['Path'] + '" /></div>';
+				item += '<p>' + data[key]['Filename'] + '</p>';
+				if(props['Width'] && props['Width'] != '') item += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
+				if(props['Size'] && props['Size'] != '') item += '<span class="meta size">' + props['Size'] + '</span>';
 				if(props['Size'] && props['Size'] != '') totalSize += props['Size'];
-				if(props['Date Created'] && props['Date Created'] != '') result += '<span class="meta created">' + props['Date Created'] + '</span>';
-				if(props['Date Modified'] && props['Date Modified'] != '') result += '<span class="meta modified">' + props['Date Modified'] + '</span>';
-				result += '</li>';
+				if(props['Date Created'] && props['Date Created'] != '') item += '<span class="meta created">' + props['Date Created'] + '</span>';
+				if(props['Date Modified'] && props['Date Modified'] != '') item += '<span class="meta modified">' + props['Date Modified'] + '</span>';
+
+				$ul.append($li.append(item));
 			}
 
-			result += '</ul>';
+			result = $ul;
 		} else {
-			result += '<table id="contents" class="list">';
-			result += '<thead><tr class="rowHeader">';
-			result += '<th class="column-name"><span>' + lg.name + '</span></th>';
-			result += '<th class="column-dimensions"><span>' + lg.dimensions + '</span></th>';
-			result += '<th class="column-size"><span>' + lg.size + '</span></th>';
-			result += '<th class="column-modified"><span>' + lg.modified + '</span></th>';
-			result += '</tr></thead>';
-			result += '<tbody>';
+			var $table = $('<table>', {id: "contents", class: "list"});
+
+			var thead = '<thead><tr class="rowHeader">';
+			thead += '<th class="column-name"><span>' + lg.name + '</span></th>';
+			thead += '<th class="column-dimensions"><span>' + lg.dimensions + '</span></th>';
+			thead += '<th class="column-size"><span>' + lg.size + '</span></th>';
+			thead += '<th class="column-modified"><span>' + lg.modified + '</span></th>';
+			thead += '</tr></thead>';
+
+			$table.append(thead);
+			$table.append('<tbody>');
 
 			if(!isFile(path) && path !== fileRoot) {
-				result += '<tr class="directory-parent" oncontextmenu="return false;">';
-				result += '<td data-path="' + getParentDirname(path) + '">..</td>';
-				result += '<td></td>';
-				result += '<td></td>';
-				result += '<td></td>';
-				result += '</tr>';
+				parentItem = '<tr class="directory-parent" oncontextmenu="return false;">';
+				parentItem += '<td data-path="' + getParentDirname(path) + '">..</td>';
+				parentItem += '<td></td>';
+				parentItem += '<td></td>';
+				parentItem += '<td></td>';
+				parentItem += '</tr>';
+				$table.append(parentItem);
 			}
 
 			for(var key in data) {
 				counter++;
-				var props = data[key]['Properties'];
-				var typeClass = (data[key]['File Type'] == 'dir') ? 'directory' : 'file';
-				var cap_classes = "";
+				props = data[key]['Properties'];
 
-				config.options.showTitleAttr ? title = ' title="' + data[key]['Path'] + '"' : title = '';
+				var $tr = $('<tr>', {
+					class: (data[key]['File Type'] == 'dir') ? 'directory' : 'file',
+					title: config.options.showTitleAttr ? data[key]['Path'] : null
+				}).data('itemdata', data[key]);
 
-				for(var cap in capabilities) {
-					if (has_capability(data[key], capabilities[cap])) {
-						cap_classes += " cap_" + capabilities[cap];
-					}
-				}
-				result += '<tr class="' + typeClass + cap_classes + '">';
-				result += '<td data-sort="' + data[key]['Filename'] + '" data-path="' + data[key]['Path'] + '"' + title + '>' + data[key]['Filename'] + '</td>';
+				item = '<td data-sort="' + data[key]['Filename'] + '" data-path="' + data[key]['Path'] + '">' + data[key]['Filename'] + '</td>';
 
 				if(props['Width'] && props['Width'] != '') {
 					var dimensions = props['Width'] + 'x' + props['Height'];
-					result += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
+					item += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
 				} else {
-					result += '<td data-sort=""></td>';
+					item += '<td data-sort=""></td>';
 				}
 
 				if(props['Size'] && props['Size'] != '') {
-					result += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
+					item += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
 					totalSize += props['Size'];
 				} else {
-					result += '<td data-sort=""></td>';
+					item += '<td data-sort=""></td>';
 				}
 
 				if(props['Date Modified'] && props['Date Modified'] != '') {
-					result += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
+					item += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
 				} else {
-					result += '<td data-sort=""></td>';
+					item += '<td data-sort=""></td>';
 				}
 
-				result += '</tr>';
+				$table.append($tr.append(item));
 			}
 
-			result += '</tbody>';
-			result += '</table>';
+			$table.append('</tbody>');
+			result = $table;
 		}
 	} else {
 		result += '<h1>' + lg.could_not_retrieve_folder + '</h1>';
 	}
 
 	// add the new markup to the DOM
-	getSectionContainer($fileinfo).html(result);
+	container.html(result);
 	// apply client-side sorting, required for persistent list view sorting
 	sortViewItems();
 	updateFolderSummary(counter, totalSize);
@@ -1887,11 +1895,16 @@ var getFolderInfo = function(path) {
 		// context menu
 		$contents.contextMenu({
 			selector: 'li.file, li.directory',
-			appendTo: '.fm-container',
-			items: getContextMenuItems(),
-			callback: function(itemKey, opt) {
-				var path = opt.$trigger.find('img').attr('data-path');
-				setMenus(itemKey, path);
+			// wrap options with "build" allows to get item element
+			build: function($triggerElement, e) {
+				return {
+					appendTo: '.fm-container',
+					items: getContextMenuItems($triggerElement),
+					callback: function(itemKey, opt) {
+						var path = opt.$trigger.find('img').attr('data-path');
+						setMenus(itemKey, path);
+					}
+				}
 			}
 		});
 		// drag-and-drop
@@ -1912,7 +1925,7 @@ var getFolderInfo = function(path) {
 		// bind click event to load and display detail view
 		$contents.find('li').click(function() {
 			var path = $(this).find('img').attr('data-path');
-			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
+			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
 			} else {
 				getDetailView(path);
@@ -1922,11 +1935,16 @@ var getFolderInfo = function(path) {
 		// context menu
 		$contents.contextMenu({
 			selector: 'tr.file, tr.directory',
-			appendTo: '.fm-container',
-			items: getContextMenuItems(),
-			callback: function(itemKey, opt) {
-				var path = $('td:first-child', opt.$trigger).attr('data-path');
-				setMenus(itemKey, path);
+			// wrap options with "build" allows to get item element
+			build: function($triggerElement, e) {
+				return {
+					appendTo: '.fm-container',
+					items: getContextMenuItems($triggerElement),
+					callback: function(itemKey, opt) {
+						var path = $('td:first-child', opt.$trigger).attr('data-path');
+						setMenus(itemKey, path);
+					}
+				}
 			}
 		});
 		// drag-and-drop
@@ -1947,7 +1965,7 @@ var getFolderInfo = function(path) {
 		// bind click event to load and display detail view
 		$contents.find('tr:has(td)').click(function() {
 			var path = $('td:first-child', this).attr('data-path');
-			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && $(this).hasClass('cap_select')) {
+			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
 			} else {
 				getDetailView(path);
@@ -1998,7 +2016,7 @@ var getFolderData = function(path) {
 
 // Retrieves data (file/folder listing) and build html for jqueryFileTree
 var buildFileTreeBranch = function(options, itemPath) {
-	var result = '',
+	var result,
 		items = [],
 		data = getFolderData(options.dir);
 
@@ -2018,34 +2036,31 @@ var buildFileTreeBranch = function(options, itemPath) {
 				items.push(item);
 			}
 		}
-		result += '<ul class="jqueryFileTree" style="display: none;">' + items.join("\n") + '</ul>';
+		result = $('<ul>', {class: "jqueryFileTree", style: "display: none;"}).append(items);
 	} else {
-		result += '<h1>' + lg.could_not_retrieve_folder + '</h1>';
+		result = $('<h1>').text(lg.could_not_retrieve_folder);
 	}
 	return result;
 };
 
 // Builds html node for filetree branch
 var buildFileTreeItem = function(item) {
-	var html = "",
-		extraClass = "",
-		cap_classes = "";
+	var result,
+		extraClass;
 
-	for(var cap in capabilities) {
-		if(has_capability(item, capabilities[cap])) {
-			cap_classes += " cap_" + capabilities[cap];
-		}
-	}
+	var $link = $('<a>', {rel: item['Path'], "data-path": item['Path'], text: item['Filename']})
+		.data('itemdata', item);
+
 	if(item['File Type'] == 'dir') {
 		extraClass = item['Protected'] == 0 ? '' : ' directory-locked';
-		html += "<li class=\"directory collapsed" + extraClass + "\"><a href=\"#\" class=\"" + cap_classes + "\" rel=\"" + item['Path'] + "\" data-path=\"" + item['Path'] + "\">" + item['Filename'] + "</a></li>";
+		result = $('<li>', {class: "directory collapsed" + extraClass}).append($link);
 	} else {
 		if(config.options.listFiles) {
 			extraClass = item['Protected'] == 0 ? '' : ' file-locked';
-			html += "<li class=\"file ext_" + item['File Type'].toLowerCase() + extraClass + "\"><a href=\"#\" class=\"" + cap_classes + "\" rel=\"" + item['Path'] + "\" data-path=\"" + item['Path'] + "\">" + item['Filename'] + "</a></li>";
+			result = $('<li>', {class: "file ext_" + item['File Type'].toLowerCase() + extraClass}).append($link);
 		}
 	}
-	return html;
+	return result;
 };
 
 
