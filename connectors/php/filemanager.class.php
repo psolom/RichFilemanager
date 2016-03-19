@@ -1096,8 +1096,11 @@ class Filemanager extends FilemanagerBase
      */
 	protected function cleanString($string, $allowed = array())
     {
-		$allow = null;
+		if(!$this->config['options']['normalizeFilename']) {
+			return $string;
+		}
 
+		$allow = null;
 		if(!empty($allowed)) {
 			foreach ($allowed as $value) {
 				$allow .= "\\$value";
@@ -1139,11 +1142,12 @@ class Filemanager extends FilemanagerBase
 		// replace chars which are not related to any language
 		$clean = strtr($clean, array(' '=>'_', "'"=>'_', '/'=>''));
 
+		if(extension_loaded('intl') === true) {
+			$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
+			$clean = transliterator_transliterate($options, $string);
+		}
+
 		if($this->config['options']['chars_only_latin'] == true) {
-			if(extension_loaded('intl') === true) {
-				$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
-				$clean = transliterator_transliterate($options, $string);
-			}
 			$clean = preg_replace("/[^{$allowed}_a-zA-Z0-9]/u", '', $clean);
 			// $clean = preg_replace("/[^{$allow}_a-zA-Z0-9\x{0430}-\x{044F}\x{0410}-\x{042F}]/u", '', $clean); // allow only latin alphabet with cyrillic
 		}
