@@ -21,8 +21,6 @@ class FilemanagerS3 extends Filemanager
 	/*******************************************************************************
 	 * Constants
 	 ******************************************************************************/
-	const FILE_TYPE_DIR         = 'dir';
-	const FILE_TYPE_IMG         = 'img';
 	const MSG_OBJECT_EXISTS     = 'object (%s) not created as it already exists.';
 	const MSG_DEBUG_UPLOAD_INI  = 'post_max_size: %s, upload_max_filesize: %s, max_input_time: %s';
 

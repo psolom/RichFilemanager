@@ -16,6 +16,7 @@
         "searchBox": true,
         "listFiles": true,
         "fileSorting": "default",
+        "folderPosition": "bottom",
         "quickSelect": false,
         "chars_only_latin": true,
         "splitterWidth": 200,

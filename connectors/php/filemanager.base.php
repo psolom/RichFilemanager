@@ -13,6 +13,8 @@
 
 abstract class FilemanagerBase
 {
+    const FILE_TYPE_DIR = 'dir';
+
     protected $config = array();
     protected $language = array();
     protected $get = array();

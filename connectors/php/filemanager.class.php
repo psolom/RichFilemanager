@@ -109,15 +109,7 @@ class Filemanager extends FilemanagerBase
      */
 	public function getinfo()
     {
-		// handle path when set dynamically with setFileRoot() method
-		if($this->dynamic_fileroot != '') {
-			$path = $this->dynamic_fileroot . $this->get['path'];
-			// $path = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->path_to_files) . $this->get['path']; // instruction could replace the line above
-			$this->cleanPath($path);
-		} else {
-			$path = $this->get['path'];
-		}
-
+		$path = $this->get['path'];
 		$current_path = $this->getFullPath($path);
 		$filename = basename($current_path);
 
@@ -139,19 +131,7 @@ class Filemanager extends FilemanagerBase
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$item = $this->get_file_info('', false);
-
-		$array = array(
-			'Path' => $this->formatPath($path),
-			'Filename' => $item['filename'],
-			'File Type' => $item['filetype'],
-			'Protected' => $item['protected'],
-			'Preview' => $item['preview'],
-			'Properties' => $item['properties'],
-			'Error' => "",
-			'Code' => 0
-		);
-		return $array;
+		return $this->get_file_info($path, false);
 	}
 
 	/**
@@ -192,62 +172,25 @@ class Filemanager extends FilemanagerBase
 			natcasesort($filesDir);
 
 			foreach($filesDir as $file) {
+				$filepath = $this->get['path'] . $file;
 
 				if(is_dir($current_path . $file)) {
 					if(!in_array($file, $this->config['exclude']['unallowed_dirs']) && !preg_match( $this->config['exclude']['unallowed_dirs_REGEXP'], $file)) {
-
-						$iconsFolder = $this->getUrl($this->config['icons']['path']);
-						// check if file is writable and readable
-						if(!$this->has_system_permission($current_path . $file, array('w', 'r'))) {
-							$protected = 1;
-							$previewPath = $iconsFolder . 'locked_' . $this->config['icons']['directory'];
-						} else {
-							$protected =0;
-							$previewPath = $iconsFolder . $this->config['icons']['directory'];
-						}
-
-						$array[$this->get['path'] . $file . '/'] = array(
-							'Path' => $this->get['path'] . $file . '/',
-							'Filename' => $file,
-							'File Type' => 'dir',
-							'Protected' => $protected,
-							'Preview' => $previewPath,
-							'Properties' => array(
-								'Date Created' => date($this->config['options']['dateFormat'], filectime($this->getFullPath($this->get['path'] . $file . '/'))),
-								'Date Modified' => date($this->config['options']['dateFormat'], filemtime($this->getFullPath($this->get['path'] . $file . '/'))),
-								'filemtime' => filemtime($this->getFullPath($this->get['path'] . $file . '/')),
-								'Height' => null,
-								'Width' => null,
-								'Size' => null
-							),
-							'Error' => "",
-							'Code' => 0
-						);
+						$array[$filepath . '/'] = $this->get_file_info($filepath . '/', true);
 					}
 				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match( $this->config['exclude']['unallowed_files_REGEXP'], $file)) {
-					$item = $this->get_file_info($this->get['path'] . $file, true);
+					$item = $this->get_file_info($filepath, true);
 
 					if(!isset($this->refParams['type']) || (isset($this->refParams['type']) && strtolower($this->refParams['type'])=='images' && in_array(strtolower($item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
 						if($this->config['upload']['imagesOnly']== false || ($this->config['upload']['imagesOnly']== true && in_array(strtolower($item['filetype']),array_map('strtolower', $this->config['images']['imagesExt'])))) {
-							$array[$this->get['path'] . $file] = array(
-								'Path' => $this->get['path'] . $file,
-								'Filename' => $item['filename'],
-								'File Type' => $item['filetype'],
-								'Protected' => $item['protected'],
-								'Preview' => $item['preview'],
-								'Properties' => $item['properties'],
-								'Error' => "",
-								'Code' => 0
-							);
+							$array[$filepath] = $item;
 						}
 					}
 				}
 			}
 		}
 
-		$array = $this->sortFiles($array);
-
-		return $array;
+		return $this->sortFiles($array);
 	}
 
 	/**
@@ -896,80 +839,65 @@ class Filemanager extends FilemanagerBase
 
     /**
      * Create array with file properties
-     * @param string $path
+     * @param string $relative_path
      * @param bool $thumbnail
 	 * @return array|void
      */
-	protected function get_file_info($path = '', $thumbnail = false)
+	protected function get_file_info($relative_path, $thumbnail = false)
     {
-		// DO NOT  rawurlencode() since $relative_path it
-		// is used for displaying name file
-		if($path == '') {
-			$relative_path = $this->get['path'];
-		} else {
-			$relative_path = $path;
-		}
 		$current_path = $this->getFullPath($relative_path);
 
 		$item = $this->defaultInfo;
-		$tmp = explode('/', $relative_path);
-		$item['filename'] = $tmp[(sizeof($tmp)-1)];
-
-		$tmp = explode('.', $item['filename']);
-		$item['filetype'] = $tmp[(sizeof($tmp)-1)];
-		$item['filemtime'] = filemtime($current_path);
-		$item['filectime'] = filectime($current_path);
+		$pathInfo = pathinfo($current_path);
+		$filemtime = filemtime($current_path);
 		$iconsFolder = $this->getUrl($this->config['icons']['path']);
 
 		// check if file is writable and readable
-		if(!$this->has_system_permission($current_path, array('w', 'r'))) {
-			$item['protected'] = 1;
-			$item['preview'] = $iconsFolder . 'locked_' . $this->config['icons']['default'];
-			// prevent Internal Server Error HTTP_CODE 500 on non readable files/folders
-			// without returning errors
-			return;
-		} else {
-			$item['protected'] = 0;
-			$item['preview'] = $iconsFolder . $this->config['icons']['default'];
-		}
+		$protected = $this->has_system_permission($current_path, array('w', 'r')) ? 0 : 1;
 
 		if(is_dir($current_path)) {
-
-			$item['preview'] = $iconsFolder . $this->config['icons']['directory'];
-
-		} else if($this->config['options']['showThumbs'] && in_array(strtolower($item['filetype']), array_map('strtolower', $this->config['images']['imagesExt']))) {
-
-			// svg should not be previewed as raster formats images
-			if($item['filetype'] == 'svg') {
-				$item['preview'] = $relative_path;
+			$fileType = self::FILE_TYPE_DIR;
+			$preview = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
+		} else {
+			$fileType = $pathInfo['extension'];
+			if($protected == 1) {
+				$preview = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			} else {
-				$item['preview'] = $this->connector_script_url . '?mode=preview&path='. rawurlencode($relative_path).'&'. time();
-				if($thumbnail) $item['preview'] .= '&thumbnail=true';
-			}
-			//if(isset($get['getsize']) && $get['getsize']=='true') {
-			$item['properties']['Size'] = filesize($current_path);
-			if ($item['properties']['Size']) {
-				list($width, $height, $type, $attr) = getimagesize($current_path);
-			} else {
-				$item['properties']['Size'] = 0;
-				list($width, $height) = array(0, 0);
-			}
-			$item['properties']['Height'] = $height;
-			$item['properties']['Width'] = $width;
-			$item['properties']['Size'] = filesize($current_path);
-			//}
+				$preview = $iconsFolder . $this->config['icons']['default'];
+				$item['Properties']['Size'] = (int)filesize($current_path);
 
-		} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($item['filetype']) . '.png')) {
+				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
+					// svg should not be previewed as raster formats images
+					if($fileType == 'svg') {
+						$preview = $relative_path;
+					} else {
+						$preview = $this->connector_script_url . '?mode=preview&path='. rawurlencode($relative_path).'&'. time();
+						if($thumbnail) $preview .= '&thumbnail=true';
+					}
 
-			$item['preview'] = $iconsFolder . strtolower($item['filetype']) . '.png';
-			$item['properties']['Size'] = filesize($current_path);
-			if (!$item['properties']['Size']) $item['properties']['Size'] = 0;
+					if($item['Properties']['Size']) {
+						list($width, $height, $type, $attr) = getimagesize($current_path);
+					} else {
+						list($width, $height) = array(0, 0);
+					}
+
+					$item['Properties']['Height'] = $height;
+					$item['Properties']['Width'] = $width;
+				} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
+					$preview = $iconsFolder . strtolower($fileType) . '.png';
+				}
+			}
 		}
 
-		$item['properties']['Date Modified'] = date($this->config['options']['dateFormat'], $item['filemtime']);
-		$item['properties']['filemtime'] = filemtime($current_path);
-		//$return['properties']['Date Created'] = $this->config['options']['dateFormat'], $return['filectime']); // PHP cannot get create timestamp
+		$item['Path'] = $this->formatPath($relative_path);
+		$item['Filename'] = $pathInfo['basename'];
+		$item['File Type'] = $fileType;
+		$item['Protected'] = $protected;
+		$item['Preview'] = $preview;
 
+		$item['Properties']['Date Modified'] = date($this->config['options']['dateFormat'], $filemtime);
+		//$item['properties']['Date Created'] = date($this->config['options']['dateFormat'], filectime($current_path); // PHP cannot get create timestamp
+		$item['Properties']['filemtime'] = $filemtime;
 		return $item;
 	}
 
@@ -987,9 +915,9 @@ class Filemanager extends FilemanagerBase
 		if($this->config['options']['fileRoot'] !== false) {
 			$full_path = $this->doc_root . rawurldecode(str_replace ( $this->doc_root , '' , $path));
 			if($this->dynamic_fileroot != '') {
-				$full_path = $this->doc_root . rawurldecode(str_replace ( $this->dynamic_fileroot , '' , $path));
+				$full_path = $this->doc_root . rawurldecode(str_replace($this->dynamic_fileroot, '', $path));
 				// $dynPart = str_replace($_SERVER['DOCUMENT_ROOT'], '', $this->path_to_files); // instruction could replace the line above
-				// $full_path = $this->path_to_files . rawurldecode(str_replace ( $dynPart , '' , $path)); // instruction could replace the line above
+				// $full_path = $this->path_to_files . rawurldecode(str_replace($dynPart, '' ,$path)); // instruction could replace the line above
 			}
 		} else {
 			$full_path = $this->doc_root . rawurldecode($path);

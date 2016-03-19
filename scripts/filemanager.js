@@ -15,10 +15,11 @@
 // function to retrieve GET params
 $.urlParam = function(name) {
 	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-	if (results)
+	if (results) {
 		return results[1];
-	else
+	} else {
 		return 0;
+	}
 };
 
 /*---------------------------------------------------------
@@ -142,6 +143,14 @@ var fullexpandedFolder;
 
 // Stores file/folder listing data for jqueryFileTree and list/grid view
 var loadedFolderData = {};
+
+// Defines sort params
+var chunks = [];
+if(config.options.fileSorting !== 'default') {
+	chunks = config.options.fileSorting.toLowerCase().split('_');
+}
+var configSortField = chunks[0] || 'name';
+var configSortOrder = chunks[1] || 'asc';
 
 // Get localized messages from file
 // through culture var or from URL
@@ -651,6 +660,7 @@ var updateFolderSummary = function(itemsTotal, sizeTotal) {
 		var items = $contents.find(selector + '.file, ' + selector + '.directory');
 		itemsTotal = items.length;
 	}
+
 	if(!sizeTotal) {
 		sizeTotal = 0;
 		if(isGridView) {
@@ -671,24 +681,6 @@ var updateFolderSummary = function(itemsTotal, sizeTotal) {
 
 // Apply actions after manipulating with filetree or its single node
 var adjustFileTree = function($node) {
-	$node = $node || $('#filetree');
-
-	// apply context menu
-	$node.contextMenu({
-		selector: 'li a',
-		// wrap options with "build" allows to get item element
-		build: function($triggerElement, e) {
-			return {
-				appendTo: '.fm-container',
-				items: getContextMenuItems($triggerElement),
-				callback: function(itemKey, opt) {
-					var path = opt.$trigger.attr('data-path');
-					setMenus(itemKey, path);
-				}
-			}
-		}
-	});
-
 	// search function
 	if (config.options.searchBox == true) {
 		$('#q').liveUpdate('#filetree ul').blur();
@@ -744,7 +736,7 @@ var createFileTree = function() {
 	var expandFolderDefault = function($el, data) {
 		if (fullexpandedFolder !== null) {
 			var flag = false;
-			$el.find(".directory.collapsed").each(function (i, folder) {
+			$el.find("li.directory.collapsed").each(function (i, folder) {
 				var $link = $(folder).children();
 				if (fullexpandedFolder.indexOf($link.attr('data-path')) === 0) {
 					flag = true;
@@ -765,26 +757,26 @@ var createFileTree = function() {
 	// event 'filetreeinitiated' should be declared before 'fileTree' plugin is initialized
 	$treeNode
 		.on('filetreeinitiated', function (e, data) {
-			var $el = $(e.target);
+			var $el = $(e.target).find('ul');
 			expandFolderDefault($el, data);
-			adjustFileTree();
+			sortFileTreeItems($el);
+			adjustFileTree($el);
+		})
+		.on('filetreeexpand', function (e, data) {
+			var $el = data.li.children('ul');
+			getFolderInfo(data.rel);
+			sortFileTreeItems($el);
+			adjustFileTree($el);
 		})
 		.on('filetreeexpanded', function (e, data) {
-			var $el = $(e.target);
+			var $el = data.li.children('ul');
 			expandFolderDefault($el, data);
-
-			// prevent opening folder and loader when clicking locked folder
-			if($el.parent().hasClass('directory-locked')) {
-				$el.parent().removeClass('expanded').removeClass('wait');
-			}
-			getFolderInfo(data.rel);
 
 			// clean autoexpand folder and restore animation
 			if (fullexpandedFolder == data.rel) {
 				fullexpandedFolder = null;
 				handleAnimation(data.options, true);
 			}
-			adjustFileTree();
 		})
 		// Creates file tree.
 		.fileTree({
@@ -792,10 +784,27 @@ var createFileTree = function() {
 			script: buildFileTreeBranch,
 			multiFolder: true,
 			expandSpeed: 300,
-			collapseSpeed: 300
+			collapseSpeed: 300,
+			errorMessage: null
 		}, function(file) {
 			getFileInfo(file);
 		});
+
+	// apply context menu
+	$treeNode.contextMenu({
+		selector: 'li a',
+		// wrap options with "build" allows to get item element
+		build: function($triggerElement, e) {
+			return {
+				appendTo: '.fm-container',
+				items: getContextMenuItems($triggerElement),
+				callback: function(itemKey, opt) {
+					var path = opt.$trigger.attr('data-path');
+					setMenus(itemKey, path);
+				}
+			}
+		}
+	});
 };
 
 
@@ -1287,6 +1296,7 @@ var removeDomItem = function(path, speed) {
 			.not('.directory-parent') // prevent removal "parent folder" item
             .fadeOut(speed, function() {
                 $(this).remove();
+				updateFolderSummary();
             });
     // from main window - list view
     } else {
@@ -1295,6 +1305,7 @@ var removeDomItem = function(path, speed) {
 			.not('.directory-parent')
             .fadeOut(speed, function () {
                 $(this).remove();
+				updateFolderSummary();
             });
     }
 };
@@ -1477,10 +1488,45 @@ var actualizeChildrenItems = function(oldPath, newPath, $items) {
 	});
 };
 
+var getSortValueCallback = function(el) {
+	var $fileinfo = $('#fileinfo'),
+		sortField = configSortField,
+		itemData = $(el).data('itemdata');
+
+	// list view sorting may differ from config
+	if($fileinfo.data('view') == 'list') {
+		var sortData = $fileinfo.data('list-sort');
+		if(sortData) sortField = sortData.column;
+	}
+
+	switch(sortField) {
+		case 'type':
+			return itemData['File Type'];
+		case 'size':
+			return itemData['Properties']['Size'];
+		case 'modified':
+			return itemData['Properties']['filemtime'];
+		case 'dimensions':
+			return itemData['Properties']['Width'] + 'x' + itemData['Properties']['Height'];
+		default:
+			return itemData['Filename'];
+	}
+};
+
+var arrangeFolders = function($parent, selector) {
+	if(config.options.folderPosition === 'bottom') {
+		$parent.find(selector + '.directory').appendTo($parent);
+	}
+	if(config.options.folderPosition === 'top') {
+		$parent.find(selector + '.directory').prependTo($parent);
+		$parent.find(selector + '.directory-parent').prependTo($parent);
+	}
+};
+
 // Sorts children of specified filetree node
 var sortFileTreeItems = function($node) {
-	$node.find('> li').tsort({selector: 'a', order: 'asc', natural: true});
-	$node.find('> li.directory').appendTo($node);
+	$node.find('> li').tsort({selector: 'a', callback: getSortValueCallback, order: configSortOrder, natural: true});
+	arrangeFolders($node, '> li');
 };
 
 // Sorts children of specified filetree node
@@ -1495,27 +1541,28 @@ var sortViewItems = function() {
 		// prevent sorting if there are no items
 		if($items.length === 0) return;
 
-		$items.tsort({selector: 'p', order: 'asc', natural: true});
-		$contents.find('li.directory').appendTo($contents);
+		$items.tsort({callback: getSortValueCallback, order: configSortOrder, natural: true});
+		arrangeFolders($contents, 'li');
 	} else {
 		var data = $fileinfo.data('list-sort'),
 			$headers = $contents.find('th'),
-			columnIndex, order;
+			sortField, order, $targetHeader;
 
 		// retrieve stored sort settings or use defaults
-		columnIndex = data ? data.column : 0;
-		order = data ? data.order : 'asc';
+		order = data ? data.order : configSortOrder;
+		sortField = data ? data.column : configSortField;
 
 		// apply sort classes to table headers
+		$targetHeader = $headers.filter('.column-' + sortField);
 		$headers.removeClass('sorted sorted-asc sorted-desc');
-		$headers.eq(columnIndex).addClass('sorted sorted-' + order);
+		$targetHeader.addClass('sorted sorted-' + order);
 
 		$items = $contents.find('tr.file, tr.directory');
 		// prevent sorting if there are no items
 		if($items.length === 0) return;
 
-		$items.tsort({selector: 'td:nth-child('+(columnIndex+1)+')', data: 'sort', order: order, natural: true});
-		$contents.find('tr.directory').appendTo($contents);
+		$items.tsort({callback: getSortValueCallback, order: order, natural: true});
+		arrangeFolders($contents, 'tr');
 	}
 };
 
@@ -1525,6 +1572,8 @@ var updateNodeItem = function(branchPath, nodePathOld, nodePathNew) {
 	var $oldNode = $('#filetree').find('a[data-path="' + nodePathOld + '"]').parent();
 	var $newNode = buildFileTreeBranch({dir: getDirname(branchPath)}, nodePathNew);
 	$oldNode.replaceWith($newNode);
+
+	sortFileTreeItems($newNode.parent());
 	adjustFileTree($newNode.parent());
 };
 
@@ -1761,7 +1810,7 @@ var getFolderInfo = function(path) {
 	var $fileinfo = $('#fileinfo'),
 		container = getSectionContainer($fileinfo),
 		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />',
-		item, parentItem, props;
+		item, node, parentNode, props;
 
 	// display an activity indicator
 	container.html(loading);
@@ -1787,34 +1836,35 @@ var getFolderInfo = function(path) {
 			var $ul = $('<ul>', {id: "contents", class: "grid"});
 
 			if(!isFile(path) && path !== fileRoot) {
-				parentItem = '<li class="directory-parent" oncontextmenu="return false;">';
-				parentItem += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
-				parentItem += '</li>';
-				$ul.append(parentItem);
+				parentNode = '<li class="directory-parent" oncontextmenu="return false;">';
+				parentNode += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
+				parentNode += '</li>';
+				$ul.append(parentNode);
 			}
 
 			for(var key in data) {
 				counter++;
-				props = data[key]['Properties'];
+				item = data[key];
+				props = item['Properties'];
 
 				var scaledWidth = 64;
 				var actualWidth = props['Width'];
 				if(actualWidth > 1 && actualWidth < scaledWidth) scaledWidth = actualWidth;
 
 				var $li = $('<li>', {
-					class: (data[key]['File Type'] == 'dir') ? 'directory' : 'file',
-					title: config.options.showTitleAttr ? data[key]['Path'] : null
-				}).data('itemdata', data[key]);
+					class: (item['File Type'] == 'dir') ? 'directory' : 'file',
+					title: config.options.showTitleAttr ? item['Path'] : null
+				}).data('itemdata', item);
 
-				item = '<div class="clip"><img src="' + data[key]['Preview'] + '" width="' + scaledWidth + '" alt="' + data[key]['Path'] + '" data-path="' + data[key]['Path'] + '" /></div>';
-				item += '<p>' + data[key]['Filename'] + '</p>';
-				if(props['Width'] && props['Width'] != '') item += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
-				if(props['Size'] && props['Size'] != '') item += '<span class="meta size">' + props['Size'] + '</span>';
+				node = '<div class="clip"><img src="' + item['Preview'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" data-path="' + item['Path'] + '" /></div>';
+				node += '<p>' + item['Filename'] + '</p>';
+				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
+				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
 				if(props['Size'] && props['Size'] != '') totalSize += props['Size'];
-				if(props['Date Created'] && props['Date Created'] != '') item += '<span class="meta created">' + props['Date Created'] + '</span>';
-				if(props['Date Modified'] && props['Date Modified'] != '') item += '<span class="meta modified">' + props['Date Modified'] + '</span>';
+				if(props['Date Created'] && props['Date Created'] != '') node += '<span class="meta created">' + props['Date Created'] + '</span>';
+				if(props['Date Modified'] && props['Date Modified'] != '') node += '<span class="meta modified">' + props['Date Modified'] + '</span>';
 
-				$ul.append($li.append(item));
+				$ul.append($li.append(node));
 			}
 
 			result = $ul;
@@ -1822,57 +1872,66 @@ var getFolderInfo = function(path) {
 			var $table = $('<table>', {id: "contents", class: "list"});
 
 			var thead = '<thead><tr class="rowHeader">';
-			thead += '<th class="column-name"><span>' + lg.name + '</span></th>';
-			thead += '<th class="column-dimensions"><span>' + lg.dimensions + '</span></th>';
-			thead += '<th class="column-size"><span>' + lg.size + '</span></th>';
-			thead += '<th class="column-modified"><span>' + lg.modified + '</span></th>';
+			thead += '<th class="column-name" data-colname="name"><span>' + lg.name + '</span></th>';
+			thead += '<th class="column-type" data-colname="type"><span>' + 'Type' + '</span></th>';
+			thead += '<th class="column-dimensions" data-colname="dimensions"><span>' + lg.dimensions + '</span></th>';
+			thead += '<th class="column-size" data-colname="size"><span>' + lg.size + '</span></th>';
+			thead += '<th class="column-modified" data-colname="modified"><span>' + lg.modified + '</span></th>';
 			thead += '</tr></thead>';
 
 			$table.append(thead);
 			$table.append('<tbody>');
 
 			if(!isFile(path) && path !== fileRoot) {
-				parentItem = '<tr class="directory-parent" oncontextmenu="return false;">';
-				parentItem += '<td data-path="' + getParentDirname(path) + '">..</td>';
-				parentItem += '<td></td>';
-				parentItem += '<td></td>';
-				parentItem += '<td></td>';
-				parentItem += '</tr>';
-				$table.append(parentItem);
+				parentNode = '<tr class="directory-parent" oncontextmenu="return false;">';
+				parentNode += '<td data-path="' + getParentDirname(path) + '">..</td>';
+				parentNode += '<td></td>';
+				parentNode += '<td></td>';
+				parentNode += '<td></td>';
+				parentNode += '<td></td>';
+				parentNode += '</tr>';
+				$table.append(parentNode);
 			}
 
 			for(var key in data) {
 				counter++;
-				props = data[key]['Properties'];
+				item = data[key];
+				props = item['Properties'];
 
 				var $tr = $('<tr>', {
-					class: (data[key]['File Type'] == 'dir') ? 'directory' : 'file',
-					title: config.options.showTitleAttr ? data[key]['Path'] : null
-				}).data('itemdata', data[key]);
+					class: (item['File Type'] == 'dir') ? 'directory' : 'file',
+					title: config.options.showTitleAttr ? item['Path'] : null
+				}).data('itemdata', item);
 
-				item = '<td data-sort="' + data[key]['Filename'] + '" data-path="' + data[key]['Path'] + '">' + data[key]['Filename'] + '</td>';
+				node = '<td data-sort="' + item['Filename'] + '" data-path="' + item['Path'] + '">' + item['Filename'] + '</td>';
+
+				if(item['File Type'] && item['File Type'] != '' && item['File Type'] != 'dir') {
+					node += '<td data-sort="' + item['File Type'] + '">' + item['File Type'] + '</td>';
+				} else {
+					node += '<td data-sort=""></td>';
+				}
 
 				if(props['Width'] && props['Width'] != '') {
 					var dimensions = props['Width'] + 'x' + props['Height'];
-					item += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
+					node += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
 				} else {
-					item += '<td data-sort=""></td>';
+					node += '<td data-sort=""></td>';
 				}
 
 				if(props['Size'] && props['Size'] != '') {
-					item += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
+					node += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
 					totalSize += props['Size'];
 				} else {
-					item += '<td data-sort=""></td>';
+					node += '<td data-sort=""></td>';
 				}
 
 				if(props['Date Modified'] && props['Date Modified'] != '') {
-					item += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
+					node += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
 				} else {
-					item += '<td data-sort=""></td>';
+					node += '<td data-sort=""></td>';
 				}
 
-				$table.append($tr.append(item));
+				$table.append($tr.append(node));
 			}
 
 			$table.append('</tbody>');
@@ -1974,12 +2033,12 @@ var getFolderInfo = function(path) {
 		// bind click event to table header to implement sorting
 		$contents.find('.rowHeader > th').click(function(e) {
 			var $th = $(this);
-			var index = $th.index();
+			var columnName = $th.data('colname');
 			var isAscending = !$th.hasClass('sorted-desc');
 			var order = isAscending ? 'desc' : 'asc';
 
 			// stores sorting settings as container data to retrieve them on sorting
-			$fileinfo.data('list-sort', {column: index, order: order});
+			$fileinfo.data('list-sort', {column: columnName, order: order});
 			sortViewItems();
 		});
 
@@ -2002,7 +2061,7 @@ var getFolderData = function(path) {
 			'async': false,
 			'url': url,
 			'dataType': "json",
-			cache: false,
+			'cache': false,
 			'success': function(data) {
 				loadedFolderData[path] = {
 					cached: Date.now(),
