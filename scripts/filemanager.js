@@ -277,28 +277,35 @@ function file_exists (url) {
 }
 
 // Sanitize and transliterate file/folder name as server side (connector) way
-var cleanString = function(str, allowed) {
-	if(!config.security.normalizeFilename) {
-		return str;
-	}
+var cleanString = function(string, allowed) {
 
-	loadJS('/scripts/speakingurl/speakingurl.min.js');
-	if (typeof allowed == "undefined") {
-		allowed = [];
+	if(config.security.normalizeFilename) {
+		// replace chars which are not related to any language
+		var replacements = {' ': '_', '\'': '_', '/': '', '\\': ''};
+		string = string.replace(/[\s\S]/g, function(c) {return replacements[c] || c});
 	}
-
-	var cleaned = getSlug(str, {
-		separator: '_',
-		maintainCase: true,
-		custom: allowed
-	});
 
 	// allow only latin alphabet
 	if(config.options.chars_only_latin) {
-		cleaned = cleaned.replace(/[^_a-zA-Z0-9]/g, "");
+		loadJS('/scripts/speakingurl/speakingurl.min.js');
+		if (typeof allowed == "undefined") {
+			allowed = [];
+		}
+		// transliterate string
+		string = getSlug(string, {
+			separator: '_',
+			maintainCase: true,
+			custom: allowed
+		});
+
+		// clean up all non-latin chars
+		string = string.replace(/[^_a-zA-Z0-9]/g, "");
 	}
 
-	return cleaned.replace(/[_]+/g, "_");
+	// remove double underscore
+	string = string.replace(/[_]+/g, "_");
+
+	return string;
 };
 
 // Separate filename from extension before calling cleanString()
