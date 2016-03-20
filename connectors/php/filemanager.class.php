@@ -620,7 +620,7 @@ class Filemanager extends FilemanagerBase
 		}
 
 		$newdir = $this->cleanString($this->get['name']);
-		if(!mkdir($current_path . $newdir,0755)) {
+		if(!mkdir($current_path . $newdir, 0755)) {
 			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'),$newdir));
 		}
 		$array = array(
@@ -1096,10 +1096,6 @@ class Filemanager extends FilemanagerBase
      */
 	protected function cleanString($string, $allowed = array())
     {
-		if(!$this->config['options']['normalizeFilename']) {
-			return $string;
-		}
-
 		$allow = null;
 		if(!empty($allowed)) {
 			foreach ($allowed as $value) {
@@ -1110,49 +1106,43 @@ class Filemanager extends FilemanagerBase
 		if(is_array($string)) {
 			$cleaned = array();
 			foreach ($string as $key => $clean) {
-				$cleaned[$key] = $this->transliterateString($clean, $allow);
+				$cleaned[$key] = $this->normalizeString($clean, $allow);
 			}
 		} else {
-			$cleaned = $this->transliterateString($string, $allow);
+			$cleaned = $this->normalizeString($string, $allow);
 		}
 
 		return $cleaned;
 	}
 
     /**
-     * Transliterate string to latin chars
+     * Normalize and transliterate string to latin chars
      * @param string|array $string
      * @param array $allowed
      * @return mixed
      */
-    protected function transliterateString($string, $allowed)
+    protected function normalizeString($string, $allowed)
 	{
-		$mapping = array(
-			'Š'=>'S', 'š'=>'s', 'Đ'=>'Dj', 'đ'=>'dj', 'Ž'=>'Z', 'ž'=>'z', 'Č'=>'C', 'č'=>'c', 'Ć'=>'C', 'ć'=>'c',
-			'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
-			'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O',
-			'Õ'=>'O', 'Ö'=>'O', 'Ő'=>'O', 'Ø'=>'O', 'Ù'=>'U', 'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ű'=>'U', 'Ý'=>'Y',
-			'Þ'=>'B', 'ß'=>'Ss','à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
-			'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n',
-			'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o', 'ö'=>'o', 'ő'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'ű'=>'u',
-			'û'=>'u', 'ü'=>'u', 'ý'=>'y', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y', 'Ŕ'=>'R', 'ŕ'=>'r',
-		);
-
-		$clean = strtr($string, $mapping);
-		// replace chars which are not related to any language
-		$clean = strtr($clean, array(' '=>'_', "'"=>'_', '/'=>''));
-
-		if(extension_loaded('intl') === true) {
-			$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
-			$clean = transliterator_transliterate($options, $string);
+		if($this->config['security']['normalizeFilename']) {
+			// replace chars which are not related to any language
+			$replacements = array(' '=>'_', '\''=>'_', '/'=>'', '\\'=>'');
+			$string = strtr($string, $replacements);
 		}
 
-		if($this->config['options']['chars_only_latin'] == true) {
-			$clean = preg_replace("/[^{$allowed}_a-zA-Z0-9]/u", '', $clean);
-			// $clean = preg_replace("/[^{$allow}_a-zA-Z0-9\x{0430}-\x{044F}\x{0410}-\x{042F}]/u", '', $clean); // allow only latin alphabet with cyrillic
+		if($this->config['options']['chars_only_latin'] === true) {
+			// transliterate if extension is loaded
+			if(extension_loaded('intl') === true) {
+				$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
+				$string = transliterator_transliterate($options, $string);
+			}
+			// clean up all non-latin chars
+			$string = preg_replace("/[^{$allowed}_a-zA-Z0-9]/u", '', $string);
 		}
 
-		return preg_replace('/[_]+/', '_', $clean); // remove double underscore
+		// remove double underscore
+		$string = preg_replace('/[_]+/', '_', $string);
+
+		return $string;
 	}
 
 	/**
