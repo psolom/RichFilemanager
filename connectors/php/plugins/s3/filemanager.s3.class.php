@@ -465,7 +465,7 @@ class FilemanagerS3 extends Filemanager
 
 		// forbid bulk rename of objects
 		if($suffix == '/' && !$this->config['s3']['allowBulk']) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
 		}
 
 		// forbid to change path during rename

@@ -1926,7 +1926,7 @@ var getFolderInfo = function(path) {
 
 			var thead = '<thead><tr class="rowHeader">';
 			thead += '<th class="column-name" data-colname="name"><span>' + lg.name + '</span></th>';
-			thead += '<th class="column-type" data-colname="type"><span>' + 'Type' + '</span></th>';
+			thead += '<th class="column-type" data-colname="type"><span>' + lg.type + '</span></th>';
 			thead += '<th class="column-dimensions" data-colname="dimensions"><span>' + lg.dimensions + '</span></th>';
 			thead += '<th class="column-size" data-colname="size"><span>' + lg.size + '</span></th>';
 			thead += '<th class="column-modified" data-colname="modified"><span>' + lg.modified + '</span></th>';
