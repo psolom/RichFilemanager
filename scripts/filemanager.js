@@ -517,12 +517,12 @@ var getPdfReader = function(data) {
 // retrieving them from filetree
 // Called using SetInterval
 var display_icons = function(timer) {
-	$('#fileinfo').find('tr.file, tr.directory').find('td:first').each(function() {
+	$('#fileinfo').find('tr.file, tr.directory').each(function() {
 		var path = $(this).attr('data-path');
 		var treenode = $('#filetree').find('a[data-path="' + path + '"]').parent();
 
 		if (typeof treenode.css('background-image') !== "undefined") {
-			$(this).css('background-image', treenode.css('background-image'));
+			$(this).find('td:first').css('background-image', treenode.css('background-image'));
 			window.clearInterval(timer);
 		}
 	});
@@ -656,6 +656,17 @@ var getSectionContainer = function($section) {
 	}
 };
 
+// Returns grid/list item by path
+var getViewItem = function(path) {
+	var $fileinfo = $('#fileinfo');
+
+	if($fileinfo.data('view') == 'grid') {
+		return $fileinfo.find('li[data-path="' + path + '"]');
+	} else {
+		return $fileinfo.find('tr[data-path="' + path + '"]');
+	}
+};
+
 // Updates folder summary info
 var updateFolderSummary = function(itemsTotal, sizeTotal) {
 	var $fileinfo = $('#fileinfo'),
@@ -766,14 +777,10 @@ var createFileTree = function() {
 		.on('filetreeinitiated', function (e, data) {
 			var $el = $(e.target).find('ul');
 			expandFolderDefault($el, data);
-			sortFileTreeItems($el);
-			adjustFileTree($el);
 		})
 		.on('filetreeexpand', function (e, data) {
-			var $el = data.li.children('ul');
+			//var $el = data.li.children('ul');
 			getFolderInfo(data.rel);
-			sortFileTreeItems($el);
-			adjustFileTree($el);
 		})
 		.on('filetreeexpanded', function (e, data) {
 			var $el = data.li.children('ul');
@@ -980,7 +987,7 @@ var renameItem = function(data) {
 								actualizePreviewItem(newPath);
 							// update item data in grid/list view otherwise
 							} else if(!isPreview) {
-								actualizeViewItem(oldPath, newPath, newName);
+								actualizeViewItem(getViewItem(oldPath), newPath, newName);
 							}
 						}
 						// currently open folder is a child of renamed folder
@@ -994,7 +1001,7 @@ var renameItem = function(data) {
 								actualizePreviewItem(newCurrentPath);
 							} else {
 								// actualize path of each item in main window
-								var selector = ($fileinfo.data('view') == 'grid') ? 'img' : 'td:first-child';
+								var selector = ($fileinfo.data('view') == 'grid') ? 'li' : 'tr';
 								actualizeChildrenItems(oldPath, newPath, $fileinfo.find(selector));
 							}
 						}
@@ -1134,10 +1141,36 @@ var moveItem = function(oldPath, newPath) {
 			if(result['Code'] == 0) {
 				var newPath = result['New Path'];
 				var newName = result['New Name'];
+				var currentPath = getCurrentPath();
 
 				moveNode(newPath, newName, oldPath);
-				sortViewItems();
-				updateFolderSummary();
+
+				// ON move node to the currently open folder
+				if(currentPath === newPath) {
+					getFolderInfo(newPath);
+				}
+
+				// ON move currently open file/folder to another node
+				if(currentPath === getDirname(oldPath)) {
+					var newFullDir = isFile(oldPath) ? newPath : newPath + newName + '/';
+
+					// move currently open folder
+					if(currentPath === oldPath) {
+						setCurrentPath(newFullDir);
+					}
+
+					var $fileinfo = $('#fileinfo');
+					if($('#preview').length > 0) {
+						actualizePreviewItem(newFullDir);
+					} else {
+						// actualize path of each item in main window
+						var selector = ($fileinfo.data('view') == 'grid') ? 'li' : 'tr';
+						actualizeChildrenItems(oldPath, newFullDir, $fileinfo.find(selector));
+					}
+
+					sortViewItems();
+					updateFolderSummary();
+				}
 
 				if(config.options.showConfirmation) $.prompt(lg.successful_moved);
 			} else {
@@ -1287,35 +1320,26 @@ var editItem = function(data) {
 	return isEdited;
 };
 
-// Removes file or folder DOM element
-var removeDomItem = function(path, speed) {
-	// from filetree
+// Removes grid/list item
+var removeViewItem = function(path, speed) {
+	getViewItem(path)
+		.not('.directory-parent') // prevent removal "parent folder" item
+		.fadeOut(speed, function() {
+			$(this).remove();
+			updateFolderSummary();
+		});
+};
+
+// Removes filetree item
+var removeFileTreeItem = function(path, speed) {
     $('#filetree')
         .find('a[data-path="' + path + '"]')
         .parent()
         .fadeOut(speed, function() {
             $(this).remove();
         });
-
-    // from main window - grid view
-    if ($('#fileinfo').data('view') == 'grid') {
-        $('#contents img[data-path="' + path + '"]').parent().parent()
-			.not('.directory-parent') // prevent removal "parent folder" item
-            .fadeOut(speed, function() {
-                $(this).remove();
-				updateFolderSummary();
-            });
-    // from main window - list view
-    } else {
-        $('table#contents')
-            .find('td[data-path="' + path + '"]').parent()
-			.not('.directory-parent')
-            .fadeOut(speed, function () {
-                $(this).remove();
-				updateFolderSummary();
-            });
-    }
 };
+
 
 /*---------------------------------------------------------
   Functions to Update the File Tree
@@ -1350,12 +1374,14 @@ var renameNode = function(oldPath, newPath, newName) {
 		if(getExtension(newPath) !== getExtension(oldPath)) {
 			updateNodeItem(getDirname(newPath), oldPath, newPath);
 		} else {
-			$oldNodeLink.attr('data-path', newPath).attr('rel', newPath).text(newName);
+			actualizeFileTreeItem($oldNodeLink, newPath, newName);
 		}
 	} else {
-		$oldNodeLink.text(newName);
-		actualizeChildrenItems(oldPath, newPath, $oldNodeLink.parent().find('a'));
+		// actualize renamed folder and all its descendants
+		actualizeFileTreeItem($oldNodeLink, newPath, newName);
+		actualizeChildrenItems(oldPath, newPath, $oldNodeLink.next('ul').find('a'));
 	}
+
 	sortFileTreeItems($filetree.find('a[data-path="' + newPath + '"]').parent().parent());
 };
 
@@ -1366,14 +1392,12 @@ var moveNode = function(newPath, newName, oldFullPath, forceExpand) {
 	forceExpand = forceExpand || false;
 
 	var $filetree = $('#filetree');
-	// clone original element of the dragging node before it is removed
-	var $node = $filetree.find('a[data-path="' + oldFullPath + '"]').parent().not('.ui-draggable-dragging').clone();
-    removeDomItem(oldFullPath, 0);
-
 	var currentPath = getCurrentPath();
 	var $targetLink = $filetree.find('a[data-path="' + newPath + '"]');
 	var $targetNode = $targetLink.next('ul');
 	var $adjustNode = $targetNode.parent();
+
+	removeViewItem(oldFullPath, 0);
 
 	// Actually it is possible to use only this condition without code below, but this way leads to
 	// rebuilding the whole filetree, node by node. Filetree performs request to server for each node,
@@ -1399,6 +1423,7 @@ var moveNode = function(newPath, newName, oldFullPath, forceExpand) {
 			getSectionContainer($filetree).data('fileTree').options.expandSpeed = 0;
 			$targetLink.click();
 		}
+		removeFileTreeItem(oldFullPath, 0);
 		return;
 	}
 
@@ -1412,22 +1437,10 @@ var moveNode = function(newPath, newName, oldFullPath, forceExpand) {
 		getFolderInfo(newPath);
 	}
 
-	// ON move currently open file/folder to another node
-	if(currentPath === getDirname(oldFullPath)) {
-		var newFullDir = isFile(oldFullPath) ? newPath : newPath + newName + '/';
-
-		var $fileinfo = $('#fileinfo');
-		if($('#preview').length > 0) {
-			actualizePreviewItem(newFullDir);
-		} else {
-			// actualize path of each item in main window
-			var selector = ($fileinfo.data('view') == 'grid') ? 'img' : 'td:first-child';
-			actualizeChildrenItems(oldFullPath, newFullDir, $fileinfo.find(selector));
-		}
-	}
-
+	var $node = $filetree.find('a[data-path="' + oldFullPath + '"]').parent().not('.ui-draggable-dragging');
 	actualizeChildrenItems(getClosestNode(oldFullPath), newPath, $node.find('a'));
-	$targetNode.append($node);
+
+	$node.appendTo($targetNode);
 	sortFileTreeItems($targetNode);
 	adjustFileTree($adjustNode);
 };
@@ -1435,7 +1448,8 @@ var moveNode = function(newPath, newName, oldFullPath, forceExpand) {
 // Removes the specified node.
 // Called after a successful delete operation.
 var removeNode = function(path) {
-    removeDomItem(path, 600);
+	removeViewItem(path, 600);
+	removeFileTreeItem(path, 600);
 };
 
 
@@ -1447,7 +1461,7 @@ var removeNode = function(path) {
 ---------------------------------------------------------*/
 
 // Actualize data of file which is currently open in the preview window
-var	actualizePreviewItem = function(newPath) {
+var actualizePreviewItem = function(newPath) {
 	var $toolbar = $('#toolbar');
 	var filename = basename(newPath) || $('#fileinfo').find('#main-title').find('h1').text();
 	var fullPath = getDirname(newPath) + filename;
@@ -1465,18 +1479,42 @@ var	actualizePreviewItem = function(newPath) {
 };
 
 // Actualize data of file/folder item which is currently displayed in gris/list view
-var	actualizeViewItem = function(oldPath, newPath, newName) {
+var actualizeViewItem = function($item, newPath, newName) {
 	var $fileinfo = $('#fileinfo'),
-		$item;
-	// update DOM element based on view mode
-	if($fileinfo.data('view') == 'grid') {
-		$item = $fileinfo.find('img[data-path="' + oldPath + '"]');
-		$item.parent().next('p').text(newName);
-		$item.attr('data-path', newPath).attr('alt', newPath);
-	} else {
-		$item = $fileinfo.find('td[data-path="' + oldPath + '"]');
-		$item.attr('data-path', newPath).attr('data-sort', newName).text(newName);
+		itemdata = $item.data('itemdata');
+
+	itemdata['Path'] = newPath;
+	if(typeof newName !== "undefined") {
+		itemdata['Filename'] = newName;
+		if(isFile(newName)) {
+			itemdata['File Type'] = getExtension(newName);
+		}
 	}
+
+	$item.attr('data-path', newPath);
+	// update item info based on view mode
+	if($fileinfo.data('view') == 'grid') {
+		$item.find('img').attr('alt', newPath);
+		$item.children('p').text(itemdata['Filename']);
+	} else {
+		$item.find('td:first').text(itemdata['Filename']);
+	}
+};
+
+// Actualize data of filetree item which was changed
+var actualizeFileTreeItem = function($nodeLink, newPath, newName) {
+	var itemdata = $nodeLink.data('itemdata');
+
+	itemdata['Path'] = newPath;
+	if(typeof newName !== "undefined") {
+		itemdata['Filename'] = newName;
+		if(isFile(newName)) {
+			itemdata['File Type'] = getExtension(newName);
+		}
+	}
+
+	$nodeLink.attr('data-path', newPath).attr('rel', newPath);
+	$nodeLink.text(itemdata['Filename']);
 };
 
 // Actualize data of filetree branch descendants or grid/list view items.
@@ -1488,10 +1526,18 @@ var actualizeChildrenItems = function(oldPath, newPath, $items) {
 	$items.each(function() {
 		var subject = $(this).attr('data-path');
 		var replaced = subject.replace(search, newPath);
-		$(this).attr('data-path', replaced);
-		// set extra attributes
-		if($(this).is('a')) $(this).attr('rel', replaced);
-		if($(this).is('img')) $(this).attr('alt', replaced);
+
+		// filetree item
+		if($(this).is('a')) {
+			actualizeFileTreeItem($(this), replaced);
+		} else {
+			// setup data for parent folder link item
+			if($(this).hasClass('directory-parent')) {
+				$(this).attr('data-path', getParentDirname(getCurrentPath()));
+			} else {
+				actualizeViewItem($(this), replaced);
+			}
+		}
 	});
 };
 
@@ -1532,7 +1578,10 @@ var arrangeFolders = function($parent, selector) {
 
 // Sorts children of specified filetree node
 var sortFileTreeItems = function($node) {
-	$node.find('> li').tsort({selector: 'a', callback: getSortValueCallback, order: configSortOrder, natural: true});
+	var $items = $node.find('> li');
+	if($items.length === 0) return;
+
+	$items.tsort({selector: 'a', callback: getSortValueCallback, order: configSortOrder, natural: true});
 	arrangeFolders($node, '> li');
 };
 
@@ -1545,7 +1594,6 @@ var sortViewItems = function() {
 	// sorting based on view mode
 	if($fileinfo.data('view') == 'grid') {
 		$items = $contents.find('li.file, li.directory');
-		// prevent sorting if there are no items
 		if($items.length === 0) return;
 
 		$items.tsort({callback: getSortValueCallback, order: configSortOrder, natural: true});
@@ -1565,7 +1613,6 @@ var sortViewItems = function() {
 		$targetHeader.addClass('sorted sorted-' + order);
 
 		$items = $contents.find('tr.file, tr.directory');
-		// prevent sorting if there are no items
 		if($items.length === 0) return;
 
 		$items.tsort({callback: getSortValueCallback, order: order, natural: true});
@@ -1579,9 +1626,6 @@ var updateNodeItem = function(branchPath, nodePathOld, nodePathNew) {
 	var $oldNode = $('#filetree').find('a[data-path="' + nodePathOld + '"]').parent();
 	var $newNode = buildFileTreeBranch({dir: getDirname(branchPath)}, nodePathNew);
 	$oldNode.replaceWith($newNode);
-
-	sortFileTreeItems($newNode.parent());
-	adjustFileTree($newNode.parent());
 };
 
 // Loads filetree node with new items that are on server
@@ -1806,6 +1850,15 @@ var getFileInfo = function(file) {
 	});
 };
 
+// Clean up unnecessary item data
+var prepareItemInfo = function(item) {
+	var data = $.extend({}, item);
+	delete data['Preview'];
+	delete data['Error'];
+	delete data['Code'];
+	return data;
+};
+
 // Retrieves data for all items within the given folder and
 // creates a list view. Binds contextual menu options.
 // TODO: consider stylesheet switching to switch between grid
@@ -1843,8 +1896,8 @@ var getFolderInfo = function(path) {
 			var $ul = $('<ul>', {id: "contents", class: "grid"});
 
 			if(!isFile(path) && path !== fileRoot) {
-				parentNode = '<li class="directory-parent" oncontextmenu="return false;">';
-				parentNode += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="' + getParentDirname(path) + '" data-path="' + getParentDirname(path) + '" /></div>';
+				parentNode = '<li class="directory-parent" data-path="' + getParentDirname(path) + '" oncontextmenu="return false;">';
+				parentNode += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="Parent" /></div>';
 				parentNode += '</li>';
 				$ul.append(parentNode);
 			}
@@ -1860,10 +1913,11 @@ var getFolderInfo = function(path) {
 
 				var $li = $('<li>', {
 					class: (item['File Type'] == 'dir') ? 'directory' : 'file',
-					title: config.options.showTitleAttr ? item['Path'] : null
-				}).data('itemdata', item);
+					title: config.options.showTitleAttr ? item['Path'] : null,
+					'data-path': item['Path']
+				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + item['Preview'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" data-path="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + item['Preview'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
@@ -1890,8 +1944,8 @@ var getFolderInfo = function(path) {
 			$table.append('<tbody>');
 
 			if(!isFile(path) && path !== fileRoot) {
-				parentNode = '<tr class="directory-parent" oncontextmenu="return false;">';
-				parentNode += '<td data-path="' + getParentDirname(path) + '">..</td>';
+				parentNode = '<tr class="directory-parent" data-path="' + getParentDirname(path) + '" oncontextmenu="return false;">';
+				parentNode += '<td>..</td>';
 				parentNode += '<td></td>';
 				parentNode += '<td></td>';
 				parentNode += '<td></td>';
@@ -1907,35 +1961,36 @@ var getFolderInfo = function(path) {
 
 				var $tr = $('<tr>', {
 					class: (item['File Type'] == 'dir') ? 'directory' : 'file',
-					title: config.options.showTitleAttr ? item['Path'] : null
-				}).data('itemdata', item);
+					title: config.options.showTitleAttr ? item['Path'] : null,
+					'data-path': item['Path']
+				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<td data-sort="' + item['Filename'] + '" data-path="' + item['Path'] + '">' + item['Filename'] + '</td>';
+				node = '<td>' + item['Filename'] + '</td>';
 
 				if(item['File Type'] && item['File Type'] != '' && item['File Type'] != 'dir') {
-					node += '<td data-sort="' + item['File Type'] + '">' + item['File Type'] + '</td>';
+					node += '<td>' + item['File Type'] + '</td>';
 				} else {
-					node += '<td data-sort=""></td>';
+					node += '<td></td>';
 				}
 
 				if(props['Width'] && props['Width'] != '') {
 					var dimensions = props['Width'] + 'x' + props['Height'];
-					node += ('<td data-sort="' + dimensions + '">' + dimensions + '</td>');
+					node += ('<td>' + dimensions + '</td>');
 				} else {
-					node += '<td data-sort=""></td>';
+					node += '<td></td>';
 				}
 
 				if(props['Size'] && props['Size'] != '') {
-					node += '<td data-sort="' + props['Size'] + '">' + formatBytes(props['Size']) + '</td>';
+					node += '<td>' + formatBytes(props['Size']) + '</td>';
 					totalSize += props['Size'];
 				} else {
-					node += '<td data-sort=""></td>';
+					node += '<td></td>';
 				}
 
 				if(props['Date Modified'] && props['Date Modified'] != '') {
-					node += '<td data-sort="' + props['filemtime'] + '">' + props['Date Modified'] + '</td>';
+					node += '<td>' + props['Date Modified'] + '</td>';
 				} else {
-					node += '<td data-sort=""></td>';
+					node += '<td></td>';
 				}
 
 				$table.append($tr.append(node));
@@ -1967,7 +2022,7 @@ var getFolderInfo = function(path) {
 					appendTo: '.fm-container',
 					items: getContextMenuItems($triggerElement),
 					callback: function(itemKey, opt) {
-						var path = opt.$trigger.find('img').attr('data-path');
+						var path = opt.$trigger.attr('data-path');
 						setMenus(itemKey, path);
 					}
 				}
@@ -1983,14 +2038,14 @@ var getFolderInfo = function(path) {
 			accept: "li.file, li.directory",
 			hoverClass: "drop-hover",
 			drop: function(event, ui) {
-				var oldPath = ui.draggable.find('img').attr('data-path'),
-					newPath = $(event.target).find('img').attr('data-path');
+				var oldPath = ui.draggable.attr('data-path'),
+					newPath = $(event.target).attr('data-path');
 				moveItem(oldPath, newPath);
 			}
 		});
 		// bind click event to load and display detail view
 		$contents.find('li').click(function() {
-			var path = $(this).find('img').attr('data-path');
+			var path = $(this).attr('data-path');
 			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
 			} else {
@@ -2007,7 +2062,7 @@ var getFolderInfo = function(path) {
 					appendTo: '.fm-container',
 					items: getContextMenuItems($triggerElement),
 					callback: function(itemKey, opt) {
-						var path = $('td:first-child', opt.$trigger).attr('data-path');
+						var path = opt.$trigger.attr('data-path');
 						setMenus(itemKey, path);
 					}
 				}
@@ -2023,14 +2078,14 @@ var getFolderInfo = function(path) {
 			accept: "tr.file, tr.directory",
 			hoverClass: "drop-hover",
 			drop: function(event, ui) {
-				var oldPath = ui.draggable.find('td:first').attr('data-path'),
-					newPath = $(event.target).find('td:first').attr('data-path');
+				var oldPath = ui.draggable.attr('data-path'),
+					newPath = $(event.target).attr('data-path');
 				moveItem(oldPath, newPath);
 			}
 		});
 		// bind click event to load and display detail view
 		$contents.find('tr:has(td)').click(function() {
-			var path = $('td:first-child', this).attr('data-path');
+			var path = $(this).attr('data-path');
 			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
 			} else {
@@ -2102,7 +2157,11 @@ var buildFileTreeBranch = function(options, itemPath) {
 				items.push(item);
 			}
 		}
-		result = $('<ul>', {class: "jqueryFileTree", style: "display: none;"}).append(items);
+		var $ul = $('<ul>', {class: "jqueryFileTree", style: "display: none;"}).append(items);
+
+		sortFileTreeItems($ul);
+		adjustFileTree($ul);
+		result = $ul;
 	} else {
 		result = $('<h1>').text(lg.could_not_retrieve_folder);
 	}
@@ -2115,7 +2174,7 @@ var buildFileTreeItem = function(item) {
 		extraClass;
 
 	var $link = $('<a>', {rel: item['Path'], "data-path": item['Path'], text: item['Filename']})
-		.data('itemdata', item);
+		.data('itemdata', prepareItemInfo(item));
 
 	if(item['File Type'] == 'dir') {
 		extraClass = item['Protected'] == 0 ? '' : ' directory-locked';
