@@ -167,10 +167,6 @@ class Filemanager extends FilemanagerBase
 			}
 			closedir($handle);
 
-			// By default
-			// Sorting files by name ('default' or 'NAME_DESC' cases from $this->config['options']['fileSorting']
-			natcasesort($filesDir);
-
 			foreach($filesDir as $file) {
 				$filepath = $this->get['path'] . $file;
 
@@ -190,7 +186,7 @@ class Filemanager extends FilemanagerBase
 			}
 		}
 
-		return $this->sortFiles($array);
+		return $array;
 	}
 
 	/**
@@ -942,57 +938,6 @@ class Filemanager extends FilemanagerBase
 		} else {
 			return $path;
 		}
-	}
-
-    protected function sortFiles($array)
-    {
-		// handle 'NAME_ASC'
-		if($this->config['options']['fileSorting'] == 'NAME_ASC') {
-			$array = array_reverse($array);
-		}
-
-		// handle 'TYPE_ASC' and 'TYPE_DESC'
-		if(strpos($this->config['options']['fileSorting'], 'TYPE_') !== false || $this->config['options']['fileSorting'] == 'default') {
-
-			$a = array();
-			$b = array();
-
-			foreach ($array as $key=>$item){
-				if(strcmp($item["File Type"], "dir") == 0) {
-					$a[$key]=$item;
-				}else{
-					$b[$key]=$item;
-				}
-			}
-
-			if($this->config['options']['fileSorting'] == 'TYPE_ASC') {
-				$array = array_merge($a, $b);
-			}
-
-			if($this->config['options']['fileSorting'] == 'TYPE_DESC' || $this->config['options']['fileSorting'] == 'default') {
-				$array = array_merge($b, $a);
-			}
-		}
-
-		// handle 'MODIFIED_ASC' and 'MODIFIED_DESC'
-		if(strpos($this->config['options']['fileSorting'], 'MODIFIED_') !== false) {
-
-			$modified_order_array = array();  // new array as a column to sort collector
-
-			foreach ($array as $item) {
-				$modified_order_array[] = $item['Properties']['filemtime'];
-			}
-
-			if($this->config['options']['fileSorting'] == 'MODIFIED_ASC') {
-				array_multisort($modified_order_array, SORT_ASC, $array);
-			}
-			if($this->config['options']['fileSorting'] == 'MODIFIED_DESC') {
-				array_multisort($modified_order_array, SORT_DESC, $array);
-			}
-			return $array;
-		}
-
-		return $array;
 	}
 
     /**
