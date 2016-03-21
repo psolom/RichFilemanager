@@ -347,6 +347,11 @@ var handleError = function(errMsg) {
 	$('#newfolder').attr("disabled", "disabled");
 };
 
+// Handle ajax request error.
+var handleAjaxError = function(response) {
+	$.prompt(lg.ERROR_SERVER);
+};
+
 // Test if item has the 'cap' capability
 // 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'move'
 function has_capability(data, cap) {
@@ -1004,7 +1009,8 @@ var renameItem = function(data) {
 					} else {
 						$.prompt(result['Error']);
 					}
-				}
+				},
+				error: handleAjaxError
 			});
 		}
 	};
@@ -1168,7 +1174,8 @@ var moveItem = function(oldPath, newPath) {
 			} else {
 				$.prompt(result['Error']);
 			}
-		}
+		},
+		error: handleAjaxError
 	});
 };
 
@@ -1212,7 +1219,8 @@ var deleteItem = function(data) {
 					isDeleted = false;
 					$.prompt(result['Error']);
 				}
-			}
+			},
+			error: handleAjaxError
 		});
 	};
 	var btns = {};
@@ -1292,9 +1300,9 @@ var editItem = function(data) {
 									isEdited = false;
 									$.prompt(result['Error']);
 								}
-							}
+							},
+							error: handleAjaxError
 						});
-
 					});
 
 					// instantiate codeMirror according to config options
@@ -2121,7 +2129,8 @@ var getFolderData = function(path) {
 					cached: Date.now(),
 					data: data
 				};
-			}
+			},
+			error: handleAjaxError
 		});
 	}
 	return loadedFolderData[path].data;

@@ -271,7 +271,7 @@ class Filemanager extends FilemanagerBase
 		$tmp = explode('/', $this->get['old']);
 		$filename = $tmp[(sizeof($tmp)-1)];
 
-		$newPath = str_replace('/' . $filename, '', $this->get['old']);
+		$newPath = substr($this->get['old'], 0, strripos($this->get['old'], '/' . $filename));
 		$newName = $this->cleanString($this->get['new'], array('.', '-'));
 
 		$old_file = $this->getFullPath($this->get['old']) . $suffix;
@@ -346,34 +346,27 @@ class Filemanager extends FilemanagerBase
 	public function move()
     {
 		$newPath = $this->get['new'] . '/';
-		// dynamic fileroot dir must be used when enabled
-		if($this->dynamic_fileroot != '') {
-			$newPath = $this->dynamic_fileroot . '/' . $newPath;
-		}
+		$newPath = $this->expandPath($newPath, true);
+
+		// old path
+		$tmp = explode('/', trim($this->get['old'], '/'));
+		$fileName = array_pop($tmp); // file name or new dir name
+		$path = '/' . implode('/', $tmp) . '/';
+		$this->cleanPath($path);
 
 		$oldPath = $this->getFullPath($this->get['old']);
+		$newPath = $this->getFullPath($newPath);
+		$newFullPath = $newPath . $fileName;
 
 		// check if file is writable
-		if(!$this->has_system_permission($oldPath, array('w'))) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')),true);
+		if(!$this->has_system_permission($oldPath, array('w')) || !$this->has_system_permission($newPath, array('w'))) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($oldPath)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')),true);
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
-
-		// old path
-		$tmp = explode('/',trim($this->get['old'], '/'));
-		$fileName = array_pop($tmp); // file name or new dir name
-		$path = '/' . implode('/', $tmp) . '/';
-
-		$this->cleanPath($newPath);
-		$newPath = $this->expandPath($newPath, true);
-
-		$newRelativePath = str_replace('./', '', $newPath);
-		$newPath = $this->getFullPath($newPath);
-		$newFullPath = $newPath . $fileName;
 
 		if(!$this->has_permission('move') || !$this->is_valid_path($oldPath) || !$this->is_valid_path($newPath)) {
 			$this->error("No way.");
@@ -421,9 +414,9 @@ class Filemanager extends FilemanagerBase
 		$array = array(
 			'Error' => "",
 			'Code' => 0,
-			'Old Path' => $this->formatPath($path),
+			'Old Path' => $path,
 			'Old Name' => $fileName,
-			'New Path' => $this->formatPath($newRelativePath),
+			'New Path' => $this->formatPath($newPath),
 			'New Name' => $fileName,
 			'Type' => is_dir($oldPath) ? 'dir' : 'file',
 		);
@@ -512,7 +505,7 @@ class Filemanager extends FilemanagerBase
 
 		// check if file is writable
 		if(!$this->has_system_permission($current_path, array('w'))) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')), true);
+			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')),true);
 		}
 
 		if(!$this->has_permission('replace') || !$this->is_valid_path($current_path)) {
@@ -643,23 +636,23 @@ class Filemanager extends FilemanagerBase
 
 		// check if file is writable
 		if(!$this->has_system_permission($current_path, array('w'))) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')),true);
+			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
 		// we check if extension is allowed regarding the security Policy settings
 		if(is_file($current_path)) {
 			if(!$this->is_allowed_file_type(basename($current_path))) {
-				$this->error(sprintf($this->lang('INVALID_FILE_TYPE')),true);
+				$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
 			}
 		} else {
 			// check if permission is granted
 			if(is_dir($current_path) && $this->config['security']['allowFolderDownload'] == false ) {
-				$this->error(sprintf($this->lang('NOT_ALLOWED')),true);
+				$this->error(sprintf($this->lang('NOT_ALLOWED')));
 			}
 
 			// check if not requesting main FM userfiles folder
 			if($this->is_root_folder($current_path)) {
-				$this->error(sprintf($this->lang('NOT_ALLOWED')),true);
+				$this->error(sprintf($this->lang('NOT_ALLOWED')));
 			}
 
 			$destination_path = sys_get_temp_dir().'/'.uniqid().'.zip';
@@ -670,7 +663,6 @@ class Filemanager extends FilemanagerBase
 			} else {
 				$this->error($this->lang('ERROR_CREATING_ZIP'));
 			}
-
 		}
 
 		if(isset($this->get['path']) && file_exists($current_path)) {
@@ -904,8 +896,8 @@ class Filemanager extends FilemanagerBase
      */
 	protected function getFullPath($path = '')
     {
-		if($path == '') {
-			if(isset($this->get['path'])) $path = $this->get['path'];
+		if($path == '' && isset($this->get['path'])) {
+			$path = $this->get['path'];
 		}
 
 		if($this->config['options']['fileRoot'] !== false) {
@@ -919,8 +911,6 @@ class Filemanager extends FilemanagerBase
 			$full_path = $this->doc_root . rawurldecode($path);
 		}
 		$this->cleanPath($full_path);
-
-		// $this->__log("getFullPath() returned path : " . $full_path);
 
 		return $full_path;
 	}
@@ -1296,7 +1286,7 @@ class Filemanager extends FilemanagerBase
 				$this->error(sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'),$this->config['upload']['fileSizeLimit'] . $this->lang('mb')),true);
 			}
 
-			$this->error(sprintf($this->lang('INVALID_FILE_UPLOAD') . ' '. sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'),$this->config['upload']['fileSizeLimit'] . $this->lang('mb'))),true);
+			$this->error(sprintf($this->lang('INVALID_FILE_UPLOAD') . ' '. sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'), $this->config['upload']['fileSizeLimit'] . $this->lang('mb'))),true);
 		}
 
 		// we determine max upload size if not set

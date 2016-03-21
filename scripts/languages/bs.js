@@ -10,6 +10,7 @@
     "ERROR_RENAMING_FILE": "Greška pri promjeni naziva datoteke iz %s u %s.",
     "ERROR_REPLACING_FILE": "Molimo Vas da postavite datoteku sljedećeg tipa :",
     "ERROR_SAVING_FILE": "Greška pri snimanju .",
+    "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Greška pri uploadu (postavljanju).",
     "ERROR_WRITING_PERM": "Nemate ovlasti za traženu akciju.",
     "FILE_ALREADY_EXISTS": "Datoteka '%s' već postoji.",

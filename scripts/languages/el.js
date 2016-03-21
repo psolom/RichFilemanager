@@ -10,6 +10,7 @@
 	"ERROR_RENAMING_FILE": "Λάθος κατά την μετονομασία του αρχείου %s σε %s.",
     "ERROR_REPLACING_FILE": " Παρακαλούμε, επιλέξτε ένα αρχείο που έχει την ακόλουθη επέκταση:", 
     "ERROR_SAVING_FILE": " Σφάλμα αποθήκευσης αρχείου.",
+    "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": " Σφάλμα μεταφόρτωσης  του αρχείου.", 
     "ERROR_WRITING_PERM": " Δεν έχετε δικαιώματα εγγραφής σε αυτό το αρχείο.",
 	"FILE_ALREADY_EXISTS": "Το αρχείο '%s' υπάρχει ήδη.",
