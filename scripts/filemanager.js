@@ -670,27 +670,19 @@ var getViewItem = function(path) {
 // Updates folder summary info
 var updateFolderSummary = function(itemsTotal, sizeTotal) {
 	var $fileinfo = $('#fileinfo'),
-		$contents = $fileinfo.find('#contents'),
-		isGridView = $fileinfo.data('view') == 'grid';
+		isGridView = $fileinfo.data('view') == 'grid',
+		selector = isGridView ? 'li' : 'tbody > tr';
 
 	if(!itemsTotal) {
-		var selector = isGridView ? 'li' : 'tr';
-		var items = $contents.find(selector + '.file, ' + selector + '.directory');
-		itemsTotal = items.length;
+		itemsTotal = $fileinfo.find(selector + '.file, ' + selector + '.directory').not('.ui-draggable-dragging').length;
 	}
 
 	if(!sizeTotal) {
 		sizeTotal = 0;
-		if(isGridView) {
-			$contents.find('li.file').find('span.meta.size').each(function() {
-				sizeTotal += Number($(this).text());
-			});
-		} else {
-			var columnIndex = $contents.find('th.column-size').index();
-			$contents.find('tr.file').find('td:eq('+columnIndex+')').each(function() {
-				sizeTotal += Number($(this).data('sort'));
-			});
-		}
+		$fileinfo.find(selector + '.file').not('.ui-draggable-dragging').each(function() {
+			var data = $(this).data('itemdata');
+			sizeTotal += Number(data['Properties']['Size']);
+		});
 	}
 
 	$('#items-counter').text(itemsTotal + ' ' + lg.items);
@@ -1001,7 +993,7 @@ var renameItem = function(data) {
 								actualizePreviewItem(newCurrentPath);
 							} else {
 								// actualize path of each item in main window
-								var selector = ($fileinfo.data('view') == 'grid') ? 'li' : 'tr';
+								var selector = ($fileinfo.data('view') == 'grid') ? 'li' : 'tbody > tr';
 								actualizeChildrenItems(oldPath, newPath, $fileinfo.find(selector));
 							}
 						}
@@ -1164,7 +1156,7 @@ var moveItem = function(oldPath, newPath) {
 						actualizePreviewItem(newFullDir);
 					} else {
 						// actualize path of each item in main window
-						var selector = ($fileinfo.data('view') == 'grid') ? 'li' : 'tr';
+						var selector = ($fileinfo.data('view') == 'grid') ? 'li' : 'tbody > tr';
 						actualizeChildrenItems(oldPath, newFullDir, $fileinfo.find(selector));
 					}
 
@@ -2084,7 +2076,7 @@ var getFolderInfo = function(path) {
 			}
 		});
 		// bind click event to load and display detail view
-		$contents.find('tr:has(td)').click(function() {
+		$contents.find('tbody > tr').click(function() {
 			var path = $(this).attr('data-path');
 			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
