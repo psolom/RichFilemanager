@@ -644,15 +644,34 @@ class Filemanager extends FilemanagerBase
 			return $array;
 		}
 
-
-		header("Content-type: application/force-download");
+		header("Content-Type: application/force-download");
 		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
-		header("Content-Transfer-Encoding: Binary");
-		header("Content-length: ".filesize($current_path));
+		header("Content-Transfer-Encoding: binary");
+		header("Content-Length: " . real_filesize($current_path));
 		header('Content-Type: application/octet-stream');
 		header('Content-Disposition: attachment; filename="' . basename($current_path) . '"');
-		readfile($current_path);
+		//handle caching
+		header('Pragma: public');
+		header('Expires: 0');
+		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+		header('Cache-Control: private', false);
+
+		// download by chunks to avoid memory issues
+		$chunkSize = 10 * (1024 * 1024); // 10 MB
+		$handle = fopen($current_path, 'rb');
 		$this->__log(__METHOD__ . ' - downloading '. $current_path);
+
+		//read file chunks by chunk and send output to browser until end of file is not reached
+		while(!feof($handle)) {
+			echo fread($handle, $chunkSize);
+			//send an application-initiated buffer
+			ob_flush();
+			//usually FastCGI has a socket buffer on its own so use flush() to send the current content.
+			flush();
+		}
+		fclose($handle);
+
+		$this->__log(__METHOD__ . ' - downloaded '. $current_path);
 		exit();
 	}
 
@@ -673,7 +692,7 @@ class Filemanager extends FilemanagerBase
 
 		header("Content-type: image/" . strtolower(pathinfo($returned_path, PATHINFO_EXTENSION)));
 		header("Content-Transfer-Encoding: Binary");
-		header("Content-length: ".filesize($returned_path));
+		header("Content-length: " . real_filesize($returned_path));
 		header('Content-Disposition: inline; filename="' . basename($returned_path) . '"');
 		readfile($returned_path);
 
@@ -818,7 +837,7 @@ class Filemanager extends FilemanagerBase
 				$preview = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			} else {
 				$preview = $iconsFolder . $this->config['icons']['default'];
-				$item['Properties']['Size'] = (int)filesize($current_path);
+				$item['Properties']['Size'] = real_filesize($current_path);
 
 				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
 					// svg should not be previewed as raster formats images
@@ -1328,4 +1347,5 @@ class Filemanager extends FilemanagerBase
 		$resized = $image->resize($width, $height, 'outside')->crop('center', 'center', $width, $height);
 		$resized->saveToFile($thumbnailPath);
 	}
+
 }
