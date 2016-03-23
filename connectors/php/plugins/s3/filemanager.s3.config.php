@@ -22,10 +22,10 @@ $config['s3']['localThumbsPath'] = 'userfilesS3';
 /**
  * Whether to perform bulk operations on "folders" (rename/move/copy)
  * NOTE: S3 is not a filesystem, it operates with "objects" and it has no such thing as "folder".
- * When you are performing operations like delete/rename/move/copy on "directory" the plugin actually performs
- * your action for each object prefixed with the "directory" name in the background. The more objects you have
- * in your "directory", the more requests will be sent to simulate the "recursive mode". Also be aware that each
- * rename/move/copy operation requires at least 2 requests: COPY and DELETE of the old object then.
+ * When you are performing operation like delete/rename/move/copy on "directory" the plugin actually performs
+ * multiple operations for each object prefixed with the "directory" name in the background. The more objects you have
+ * in your "directory", the more requests will be sent to simulate the "recursive mode".
+ * DELETE requests are not charged so they are not restricted with with option.
  *
  * Links with some explanations:
  * http://stackoverflow.com/a/12523414/1789808

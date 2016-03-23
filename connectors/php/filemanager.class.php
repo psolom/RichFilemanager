@@ -110,16 +110,8 @@ class Filemanager extends FilemanagerBase
 	public function getinfo()
     {
 		$path = $this->get['path'];
-		$current_path = $this->getFullPath($path);
+		$current_path = $this->getFullPath($path, true);
 		$filename = basename($current_path);
-
-		if(!$this->is_valid_path($current_path)) {
-			$this->error("No way.");
-		}
-
-		if(!file_exists($current_path)) {
-			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'), $path));
-		}
 
 		// check if file is readable
 		if(!$this->has_system_permission($current_path, array('r'))) {
@@ -141,15 +133,10 @@ class Filemanager extends FilemanagerBase
     {
 		$array = array();
 		$filesDir = array();
-
-		$current_path = $this->getFullPath();
-
-		if(!$this->is_valid_path($current_path)) {
-			$this->error("No way.");
-		}
+		$current_path = $this->getFullPath($this->get['path'], true);
 
 		if(!is_dir($current_path)) {
-			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'),$this->get['path']));
+			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $this->get['path']));
 		}
 
 		// check if file is readable
@@ -194,15 +181,15 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function editfile()
     {
-		$current_path = $this->getFullPath();
+		$current_path = $this->getFullPath($this->get['path'], true);
 
 		// check if file is writable
 		if(!$this->has_system_permission($current_path, array('w'))) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		if(!$this->has_permission('edit') || !$this->is_valid_path($current_path) || !$this->is_editable($current_path)) {
-			$this->error("No way.");
+		if(!$this->has_permission('edit') || !$this->is_editable($current_path)) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		$this->__log(__METHOD__ . ' - editing file '. $current_path);
@@ -229,10 +216,10 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function savefile()
     {
-		$current_path = $this->getFullPath($this->post['path']);
+		$current_path = $this->getFullPath($this->post['path'], true);
 
-		if(!$this->has_permission('edit') || !$this->is_valid_path($current_path) || !$this->is_editable($current_path)) {
-			$this->error("No way.");
+		if(!$this->has_permission('edit') || !$this->is_editable($current_path)) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		if(!$this->has_system_permission($current_path, array('w'))) {
@@ -274,11 +261,11 @@ class Filemanager extends FilemanagerBase
 		$newPath = substr($this->get['old'], 0, strripos($this->get['old'], '/' . $filename));
 		$newName = $this->cleanString($this->get['new'], array('.', '-'));
 
-		$old_file = $this->getFullPath($this->get['old']) . $suffix;
-		$new_file = $this->getFullPath($newPath . '/' . $newName). $suffix;
+		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
+		$new_file = $this->getFullPath($newPath, true) . '/' . $newName . $suffix;
 
-		if(!$this->has_permission('rename') || !$this->is_valid_path($old_file)) {
-			$this->error("No way.");
+		if(!$this->has_permission('rename')) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		// forbid to change path during rename
@@ -354,8 +341,8 @@ class Filemanager extends FilemanagerBase
 		$path = '/' . implode('/', $tmp) . '/';
 		$this->cleanPath($path);
 
-		$oldPath = $this->getFullPath($this->get['old']);
-		$newPath = $this->getFullPath($newPath);
+		$oldPath = $this->getFullPath($this->get['old'], true);
+		$newPath = $this->getFullPath($newPath, true);
 		$newFullPath = $newPath . $fileName;
 
 		// check if file is writable
@@ -368,8 +355,8 @@ class Filemanager extends FilemanagerBase
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		if(!$this->has_permission('move') || !$this->is_valid_path($oldPath) || !$this->is_valid_path($newPath)) {
-			$this->error("No way.");
+		if(!$this->has_permission('move')) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		// check if file already exists
@@ -428,11 +415,11 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function delete()
     {
-		$current_path = $this->getFullPath();
+		$current_path = $this->getFullPath($this->get['path'], true);
 		$thumbnail_path = $this->get_thumbnail_path($current_path);
 
-		if(!$this->has_permission('delete') || !$this->is_valid_path($current_path)) {
-			$this->error("No way.");
+		if(!$this->has_permission('delete')) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		// check if file is writable
@@ -446,46 +433,30 @@ class Filemanager extends FilemanagerBase
 		}
 
 		if(is_dir($current_path)) {
-
+			$this->__log(__METHOD__ . ' - deleting folder '. $current_path);
 			$this->unlinkRecursive($current_path);
 
 			// delete thumbnails if exists
-			$this->__log(__METHOD__ . ' - deleting thumbnails folder '. $thumbnail_path);
 			if(file_exists($thumbnail_path)) {
+				$this->__log(__METHOD__ . ' - deleting thumbnails folder '. $thumbnail_path);
 				$this->unlinkRecursive($thumbnail_path);
 			}
-
-			$array = array(
-				'Error' => "",
-				'Code' => 0,
-				'Path' => $this->formatPath($this->get['path'])
-			);
-
-			$this->__log(__METHOD__ . ' - deleting folder '. $current_path);
-			return $array;
-
-		} else if(file_exists($current_path)) {
-
+		} else {
+			$this->__log(__METHOD__ . ' - deleting file '. $current_path);
 			unlink($current_path);
 
 			// delete thumbnails if exists
-			$this->__log(__METHOD__ . ' - deleting thumbnail file '. $thumbnail_path);
 			if(file_exists($thumbnail_path)) {
+				$this->__log(__METHOD__ . ' - deleting thumbnail file '. $thumbnail_path);
 				unlink($thumbnail_path);
 			}
-
-			$array = array(
-				'Error' => "",
-				'Code' => 0,
-				'Path' => $this->formatPath($this->get['path'])
-			);
-
-			$this->__log(__METHOD__ . ' - deleting file '. $current_path);
-			return $array;
-
-		} else {
-			$this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
 		}
+
+		return array(
+			'Error' => "",
+			'Code' => 0,
+			'Path' => $this->formatPath($this->get['path']),
+		);
 	}
 
 	/**
@@ -493,23 +464,28 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function replace()
     {
+		$this->response_format = self::RESPONSE_TYPE_TEXT;
+
 		$this->setParams();
 		$this->validateUploadedFile('fileR');
+		$current_path = $this->getFullPath($this->post['newfilepath']);
 
 		// we check the given file has the same extension as the old one
 		if(strtolower(pathinfo($_FILES['fileR']['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($this->post['newfilepath'], PATHINFO_EXTENSION))) {
-			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' '. pathinfo($this->post['newfilepath'], PATHINFO_EXTENSION)),true);
+			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' '. pathinfo($this->post['newfilepath'], PATHINFO_EXTENSION)));
 		}
 
-		$current_path = $this->getFullPath($this->post['newfilepath']);
+		if(!$this->is_valid_path($current_path)) {
+			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'), $this->post['newfilepath']));
+		}
 
 		// check if file is writable
 		if(!$this->has_system_permission($current_path, array('w'))) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')),true);
+			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		if(!$this->has_permission('replace') || !$this->is_valid_path($current_path)) {
-			$this->error("No way.");
+		if(!$this->has_permission('replace')) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		move_uploaded_file($_FILES['fileR']['tmp_name'], $current_path);
@@ -550,20 +526,17 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function add()
     {
+		$this->response_format = self::RESPONSE_TYPE_TEXT;
+
 		$this->setParams();
 		$this->validateUploadedFile('newfile');
-
 		$_FILES['newfile']['name'] = $this->cleanString($_FILES['newfile']['name'], array('.', '-'));
 
-		$current_path = $this->getFullPath($this->post['currentpath']);
-
-		if(!$this->is_valid_path($current_path)) {
-			$this->error("No way.");
-		}
+		$current_path = $this->getFullPath($this->post['currentpath'], true);
 
 		// unless we are in overwrite mode, we need a unique file name
 		if(!$this->config['upload']['overwrite']) {
-			$_FILES['newfile']['name'] = $this->checkFilename($current_path,$_FILES['newfile']['name']);
+			$_FILES['newfile']['name'] = $this->checkFilename($current_path, $_FILES['newfile']['name']);
 		}
 
 		move_uploaded_file($_FILES['newfile']['tmp_name'], $current_path . $_FILES['newfile']['name']);
@@ -599,18 +572,15 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function addfolder()
     {
-		$current_path = $this->getFullPath();
+		$current_path = $this->getFullPath($this->get['path'], true);
 
-		if(!$this->is_valid_path($current_path)) {
-			$this->error("No way.");
-		}
 		if(is_dir($current_path . $this->get['name'])) {
-			$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'),$this->get['name']));
+			$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $this->get['name']));
 		}
 
 		$newdir = $this->cleanString($this->get['name']);
 		if(!mkdir($current_path . $newdir, 0755)) {
-			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'),$newdir));
+			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $newdir));
 		}
 		$array = array(
 			'Parent' => $this->get['path'],
@@ -626,12 +596,12 @@ class Filemanager extends FilemanagerBase
 	/**
 	 * @inheritdoc
 	 */
-	public function download()
+	public function download($force)
     {
-		$current_path = $this->getFullPath();
+		$current_path = $this->getFullPath($this->get['path'], true);
 
-		if(!$this->has_permission('download') || !$this->is_valid_path($current_path)) {
-			$this->error("No way.");
+		if(!$this->has_permission('download')) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		// check if file is writable
@@ -665,19 +635,25 @@ class Filemanager extends FilemanagerBase
 			}
 		}
 
-		if(isset($this->get['path']) && file_exists($current_path)) {
-			header("Content-type: application/force-download");
-			header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
-			header("Content-Transfer-Encoding: Binary");
-			header("Content-length: ".filesize($current_path));
-			header('Content-Type: application/octet-stream');
-			header('Content-Disposition: attachment; filename="' . basename($current_path) . '"');
-			readfile($current_path);
-			$this->__log(__METHOD__ . ' - downloading '. $current_path);
-			exit();
-		} else {
-			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'),$current_path));
+		if(!$force) {
+			$array = array(
+				'Error' => "",
+				'Code' => 0,
+				'Path' => $this->formatPath($this->get['path']),
+			);
+			return $array;
 		}
+
+
+		header("Content-type: application/force-download");
+		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
+		header("Content-Transfer-Encoding: Binary");
+		header("Content-length: ".filesize($current_path));
+		header('Content-Type: application/octet-stream');
+		header('Content-Disposition: attachment; filename="' . basename($current_path) . '"');
+		readfile($current_path);
+		$this->__log(__METHOD__ . ' - downloading '. $current_path);
+		exit();
 	}
 
 	/**
@@ -685,33 +661,23 @@ class Filemanager extends FilemanagerBase
 	 */
 	public function preview($thumbnail)
     {
-		$current_path = $this->getFullPath();
+		$current_path = $this->getFullPath($this->get['path'], true);
 
-		if(!$this->is_valid_path($current_path)) {
-			$this->error("No way.");
-		}
-
-		if(isset($this->get['path']) && file_exists($current_path)) {
-
-			// if $thumbnail is set to true we return the thumbnail
-			if($this->config['options']['generateThumbnails'] == true && $thumbnail == true) {
-				// get thumbnail (and create it if needed)
-				$returned_path = $this->get_thumbnail($current_path);
-			} else {
-				$returned_path = $current_path;
-			}
-
-			header("Content-type: image/" . strtolower(pathinfo($returned_path, PATHINFO_EXTENSION)));
-			header("Content-Transfer-Encoding: Binary");
-			header("Content-length: ".filesize($returned_path));
-			header('Content-Disposition: inline; filename="' . basename($returned_path) . '"');
-			readfile($returned_path);
-
-			exit();
-
+		// if $thumbnail is set to true we return the thumbnail
+		if($this->config['options']['generateThumbnails'] == true && $thumbnail == true) {
+			// get thumbnail (and create it if needed)
+			$returned_path = $this->get_thumbnail($current_path);
 		} else {
-			$this->error(sprintf($this->lang('FILE_DOES_NOT_EXIST'), $current_path));
+			$returned_path = $current_path;
 		}
+
+		header("Content-type: image/" . strtolower(pathinfo($returned_path, PATHINFO_EXTENSION)));
+		header("Content-Transfer-Encoding: Binary");
+		header("Content-length: ".filesize($returned_path));
+		header('Content-Disposition: inline; filename="' . basename($returned_path) . '"');
+		readfile($returned_path);
+
+		exit();
 	}
 
 	/**
@@ -892,14 +858,11 @@ class Filemanager extends FilemanagerBase
     /**
      * Return full path to file
      * @param string $path
+     * @param bool $verify If file or folder exists and valid
      * @return mixed|string
      */
-	protected function getFullPath($path = '')
+	protected function getFullPath($path, $verify = false)
     {
-		if($path == '' && isset($this->get['path'])) {
-			$path = $this->get['path'];
-		}
-
 		if($this->config['options']['fileRoot'] !== false) {
 			$full_path = $this->doc_root . rawurldecode(str_replace ( $this->doc_root , '' , $path));
 			if($this->dynamic_fileroot != '') {
@@ -911,6 +874,13 @@ class Filemanager extends FilemanagerBase
 			$full_path = $this->doc_root . rawurldecode($path);
 		}
 		$this->cleanPath($full_path);
+
+		if($verify === true) {
+			if(!file_exists($full_path) || !$this->is_valid_path($full_path)) {
+				$langKey = is_dir($full_path) ? 'DIRECTORY_NOT_EXIST' : 'FILE_DOES_NOT_EXIST';
+				$this->error(sprintf($this->lang($langKey), $path));
+			}
+		}
 
 		return $full_path;
 	}
@@ -1283,10 +1253,10 @@ class Filemanager extends FilemanagerBase
 			if($this->config['upload']['fileSizeLimit'] > $this->getMaxUploadFileSize()) {
 				$this->__log(__METHOD__ . ' [WARNING] : file size limit set by user is greater than size allowed in php.ini file : ' . $this->config['upload']['fileSizeLimit'] . $this->lang('mb') . ' > ' . $this->getMaxUploadFileSize() . $this->lang('mb') . '.');
 				$this->config['upload']['fileSizeLimit'] = $this->getMaxUploadFileSize();
-				$this->error(sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'),$this->config['upload']['fileSizeLimit'] . $this->lang('mb')),true);
+				$this->error(sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'),$this->config['upload']['fileSizeLimit'] . $this->lang('mb')));
 			}
 
-			$this->error(sprintf($this->lang('INVALID_FILE_UPLOAD') . ' '. sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'), $this->config['upload']['fileSizeLimit'] . $this->lang('mb'))),true);
+			$this->error(sprintf($this->lang('INVALID_FILE_UPLOAD') . ' '. sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'), $this->config['upload']['fileSizeLimit'] . $this->lang('mb'))));
 		}
 
 		// we determine max upload size if not set
@@ -1295,21 +1265,21 @@ class Filemanager extends FilemanagerBase
 		}
 
 		if($_FILES[$uploadName]['size'] > ($this->config['upload']['fileSizeLimit'] * 1024 * 1024)) {
-			$this->error(sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'),$this->config['upload']['fileSizeLimit'] . $this->lang('mb')),true);
+			$this->error(sprintf($this->lang('UPLOAD_FILES_SMALLER_THAN'),$this->config['upload']['fileSizeLimit'] . $this->lang('mb')));
 		}
 
 		// we check if extension is allowed regarding the security Policy settings
 		if(!$this->is_allowed_file_type($_FILES[$uploadName]['name'])) {
-			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')),true);
+			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
 		}
 
 		// we check if only images are allowed
 		if($this->config['upload']['imagesOnly'] || (isset($this->refParams['type']) && strtolower($this->refParams['type'])=='images')) {
 			if(!($size = @getimagesize($_FILES[$uploadName]['tmp_name']))){
-				$this->error(sprintf($this->lang('UPLOAD_IMAGES_ONLY')),true);
+				$this->error(sprintf($this->lang('UPLOAD_IMAGES_ONLY')));
 			}
 			if(!in_array($size[2], array(1, 2, 3, 7, 8))) {
-				$this->error(sprintf($this->lang('UPLOAD_IMAGES_TYPE_JPEG_GIF_PNG')),true);
+				$this->error(sprintf($this->lang('UPLOAD_IMAGES_TYPE_JPEG_GIF_PNG')));
 			}
 		}
 	}

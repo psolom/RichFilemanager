@@ -14,6 +14,9 @@
 abstract class FilemanagerBase
 {
     const FILE_TYPE_DIR = 'dir';
+    // response types
+    const RESPONSE_TYPE_JSON = 'response_json';
+    const RESPONSE_TYPE_TEXT = 'response_test';
 
     protected $config = array();
     protected $language = array();
@@ -22,6 +25,7 @@ abstract class FilemanagerBase
     protected $logger = false;
     protected $logfile = '';
     protected $fm_path = '';
+    protected $response_format = self::RESPONSE_TYPE_JSON;
 
     /**
      * Default file information template
@@ -165,8 +169,9 @@ abstract class FilemanagerBase
 
     /**
      * Download file - filemanager action
+     * @param bool $force Whether to start download after validation
      */
-    abstract function download();
+    abstract function download($force);
 
     /**
      * Preview file - filemanager action
@@ -238,17 +243,14 @@ abstract class FilemanagerBase
 
                     case 'download':
                         if($this->getvar('path')) {
-                            $this->download();
+                            $force = isset($_GET['force']);
+                            $response = $this->download($force);
                         }
                         break;
 
                     case 'preview':
                         if($this->getvar('path')) {
-                            if(isset($_GET['thumbnail'])) {
-                                $thumbnail = true;
-                            } else {
-                                $thumbnail = false;
-                            }
+                            $thumbnail = isset($_GET['thumbnail']);
                             $this->preview($thumbnail);
                         }
                         break;
@@ -290,9 +292,8 @@ abstract class FilemanagerBase
     /**
      * Echo error message and terminate the application
      * @param $string
-     * @param bool $textarea
      */
-    public function error($string, $textarea = false)
+    public function error($string)
     {
         $array = array(
             'Error' => $string,
@@ -302,7 +303,7 @@ abstract class FilemanagerBase
 
         $this->__log( __METHOD__ . ' - error message : ' . $string);
 
-        if($textarea) {
+        if($this->response_format === self::RESPONSE_TYPE_TEXT) {
             echo '<textarea>' . json_encode($array) . '</textarea>';
         } else {
             echo json_encode($array);

@@ -549,8 +549,7 @@ var setUploader = function(path) {
 
 			if(fname != '') {
 				foldername = cleanString(fname);
-				var d = new Date(); // to prevent IE cache issues
-				$.getJSON(fileConnector + '?mode=addfolder&path=' + getCurrentPath() + '&config=' + userconfig + '&name=' + encodeURIComponent(foldername) + '&time=' + d.getMilliseconds(), function(result) {
+				$.getJSON(fileConnector + '?mode=addfolder&path=' + getCurrentPath() + '&config=' + userconfig + '&name=' + encodeURIComponent(foldername) + '&time=' + new Date().getTime(), function(result) {
 					if(result['Code'] == 0) {
 						addFolder(result['Parent']);
 						getFolderInfo(result['Parent']);
@@ -631,7 +630,7 @@ var bindToolbar = function(data) {
 		$fileinfo.find('button#download').hide();
 	} else {
 		$fileinfo.find('button#download').click(function() {
-			window.location = fileConnector + '?mode=download&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig;
+			downloadItem(data);
 		}).show();
 	}
 
@@ -1181,15 +1180,14 @@ var moveItem = function(oldPath, newPath) {
 
 // Prompts for confirmation, then deletes the current item.
 // Called by clicking the "Delete" button in detail views
-// or choosing the "Delete contextual menu item in list views.
+// or choosing the "Delete" contextual menu item in list views.
 var deleteItem = function(data) {
 	var isDeleted = false;
 	var msg = lg.confirmation_delete;
 
 	var doDelete = function(e, value, message, formVals) {
 		if(!value) return;
-		var d = new Date(), // to prevent IE cache issues
-			connectString = fileConnector + '?mode=delete&path=' + encodeURIComponent(data['Path'])  + '&time=' + d.getMilliseconds() + '&config=' + userconfig;
+		var connectString = fileConnector + '?mode=delete&path=' + encodeURIComponent(data['Path'])  + '&time=' + new Date().getTime() + '&config=' + userconfig;
 
 		$.ajax({
 			type: 'GET',
@@ -1234,6 +1232,28 @@ var deleteItem = function(data) {
 	return isDeleted;
 };
 
+// Starts file download process.
+// Called by clicking the "Download" button in detail views
+// or choosing the "Download" contextual menu item in list views.
+var downloadItem = function(data) {
+	var connectString = fileConnector + '?mode=download&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig;
+
+	$.ajax({
+		type: 'GET',
+		url: connectString + '&time=' + new Date().getTime(),
+		dataType: 'json',
+		async: false,
+		success: function(result) {
+			if(result['Code'] == 0) {
+				window.location = connectString + '&force=true&time=' + new Date().getTime();
+			} else {
+				$.prompt(result['Error']);
+			}
+		},
+		error: handleAjaxError
+	});
+};
+
 // Display an 'edit' link for editable files
 // Then let user change the content of the file
 // Save action is handled by the method using ajax
@@ -1246,9 +1266,7 @@ var editItem = function(data) {
 	$('#edit-file').click(function () {
 
 		$(this).hide(); // hiding Edit link
-
-		var d = new Date(); // to prevent IE cache issues
-		var connectString = fileConnector + '?mode=editfile&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig + '&time=' + d.getMilliseconds();
+		var connectString = fileConnector + '?mode=editfile&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig + '&time=' + new Date().getTime();
 
 		$.ajax({
 			type: 'GET',
@@ -1719,15 +1737,14 @@ function getContextMenuItems($item) {
 
 // Binds contextual menus to items in list and grid views.
 var setMenus = function(action, path) {
-	var d = new Date(); // to prevent IE cache issues
-	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data) {
+	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + new Date().getTime(), function(data) {
 		switch(action) {
 			case 'select':
 				selectItem(data);
 				break;
 
-			case 'download': // TODO: implement javascript method to test if exstension is correct
-				window.location = fileConnector + '?mode=download&path=' + data['Path']  + '&config=' + userconfig + '&time=' + d.getMilliseconds();
+			case 'download':
+				downloadItem(data);
 				break;
 
 			case 'rename':
@@ -1786,8 +1803,7 @@ var getFileInfo = function(file) {
 	getSectionContainer($fileinfo).html(template);
 
 	// Retrieve the data & populate the template.
-	var d = new Date(); // to prevent IE cache issues
-	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file) + '&config=' + userconfig + '&time=' + d.getMilliseconds(), function(data) {
+	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file) + '&config=' + userconfig + '&time=' + new Date().getTime(), function(data) {
 		if(data['Code'] == 0) {
 			$fileinfo.find('#main-title').find('h1').text(data['Filename']).attr('title', file);
 
@@ -1798,16 +1814,12 @@ var getFileInfo = function(file) {
 			if(isAudioFile(data['Filename']) && config.audios.showAudioPlayer == true) {
 				getAudioPlayer(data);
 			}
-			//Pdf
 			if(isPdfFile(data['Filename']) && config.pdfs.showPdfReader == true) {
 				getPdfReader(data);
 			}
 			if(isEditableFile(data['Filename']) && config.edit.enabled == true && data['Protected']==0) {
 				editItem(data);
 			}
-
-			// copy URL instructions - zeroclipboard
-			var d = new Date(); // to prevent IE cache issues
 
 			if(config.options.baseUrl !== false ) {
 				var url = smartPath(baseUrl, data['Path'].replace(fileRoot,""));
@@ -2115,8 +2127,7 @@ var getFolderData = function(path) {
 	// TODO: it is also possible to cache based on "source" (filetree / main window list)
 	// caches result for specified path to get rid of redundant requests
 	if(!loadedFolderData[path] || (Date.now() - loadedFolderData[path].cached) > 2000) {
-		var d = new Date(); // to prevent IE cache issues
-		var url = fileConnector + '?mode=getfolder&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&showThumbs=' + config.options.showThumbs + '&time=' + d.getMilliseconds();
+		var url = fileConnector + '?mode=getfolder&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&showThumbs=' + config.options.showThumbs + '&time=' + new Date().getTime();
 		if ($.urlParam('type')) url += '&type=' + $.urlParam('type');
 
 		$.ajax({
@@ -2364,21 +2375,23 @@ $(function() {
 				msg += '<div class="prompt-info">' + lg.dz_dictMaxFilesExceeded.replace('%s', config.upload.number) + lg.file_size_limit + config.upload.fileSizeLimit + ' ' + lg.mb + '.</div>';
 				msg += '<button id="process-upload">' + lg.upload + '</button></div>';
 
-			error_flag = false;
-			var path = getCurrentPath();
-
+			var errorFlag = false;
+			var uploading = false;
+			var uploadedFiles = 0;
+			var allowedFiles;
+			var currentPath = getCurrentPath();
 			var fileSize = (config.upload.fileSizeLimit != 'auto') ? config.upload.fileSizeLimit : 256; // default dropzone value
 
 			if(config.security.uploadPolicy == 'DISALLOW_ALL') {
-				var allowedFiles = '.' + config.security.uploadRestrictions.join(',.');
+				allowedFiles = '.' + config.security.uploadRestrictions.join(',.');
 			} else {
 				// allow any extension since we have no easy way to handle the the built-in `acceptedFiles` params
 				// Would be handled later by the connector
-				var allowedFiles = null;
+				allowedFiles = null;
 			}
 
 			if ($.urlParam('type').toString().toLowerCase() == 'images' || config.upload.imagesOnly) {
-				var allowedFiles = '.' + config.images.imagesExt.join(',.');
+				allowedFiles = '.' + config.images.imagesExt.join(',.');
 			}
 
 			var btns = {};
@@ -2402,6 +2415,7 @@ $(function() {
 				dictFileTooBig: lg.file_too_big + ' ' + lg.file_size_limit + config.upload.fileSizeLimit + ' ' + lg.mb,
 				acceptedFiles: allowedFiles,
 				autoProcessQueue: false,
+				// change filename before adding it to queue
 				renameFilename: function (name) {
 					return nameFormat(name);
 				},
@@ -2413,41 +2427,60 @@ $(function() {
 				    	// https://github.com/enyo/dropzone/issues/462
 				    	dropzone.processQueue();
 				    });
-				},
-				totaluploadprogress: function(progress) {
-					$("#total-progress .progress-bar").css('width', progress + "%");
-				},
-				sending: function(file, xhr, formData) {
-					formData.append("mode", "add");
-					formData.append("currentpath", path);
-				},
-				success: function(file, response, xhr) {
-					$('#uploadresponse').empty().html(response);
-					var data = jQuery.parseJSON($('#uploadresponse').find('textarea').text());
 
-					if (data['Code'] == 0) {
-						this.removeFile(file);
-					} else {
-						// this.removeAllFiles();
-						getFolderInfo(path);
-						$('#filetree').find('a[data-path="' + path + '"]').click();
-						$.prompt(data['Error']);
-						error_flag = true;
-					}
-				},
-				complete: function(file) {
-					// all files in queue are handled
-					if (this.getUploadingFiles().length === 0 && this.getQueuedFiles().length === 0) {
-						$("#total-progress .progress-bar").css('width', '0%');
-						if(this.getRejectedFiles().length === 0 && error_flag === false) {
-							$.prompt.close();
+					this.on("sending", function(file, xhr, formData) {
+						formData.append("mode", "add");
+						formData.append("currentpath", currentPath);
+					});
+
+					this.on("totaluploadprogress", function(progress, totalBytes, totalBytesSent) {
+						$("#total-progress .progress-bar").css('width', progress + "%");
+					});
+
+					this.on("success", function(file, response, xhr) {
+						uploading = true;
+						$('#uploadresponse').empty().html(response);
+						var data = jQuery.parseJSON($('#uploadresponse').find('textarea').text());
+
+						if (data['Code'] == 0) {
+							this.removeFile(file);
+							uploadedFiles++;
+						} else {
+							var $preview = $(file.previewElement);
+							$preview.addClass('dz-error');
+							$preview.find('>.dz-error-message>span').text(data['Error']);
+							errorFlag = true;
 						}
-						if(config.options.showConfirmation) {
-							$.prompt(lg.successful_added_file);
+					});
+
+					this.on("queuecomplete", function(file) {
+						if(uploading === true) {
+							$("#total-progress .progress-bar").css('width', '0%');
+
+							if($('div#multiple-uploads').children('div.dz-error').length) {
+								errorFlag = true;
+							}
+
+							if (this.getRejectedFiles().length === 0 && errorFlag === false) {
+								$.prompt.close();
+								if (config.options.showConfirmation) {
+									$.prompt(lg.upload_successful_files);
+								}
+							} else {
+								// if uploaded at least one file from the query
+								var message = (errorFlag && uploadedFiles > 0) ? lg.upload_partially : lg.upload_failed;
+								message += "<br>" + lg.upload_failed_details;
+								$.prompt(message);
+							}
+
+							getFolderInfo(currentPath);
+							reloadFileTreeNode(currentPath);
 						}
-						getFolderInfo(path);
-						reloadFileTreeNode(path);
-				    }
+
+						uploadedFiles = 0;
+						errorFlag = false;
+						uploading = false;
+					});
 				}
 			});
 		});
