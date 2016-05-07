@@ -39,6 +39,7 @@
 			,attr: nll				// order by attribute value
 			,data: nll				// use the data attribute for sorting
 			,useVal: fls			// use element value instead of text
+			,callback: nll			// use callback function to get element data for sorting
 			,place: 'org'			// place ordered elements at position: start, end, org (original position), first, last
 			,returns: fls			// return all elements or only the sorted ones (true/false)
 			,cases: fls				// a case sensitive sort orders [aB,aa,ab,bb]
@@ -49,7 +50,7 @@
 			,useFlex:fls
 			,emptyEnd:fls
 		}
-		;
+	;
 
 	/**
 	 * TinySort is a small and simple script that will sort any nodeElment by it's text- or attribute value, or by that of one of it's children.
@@ -79,25 +80,25 @@
 		}
 
 		var fragment = doc.createDocumentFragment()
-		/** both sorted and unsorted elements
-		 * @type {elementObject[]} */
+			/** both sorted and unsorted elements
+			 * @type {elementObject[]} */
 			,elmObjsAll = []
-		/** sorted elements
-		 * @type {elementObject[]} */
+			/** sorted elements
+			 * @type {elementObject[]} */
 			,elmObjsSorted = []
-		/** unsorted elements
-		 * @type {elementObject[]} */
+			/** unsorted elements
+			 * @type {elementObject[]} */
 			,elmObjsUnsorted = []
-		/** sorted elements before sort
-		 * @type {elementObject[]} */
+			/** sorted elements before sort
+			 * @type {elementObject[]} */
 			,elmObjsSortedInitial
-		/** @type {criteriumIndex[]} */
+			/** @type {criteriumIndex[]} */
 			,criteria = []
-		/** @type {HTMLElement} */
+			/** @type {HTMLElement} */
 			,parentNode
 			,isSameParent = true
 			,isFlex = nodeList.length&&(options===undef||options.useFlex!==false)&&getComputedStyle(nodeList[0].parentNode,null).display.indexOf('flex')!==-1
-			;
+		;
 
 		initCriteria.apply(nll,Array.prototype.slice.call(arguments,1));
 		initSortList();
@@ -150,12 +151,13 @@
 			var hasSelector = !!options.selector
 				,hasFilter = hasSelector&&options.selector[0]===':'
 				,allOptions = extend(options||{},defaults)
-				;
+			;
 			criteria.push(extend({
 				// has find, attr or data
 				hasSelector: hasSelector
 				,hasAttr: !(allOptions.attr===nll||allOptions.attr==='')
 				,hasData: allOptions.data!==nll
+				,hasCallback: typeof allOptions.callback==='function'
 				// filter
 				,hasFilter: hasFilter
 				,sortReturnNumber: allOptions.order==='asc'?1:-1
@@ -190,7 +192,7 @@
 						,pos: i
 						,posn: listPartial.length
 					}
-					;
+				;
 				elmObjsAll.push(elementObject);
 				listPartial.push(elementObject);
 			});
@@ -262,12 +264,12 @@
 					sortReturnNumber = Math.random()<0.5?1:-1;
 				} else { // regular sort
 					var isNumeric = fls
-					// prepare sort elements
+						// prepare sort elements
 						,valueA = getSortBy(a,criterium)
 						,valueB = getSortBy(b,criterium)
 						,noA = valueA===''||valueA===undef
 						,noB = valueB===''||valueB===undef
-						;
+					;
 					if (valueA===valueB) {
 						sortReturnNumber = 0;
 					} else if (criterium.emptyEnd&&(noA||noB)) {
@@ -277,7 +279,7 @@
 							// cast to float if both strings are numeral (or end numeral)
 							var  valuesA = isString(valueA)?valueA&&valueA.match(regexLast):fls// todo: isString superfluous because getSortBy returns string|undefined
 								,valuesB = isString(valueB)?valueB&&valueB.match(regexLast):fls
-								;
+							;
 							if (valuesA&&valuesB) {
 								var  previousA = valueA.substr(0,valueA.length-valuesA[0].length)
 									,previousB = valueB.substr(0,valueB.length-valuesB[0].length);
@@ -334,7 +336,7 @@
 					,placeEnd = place==='end'
 					,placeFirst = place==='first'
 					,placeLast = place==='last'
-					;
+				;
 				if (placeOrg) {
 					elmObjsSorted.forEach(addGhost);
 					elmObjsSorted.forEach(function(elmObj,i) {
@@ -378,7 +380,7 @@
 		function addGhost(elmObj){
 			var element = elmObj.elm
 				,ghost = doc.createElement('div')
-				;
+			;
 			elmObj.ghost = ghost;
 			element.parentNode.insertBefore(ghost,element);
 			return elmObj;
@@ -423,6 +425,8 @@
 			if (criterium.hasAttr) sortBy = element.getAttribute(criterium.attr);
 			else if (criterium.useVal) sortBy = element.value||element.getAttribute('value');
 			else if (criterium.hasData) sortBy = element.getAttribute('data-'+criterium.data);
+			else if (criterium.hasCallback) sortBy = criterium.callback(element);
+
 			else if (element) sortBy = element.textContent;
 			// strings should be ordered in lowercase (unless specified)
 			if (isString(sortBy)) {
@@ -433,13 +437,13 @@
 		}
 
 		/*function memoize(fnc) {
-		 var oCache = {}
-		 , sKeySuffix = 0;
-		 return function () {
-		 var sKey = sKeySuffix + JSON.stringify(arguments); // todo: circular dependency on Nodes
-		 return (sKey in oCache)?oCache[sKey]:oCache[sKey] = fnc.apply(fnc,arguments);
-		 };
-		 }*/
+			var oCache = {}
+				, sKeySuffix = 0;
+			return function () {
+				var sKey = sKeySuffix + JSON.stringify(arguments); // todo: circular dependency on Nodes
+				return (sKey in oCache)?oCache[sKey]:oCache[sKey] = fnc.apply(fnc,arguments);
+			};
+		}*/
 
 		/**
 		 * Test if an object is a string
@@ -502,17 +506,17 @@
 	// matchesSelector shim
 	win.Element&&(function(ElementPrototype) {
 		ElementPrototype.matchesSelector = ElementPrototype.matchesSelector
-			||ElementPrototype.mozMatchesSelector
-			||ElementPrototype.msMatchesSelector
-			||ElementPrototype.oMatchesSelector
-			||ElementPrototype.webkitMatchesSelector
-			||function (selector) {
-				var that = this, nodes = (that.parentNode || that.document).querySelectorAll(selector), i = -1;
-				//jscs:disable requireCurlyBraces
-				while (nodes[++i] && nodes[i] != that);
-				//jscs:enable requireCurlyBraces
-				return !!nodes[i];
-			};
+		||ElementPrototype.mozMatchesSelector
+		||ElementPrototype.msMatchesSelector
+		||ElementPrototype.oMatchesSelector
+		||ElementPrototype.webkitMatchesSelector
+		||function (selector) {
+			var that = this, nodes = (that.parentNode || that.document).querySelectorAll(selector), i = -1;
+			//jscs:disable requireCurlyBraces
+			while (nodes[++i] && nodes[i] != that);
+			//jscs:enable requireCurlyBraces
+			return !!nodes[i];
+		};
 	})(Element.prototype);
 
 	// extend the plugin to expose stuff

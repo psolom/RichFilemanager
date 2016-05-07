@@ -17,14 +17,6 @@
 @import "icons/mixins";
 @import "icons";
 
-.context-menu-icon {
-  @extend %context-menu-icon;
-  &.context-menu-hover:before {
-    color: $context-menu-icon-color-hover;
-  }
-}
-
-
 .context-menu-list {
   background: $context-menu-background-color;
   border: $context-menu-border-width $context-menu-border-style $context-menu-border-color;
@@ -39,6 +31,7 @@
   min-width: $context-menu-min-width;
   padding: $context-menu-container-padding;
   position: absolute;
+  white-space: pre;
 }
 
 .context-menu-item {
@@ -70,10 +63,6 @@
   background-color: $context-menu-item-color-disabled;
   color: $context-menu-text-color-disabled;
 }
-.context-menu-item.context-menu-disabled {
-  color: $context-menu-text-color-disabled;
-}
-
 
 .context-menu-input.context-menu-hover,
 .context-menu-item.context-menu-disabled.context-menu-hover {

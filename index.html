@@ -8,6 +8,20 @@
 	<link rel="stylesheet" type="text/css" href="scripts/jquery.filetree/src/jQueryFileTree.css" />
 	<link rel="stylesheet" type="text/css" href="scripts/jquery.contextmenu/dist/jquery.contextMenu.min.css" />
 	<link rel="stylesheet" type="text/css" href="scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css" />
+
+	<style type="text/css">
+		.fm-container #loading-wrap {
+			position: fixed;
+			height: 100%;
+			width: 100%;
+			overflow: hidden;
+			top: 0;
+			left: 0;
+			display: block;
+			background: white url(./images/wait30trans.gif) no-repeat center center;
+			z-index: 999;
+		}
+	</style>
 	<!-- CSS dynamically added using 'config.options.theme' defined in config file -->
 </head>
 
@@ -17,7 +31,6 @@
 	<div>
 		<form id="uploader" method="post">
 			<h1></h1>
-			<div id="uploadresponse"></div>
 			<button id="level-up" name="level-up" type="button" value="LevelUp">&nbsp;</button>
 			<button id="home" name="home" type="button" value="Home">&nbsp;</button>
 			<input id="mode" name="mode" type="hidden" value="add"/>
@@ -29,7 +42,7 @@
 				</div>
 				<input id="newfile" name="newfile" type="file"/>
 			</div>
-			<button id="upload" name="upload" type="submit" value="Upload" class="em"></button>
+			<button id="upload" name="upload" type="button" value="Upload" class="em"></button>
 			<button id="newfolder" name="newfolder" type="button" value="New Folder" class="em"></button>
 			<button id="grid" class="ON" type="button">&nbsp;</button>
 			<button id="list" type="button">&nbsp;</button>
@@ -60,13 +73,23 @@
 		<script type="text/javascript" src="scripts/jquery-1.11.3.min.js"></script>
 		<script type="text/javascript" src="scripts/jquery-ui.min.js"></script> <!-- build for drag&drop only -->
 		<script type="text/javascript" src="scripts/jquery-browser.js"></script>
-		<script type="text/javascript" src="scripts/jquery.form-3.24.js"></script>
 		<script type="text/javascript" src="scripts/jquery.splitter/jquery.splitter-1.5.1.js"></script>
 		<script type="text/javascript" src="scripts/jquery.filetree/src/jQueryFileTree.js"></script>
 		<script type="text/javascript" src="scripts/jquery.contextmenu/dist/jquery.contextMenu.min.js"></script>
 		<script type="text/javascript" src="scripts/jquery.impromptu/dist/jquery-impromptu.min.js"></script>
 		<script type="text/javascript" src="scripts/TinySort/dist/tinysort.js"></script>
 		<script type="text/javascript" src="scripts/TinySort/dist/jquery.tinysort.js"></script>
+		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
+		<!-- Load jquery file upload library -->
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/canvas-to-blob.min.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/load-image.all.min.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/jquery.iframe-transport.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/jquery.fileupload.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/jquery.fileupload-process.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/jquery.fileupload-image.js"></script>
+		<script type="text/javascript" src="scripts/jQuery-File-Upload/js/jquery.fileupload-validate.js"></script>
+		<!-- Load filemanager script -->
 		<script type="text/javascript" src="scripts/filemanager.js"></script>
 	</div>
 </div>

@@ -2,7 +2,7 @@
 
 namespace filemanager;
 
-require_once(__DIR__ . '/../plugins/s3/filemanager.s3.class.php');
+require_once(__DIR__ . '/../plugins/s3/S3Filemanager.php');
 
 /**
  *  Local class
@@ -14,5 +14,5 @@ require_once(__DIR__ . '/../plugins/s3/filemanager.s3.class.php');
  *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
-class S3 extends \FilemanagerS3 {
+class S3 extends \S3Filemanager {
 }

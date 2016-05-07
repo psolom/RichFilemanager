@@ -14,7 +14,7 @@
 // error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 // ini_set('display_errors', '1');
 
-require_once('filemanager.helper.php');
+require_once('BaseHelper.php');
 
 function auth()
 {
@@ -24,6 +24,9 @@ function auth()
     return true;
 }
 
-$fm = FmHelper::getInstance();
+$fm = BaseHelper::getInstance();
+
+// use to setup files root folder
 //$fm->setFileRoot('userfiles', true);
+
 $fm->handleRequest();

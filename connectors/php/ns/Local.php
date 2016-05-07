@@ -2,7 +2,7 @@
 
 namespace filemanager;
 
-require_once(__DIR__ . '/../filemanager.class.php');
+require_once(__DIR__ . '/../LocalFilemanager.php');
 
 /**
  *  Local class
@@ -14,5 +14,5 @@ require_once(__DIR__ . '/../filemanager.class.php');
  *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
-class Local extends \Filemanager {
+class Local extends \LocalFilemanager {
 }

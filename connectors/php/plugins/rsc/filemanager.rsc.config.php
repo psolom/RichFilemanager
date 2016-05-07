@@ -4,7 +4,7 @@
 *
 *	filemanager.rsc.class.php
 *	This is a separate config file for the parameters needed for the RSC plugin
-*	You may over-ride any parameters set by the filemanager.config.php file here
+*	You may over-ride any parameters set by the main config.php file here
 *
 *	@license	MIT License
 *	@author		Alan Blount <alan (at) zeroasterisk (dot) com>

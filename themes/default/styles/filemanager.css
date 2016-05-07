@@ -59,7 +59,8 @@
 	/* no margin or border allowed */
 }
 
-.fm-container #filetree > ul {
+.fm-container #filetree > ul,
+.fm-container #filetree .mCSB_container > ul {
 	padding: 4px;
 }
 
@@ -514,7 +515,7 @@ x:-o-prefocus,
 .fm-container #delete span,
 .fm-container .context-menu-item.delete:before { background-image: url(../images/bin_closed.png); }
 .fm-container #upload span { background-image: url(../images/upload.png); }
-.fm-container #upload span.loading { background-image: url(../images/ajax-loader.gif);color:#555555;font-size:0.9em; }
+.fm-container #upload.loading span { background-image: url(../images/ajax-loader.gif);color:#555555;font-size:0.9em; }
 .fm-container #parentfolder span { background-image: url(../images/parentfolder.png); }
 .fm-container #newfolder span { background-image: url(../images/folder_add.png); }
 .fm-container #home span { background-image: url(../images/house.png); background-position: center; }
@@ -624,21 +625,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 
-/** Loading spinner */
-
-.fm-container #loading-wrap {
-	position: fixed;
-	height: 100%;
-	width: 100%;
-	overflow: hidden;
-	top: 0;
-	left: 0;
-	display: block;
-	background: white url(../images/wait30trans.gif) no-repeat center center;
-	z-index: 999;
-}
-
-
 /** Modal dialog by Impromptu plugin */
 
 .fm-modal-container .jqi {
@@ -692,69 +678,22 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 	color: #444;
 }
 
-.fm-modal-container #dropzone-container {
+.fm-modal-container #fileupload-container {
 	min-width: 860px;
 }
 
-.fm-modal-container #dropzone-container h2 {
+.fm-modal-container #fileupload-container h2 {
 	font-size: 1.2em;
 	font-weight: bold;
 }
 
-.fm-modal-container .dropzone {
-	min-height: 200px ! important;
-	margin-top: 1em;
-}
-
-.fm-modal-container .dropzone .dz-default.dz-message {
-	background: none ! important;
-	color: #999;
-	font-size: 1.5em;
-	font-weight: bold;
-}
-
-.fm-modal-container .dropzone .dz-default.dz-message span {
-	display: block ! important;
-}
-
-.fm-modal-container .dropzone .dz-preview .dz-image {
-	border: 1px solid #acacac;
-	-webkit-box-shadow: 1px 1px 4px rgba(0,0,0,0.16);
-	box-shadow: 1px 1px 4px rgba(0,0,0,0.16);
-}
-
-.fm-modal-container .dropzone .dz-preview .dz-remove {
-	display: block;
-	margin-top: 10px;
-	text-align: center;
-	color: #5A5A5A;
-	font-weight: bold;
-}
-
-.fm-modal-container .dropzone .dz-preview .dz-error-message {
-	top: 150px;
-}
-
-.fm-modal-container .dropzone .dz-preview.dz-error .dz-image {
-	border: 1px solid #FF0000;
-}
-
-.fm-modal-container .dropzone .dz-preview .dz-details {
-	padding: 1em 1em;
-}
-
-.fm-modal-container .dropzone .dz-preview .dz-details .dz-size {
-	margin-bottom: 0.2em;
-	font-size: 16px;
-}
-
-.fm-modal-container #total-progress {
+.fm-modal-container #fileupload-container #total-progress {
 	width: 100%;
-	height: 3px;
+	height: 5px;
 	background-color: #A7A1C6;
 }
 
-.fm-modal-container #total-progress .progress-bar {
-	height: 3px;
+.fm-modal-container #fileupload-container #total-progress .progress-bar {
+	height: 5px;
 	background-color: #294750;
 }

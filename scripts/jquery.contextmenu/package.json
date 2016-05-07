@@ -1,14 +1,14 @@
 {
   "name": "jquery-contextmenu",
   "title": "jQuery.contextMenu()",
-  "version": "2.1.0",
+  "version": "2.0.1",
   "author": {
     "name": "Björn Brala",
     "url": "http://www.swis.nl"
   },
   "license": "MIT",
   "peerDependencies": {
-    "jquery": ">=1.8.2"
+    "jquery": "^1.8.2"
   },
   "devDependencies": {
     "dalek-browser-chrome": "0.0.11",
@@ -23,9 +23,9 @@
     "gulp-debug": "^2.1.2",
     "gulp-dest": "^0.2.2",
     "gulp-htmlcomb": "0.1.0",
-    "gulp-iconfont": "^5.0.1",
-    "gulp-jscs": "^3.0.2",
-    "gulp-jshint": "^2.0.0",
+    "gulp-iconfont": "^3.0.2",
+    "gulp-jscs": "^2.0.0",
+    "gulp-jshint": "^1.11.0",
     "gulp-load-plugins": "^1.0.0-rc.1",
     "gulp-minify-css": "^1.1.6",
     "gulp-qunit": "^1.2.1",
@@ -39,8 +39,7 @@
     "karma-phantomjs-launcher": "^0.2.1",
     "karma-qunit": "^0.1.4",
     "lodash": "^3.10.1",
-    "qunitjs": "^1.15.0",
-    "jshint": "^2.8.0"
+    "qunitjs": "^1.15.0"
   },
   "description": "Management facility for context menus. Developed for a large number of triggering objects. HTML5 Polyfill",
   "keywords": [
@@ -84,10 +83,14 @@
     "dist/jquery.contextMenu.min.css.map",
     "dist/jquery.ui.position.js",
     "dist/jquery.ui.position.min.js",
-    "dist/font/context-menu-icons.eot",
-    "dist/font/context-menu-icons.ttf",
-    "dist/font/context-menu-icons.woff",
-    "dist/font/context-menu-icons.woff2"
+    "dist/images/cut.png",
+    "dist/images/door.png",
+    "dist/images/page_white_add.png",
+    "dist/images/page_white_copy.png",
+    "dist/images/page_white_delete.png",
+    "dist/images/page_white_edit.png",
+    "dist/images/page_white_paste.png",
+    "dist/images/cut.png"
   ],
   "scripts": {
     "test": "npm run test-unit && npm run test-integration",

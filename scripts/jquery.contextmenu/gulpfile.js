@@ -61,14 +61,14 @@ var replacement = {
     };
 
 gulp.task('jshint', function () {
-  return gulp.src(scripts.src).
+  return gulp.src(scripts.all).
     pipe(plugins.jshint('src/.jshintrc')).
     pipe(plugins.jshint.reporter('default'));
 });
 
 gulp.task('jscs', function () {
-  return gulp.src(scripts.src).
-    pipe(plugins.jscs());
+  return gulp.src(scripts.all).
+    pipe(plugins.jscs('src/.jscsrc'));
 });
 
 gulp.task('js', ['jshint', 'jscs', 'jslibs'], function () {
@@ -159,9 +159,9 @@ gulp.task('build-icons', function () {
  */
 gulp.task('integration-test-paths', function(){
     return gulp.src('test/integration/html/*.html').
-    pipe(plugins.replace('http\:\/\/swisnl\.github\.io\/jQuery\-contextMenu\/dist\/', '\.\.\/\.\.\/\.\.\/src\/')).
-    pipe(plugins.replace('\/src\/jquery.contextMenu.css', '\/dist\/jquery.contextMenu.css')).
-    pipe(plugins.replace('http\:\/\/swisnl\.github\.io\/jQuery-contextMenu\/js\/jquery\.ui\.position\.min\.js', '\.\.\/\.\.\/\.\.\/src\/jquery\.ui\.position\.min\.js')).
+    pipe(plugins.replace('http\:\/\/swisnl\.github\.io\/jQuery\-contextMenu\/dist\/', '\.\.\/\.\.\/\.\.\/dist\/')).
+    pipe(plugins.replace('http\:\/\/swisnl\.github\.io\/jQuery\-contextMenu\/dist\/', '\.\.\/\.\.\/\.\.\/dist\/')).
+    pipe(plugins.replace('http\:\/\/swisnl\.github\.io\/jQuery-contextMenu\/js\/jquery\.ui\.position\.min\.js', '\.\.\/\.\.\/\.\.\/dist\/jquery\.ui\.position\.min\.js')).
     pipe(gulp.dest('test/integration/html/'));
 });
 

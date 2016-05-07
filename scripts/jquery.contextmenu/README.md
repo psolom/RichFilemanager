@@ -20,7 +20,7 @@ $.contextMenu is a management facility for - you guessed it - context menus. It 
 
 ## Dependencies ##
 
-* jQuery >=1.8.2
+* jQuery 1.8.2
 * jQuery UI position (optional but recommended)
 
 ## Usage ##
@@ -103,22 +103,7 @@ Font-Awesome icons used from [encharm/Font-Awesome-SVG-PNG](https://github.com/e
 
 ## Changelog ##
 
-### Unreleased
-
-* Fixed a problem when using the open function with custom arguments (thanks @RareDevil)
-
-### 2.1.0 ###
-
-* Added support for providing a function as zIndex value in options object (thanks @eivindga)
-* Fixed a switch to use the correct type for separators (thanks @RareDevil)
-* Fixed the problem with submenus size wrongly ([Issue #308](https://github.com/swisnl/jQuery-contextMenu/issues/308)) (thanks @RareDevil)
-* Incorrect entry on package.json ([Issue #336](https://github.com/swisnl/jQuery-contextMenu/issues/336)) (thanks @Dijir)
-* Gray out disabled icons as well as text ([Issue #337](https://github.com/swisnl/jQuery-contextMenu/issues/337)) (thanks @r02b)
-* Optimized generated CSS so that ``context-menu-icon`` class can be used to overwrite icon CSS.
-* Positioning of contextmenu when using appendTo (thanks @mrMarco)
-* Check to see if target have a higher zIndex than the contextmenu in the key event handler (thanks @RareDevil)
-
-###  2.0.1 (December 3rd 2015) ###
+###  2.0.1 (December 3rd 2015 ###
 
 * Remove executable bit from jquery.contextMenu.js (thanks @jacknagel)
 * Fixed a problem there was when using a function for icons (thanks @RareDevil)

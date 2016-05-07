@@ -27,7 +27,7 @@
         "fileConnector": false,
         "baseUrl": false,
         "logger": false,
-        "capabilities": ["select", "download", "rename", "delete", "replace"],
+        "capabilities": ["upload", "select", "download", "rename", "move", "delete", "replace"],
         "plugins": []
     },
     "security": {
@@ -57,6 +57,8 @@
             "pptx",
             "csv",
             "ogv",
+            "avi",
+            "mkv",
             "mp4",
             "webm",
             "m4v",
@@ -66,13 +68,6 @@
             "zip",
             "rar"
         ]
-    },
-    "upload": {
-        "multiple": true,
-        "number": 5,
-        "overwrite": false,
-        "imagesOnly": false,
-        "fileSizeLimit": 16
     },
     "exclude": {
         "unallowed_files": [
@@ -87,6 +82,15 @@
         "unallowed_files_REGEXP": "/^\\./",
         "unallowed_dirs_REGEXP": "/^\\./"
     },
+    "upload": {
+        "paramName": "files",
+        "chunkSize": false,
+        "multiple": true,
+        "number": 5,
+        "overwrite": false,
+        "imagesOnly": false,
+        "fileSizeLimit": 16000000
+    },
     "images": {
         "imagesExt": [
             "jpg",
@@ -96,10 +100,16 @@
             "png",
             "svg"
         ],
-        "resize": {
-        	"enabled":true,
-        	"maxWidth": 1280,
+        "main": {
+            "autoOrient": true,
+            "maxWidth": 1280,
             "maxHeight": 1024
+        },
+        "thumbnail": {
+            "dir": "_thumbs/",
+            "crop": true,
+            "maxWidth": 64,
+            "maxHeight": 64
         }
     },
     "videos": {
@@ -125,10 +135,25 @@
         "showPdfReader": true,
         "pdfsExt": [
             "pdf",
-            "odp"
+            "odt",
+            "odp",
+            "ods"
         ],
-	    "pdfsReaderWidth": "640",
-        "pdfsReaderHeight": "480"	
+        "pdfsReaderWidth": "640",
+        "pdfsReaderHeight": "480"
+    },
+    "docs": {
+        "showGoogleViewer": true,
+        "docsExt": [
+            "doc",
+            "docx",
+            "xls",
+            "xlsx",
+            "ppt",
+            "pptx"
+        ],
+        "docsReaderWidth": "640",
+        "docsReaderHeight": "480"
     },
     "edit": {
         "enabled": true,

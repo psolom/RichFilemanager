@@ -281,7 +281,7 @@ class FilemanagerRSC extends Filemanager {
 		
 		if(isset($this->get['path']) && file_exists($this->doc_root . $this->get['path'])) {
 			header("Content-type: image/" .$ext = pathinfo($this->get['path'], PATHINFO_EXTENSION));
-			header("Content-Transfer-Encoding: Binary");
+			header("Content-Transfer-Encoding: binary");
 			header("Content-length: ".filesize($this->doc_root . $this->get['path']));
 			header('Content-Disposition: inline; filename="' . basename($this->get['path']) . '"');
 			readfile($this->doc_root . $this->get['path']);

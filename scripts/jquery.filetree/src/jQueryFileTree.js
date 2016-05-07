@@ -53,7 +53,7 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
     }
 
     FileTree.prototype.onEvent = function(event) {
-      var $ev, _this, callback, jqft, options, ref;
+      var $ev, _this, callback, jqft, options, ref, prevent;
       $ev = $(event.target);
       options = this.options;
       jqft = this.jqft;
@@ -68,6 +68,10 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
       _this.data.rel = $ev.prop('rel');
       _this.data.container = jqft.container;
       _this.data.options = _this.options;
+      prevent = _this._trigger('filetreeclick', _this.data);
+      if(prevent === true) {
+        return false;
+      }
       if ($ev.parent().hasClass('directory')) {
         if ($ev.parent().hasClass('collapsed')) {
           if (!options.multiFolder) {
@@ -160,7 +164,12 @@ var bind = function(fn, me){ return function(){ return fn.apply(me, arguments); 
       };
       handleFail = function() {
         $el.find('.start').html('');
-        $el.removeClass('wait').append("<p>" + options.errorMessage + "</p>");
+        $el.removeClass('wait');
+        if(options.errorMessage) {
+          $el.append("<p>" + options.errorMessage + "</p>");
+        } else {
+          $el.removeClass('expanded').addClass('collapsed');
+        }
         return false;
       };
       if (typeof options.script === 'function') {
