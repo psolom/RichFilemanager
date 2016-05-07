@@ -32,18 +32,19 @@ class LocalFilemanager extends BaseFilemanager
             $this->connector_script_url = $this->config['options']['fileConnector'];
         }
 
-		if ($this->config['options']['fileRoot'] !== false) {
+		$fileRoot = $this->config['options']['fileRoot'];
+		if ($fileRoot !== false) {
 			// takes $_SERVER['DOCUMENT_ROOT'] as files root; "fileRoot" is a suffix
 			if($this->config['options']['serverRoot'] === true) {
 				$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
-				$this->dynamic_fileroot = $this->config['options']['fileRoot'];
-				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] . '/' . $this->config['options']['fileRoot'];
+				$this->dynamic_fileroot = $fileRoot;
+				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
 			}
 			// takes "fileRoot" as files root; "fileRoot" is a full server path
 			else {
-				$this->doc_root = $this->config['options']['fileRoot'];
+				$this->doc_root = $fileRoot;
 				$this->dynamic_fileroot = '';
-				$this->path_to_files = $this->config['options']['fileRoot'];
+				$this->path_to_files = $fileRoot;
 			}
 		} else {
 			$this->doc_root = $_SERVER['DOCUMENT_ROOT'];

@@ -755,7 +755,7 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	protected function getLocalPath($path)
 	{
-		$path = $this->path_to_files . '/' . $this->config['s3']['localThumbsPath'] . '/' . $path;
+		$path = $this->doc_root . '/' . $this->config['s3']['localThumbsPath'] . '/' . $path;
 		return $this->cleanPath($path);
 	}
 
