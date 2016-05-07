@@ -538,7 +538,7 @@ var getAudioPlayer = function(data) {
 
 //Return PDF Reader
 var getPdfReader = function(data) {
-	var code = '<iframe id="fm-pdf-viewer" src="scripts/ViewerJS/index.html#' + data['View'] + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + data['View'] + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
