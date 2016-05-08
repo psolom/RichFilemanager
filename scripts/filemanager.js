@@ -547,7 +547,7 @@ var getPdfReader = function(data) {
 //Return Google Viewer
 var getGoogleViewer = function(data) {
 	var url = location.protocol + '//' + location.host + data['View'];
-	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
