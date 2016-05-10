@@ -300,17 +300,36 @@
 }
 /** Input file Replacement - end */
 
+.fm-container #footer .right {
+	float: right;
+}
+
 .fm-container #search,
 .fm-container #search div,
 .fm-container #folder-info {
-	display:inline;
+	display: inline-block;
 }
 
 .fm-container #folder-info {
 	font-size: 0.8em;
 	color: #666666;
-	padding: 1.3em 1.3em 0 1.3em;
-	float: right;
+	padding: 1.3em 0.5em 0 1.3em;
+}
+
+.fm-container #summary {
+	width: 16px;
+	height: 16px;
+	display: inline-block;
+	background: url(../images/summary.png) no-repeat center center;
+	cursor: pointer;
+}
+
+.fm-container #link-to-project {
+	height: 12px;
+	width: 45px;
+	display: inline-block;
+	background: transparent url(../../../images/fmlogo_wbg.png) no-repeat 0 0;
+	margin: 1em 1em 0 1em;
 }
 
 .fm-container #q {
@@ -444,7 +463,7 @@ x:-o-prefocus,
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#a4bcb3', endColorstr='#bad3c6',GradientType=0 ); /* IE6-9 */
 }
 
-.fm-container #contents.list th.sorted-asc {
+.fm-container #contents.list th.sorted-asc span {
 	display: block;
 	width: 100%;
 	padding-right: 20px;
@@ -559,6 +578,7 @@ x:-o-prefocus,
 .fm-container #list {
 	margin-left: 0;
 }
+
 .fm-container #progressbar {
 	background:transparent url(../images/ajax-loader.gif) no-repeat 0 0;
 	display:inline-table;
@@ -572,15 +592,6 @@ x:-o-prefocus,
 	width:100%;
 	font-variant: small-caps;
 	padding:0.5em;
-}
-
-.fm-container #link-to-project {
-	background: transparent url(../../../images/fmlogo_wbg.png) no-repeat 0 0;
-	display: block;
-	height: 12px;
-	width: 45px;
-	float: right;
-	margin: 1em 1em 0 1em;
 }
 
 .fm-container div.CodeMirror {
@@ -666,6 +677,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 	font-weight: normal;
 	float: right;
 }
+
 .fm-modal-container div.jqistates {
 	padding: 1em;
 }
@@ -705,4 +717,17 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-modal-container #fileupload-container #total-progress .progress-bar {
 	height: 5px;
 	background-color: #333;
+}
+
+.fm-modal-container .summary-popup .jqimessage {
+	font-size: 1.2em;
+}
+
+.fm-modal-container .summary-popup .jqimessage .title {
+	font-weight: bold;
+	margin-bottom: 0.8em;
+}
+
+.fm-modal-container .summary-popup .jqimessage .line {
+	line-height: 1.4em;
 }

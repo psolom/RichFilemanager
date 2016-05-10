@@ -22,8 +22,8 @@
 		
 		
 		define_tag('setlang'); // TODO: verify this will work with relative paths
-			local('langfile') = '../../scripts/languages/' + self->config->culture + '.js';
-			!file_exists(#langfile) ? #langfile = '../../scripts/languages/en.js';
+			local('langfile') = '../../scripts/languages/' + self->config->culture + '.json';
+			!file_exists(#langfile) ? #langfile = '../../scripts/languages/en.json';
 			self->lang = decode_json(string(include_raw(#langfile)));
 			error_code ? log_critical('[FileManager] Error loading language file: ' + error_msg);
 		/define_tag;

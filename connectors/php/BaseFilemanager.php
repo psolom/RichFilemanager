@@ -183,6 +183,12 @@ abstract class BaseFilemanager
      */
     abstract function viewfile();
 
+    /**
+     * Retrieves storage summarize info - filemanager action
+     * @return array
+     */
+    abstract function summarize();
+
 
     /**
      * Invokes filemanager action based on request params and returns response
@@ -263,6 +269,10 @@ abstract class BaseFilemanager
                         if($this->getvar('path')) {
                             $this->viewfile();
                         }
+                        break;
+
+                    case 'summarize':
+                        $response = $this->summarize();
                         break;
                 }
 

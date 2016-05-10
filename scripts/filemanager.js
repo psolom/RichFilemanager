@@ -176,20 +176,19 @@ var $fileinfo = $('#fileinfo'),
 	$uploadButton = $('#upload');
 
 
-// Get localized messages from file
-// through culture var or from URL
+// Get localized messages from file through culture var or from URL
 if($.urlParam('langCode') != 0) {
-    if(file_exists (config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.js')) {
+    if(file_exists (config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json')) {
         config.options.culture = $.urlParam('langCode');
     } else {
         var urlLang = $.urlParam('langCode').substring(0, 2);
-        if(file_exists (config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.js')) config.options.culture = urlLang;
+        if(file_exists (config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.json')) config.options.culture = urlLang;
     }
 }
 
 var lg = [];
 $.ajax({
-  url: config.globals.pluginPath + '/scripts/languages/'  + config.options.culture + '.js',
+  url: config.globals.pluginPath + '/scripts/languages/'  + config.options.culture + '.json',
   async: false,
   dataType: 'json',
   success: function (json) {
@@ -243,9 +242,9 @@ var setDimensions = function() {
 
 // Display Min Path
 var displayPath = function (path, reduce) {
-	reduce = (typeof reduce === "undefined") ? true : false;
+	reduce = (typeof reduce === "undefined");
 
-	if (config.options.showFullPath == false) {
+	if (config.options.showFullPath === false) {
 		path = path.replace(fileRoot, "/");
 		// if a "displayPathDecorator" function is defined, use it to decorate path
 		if ('function' === typeof displayPathDecorator) {
@@ -305,7 +304,7 @@ var cleanString = function(string, allowed) {
 	}
 
 	// allow only latin alphabet
-	if(config.options.chars_only_latin) {
+	if(config.options.charsLatinOnly) {
 		loadJS('/scripts/speakingurl/speakingurl.min.js');
 		if (typeof allowed == "undefined") {
 			allowed = [];
@@ -2301,14 +2300,11 @@ $(function() {
 		fullexpandedFolder = null;
 	}
 
-	// finalize the FileManager UI initialization
-	// with localized text if necessary
-	if(config.options.autoload == true) {
-		$uploadButton.append(lg.upload);
-		$('#newfolder').append(lg.new_folder);
-		$('#grid').attr('title', lg.grid_view);
-		$('#list').attr('title', lg.list_view);
-	}
+	// finalize the FileManager UI initialization with localized text
+	$uploadButton.append(lg.upload);
+	$('#newfolder').append(lg.new_folder);
+	$('#grid').attr('title', lg.grid_view);
+	$('#list').attr('title', lg.list_view);
 
 	/** Adding a close button triggering callback function if CKEditorCleanUpFuncNum passed */
 	if($.urlParam('CKEditorCleanUpFuncNum')) {
@@ -2369,6 +2365,30 @@ $(function() {
 		setViewButtonsFor('list');
 		$fileinfo.data('view', 'list');
 		getFolderInfo(getCurrentPath());
+	});
+
+	// display storage summary info
+	$('#summary').click(function() {
+		var message = '<div class="title">' + lg.summary_title + '</div>';
+		var $prompt = $.prompt(message).addClass('summary-popup');
+
+		$.getJSON(fileConnector + '?mode=summarize&config=' + userconfig, function(result) {
+			var $content = $prompt.find('.jqimessage'),
+				size = formatBytes(result.size, true);
+
+			if(config.options.fileRootSizeLimit > 0) {
+				var sizeTotal = formatBytes(config.options.fileRootSizeLimit, true);
+				var ratio = result.size * 100 / config.options.fileRootSizeLimit;
+				var percentage = Math.round(ratio * 100) / 100;
+				size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
+			}
+
+			$content.append($('<div>', {class: 'line', text: lg.summary_files + ': ' + result.files}));
+			if(result.folders) {
+				$content.append($('<div>', {class: 'line', text: lg.summary_folders + ': ' + result.folders}));
+			}
+			$content.append($('<div>', {class: 'line', text: lg.summary_size + ': ' + size}));
+		});
 	});
 
 	// Provide initial values for upload form, status, etc.
@@ -2589,7 +2609,7 @@ $(function() {
 						var $node = file.context;
 						$node.removeClass('added aborted error').addClass('process');
 
-						// workaround to handle a case while chunk upload when you may press abort button after
+						// workaround to handle a case while chunk uploading when you may press abort button after
 						// uploading is done, but right before "fileuploaddone" event is fired, and try to resume upload
 						if(file.chunkUploaded && (data.total === data.uploadedBytes)) {
 							$node.remove();

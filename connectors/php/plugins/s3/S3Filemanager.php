@@ -146,7 +146,6 @@ class S3Filemanager extends LocalFilemanager
 		$files_list = array();
 		$current_path = $this->getFullPath($this->get['path'], true);
 
-		// bail-out if the requested directory does not exist
 		if (!is_dir($current_path)) {
 			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $this->get['path']));
 		}
@@ -604,7 +603,7 @@ class S3Filemanager extends LocalFilemanager
 			$returned_path = $this->cleanPath($iconsFolder . '/' . 'locked_' . $this->config['icons'][$iconType]);
 		} else {
 			// if $thumbnail is set to true we return the thumbnail
-			if($this->config['options']['generateThumbnails'] == true && $thumbnail == true) {
+			if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
 				// get thumbnail (and create it if needed)
 				$returned_path = $this->get_thumbnail($current_path);
 			} else {
@@ -691,6 +690,22 @@ class S3Filemanager extends LocalFilemanager
 		readfile($current_path);
 		$this->__log(__METHOD__ . ' - downloaded '. $current_path);
 		exit();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function summarize()
+	{
+		$result = array(
+			'size' => 0,
+			'files' => 0,
+		);
+
+		$path = rtrim($this->rootWrapperPath, '/') . '/';
+		$this->getDirSummary($path, $result);
+
+		return $result;
 	}
 
 
@@ -986,28 +1001,39 @@ class S3Filemanager extends LocalFilemanager
 	}
 
 	/**
-	 * Apply common filters, etc. to a file path
-	 * @param string $filePath
-	 * @return string
+	 * Returns summary info for specified folder
+	 * @param string $dir
+	 * @param array $result
+	 * @return int
 	 */
-	protected function sanitizePath($filePath)
+	public function getDirSummary($dir, &$result = array('files'=>0, 'size'=>0))
 	{
-		return trim(rawurldecode($filePath), '/');
-	}
+		/**
+		 * set empty delimiter to get recursive objects list
+		 * @see \Aws\S3\StreamWrapper::dir_opendir()
+		 */
+		$context = stream_context_create(array(
+			's3' => array(
+				'delimiter' => ''
+			)
+		));
 
-	/**
-	 * @inheritdoc
-	 */
-	protected function get_thumbnail($path)
-	{
-		$thumbnail_fullpath = $this->get_thumbnail_path($path);
+		$dir = rtrim($dir, '/') . '/';
+		$handle = @opendir($dir, $context);
 
-		// generate thumbnail if it does not exist or cacheThumbnail is set to false
-		if(!file_exists($thumbnail_fullpath) || $this->config['options']['cacheThumbnails'] == false) {
-			$this->createThumbnail($path, $thumbnail_fullpath);
-			$this->__log(__METHOD__ . ' - generating thumbnail :  '. $thumbnail_fullpath);
+		while (false !== ($filename = readdir($handle))) {
+			$path = $dir . $filename;
+
+			if(is_file($path)) {
+				$result['files']++;
+				$result['size'] += filesize($path);
+			} else {
+				// stream wrapper opendir() lists only files
+			}
 		}
-		return $thumbnail_fullpath;
+		closedir($handle);
+
+		return $result;
 	}
 
 	/**
@@ -1018,6 +1044,7 @@ class S3Filemanager extends LocalFilemanager
 		$dynamic_path = $this->getDynamicPath($path);
 		$thumbnail_path = $this->rootDirectory . '/' . $this->config['images']['thumbnail']['dir'] . '/' . $dynamic_path;
 		$thumbnail_path = $this->cleanPath($thumbnail_path);
+
 		if($this->config['s3']['localThumbsPath']) {
 			return $this->getLocalPath($thumbnail_path);
 		} else {
@@ -1028,10 +1055,29 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function createThumbnail($imagePath, $thumbnailPath)
+	protected function get_thumbnail($path)
 	{
-		$this->initUploader(array(
-			'upload_dir' => dirname($imagePath) . '/',
-		))->create_thumbnail_image($imagePath);
+		$thumbnail_fullpath = $this->get_thumbnail_path($path);
+
+		// generate thumbnail if it doesn't exist or caching is disabled
+		if(!file_exists($thumbnail_fullpath) || $this->config['images']['thumbnail']['cache'] === false) {
+			$this->createThumbnail($path, $thumbnail_fullpath);
+		}
+
+		return $thumbnail_fullpath;
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	protected function createThumbnail($imagePath, $thumbnailPath)
+	{
+		if($this->config['images']['thumbnail']['enabled'] === true) {
+			$this->__log(__METHOD__ . ' - generating thumbnail:  '. $thumbnailPath);
+
+			$this->initUploader(array(
+				'upload_dir' => dirname($imagePath) . '/',
+			))->create_thumbnail_image($imagePath);
+		}
 	}
 }

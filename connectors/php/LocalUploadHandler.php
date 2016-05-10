@@ -49,7 +49,7 @@ class LocalUploadHandler extends BaseUploadHandler
             ),
         );
         // image thumbnail settings
-        if(isset($images['thumbnail'])) {
+        if(isset($images['thumbnail']) && $images['thumbnail']['enabled'] === true) {
             $this->options['image_versions']['thumbnail'] = array(
                 'upload_dir' => $this->fmData['thumbnails_dir'],
                 'crop' => $images['thumbnail']['crop'],
@@ -60,6 +60,7 @@ class LocalUploadHandler extends BaseUploadHandler
 
         $this->error_messages['accept_file_types'] = $this->fm->lang('INVALID_FILE_TYPE');
         $this->error_messages['max_file_size'] = sprintf($this->fm->lang('UPLOAD_FILES_SMALLER_THAN'), (round($this->fm->config['upload']['fileSizeLimit'] / 1000 / 1000, 2)) . ' ' . $this->fm->lang('mb'));
+        $this->error_messages['max_storage_size'] = sprintf($this->fm->lang('STORAGE_SIZE_EXCEED'), (round($this->fm->config['options']['fileRootSizeLimit'] / 1000 / 1000, 2)) . ' ' . $this->fm->lang('mb'));
     }
 
     public function create_thumbnail_image($image_path)
@@ -111,6 +112,11 @@ class LocalUploadHandler extends BaseUploadHandler
             $file_size = $this->get_file_size($uploaded_file);
         } else {
             $file_size = $content_length;
+        }
+        if ($this->fm->config['options']['fileRootSizeLimit'] > 0 &&
+            ($file_size + $this->fm->getRootTotalSize()) > $this->fm->config['options']['fileRootSizeLimit']) {
+            $file->error = $this->get_error_message('max_storage_size');
+            return false;
         }
         if ($this->options['max_file_size'] && (
                 $file_size > $this->options['max_file_size'] ||

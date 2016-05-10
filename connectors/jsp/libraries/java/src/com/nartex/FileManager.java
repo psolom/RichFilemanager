@@ -677,7 +677,7 @@ public class FileManager {
 			String text;
 			StringBuffer contents = new StringBuffer();
 			try {
-				isr = new InputStreamReader(new FileInputStream (this.fileManagerRoot + "/scripts/languages/" + lang + ".js"), "UTF-8");
+				isr = new InputStreamReader(new FileInputStream (this.fileManagerRoot + "/scripts/languages/" + lang + ".json"), "UTF-8");
 				br = new BufferedReader (isr);
 				while ((text = br.readLine()) != null)
 					contents.append(text);

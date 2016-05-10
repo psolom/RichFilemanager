@@ -29,7 +29,7 @@
 	<cfscript>
 		var loc = {};
 		loc.defaultLanguage = "en";
-		loc.fileLocation = ExpandPath("../../scripts/languages/" & arguments.language & ".js");
+		loc.fileLocation = ExpandPath("../../scripts/languages/" & arguments.language & ".json");
 		
 		try
 		{
@@ -37,7 +37,7 @@
 		}
 		catch (Any e)
 		{
-			loc.fileLocation = variables.class.root & "/scripts/languages/" & arguments.defaultLanguage & ".js";
+			loc.fileLocation = variables.class.root & "/scripts/languages/" & arguments.defaultLanguage & ".json";
 			loc.fileContents = $file(action="read", file=loc.fileLocation);
 		}
 	</cfscript>
