@@ -717,6 +717,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 	width: 100%;
 	height: 5px;
 	background-color: #A1ADE2;
+	overflow: hidden;
 }
 
 .fm-modal-container #fileupload-container #total-progress .progress-bar {
