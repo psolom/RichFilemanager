@@ -1037,6 +1037,17 @@ class S3Filemanager extends LocalFilemanager
 	}
 
 	/**
+	 * Calculates total size of all files
+	 * @return mixed
+	 */
+	public function getRootTotalSize()
+	{
+		$path = rtrim($this->rootWrapperPath, '/') . '/';
+		$result = $this->getDirSummary($path);
+		return $result['size'];
+	}
+
+	/**
 	 * @inheritdoc
 	 */
 	protected function get_thumbnail_path($path)
