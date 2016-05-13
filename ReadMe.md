@@ -1,14 +1,24 @@
-Filemanager
+Rich Filemanager
 ========================
 
-FM is an open-source file manager released under MIT license. It is an alternative to elfinder or CKFinder.
+Rich Filemanager is an open-source file manager released under MIT license.
+Based on the [simogeo Filemanager](https://github.com/simogeo/Filemanager), with a lot of improvements and new features.
 
-Support
--------
 
-Filemanager is under free license. If you want to support the filemanager development or just thank its main maintainer by paying a beer, you can make a donation by clicking the following button : 
-[![Donate](https://www.paypal.com/en_US/i/btn/x-click-but21.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=2M5GWH9NLNEZL) 
+Compatibility
+-------------
 
+Filemanager was initially designed to interact with a number of programming languages via [connectors](https://github.com/servocoder/RichFilemanager/tree/master/connectors).
+But since many changes have been done recently, **only PHP connector** is the only actual connector currently. Compatibility with other connectors is most likely completely broken.
+You are still able you to download unsupported v0.8 from [archive](https://github.com/simogeo/Filemanager/archive/v0.8.zip) (PHP, ASHX, ASP, CFM, lasso, PL and JSP)
+
+
+Contribution
+------------
+
+Any contribution is greatly appreciated.
+You can become a maintainer for any of existent connectors, or create new one for your server side language.
+Check the details in [API](https://github.com/servocoder/RichFilemanager#api) section.
 
 
 Main features
@@ -16,11 +26,11 @@ Main features
 
 * A Filemanager relying on jquery.
 * Available in more than 20 languages.
-* [Highly customizable](https://github.com/servocoder/Filemanager/wiki/Filemanager-configuration-file)
+* [Highly customizable](https://github.com/servocoder/RichFilemanager/wiki/Filemanager-configuration-file)
 * Can work as standalone application
 * Easy integration with RTE like CKEditor, TinyMCE, Imperavi Redactor and so on.
-* Easy integration with [AWS S3 storage](https://github.com/servocoder/Filemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
-* Easy integration with [colorbox jquery plugin](https://github.com/servocoder/Filemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/Filemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
+* Easy integration with [AWS S3 storage](https://github.com/servocoder/RichFilemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
+* Easy integration with [colorbox jquery plugin](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
 * Several computer language connectors available. **PHP is up-to-date**
 * Ability to upload, delete, modify, download and move files
 * Ability to create folders
@@ -30,10 +40,10 @@ Main features
 * Multiple uploads support - based on [dropzonejs](http://www.dropzonejs.com)
 * Online text / code edition - based on [codeMirror](http://codemirror.net/)
 * Online documents viewer - based on [viewerJS](http://viewerjs.org/)
-* [Opening a given folder](https://github.com/servocoder/Filemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
-* [Opening exclusively a given folder](https://github.com/servocoder/Filemanager/wiki/How-to-open-%28exclusively%29-a-given-subfolder)
-* [Passing parameters to the FM](https://github.com/servocoder/Filemanager/wiki/Passing-parameters-to-the-FM)
-* [File types restriction](https://github.com/servocoder/Filemanager/wiki/Set-up-upload-restriction-on-file-type)
+* [Opening a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
+* [Opening exclusively a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-%28exclusively%29-a-given-subfolder)
+* [Passing parameters to the FM](https://github.com/servocoder/RichFilemanager/wiki/Passing-parameters-to-the-FM)
+* [File types restriction](https://github.com/servocoder/RichFilemanager/wiki/Set-up-upload-restriction-on-file-type)
 * Video and audio player relying on web browser capabilities
 * Textbox Search filter
 * Thumbnails generation
@@ -44,7 +54,7 @@ Main features
 * Prevent files overwriting (or not)
 * Switch from list to grid view and vice-versa
 * Copy direct file URL
-* [CSS Themes](https://github.com/servocoder/Filemanager/wiki/Create-your-own-theme) - **Please, share your themes with others !**
+* [CSS Themes](https://github.com/servocoder/RichFilemanager/wiki/Create-your-own-theme) - **Please, share your themes with others !**
 * and more ...
 
 
@@ -57,33 +67,24 @@ Screenshot
 Documentation
 -------------
 
-Filemanager is highly documented on the [wiki pages](https://github.com/servocoder/Filemanager/wiki). API, see below.
+Filemanager is highly documented on the [wiki pages](https://github.com/servocoder/RichFilemanager/wiki). API, see below.
 
 
 Installation and Setup
 ----------------------
 
-**Preamble**
+**(1)** Check out a copy of the Rich Filemanager from the repository using Git:
 
-Since many changes have been done recently, only PHP and MVC connectors are now available. You can try the latest version for others connectors, but with no warranty they implement all features and work correctly.
+git clone http://github.com/servocoder/RichFilemanager.git
 
-To use other connectors, please download v0.8 version from https://github.com/servocoder/Filemanager/archive/v0.8.zip
-(PHP, ASHX, ASP, CFM, lasso, PL and JSP connectors are available)
-
-A JSP/Java connector implementation is available at : https://github.com/th-schwarz/C5Connector.Java 
-
----
-
-**(1)** Check out a copy of the FileManager from the repository using Git :
-
-git clone http://github.com/servocoder/Filemanager.git
-
-or download the archive from Github : https://github.com/servocoder/Filemanager/archive/master.zip
+or download the archive from Github : https://github.com/servocoder/RichFilemanager/archive/master.zip
 
 You can place the FileManager anywhere within your web serving root directory.
 
-**(2)** Make a copy of the default configuration file ("filemanager.config.default.json" located in the scripts directory), removing the '.default' from the end of the filename, and edit the options according to the following wiki page : https://github.com/servocoder/Filemanager/wiki/Filemanager-configuration-file
-   Having a look on configuration cases study may also be helpful to you : https://github.com/servocoder/Filemanager/wiki/Specify-user-folder%2C-configuration-cases
+
+**(2)** Make a copy of the default configuration file ("filemanager.config.default.json" located in the scripts directory), removing the '.default' from the end of the filename, and edit the options according to the following wiki page : https://github.com/servocoder/RichFilemanager/wiki/Filemanager-configuration-file
+   Having a look on configuration cases study may also be helpful to you : https://github.com/servocoder/RichFilemanager/wiki/Specify-user-folder%2C-configuration-cases
+
 
 **(3a)** If you are integrating the FileManager with FCKEditor, open your fckconfig.js file and find the lines which specify what file browser to use for images, links, etc. Look toward the bottom of the file. You will need to change lines such as this:
 
@@ -99,6 +100,7 @@ FCKConfig.ImageBrowser = true ;
 FCKConfig.ImageBrowserURL = '[Path to Filemanager]/index.html' ;
 ```
 
+
 **(3b)** If you are integrating the FileManager with CKEditor 3.x or higher, simply set the URL when you configure your instance, like so:
 
 ```javascript
@@ -108,7 +110,8 @@ CKEDITOR.replace('instancename', {
 });
 ```
 
-If you want to use the **modal dialog mode** (instead of pop-up), please refer to [the dedicated wiki page](https://github.com/servocoder/Filemanager/wiki/How-to-open-the-Filemanager-from-CKEditor-in-a-modal-window).
+If you want to use the **modal dialog mode** (instead of pop-up), please refer to [the dedicated wiki page](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-the-Filemanager-from-CKEditor-in-a-modal-window).
+
 
 **(3c)** If you are integrating the FileManager with TinyMCE (>= 3.0), you should:
 
@@ -116,14 +119,14 @@ Create a Javascript callback function that will open the FileManager index.html 
 Add a line like: "file_browser_callback : 'name_of_callback_function'" in the tinyMCE.init command
 See http://www.tinymce.com/wiki.php/TinyMCE3x:How-to_implement_a_custom_file_browser for more details.
 
-See also the dedicated wiki page, with TinyMCE 4 sample : https://github.com/servocoder/Filemanager/wiki/How-to-use-the-Filemanager-with-tinyMCE-3-or-4
+See also the dedicated wiki page, with TinyMCE 4 sample : https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-Filemanager-with-tinyMCE-3-or-4
 
 
 **(4)** Last but not least, **worry about security**!
 
 For **PHP connector** : setup `/connectors/php/filemanager.php` to define your own authentication function.
-To do so, you will find an example on the [dedicated wiki page](https://github.com/servocoder/Filemanager/wiki/Security-concern).
-(optional) Check `/connectors/php/filemanager.config.php` to enable desired plugin or setup some server-side related settings.
+To do so, you will find an example on the [dedicated wiki page](https://github.com/servocoder/RichFilemanager/wiki/Security-concern).
+(optional) Check `/connectors/php/config.php` to enable desired plugin or setup some server-side related settings.
 
 **jQuery dependency and compatibility**
 
@@ -136,20 +139,24 @@ Set-up & security
 -----------------
 
 **Important** : The Filemanager is designed to work without any special configuration but **using it without any configuration is VERY unsafe**.
-Please set-up your own **authentication function**, based on [default file](https://github.com/servocoder/Filemanager/blob/master/connectors/php/filemanager.php) and refering to the [dedicated wiki page](https://github.com/servocoder/Filemanager/wiki/Security-concern).
+Please set-up your own **authentication function**, based on [default file](https://github.com/servocoder/RichFilemanager/blob/master/connectors/php/filemanager.php) and refering to the [dedicated wiki page](https://github.com/servocoder/RichFilemanager/wiki/Security-concern).
+
+
 
 
 API
----
+===
 
 
 Connector Location
 ------------------
-You can create a connector for your server side language of choice by following this simple API. You must have a script at the following location which can respond to HTTP GET requests by returning an appropriate JSON object:
+
+You can create a connector for your server side language of choice by following this simple API.
+You must have a script at the following location which can respond to HTTP GET requests by returning an appropriate JSON object:
 
 	[path to FileManager]/connectors/[language extension]/filemanager.[language extension]
 
-FileManager currently includes connectors for PHP, MVC, JSP, lasso, ASP, ASHX, PL and CFM in the following locations:
+Rich Filemanager currently includes connectors for PHP, MVC, JSP, lasso, ASP, ASHX, PL and CFM in the following locations:
 
 	PHP: .../connectors/php/filemanager.php
 	ASP.NET MVC Framework .../connectors/mvc/FilemanagerController.cs
@@ -165,7 +172,11 @@ As long as a script exists at this location to respond to requests, you may spli
 
 Error Handling
 --------------
-Every response should include two keys specific to error handling: Error, and Code. If an error occurs in your script, you may populate these keys with whatever values you feel are most appropriate. If there is no error, Error should remain empty or null, and Code should be empty, null, or zero (0). Do not use zero for any actual errors. The following example would be an appropriate response if the connector uses an external file for configuration (recommended), but that file cannot be found:
+
+Every response should include two keys specific to error handling: Error, and Code.
+If an error occurs in your script, you may populate these keys with whatever values you feel are most appropriate.
+If there is no error, Error should remain empty or null, and Code should be empty, null, or zero (0). Do not use zero for any actual errors.
+The following example would be an appropriate response if the connector uses an external file for configuration (recommended), but that file cannot be found:
 
 ```json
 {
@@ -174,26 +185,33 @@ Every response should include two keys specific to error handling: Error, and Co
 }
 ```
 
-Methods
+
+METHODS
 -------
-Your script should include support for the following methods/functions. GET requests from FileManager include a parameter "mode" which will indicate which type of response to return. Additional parameters will provide other information required to fulfill the request, such as the current directory.
+
+Your script should include support for the following methods/functions.
+GET requests from Rich Filemanager include a parameter "mode" which will indicate which type of response to return.
+Additional parameters will provide other information required to fulfill the request, such as the current directory.
+
 
 getinfo
 -------
-The `getinfo` method returns information about a single file. Requests with mode "getinfo" will include an additional parameter, "path", indicating which file to inspect. A boolean parameter "getsize" indicates whether the dimensions of the file (if an image) should be returned. 
+The `getinfo` method returns information about a single file.
+Requests with mode "getinfo" will include an additional parameter, "path", indicating which file to inspect.
 
 Example Request:
 
-	[path to connector]?mode=getinfo&path=/UserFiles/Image/logo.png&getsize=true
+	[path to connector]?mode=getinfo&path=/userfiles/images/logo.png
 
 Example Response:
 
 ```json
 {
-  "Path": "/UserFiles/Image/logo.png",
+  "Path": "/userfiles/images/logo.png",
   "Filename": "logo.png",
   "File Type": "png",
-  "Preview": "/UserFiles/Image/logo.png",
+  "Thumbnail": "/connectors/[lang]/filemanager.[lang]?mode=getimage&path=%2Flogo.png&time=1463130804&thumbnail=true",
+  "Preview": "http://site.com/userfiles/images/logo.png",
   "Protected": 0,
   "Properties": {
     "Date Created": null,
@@ -216,11 +234,16 @@ The keys are as follows:
 
 	File Type: The file extension, "dir" if a directory, or "txt" if missing/unknown.
 
-	Preview: Path to a preview image. If the file is an image that can be displayed in a web browser (i.e., gif, jpg, or png), you should return the path to the image. Otherwise, check to see if there is a matching file icon based on the file extension, constructing the path like so:
+	Thumbnail: Path to an image thumbnail. If the file is an image that can be displayed in a web browser (i.e., gif, jpg, or png), you should return the path to the image. Otherwise, check to see if there is a matching file icon based on the file extension, constructing the path like so:
 	
 		Directories: images/fileicons/_Open.png		
 		Files: images/fileicons/[extension].png		
 		Unknown: images/fileicons/default.png
+		
+	Preview: Path or full URL (depends on viewer) to a file that supposed to be displayed with one of viewers:
+	
+	    ViewerJS, HTML5 audio/video: local path to file
+	    Google Docs Viewer: absolute full URL to file  
 		
 	Protected: Indicates if the file has some reading / writing restrictions. If not, set to 0. Else set to 1. 
 	
@@ -228,6 +251,7 @@ The keys are as follows:
 	
 		Date Created: The file's creation date, if available.
 		Date Modified: The file's modification date, if available.
+		filemtime: The file's modification timestamp, if available.
 		Height: If an image, the height in pixels.
 		Width: If an image, the width in pixels.
 		Size: The file size in bytes.
@@ -241,7 +265,7 @@ The keys are as follows:
 
 getfolder
 ---------
-The `getfolder` method returns an array of file and folder objects representing the contents of the given directory (indicated by a "path" parameter). It should call the getinfo method to retrieve the properties of each file. A boolean parameter "getsizes" indicates whether image dimensions should be returned for each item. Folders should always be returned before files.
+The `getfolder` method returns an array of file and folder objects representing the contents of the given directory (indicated by a "path" parameter). It should call the `getinfo` method to retrieve the properties of each file. "Preview" property may be omitted for the current method.
 Optionally a "type" parameter can be specified to restrict returned files (depending on the connector). If a "type" parameter is given for the main index.html URL, the same parameter value is reused and passed to getfolder. This can be used for example to only show image files in a file system tree.
 
 Example Request:
@@ -252,32 +276,33 @@ Example Response:
 
 ```json
 {
-  "/UserFiles/Image/logo.png": {
-    "Path": "/UserFiles/Image/logo.png",
-    "Filename": "logo.png",
-    "File Type": "png",
-    "Preview": "/UserFiles/Image/logo.png",
+  "/userfiles/audio.mp3": {
+    "Path": "/userfiles/audio.mp3",
+    "Filename": "audio.mp3",
+    "File Type": "mp3",
+    "Thumbnail": "/images/fileicons/mp3.png",
     "Protected": 0,
     "Properties": {
       "Date Created": null,
-      "Date Modified": "02/09/2007 14:01:06",
-      "filemtime": 1360237058,
-      "Height": 14,
-      "Width": 14,
+      "Date Modified": "05/05/2016 11:38:42",
+      "filemtime": 1462441126,
+      "Height": 0,
+      "Width": 0,
       "Size": 384
     },
     "Error": "",
     "Code": 0
   },
-  "/UserFiles/Image/icon.png": {
-    "Path": "/UserFiles/Image/icon.png",
-    "Filename": "icon.png",
+  "/userfiles/images/logo.png": {
+    "Path": "/userfiles/images/logo.png",
+    "Filename": "logo.png",
     "File Type": "png",
-    "Preview": "/UserFiles/Image/icon.png",
+    "Thumbnail": "/connectors/[lang]/filemanager.[lang]?mode=getimage&path=%2Flogo.png&time=1463130804&thumbnail=true",
+    "Protected": 0,
     "Properties": {
       "Date Created": null,
-      "Date Modified": "02/09/2007 14:01:06",
-      "filemtime": 1360237058,
+      "Date Modified": "05/05/2016 11:38:42",
+      "filemtime": 1462441126,
       "Height": 14,
       "Width": 14,
       "Size": 384
@@ -285,18 +310,18 @@ Example Response:
     "Error": "",
     "Code": 0
   },
-  "/UserFiles/folder/":{
-    "Path":"/UserFiles/folder/",
-    "Filename":"folder",
-    "File Type":"dir",
-    "Preview":"images\/fileicons\/_Open.png",
+  "/userfiles/folder/":{
+    "Path": "/userfiles/folder/",
+    "Filename": "folder",
+    "File Type": "dir",
+    "Thumbnail": "images/fileicons/_Open.png",
     "Properties": {
-      "Date Created":null,
-      "Date Modified": "02/09/2007 14:01:06",
-      "filemtime": 1360237058,
-      "Height":null,
-      "Width":null,
-      "Size":null
+      "Date Created": null,
+      "Date Modified": "05/05/2016 11:38:42",
+      "filemtime": 1462441126,
+      "Height": 0,
+      "Width": 0,
+      "Size": 0
     },
     "Error":"",
     "Code":0
@@ -307,13 +332,49 @@ Example Response:
 Each key in the array is the path to an individual item, and the value is the file object for that item.
 
 
+add
+---
+The `add` method adds the uploaded file to the specified path. Unlike the other methods, this method must return its JSON response wrapped in an HTML `<textarea>`, so the MIME type of the response is text/html instead of text/plain. The upload form in the File Manager passes the current path as a POST param along with the uploaded file. The response includes the path as well as the name used to store the file. The uploaded file's name should be safe to use as a path component in a URL, so URL-encoded at a minimum.
+
+Example Response:
+
+```json
+{
+  "Path": "/userfiles/images/",
+  "Name": "new_logo.png",
+  "Error": "No error",
+  "Code": 0
+}
+```
+
+
+addfolder
+---------
+The `addfolder` method creates a new directory on the server within the given path.
+
+Example Request:
+
+	[path to connector]?mode=addfolder&path=/userfiles/&name=new%20logo.png
+
+Example Response:
+
+```json
+{
+  "Parent": "/userfiles/",
+  "Name": "new_logo.png",
+  "Error": "No error",
+  "Code": 0
+}
+```
+
+
 rename
 ------
 The `rename` method renames the item at the path given in the "old" parameter with the name given in the "new" parameter and returns an object indicating the results of that action.
 
 Example Request:
 
-	[path to connector]?mode=rename&old=/UserFiles/Image/logo.png&new=id.png
+	[path to connector]?mode=rename&old=/userfiles/images/logo.png&new=id.png
 
 Example Response:
 
@@ -327,6 +388,7 @@ Example Response:
   "New Name": "a_renamed_file"
 }
 ```
+
 
 move
 ------
@@ -367,14 +429,13 @@ Example Response:
 ```
 
 
-
 delete
 ------
 The `delete` method deletes the item at the given path.
 
 Example Request:
 
-	[path to connector]?mode=delete&path=/UserFiles/Image/logo.png
+	[path to connector]?mode=delete&path=/userfiles/images/logo.png
 
 Example Response:
 
@@ -382,39 +443,26 @@ Example Response:
 {
   "Error": "No error",
   "Code": 0,
-  "Path": "/UserFiles/Image/logo.png"
+  "Path": "/userfiles/images/logo.png"
 }
 ```
 
-add
----
-The `add` method adds the uploaded file to the specified path. Unlike the other methods, this method must return its JSON response wrapped in an HTML `<textarea>`, so the MIME type of the response is text/html instead of text/plain. The upload form in the File Manager passes the current path as a POST param along with the uploaded file. The response includes the path as well as the name used to store the file. The uploaded file's name should be safe to use as a path component in a URL, so URL-encoded at a minimum.
-
-Example Response:
-
-```json
-{
-  "Path": "/UserFiles/Image/",
-  "Name": "new_logo.png",
-  "Error": "No error",
-  "Code": 0
-}
-```
 
 replace
----
+-------
 The `replace` method allow the user to replace a specific file whatever the new filename - at least, the new file should have the same extension the original has. The old file is automatically overwritten. Unlike the other methods, this method must return its JSON response wrapped in an HTML `<textarea>`, so the MIME type of the response is text/html instead of text/plain. The *dynamic* upload form in the File Manager passes the current file path as a POST param along with the uploaded file. The response includes the path as well as the name used to store the file.
 
 Example Response:
 
 ```json
 {
-  "Path": "/UserFiles/Image/",
+  "Path": "/userfiles/images/",
   "Name": "new_logo.png",
   "Error": "No error",
   "Code": 0
 }
 ```
+
 
 editfile
 --------
@@ -422,7 +470,7 @@ The `editfile` method returns the content of a given file (passed as parameter).
 
 Example request:
 
-	[path to connector]?mode=editfile&path=/UserFiles/MyFolder/myfile.txt
+	[path to connector]?mode=editfile&path=/userfiles/MyFolder/myfile.txt
 
 Example Response:
 
@@ -430,10 +478,11 @@ Example Response:
 {
   "Error": "No error",
   "Code": 0,
-  "Path": "/UserFiles/MyFolder/myfile.txt",
+  "Path": "/userfiles/MyFolder/myfile.txt",
   "Content": "Content":"Lorem ipsum dolor sit amet, consectetur adipiscing elit.\r\n\Phasellus eu erat lorem.\r\n\r\n\Bye!"
 }
 ```
+
 
 savefile
 --------
@@ -445,37 +494,18 @@ Example Response:
 {
   "Error": "No error",
   "Code": 0,
-  "Path": "/UserFiles/MyFolder/myfile.txt"
+  "Path": "/userfiles/MyFolder/myfile.txt"
 }
 ```
 
-preview
+
+getimage
 --------
-The `preview` method serves the requested image for displaying. The image path is passed through the `path` parameter. If `thumbnail=true` parameter is passed, the method will return an image thumbnail. An extra parameter such as UNIX time can be added to the URL to prevent cache issue.
+The `getimage` method serves the requested image for displaying. The image path is passed through the `path` parameter. If `thumbnail=true` parameter is passed, the method will return an image thumbnail. An extra parameter such as UNIX time can be added to the URL to prevent cache issue.
 
 Example Request:
 
-	[path to connector]?mode=preview&path=/UserFiles/new%20logo.png&thumbnail=true
-
-
-addfolder
----------
-The `addfolder` method creates a new directory on the server within the given path.
-
-Example Request:
-
-	[path to connector]?mode=addfolder&path=/UserFiles/&name=new%20logo.png
-
-Example Response:
-
-```json
-{
-  "Parent": "/UserFiles/",
-  "Name": "new_logo.png",
-  "Error": "No error",
-  "Code": 0
-}
-```
+	[path to connector]?mode=getimage&path=/userfiles/new%20logo.png&thumbnail=true
 
 
 download
@@ -484,19 +514,10 @@ The `download` method serves the requested file to the user. We currently use a 
 
 Example Request:
 
-	[path to connector]?mode=download&path=/UserFiles/new%20logo.png
+	[path to connector]?mode=download&path=/userfiles/new%20logo.png
 
 	
 MIT LICENSE
----
+-----------
 
-Copyright (c) 2011-2013 Jason Huck, Simon Georget
-http://opensource.org/licenses/MIT
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
- 
+Released under the [MIT license](http://opensource.org/licenses/MIT).
