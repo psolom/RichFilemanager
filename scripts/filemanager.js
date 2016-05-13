@@ -517,8 +517,7 @@ var isDocumentFile = function(filename) {
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var code  = '<video data-able-player width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' src="' + data['View'] + '" controls="controls">';
-		code += '<img src="' + data['Preview'] + '" />';
+	var code  = '<video data-able-player width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' src="' + data['Preview'] + '" controls="controls">';
 		code += '</video>';
 
 	$fileinfo.find('img').remove();
@@ -527,8 +526,7 @@ var getVideoPlayer = function(data) {
 
 //Return HTML audio player
 var getAudioPlayer = function(data) {
-	var code  = '<audio src="' + data['View'] + '" controls="controls">';
-		code += '<img src="' + data['Preview'] + '" />';
+	var code  = '<audio src="' + data['Preview'] + '" controls="controls">';
 		code += '</audio>';
 
 	$fileinfo.find('img').remove();
@@ -537,7 +535,7 @@ var getAudioPlayer = function(data) {
 
 //Return PDF Reader
 var getPdfReader = function(data) {
-	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + data['View'] + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + data['Preview'] + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -545,7 +543,7 @@ var getPdfReader = function(data) {
 
 //Return Google Viewer
 var getGoogleViewer = function(data) {
-	var url = location.protocol + '//' + location.host + data['View'];
+	var url = location.protocol + '//' + location.host + data['Preview'];
 	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
@@ -1835,7 +1833,7 @@ var getFileInfo = function(file) {
 
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		$fileinfo.find('img').attr('src', data['Preview']);
+		$fileinfo.find('img').attr('src', data['Thumbnail']);
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
@@ -1893,7 +1891,7 @@ var getFileInfo = function(file) {
 // Clean up unnecessary item data
 var prepareItemInfo = function(item) {
 	var data = $.extend({}, item);
-	delete data['Preview'];
+	delete data['Thumbnail'];
 	delete data['Error'];
 	delete data['Code'];
 	return data;
@@ -1953,7 +1951,7 @@ var getFolderInfo = function(path) {
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + item['Preview'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + item['Thumbnail'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';

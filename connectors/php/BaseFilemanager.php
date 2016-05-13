@@ -28,16 +28,18 @@ abstract class BaseFilemanager
      * @var array
      */
     protected $defaultInfo = array(
-        'Path'       => '',
-        'Filename'   => '',
-        'File Type'  => '',
-        'Protected'  => 0,
-        'Preview'    => '',
-        'Error'      => '',
-        'Code'       => 0,
+        'Path'      => '',
+        'Filename'  => '',
+        'File Type' => '',
+        'Protected' => 0,
+        'Thumbnail' => '',
+        'Preview'   => '',
+        'Error'     => '',
+        'Code'      => 0,
         'Properties' => array(
             'Date Created'  => '',
             'Date Modified' => '',
+            'filemtime'     => '',
             'Height'        => 0,
             'Width'         => 0,
             'Size'          => 0
@@ -170,18 +172,18 @@ abstract class BaseFilemanager
     abstract function download($force);
 
     /**
-     * Preview file - filemanager action
+     * Returns image file - filemanager action
      * @param bool $thumbnail Whether to generate image thumbnail
      */
-    abstract function preview($thumbnail);
+    abstract function getimage($thumbnail);
 
     /**
-     * View file - filemanager action
-     * Intended for viewing audio/video/docs/pdf and other files,
-     * in case you have to get file contents first (from remote server e.g.)
-     * @see S3Filemanager::viewfile()
+     * Read file data - filemanager action
+     * Intended to read and output file contents when it's not possible to get file by direct URL (e.g. protected file).
+     * Initially implemented for viewing audio/video/docs/pdf and other files hosted on AWS S3 remote server.
+     * @see S3Filemanager::readfile()
      */
-    abstract function viewfile();
+    abstract function readfile();
 
     /**
      * Retrieves storage summarize info - filemanager action
@@ -258,16 +260,16 @@ abstract class BaseFilemanager
                         }
                         break;
 
-                    case 'preview':
+                    case 'getimage':
                         if($this->getvar('path')) {
                             $thumbnail = isset($_GET['thumbnail']);
-                            $this->preview($thumbnail);
+                            $this->getimage($thumbnail);
                         }
                         break;
 
-                    case 'viewfile':
+                    case 'readfile':
                         if($this->getvar('path')) {
-                            $this->viewfile();
+                            $this->readfile();
                         }
                         break;
 

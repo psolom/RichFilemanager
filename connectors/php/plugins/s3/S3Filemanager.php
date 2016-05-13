@@ -572,10 +572,10 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 * TODO: audio and video files at S3 are not seekable with html5 player, also they hang filemanager,
-	 * TODO: until fully loaded from S3. Perhaps that may be solved via streaming from CloudFront
+	 * TODO: until it's fully loaded from S3. Perhaps that may be solved via streaming from CloudFront
 	 * @see http://stackoverflow.com/questions/13115618/player-for-video-streaming-from-amazon-s3-cloudfront
 	 */
-	public function viewfile()
+	public function readfile()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 
@@ -592,7 +592,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function preview($thumbnail)
+	public function getimage($thumbnail)
 	{
 		$current_path = $this->getFullPath($this->get['path']);
 
@@ -804,13 +804,13 @@ class S3Filemanager extends LocalFilemanager
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
-			$preview = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
+			$thumbPath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
 		} else {
 			$fileType = $pathInfo['extension'];
 			if($protected) {
-				$preview = $iconsFolder . 'locked_' . $this->config['icons']['default'];
+				$thumbPath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			} else {
-				$preview = $iconsFolder . $this->config['icons']['default'];
+				$thumbPath = $iconsFolder . $this->config['icons']['default'];
 				$item['Properties']['Size'] = filesize($current_path);
 
 				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
@@ -818,13 +818,13 @@ class S3Filemanager extends LocalFilemanager
 					$is_svg = ($fileType === 'svg');
 
 					if($this->config['s3']['thumbsRetrieveMode'] === self::RETRIEVE_MODE_BROWSER || $is_svg) {
-						$preview = $this->getS3Url($current_path, $thumbnail && !$is_svg);
+						$thumbPath = $this->getS3Url($current_path, $thumbnail && !$is_svg);
 					} else {
-						$preview = $this->connector_script_url . '?mode=preview&path=' . rawurlencode($relative_path) . '&' . time();
-						if($thumbnail) $preview .= '&thumbnail=true';
+						$thumbPath = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
+						if($thumbnail) $thumbPath .= '&thumbnail=true';
 					}
 				} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
-					$preview = $iconsFolder . strtolower($fileType) . '.png';
+					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
 				}
 			}
 		}
@@ -833,9 +833,10 @@ class S3Filemanager extends LocalFilemanager
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
 		$item['Protected'] = (int)$protected;
-		$item['Preview'] = $preview;
+		$item['Thumbnail'] = $thumbPath;
+		// for preview mode only
 		if($thumbnail === false) {
-			$item['View'] = $this->connector_script_url . '?mode=viewfile&path=' . $relative_path;
+			$item['Preview'] = $this->connector_script_url . '?mode=readfile&path=' . $relative_path;
 		}
 
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);

@@ -516,15 +516,15 @@ class LocalFilemanager extends BaseFilemanager
 
 	/**
 	 * @inheritdoc
-	 * Local connector is able to reach all files directly, so no need to implement viewfile() method
-	 * @see BaseFilemanager::viewfile() to get purpose description
+	 * Local connector is able to reach all files directly, so no need to implement readfile() method
+	 * @see BaseFilemanager::readfile() to get purpose description
 	 */
-	public function viewfile() {}
+	public function readfile() {}
 
 	/**
 	 * @inheritdoc
 	 */
-	public function preview($thumbnail)
+	public function getimage($thumbnail)
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 
@@ -799,22 +799,22 @@ class LocalFilemanager extends BaseFilemanager
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
-			$preview = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
+			$thumbPath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
 		} else {
 			$fileType = $pathInfo['extension'];
 			if($protected == 1) {
-				$preview = $iconsFolder . 'locked_' . $this->config['icons']['default'];
+				$thumbPath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			} else {
-				$preview = $iconsFolder . $this->config['icons']['default'];
+				$thumbPath = $iconsFolder . $this->config['icons']['default'];
 				$item['Properties']['Size'] = $this->get_real_filesize($current_path);
 
 				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
 					// svg should not be previewed as raster formats images
 					if($fileType === 'svg') {
-						$preview = $relative_path;
+						$thumbPath = $relative_path;
 					} else {
-						$preview = $this->connector_script_url . '?mode=preview&path=' . rawurlencode($relative_path) . '&time=' . time();
-						if($thumbnail) $preview .= '&thumbnail=true';
+						$thumbPath = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
+						if($thumbnail) $thumbPath .= '&thumbnail=true';
 					}
 
 					if($item['Properties']['Size']) {
@@ -826,7 +826,7 @@ class LocalFilemanager extends BaseFilemanager
 					$item['Properties']['Height'] = $height;
 					$item['Properties']['Width'] = $width;
 				} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
-					$preview = $iconsFolder . strtolower($fileType) . '.png';
+					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
 				}
 			}
 		}
@@ -835,9 +835,10 @@ class LocalFilemanager extends BaseFilemanager
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
-		$item['Preview'] = $preview;
+		$item['Thumbnail'] = $thumbPath;
+		// for preview mode only
 		if($thumbnail === false) {
-			$item['View'] = $this->getDynamicPath($current_path);
+			$item['Preview'] = $this->getDynamicPath($current_path);
 		}
 
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
@@ -1194,8 +1195,7 @@ class LocalFilemanager extends BaseFilemanager
 	}
 
 	/**
-	 * For debugging just call the direct URL:
-	 * http://localhost/Filemanager/connectors/php/filemanager.php?mode=preview&path=%2FFilemanager%2Fuserfiles%2FMy%20folder3%2Fblanches_neiges.jPg&thumbnail=true
+	 * Returns path to image file thumbnail, creates thumbnail if doesn't exist
 	 * @param string $path
 	 * @return string
 	 */
