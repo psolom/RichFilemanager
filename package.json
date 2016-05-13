@@ -1,0 +1,28 @@
+{
+  "name": "rich-filemanager",
+  "version": "1.0.0",
+  "description": "Highly customizable open-source file manager",
+  "main": "scripts/filemanager.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/servocoder/RichFilemanager.git"
+  },
+  "keywords": [
+    "filemanager",
+    "rich",
+    "js",
+    "php"
+  ],
+  "author": "Pavel Solomienko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/servocoder/RichFilemanager/issues"
+  },
+  "homepage": "https://github.com/servocoder/RichFilemanager#readme",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-cssmin": "^1.0.1",
+    "grunt-contrib-uglify": "^1.0.1"
+  }
+}
