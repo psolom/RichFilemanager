@@ -583,8 +583,7 @@ class S3Filemanager extends LocalFilemanager
 		header("Content-Transfer-Encoding: binary");
 		header("Content-length: " . filesize($current_path));
 		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
-		ob_clean();
-		flush();
+
 		readfile($current_path);
 		exit();
 	}

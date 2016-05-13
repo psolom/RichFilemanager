@@ -540,8 +540,7 @@ class LocalFilemanager extends BaseFilemanager
 		header("Content-Transfer-Encoding: binary");
 		header("Content-length: " . $this->get_real_filesize($returned_path));
 		header('Content-Disposition: inline; filename="' . basename($returned_path) . '"');
-		ob_clean();
-		flush();
+
 		readfile($returned_path);
 		exit();
 	}
