@@ -5,6 +5,12 @@ Rich Filemanager is an open-source file manager released under MIT license.
 Based on the [simogeo Filemanager](https://github.com/simogeo/Filemanager), with a lot of improvements and new features.
 
 
+Demo
+----
+
+Filemanager live example: http://fm.16mb.com/
+
+
 Compatibility
 -------------
 
