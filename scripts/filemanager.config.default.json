@@ -181,6 +181,6 @@
         "directory": "_Open.png",
         "default": "default.png"
     },
-    "url": "https://github.com/simogeo/Filemanager",
-    "version": "2.4.0"
+    "url": "https://github.com/servocoder/RichFilemanager",
+    "version": "1.0.0"
 }

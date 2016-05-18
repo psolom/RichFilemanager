@@ -1,11 +1,27 @@
 {
-  "name": "Filemanager",
-  "repo": "simogeo/Filemanager",
-  "description": "An open-source file manager released under MIT license. Up-to-date for PHP and MVC connector.",
-  "keywords": ["file", "upload", "dms", "document", "management", "system"],
-  "dependencies": {},
-  "development": {},
-  "main": [
-    "index.html"
+  "name": "rich-filemanager",
+  "description": "Highly customizable open-source file manager",
+  "main": "scripts/filemanager.js",
+  "authors": [
+    "Pavel Solomienko"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "filemanager",
+    "fileupload",
+    "manager",
+    "upload",
+    "file",
+    "rich",
+    "js",
+    "php"
+  ],
+  "homepage": "https://github.com/servocoder/RichFilemanager",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
   ]
 }
