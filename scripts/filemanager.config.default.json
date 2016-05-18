@@ -5,6 +5,7 @@
         "lang": "php",
         "theme": "flat-dark",
         "defaultViewMode": "grid",
+        "localizeGUI": true,
         "showFullPath": false,
         "showTitleAttr": false,
         "browseOnly": false,
@@ -12,7 +13,7 @@
         "showThumbs": true,
         "searchBox": true,
         "listFiles": true,
-        "fileSorting": "default",
+        "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
         "quickSelect": false,
         "charsLatinOnly": true,
@@ -24,8 +25,8 @@
         "fileConnector": false,
         "fileRootSizeLimit": false,
         "baseUrl": false,
+        "capabilities": ["select", "upload", "download", "rename", "move", "replace", "delete"],
         "logger": false,
-        "capabilities": ["upload", "select", "download", "rename", "move", "delete", "replace"],
         "plugins": []
     },
     "security": {
@@ -81,13 +82,13 @@
         "unallowed_dirs_REGEXP": "/^\\./"
     },
     "upload": {
+        "multiple": true,
         "paramName": "files",
         "chunkSize": false,
-        "multiple": true,
-        "number": 5,
+        "numberOfFiles": 5,
+        "fileSizeLimit": 16000000,
         "overwrite": false,
-        "imagesOnly": false,
-        "fileSizeLimit": 16000000
+        "imagesOnly": false
     },
     "images": {
         "imagesExt": [

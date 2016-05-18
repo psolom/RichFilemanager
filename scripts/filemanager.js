@@ -163,7 +163,7 @@ var loadedFolderData = {};
 
 // Defines sort params
 var chunks = [];
-if(config.options.fileSorting !== 'default') {
+if(config.options.fileSorting) {
 	chunks = config.options.fileSorting.toLowerCase().split('_');
 }
 var configSortField = chunks[0] || 'name';
@@ -2299,10 +2299,12 @@ $(function() {
 	}
 
 	// finalize the FileManager UI initialization with localized text
-	$uploadButton.append(lg.upload);
-	$('#newfolder').append(lg.new_folder);
-	$('#grid').attr('title', lg.grid_view);
-	$('#list').attr('title', lg.list_view);
+	if(config.options.localizeGUI === true) {
+        $uploadButton.append(lg.upload);
+        $('#newfolder').append(lg.new_folder);
+        $('#grid').attr('title', lg.grid_view);
+        $('#list').attr('title', lg.list_view);
+	}
 
 	/** Adding a close button triggering callback function if CKEditorCleanUpFuncNum passed */
 	if($.urlParam('CKEditorCleanUpFuncNum')) {
@@ -2413,7 +2415,7 @@ $(function() {
 				currentPath = getCurrentPath(),
 				templateContainer = loadTemplate('upload-container', {
 					folder: lg.current_folder + currentPath,
-					info: lg.upload_files_number_limit.replace('%s', config.upload.number) + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true),
+					info: lg.upload_files_number_limit.replace('%s', config.upload.numberOfFiles) + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true),
 					lang: lg
 				});
 
@@ -2567,11 +2569,11 @@ $(function() {
 					},
 					// validation
 					// maxNumberOfFiles works only for single "add" call when "singleFileUploads" is set to "false"
-					maxNumberOfFiles: config.upload.number,
+					maxNumberOfFiles: config.upload.numberOfFiles,
 					acceptFileTypes: allowedFileTypes,
-					maxFileSize: (config.upload.fileSizeLimit != 'auto') ? config.upload.fileSizeLimit : 10000000, // 10 MB
+					maxFileSize: config.upload.fileSizeLimit,
 					messages: {
-						maxNumberOfFiles: lg.upload_files_number_limit.replace("%s", config.upload.number),
+						maxNumberOfFiles: lg.upload_files_number_limit.replace("%s", config.upload.numberOfFiles),
 						acceptFileTypes: lg.upload_file_type_invalid,
 						maxFileSize: lg.upload_file_too_big + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true)
 					},
@@ -2585,7 +2587,7 @@ $(function() {
 					var $items = $dropzone.children('.upload-item');
 					$.each(data.files, function (index, file) {
 						// skip selected files if total files number exceed "maxNumberOfFiles"
-						if($items.length >= config.upload.number) {
+						if($items.length >= config.upload.numberOfFiles) {
 							return false;
 						}
 						// to display in item template
