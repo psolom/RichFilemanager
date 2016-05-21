@@ -1,6 +1,6 @@
 {
   "name": "rich-filemanager",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Highly customizable open-source file manager",
   "main": "scripts/filemanager.js",
   "repository": {
