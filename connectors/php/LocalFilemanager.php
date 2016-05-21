@@ -227,7 +227,7 @@ class LocalFilemanager extends BaseFilemanager
 			'Parent' => $this->get['path'],
 			'Name' => $this->get['name'],
 			'Error' => "",
-			'Code' => 0
+			'Code' => 0,
 		);
 		$this->__log(__METHOD__ . ' - adding folder ' . $new_dir);
 
@@ -307,12 +307,12 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
 		$array = array(
-			'Error' => "",
-			'Code' => 0,
 			'Old Path' => $this->get['old'] . $suffix,
 			'Old Name' => $filename,
 			'New Path' => $newPath . '/' . $newName . $suffix,
-			'New Name' => $newName
+			'New Name' => $newName,
+			'Error' => "",
+			'Code' => 0,
 		);
 		return $array;
 	}
@@ -389,13 +389,12 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
 		$array = array(
-			'Error' => "",
-			'Code' => 0,
 			'Old Path' => $this->getRelativePath($oldPath),
 			'Old Name' => $isDirOldPath ? '' : $filename,
 			'New Path' => $this->getRelativePath($newPath),
 			'New Name' => $filename,
-			'Type' => $isDirOldPath ? 'dir' : 'file',
+			'Error' => "",
+			'Code' => 0,
 		);
 		return $array;
 	}
@@ -472,10 +471,10 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
 		$array = array(
-			'Error' => "",
-			'Code' => 0,
 			'Path' => $this->get['path'],
 			'Content' => $content,
+			'Error' => "",
+			'Code' => 0,
 		);
 
 		return $array;
@@ -586,9 +585,9 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
 		return array(
+			'Path' => $this->get['path'],
 			'Error' => "",
 			'Code' => 0,
-			'Path' => $this->get['path'],
 		);
 	}
 
@@ -637,9 +636,9 @@ class LocalFilemanager extends BaseFilemanager
 
 		if(!$force) {
 			$array = array(
+				'Path' => $this->get['path'],
 				'Error' => "",
 				'Code' => 0,
-				'Path' => $this->get['path'],
 			);
 			return $array;
 		}
@@ -666,13 +665,19 @@ class LocalFilemanager extends BaseFilemanager
 	public function summarize()
 	{
 		$result = array(
-			'size' => 0,
-			'files' => 0,
-			'folders' => 0,
+			'Size' => 0,
+			'Files' => 0,
+			'Folders' => 0,
+			'Error' => "",
+			'Code' => 0,
 		);
 
 		$path = rtrim($this->path_to_files, '/') . '/';
-		$this->getDirSummary($path, $result);
+		try {
+			$this->getDirSummary($path, $result);
+		} catch (Exception $e) {
+			$this->error(sprintf($this->lang('ERROR_SERVER')));
+		}
 
 		return $result;
 	}
@@ -1131,7 +1136,7 @@ class LocalFilemanager extends BaseFilemanager
 	 * @param array $result
 	 * @return int
 	 */
-	public function getDirSummary($dir, &$result = array('files'=>0, 'size'=>0, 'folders'=>0))
+	public function getDirSummary($dir, &$result = array('Size'=>0, 'Files'=>0, 'Folders'=>0))
 	{
 		// suppress permission denied and other errors
 		$files = @scandir($dir);
@@ -1149,14 +1154,14 @@ class LocalFilemanager extends BaseFilemanager
 			if (is_dir($path)) {
 				if (!in_array($subPath, $this->config['exclude']['unallowed_dirs']) &&
 					!preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $subPath)) {
-					$result['folders']++;
+					$result['Folders']++;
 					$this->getDirSummary($path . '/', $result);
 				}
 			} else if (
 				!in_array($subPath, $this->config['exclude']['unallowed_files']) &&
 				!preg_match($this->config['exclude']['unallowed_files_REGEXP'], $subPath)) {
-				$result['files']++;
-				$result['size'] += filesize($path);
+				$result['Files']++;
+				$result['Size'] += filesize($path);
 			}
 		}
 
@@ -1171,7 +1176,7 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$path = rtrim($this->path_to_files, '/') . '/';
 		$result = $this->getDirSummary($path);
-		return $result['size'];
+		return $result['Size'];
 	}
 
 	/**

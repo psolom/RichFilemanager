@@ -2373,21 +2373,25 @@ $(function() {
 		var $prompt = $.prompt(message).addClass('summary-popup');
 
 		$.getJSON(fileConnector + '?mode=summarize&config=' + userconfig, function(result) {
-			var $content = $prompt.find('.jqimessage'),
-				size = formatBytes(result.size, true);
+			if(result['Code'] == 0) {
+				var $content = $prompt.find('.jqimessage'),
+					size = formatBytes(result['Size'], true);
 
-			if(config.options.fileRootSizeLimit > 0) {
-				var sizeTotal = formatBytes(config.options.fileRootSizeLimit, true);
-				var ratio = result.size * 100 / config.options.fileRootSizeLimit;
-				var percentage = Math.round(ratio * 100) / 100;
-				size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
-			}
+				if(config.options.fileRootSizeLimit > 0) {
+					var sizeTotal = formatBytes(config.options.fileRootSizeLimit, true);
+					var ratio = result['Size'] * 100 / config.options.fileRootSizeLimit;
+					var percentage = Math.round(ratio * 100) / 100;
+					size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
+				}
 
-			$content.append($('<div>', {class: 'line', text: lg.summary_files + ': ' + result.files}));
-			if(result.folders) {
-				$content.append($('<div>', {class: 'line', text: lg.summary_folders + ': ' + result.folders}));
+				$content.append($('<div>', {class: 'line', text: lg.summary_files + ': ' + result['Files']}));
+				if(result['Folders']) {
+					$content.append($('<div>', {class: 'line', text: lg.summary_folders + ': ' + result['Folders']}));
+				}
+				$content.append($('<div>', {class: 'line', text: lg.summary_size + ': ' + size}));
+			} else {
+				$.prompt(result['Error']);
 			}
-			$content.append($('<div>', {class: 'line', text: lg.summary_size + ': ' + size}));
 		});
 	});
 

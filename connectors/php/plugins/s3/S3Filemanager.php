@@ -249,7 +249,7 @@ class S3Filemanager extends LocalFilemanager
 			'Parent' => $this->get['path'],
 			'Name' => $this->get['name'],
 			'Error' => "",
-			'Code' => 0
+			'Code' => 0,
 		);
 		$this->__log(__METHOD__ . ' - adding folder ' . $new_dir);
 
@@ -332,12 +332,12 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		$array = array(
-			'Error' => "",
-			'Code' => 0,
 			'Old Path' => $this->getDynamicPath($old_file),
 			'Old Name' => $filename,
 			'New Path' => $this->getDynamicPath($new_file),
-			'New Name' => $newName
+			'New Name' => $newName,
+			'Error' => "",
+			'Code' => 0,
 		);
 		return $array;
 	}
@@ -456,13 +456,12 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		$array = array(
-			'Error' => "",
-			'Code' => 0,
 			'Old Path' => $path,
 			'Old Name' => $filename,
 			'New Path' => $this->getDynamicPath($newPath),
 			'New Name' => $filename,
-			'Type' => $isDirOldPath ? 'dir' : 'file',
+			'Error' => "",
+			'Code' => 0,
 		);
 		return $array;
 	}
@@ -531,10 +530,10 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		$array = array(
-			'Error' => "",
-			'Code' => 0,
 			'Path' => $this->get['path'],
 			'Content' => $content,
+			'Error' => "",
+			'Code' => 0,
 		);
 
 		return $array;
@@ -561,9 +560,9 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		$array = array(
+			'Path' => $this->post['path'],
 			'Error' => "",
 			'Code' => 0,
-			'Path' => $this->post['path'],
 		);
 
 		return $array;
@@ -640,9 +639,9 @@ class S3Filemanager extends LocalFilemanager
 		$isDeleted = $this->deleteObject($current_path);
 
 		return array(
-			'Error' => $isDeleted ? '' : $this->lang('INVALID_DIRECTORY_OR_FILE'),
-			'Code' => $isDeleted ? 0 : -1,
 			'Path' => $this->getDynamicPath($current_path),
+			'Error' => $isDeleted ? "" : $this->lang('INVALID_DIRECTORY_OR_FILE'),
+			'Code' => $isDeleted ? 0 : -1,
 		);
 	}
 
@@ -668,9 +667,9 @@ class S3Filemanager extends LocalFilemanager
 
 		if(!$force) {
 			$array = array(
+				'Path' => $this->get['path'],
 				'Error' => "",
 				'Code' => 0,
-				'Path' => $this->get['path'],
 			);
 			return $array;
 		}
@@ -697,12 +696,18 @@ class S3Filemanager extends LocalFilemanager
 	public function summarize()
 	{
 		$result = array(
-			'size' => 0,
-			'files' => 0,
+			'Size' => 0,
+			'Files' => 0,
+			'Error' => "",
+			'Code' => 0,
 		);
 
 		$path = rtrim($this->rootWrapperPath, '/') . '/';
-		$this->getDirSummary($path, $result);
+		try {
+			$this->getDirSummary($path, $result);
+		} catch (Exception $e) {
+			$this->error(sprintf($this->lang('ERROR_SERVER')));
+		}
 
 		return $result;
 	}
@@ -1006,7 +1011,7 @@ class S3Filemanager extends LocalFilemanager
 	 * @param array $result
 	 * @return int
 	 */
-	public function getDirSummary($dir, &$result = array('files'=>0, 'size'=>0))
+	public function getDirSummary($dir, &$result = array('Size'=>0, 'Files'=>0))
 	{
 		/**
 		 * set empty delimiter to get recursive objects list
@@ -1025,8 +1030,8 @@ class S3Filemanager extends LocalFilemanager
 			$path = $dir . $filename;
 
 			if(is_file($path)) {
-				$result['files']++;
-				$result['size'] += filesize($path);
+				$result['Files']++;
+				$result['Size'] += filesize($path);
 			} else {
 				// stream wrapper opendir() lists only files
 			}
@@ -1044,7 +1049,7 @@ class S3Filemanager extends LocalFilemanager
 	{
 		$path = rtrim($this->rootWrapperPath, '/') . '/';
 		$result = $this->getDirSummary($path);
-		return $result['size'];
+		return $result['Size'];
 	}
 
 	/**
