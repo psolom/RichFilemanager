@@ -148,6 +148,9 @@ var smartPath = function(url, path) {
 	return rvalue;
 };
 
+// Default relative files root, may be changed with query params during initialization
+var fileRoot = '/';
+
 // Sets paths to connectors based on language selection.
 var fileConnector = config.options.fileConnector || config.globals.pluginPath + '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
 
@@ -156,7 +159,7 @@ var fileConnector = config.options.fileConnector || config.globals.pluginPath + 
 var capabilities = config.options.capabilities || new Array('upload', 'select', 'download', 'rename', 'move', 'delete', 'replace');
 
 // Stores path to be automatically expanded by filetree plugin
-var fullexpandedFolder;
+var fullexpandedFolder = null;
 
 // Stores file/folder listing data for jqueryFileTree and list/grid view
 var loadedFolderData = {};
@@ -446,12 +449,11 @@ var getDirname = function(path) {
 	}
 };
 
-// return parent folder for path
+// return parent folder for path, if folder is passed it should ends with '/'
 // "/dir/to/"          -->  "/dir/"
 // "/dir/to/file.txt"  -->  "/dir/"
 var getParentDirname = function(path) {
-	return path.split('/').slice(0, length - 2).join('/') + '/';
-	// return path.split('/').reverse().slice(1).reverse().join('/') + '/';
+	return path.split('/').reverse().slice(2).reverse().join('/') + '/';
 };
 
 // return closest node for path
@@ -2266,36 +2268,24 @@ $(function() {
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
 
-	if(!config.options.fileRoot) {
-		fileRoot = '/' + document.location.pathname.substring(1, document.location.pathname.lastIndexOf('/') + 1);
-	} else {
-		if(!config.options.serverRoot) {
-			fileRoot = config.options.fileRoot;
-		} else {
-			fileRoot = '/' + config.options.fileRoot;
-		}
-		// remove double slashes - can happen when using PHP SetFileRoot() function with fileRoot = '/' value
-		fileRoot = fileRoot.replace(/\/\//g, '\/');
-	}
-
 	if(config.options.baseUrl === false) {
 		baseUrl = window.location.protocol + "//" + window.location.host;
 	} else {
 		baseUrl = config.options.baseUrl;
 	}
 
+	// changes files root to restrict the view to a given folder
 	if($.urlParam('exclusiveFolder') != 0) {
 		fileRoot += $.urlParam('exclusiveFolder');
 		if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
 		fileRoot = fileRoot.replace(/\/\//g, '\/');
 	}
 
+	// get folder that should be expanded after filemanager is loaded
+	var expandedFolder = '';
 	if($.urlParam('expandedFolder') != 0) {
 		expandedFolder = $.urlParam('expandedFolder');
 		fullexpandedFolder = fileRoot + expandedFolder;
-	} else {
-		expandedFolder = '';
-		fullexpandedFolder = null;
 	}
 
 	// finalize the FileManager UI initialization with localized text
@@ -2306,7 +2296,7 @@ $(function() {
         $('#list').attr('title', lg.list_view);
 	}
 
-	/** Adding a close button triggering callback function if CKEditorCleanUpFuncNum passed */
+	// adding a close button triggering callback function if CKEditorCleanUpFuncNum passed
 	if($.urlParam('CKEditorCleanUpFuncNum')) {
 		$("body").append('<button id="close-btn" type="button">' + lg.close + '</button>');
 
@@ -2315,14 +2305,13 @@ $(function() {
 		});
 	}
 
-	/** Input file Replacement */
-	$('#browse').append('+');
-	$('#browse').attr('title', lg.browse);
+	// input file replacement
+	$('#browse').append('+').attr('title', lg.browse);
 	$("#newfile").change(function() {
 		$("#filepath").val($(this).val().replace(/.+[\\\/]/, ""));
 	});
 
-	/** load searchbox */
+	// load searchbox
 	if(config.options.searchBox === true)  {
 		loadJS('/scripts/filemanager.liveSearch.min.js');
 	} else {

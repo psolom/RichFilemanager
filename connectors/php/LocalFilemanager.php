@@ -19,18 +19,14 @@ class LocalFilemanager extends BaseFilemanager
 	protected $refParams = array();
 	protected $languages = array();
 	protected $allowed_actions = array();
-	protected $doc_root = '';		// root folder known by JS : $this->config['options']['fileRoot'] (filepath or '/') or $_SERVER['DOCUMENT_ROOT'] - overwritten by setFileRoot() method
-	protected $dynamic_fileroot = 'userfiles'; // second part of the path : '/Filemanager/assets/' ( doc_root - $_SERVER['DOCUMENT_ROOT'])
-	protected $path_to_files = ''; // path to FM userfiles folder - automatically computed by the PHP class, something like '/var/www/Filemanager/userfiles'
-	protected $connector_script_url = '/connectors/php/filemanager.php';
+	protected $doc_root;
+	protected $path_to_files;
+	protected $connector_script_url;
+	protected $dynamic_fileroot = 'userfiles';
 
 	public function __construct($extraConfig = array())
     {
 		parent::__construct($extraConfig);
-
-        if($this->config['options']['fileConnector']) {
-            $this->connector_script_url = $this->config['options']['fileConnector'];
-        }
 
 		$fileRoot = $this->config['options']['fileRoot'];
 		if ($fileRoot !== false) {
@@ -51,6 +47,14 @@ class LocalFilemanager extends BaseFilemanager
 			$this->path_to_files = $this->fm_path . '/' . $this->dynamic_fileroot;
 		}
 		$this->path_to_files = $this->cleanPath($this->path_to_files);
+
+		// set path to the connector script file
+		if($this->config['options']['fileConnector']) {
+			$this->connector_script_url = $this->config['options']['fileConnector'];
+		} else {
+			$script_path = str_replace($_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']);
+			$this->connector_script_url = $this->cleanPath('/' . $script_path);
+		}
 
 		$this->__log(__METHOD__ . ' $this->fm_path value ' . $this->fm_path);
 		$this->__log(__METHOD__ . ' $this->path_to_files ' . $this->path_to_files);
