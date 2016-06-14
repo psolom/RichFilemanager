@@ -323,7 +323,7 @@ abstract class BaseFilemanager
             'Properties' => $this->defaultInfo['Properties'],
         );
 
-        $this->__log( __METHOD__ . ' - error message : ' . $string);
+        $this->__log('error message: "' . $string . '"', 2);
 
         echo json_encode($array);
         die();
@@ -336,7 +336,7 @@ abstract class BaseFilemanager
      */
     public function lang($string)
     {
-        if(isset($this->language[$string]) && $this->language[$string]!='') {
+        if(isset($this->language[$string]) && $this->language[$string] != '') {
             return $this->language[$string];
         } else {
             return 'Language string error on ' . $string;
@@ -346,12 +346,17 @@ abstract class BaseFilemanager
     /**
      * Write log to file
      * @param string $msg
+     * @param int $traceLevel
      */
-    protected function __log($msg)
+    protected function __log($msg, $traceLevel = 1)
     {
         if($this->logger == true) {
+            $backtrace = debug_backtrace();
+            $entry = $backtrace[$traceLevel];
+            $info = "{$entry['class']}::{$entry['function']}()";
+
             $fp = fopen($this->logfile, "a");
-            $str = "[" . date("d/m/Y h:i:s", time()) . "]#".  $this->get_user_ip() . "#" . $msg;
+            $str = "[" . date("d/m/Y h:i:s", time()) . "]#".  $this->get_user_ip() . "#" . $info . " - " . $msg;
             fwrite($fp, $str . PHP_EOL);
             fclose($fp);
         }
@@ -385,16 +390,11 @@ abstract class BaseFilemanager
         $forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
         $remote  = $_SERVER['REMOTE_ADDR'];
 
-        if(filter_var($client, FILTER_VALIDATE_IP))
-        {
+        if (filter_var($client, FILTER_VALIDATE_IP)) {
             $ip = $client;
-        }
-        elseif(filter_var($forward, FILTER_VALIDATE_IP))
-        {
+        } elseif (filter_var($forward, FILTER_VALIDATE_IP)) {
             $ip = $forward;
-        }
-        else
-        {
+        } else {
             $ip = $remote;
         }
 

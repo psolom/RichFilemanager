@@ -517,43 +517,47 @@ var isDocumentFile = function(filename) {
 	}
 };
 
+// Build url to preview office and media files
+var createPreviewUrl = function(path) {
+	return location.origin + location.pathname + path;
+};
+
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var code  = '<video data-able-player width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' src="' + data['Preview'] + '" controls="controls">';
+	var code  = '<video src="' + createPreviewUrl(data['Preview']) + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls">';
 		code += '</video>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
 };
 
-//Return HTML audio player
+// Return HTML audio player
 var getAudioPlayer = function(data) {
-	var code  = '<audio src="' + data['Preview'] + '" controls="controls">';
+	var code  = '<audio src="' + createPreviewUrl(data['Preview']) + '" controls="controls">';
 		code += '</audio>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
 };
 
-//Return PDF Reader
+// Return PDF Reader
 var getPdfReader = function(data) {
-	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + data['Preview'] + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + createPreviewUrl(data['Preview']) + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
 };
 
-//Return Google Viewer
+// Return Google Viewer
 var getGoogleViewer = function(data) {
-	var url = location.protocol + '//' + location.host + data['Preview'];
-	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var url = encodeURIComponent(createPreviewUrl(data['Preview']));
+	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
 };
 
-// Display icons on list view
-// retrieving them from filetree
+// Display icons on list view retrieving them from filetree
 // Called using SetInterval
 var display_icons = function(timer) {
 	$fileinfo.find('tr.file, tr.directory').each(function() {
@@ -2864,6 +2868,14 @@ $(window).load(function() {
 });
 
 })(jQuery);
+
+
+// add location.origin for IE
+if (!window.location.origin) {
+	window.location.origin = window.location.protocol + "//"
+		+ window.location.hostname
+		+ (window.location.port ? ':' + window.location.port : '');
+}
 
 $(window).load(function() {
     $('#fileinfo').css({'left':$('#splitter .vsplitbar').width() + $('#filetree').width()});
