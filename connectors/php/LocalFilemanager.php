@@ -1025,7 +1025,7 @@ class LocalFilemanager extends BaseFilemanager
 
 		if($this->config['options']['charsLatinOnly'] === true) {
 			// transliterate if extension is loaded
-			if(extension_loaded('intl') === true) {
+			if(extension_loaded('intl') === true && function_exists('transliterator_transliterate')) {
 				$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
 				$string = transliterator_transliterate($options, $string);
 			}
