@@ -671,7 +671,7 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
 		header('Content-Description: File Transfer');
-		header('Content-Type: ' . mime_content_type($filename));
+		header('Content-Type: ' . mime_content_type($current_path));
 		header('Content-Disposition: attachment; filename=' . $filename);
 		header('Content-Transfer-Encoding: binary');
 		header('Content-Length: ' . $this->get_real_filesize($current_path));
