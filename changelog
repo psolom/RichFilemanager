@@ -35,3 +35,12 @@ to significantly reduce number of server requests (which is critical for S3 serv
 - Fixed bug: sorting respects type of item (file/folder) and doesn't mixes them together
 - Fixed bug: handle download errors correctly, if any
 - Fixed bug: better error handling for client-size and in PHP connector
+
+
+Version 1.0.4
+---------------------------
+- Improved and extended logging process
+- Added new associations of some icons with file types for filetree and listview (docx, xlsx, odt, ods, odp, etc...)
+- Fixed bug: multiple issues when filemanager is located and accessible not from root (nested) folder
+- Fixed bug: error in PHP connector while file downloading
+- Fixed bug: error in PHP connector while transliteration process
