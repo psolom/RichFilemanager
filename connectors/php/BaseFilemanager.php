@@ -49,6 +49,10 @@ abstract class BaseFilemanager
 
     public function __construct($extraConfig)
     {
+        // fix display non-latin chars correctly
+        // https://github.com/servocoder/RichFilemanager/issues/7
+        setlocale(LC_CTYPE, 'en_US.UTF-8');
+
         $this->fm_path = isset($extraConfig['fmPath']) && !empty($extraConfig['fmPath'])
             ? $extraConfig['fmPath']
             : dirname(dirname(dirname(__FILE__)));
@@ -78,7 +82,7 @@ abstract class BaseFilemanager
         if(!$config) {
             $this->error("Error parsing the settings file! Please check your JSON syntax.");
         }
-        $this->config = array_replace_recursive ($config_default, $config);
+        $this->config = array_replace_recursive($config_default, $config);
 
         // override config options if needed
         if(!empty($extraConfig)) {

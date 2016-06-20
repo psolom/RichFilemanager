@@ -16,7 +16,7 @@
         "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
         "quickSelect": false,
-        "charsLatinOnly": true,
+        "charsLatinOnly": false,
         "splitterWidth": 200,
         "splitterMinWidth": 200,
         "dateFormat": "d M Y H:i",
