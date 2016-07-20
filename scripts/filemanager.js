@@ -71,82 +71,13 @@ var configd = loadConfigFile('default');
 var config = loadConfigFile();
 // remove version from user config file
 if (config !== null) delete config.version;
-
 // merge default config and user config file
-var config = $.extend({}, configd, config);
+config = $.extend({}, configd, config);
 
 if(config.options.logger) var start = new Date().getTime();
 
 // <head> included files collector
-var HEAD_included_files = new Array();
-
-
-/**
- * function to load a given css file into header
- * if not already included
- */
-var loadCSS = function(href) {
-	href = config.globals.pluginPath + href;
-	// check if already included
-	if($.inArray(href, HEAD_included_files) == -1) {
-		var cssLink = $("<link rel='stylesheet' type='text/css' href='" + href + "'>");
-		$("head").append(cssLink);
-	    HEAD_included_files.push(href);
-	}
-};
-
-/**
-* function to load a given js file into header
-* if not already included
-*/
-var loadJS = function(src) {
-	src = config.globals.pluginPath + src;
-	// check if already included
-	if($.inArray(src, HEAD_included_files) == -1) {
-		var jsLink = $("<script type='text/javascript' src='" + src + "'>");
-	    $("head").append(jsLink);
-	    HEAD_included_files.push(src);
-	}
-};
-
-/**
-* function to load a given js template file into header
-* if not already included
-*/
-var loadTemplate = function(id, data) {
-	//loadJS('/scripts/JavaScript-Templates/js/tmpl.min.js');
-	var template;
-	$.ajax({
-		url: config.globals.pluginPath + '/scripts/templates/' + id + '.html',
-		async: false,
-		success: function(response) {
-			template = tmpl(response, data);
-		}
-	});
-	return template;
-};
-
-/**
- * determine path when using baseUrl and
- * setFileRoot connector function to give back
- * a valid path on selectItem calls
- *
- */
-var smartPath = function(url, path) {
-	var a = url.split('/');
-	var separator = '/' + a[a.length-2] + '/';
-	var pos = path.indexOf(separator);
-	// separator is not found
-	// this can happen when not set dynamically with setFileRoot function - see  : https://github.com/simogeo/Filemanager/issues/354
-	if(pos == -1) {
-		rvalue = url + path;
-	} else {
-		rvalue = url + path.substring(pos + separator.length);
-	}
-	if(config.options.logger) console.log("url : " + url + " - path : " + path +  " - separator : " + separator + " -  pos : " + pos + " - returned value : " +rvalue);
-
-	return rvalue;
-};
+var HEAD_included_files = [];
 
 // Default relative files root, may be changed with query params during initialization
 var fileRoot = '/';
@@ -154,9 +85,8 @@ var fileRoot = '/';
 // Sets paths to connectors based on language selection.
 var fileConnector = config.options.fileConnector || config.globals.pluginPath + '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
 
-// Read capabilities from config files if exists
-// else apply default settings
-var capabilities = config.options.capabilities || new Array('upload', 'select', 'download', 'rename', 'move', 'delete', 'replace');
+// Read capabilities from config files if exists else apply default settings
+var capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
 
 // Stores path to be automatically expanded by filetree plugin
 var fullexpandedFolder = null;
@@ -171,6 +101,42 @@ if(config.options.fileSorting) {
 }
 var configSortField = chunks[0] || 'name';
 var configSortOrder = chunks[1] || 'asc';
+
+// Loads a given css file into header if not already included
+var loadCSS = function(href) {
+	href = config.globals.pluginPath + href;
+	// check if already included
+	if($.inArray(href, HEAD_included_files) == -1) {
+		var cssLink = $("<link rel='stylesheet' type='text/css' href='" + href + "'>");
+		$("head").append(cssLink);
+		HEAD_included_files.push(href);
+	}
+};
+
+// Loads a given js file into header if not already included
+var loadJS = function(src) {
+	src = config.globals.pluginPath + src;
+	// check if already included
+	if($.inArray(src, HEAD_included_files) == -1) {
+		var jsLink = $("<script type='text/javascript' src='" + src + "'>");
+		$("head").append(jsLink);
+		HEAD_included_files.push(src);
+	}
+};
+
+// Loads a given js template file into header if not already included
+var loadTemplate = function(id, data) {
+	//loadJS('/scripts/JavaScript-Templates/js/tmpl.min.js');
+	var template;
+	$.ajax({
+		url: config.globals.pluginPath + '/scripts/templates/' + id + '.html',
+		async: false,
+		success: function(response) {
+			template = tmpl(response, data);
+		}
+	});
+	return template;
+};
 
 // Common variables
 var $fileinfo = $('#fileinfo'),
@@ -243,6 +209,13 @@ var setDimensions = function() {
 	$fileinfo.width(newW);
 };
 
+// Manually update existing scrollbars to accommodate new content or resized element(s)
+var adjustScrollbar = function($selector) {
+	setTimeout(function(){
+		$selector.mCustomScrollbar("update");
+	}, 0);
+};
+
 // Display Min Path
 var displayPath = function (path, reduce) {
 	reduce = (typeof reduce === "undefined");
@@ -262,6 +235,29 @@ var displayPath = function (path, reduce) {
 	} else {
 		return path;
 	}
+};
+
+/**
+ * Determine path when using baseUrl and setFileRoot connector
+ * function to give back a valid path on selectItem calls
+ */
+var smartPath = function(url, path) {
+	var a = url.split('/'),
+		separator = '/' + a[a.length-2] + '/',
+		position = path.indexOf(separator),
+		smart_path;
+
+	// separator is not found
+	// this can happen when not set dynamically with setFileRoot function - see  : https://github.com/simogeo/Filemanager/issues/354
+	if(position == -1) {
+		smart_path = url + path;
+	} else {
+		smart_path = url + path.substring(position + separator.length);
+	}
+	if(config.options.logger) {
+		console.log("url : " + url + " - path : " + path +  " - separator: " + separator + " - position: " + position + " - returned value : " + smart_path);
+	}
+	return smart_path;
 };
 
 // Set the view buttons state
@@ -524,8 +520,7 @@ var createPreviewUrl = function(path) {
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var code  = '<video src="' + createPreviewUrl(data['Preview']) + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls">';
-		code += '</video>';
+	var code  = '<video src="' + createPreviewUrl(data['Preview']) + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -533,8 +528,7 @@ var getVideoPlayer = function(data) {
 
 // Return HTML audio player
 var getAudioPlayer = function(data) {
-	var code  = '<audio src="' + createPreviewUrl(data['Preview']) + '" controls="controls">';
-		code += '</audio>';
+	var code  = '<audio src="' + createPreviewUrl(data['Preview']) + '" controls="controls"></audio>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -1308,7 +1302,9 @@ var editItem = function(data) {
 			async: false,
 			success: function (result) {
 				if (result['Code'] == 0) {
-					var $preview = $('#preview');
+					var $preview = $('#preview'),
+						codeMirrorEditor;
+
 					var content = '<form id="edit-form">';
 					content += '<textarea id="edit-content" name="content">' + result['Content'] + '</textarea>';
 					content += '<input type="hidden" name="mode" value="savefile" />';
@@ -1319,6 +1315,7 @@ var editItem = function(data) {
 
 					$preview.find('img').hide();
 					$preview.prepend(content).hide().fadeIn();
+					adjustScrollbar($fileinfo);
 
 					// Cancel Button Behavior
 					$('#edit-cancel').click(function () {
@@ -1331,8 +1328,8 @@ var editItem = function(data) {
 					$('#edit-save').click(function () {
 
 						// get new textarea content
-						var newcontent = codeMirrorEditor.getValue();
-						$("textarea#edit-content").val(newcontent);
+						var newContent = codeMirrorEditor.getValue();
+						$("textarea#edit-content").val(newContent);
 
 						var postData = $('#edit-form').serializeArray();
 
@@ -1357,7 +1354,7 @@ var editItem = function(data) {
 					});
 
 					// instantiate codeMirror according to config options
-					codeMirrorEditor = instantiateCodeMirror(getExtension(data['Path']), config);
+					codeMirrorEditor = instantiateCodeMirror(getExtension(data['Path']), config, loadJS);
 
 				} else {
 					isEdited = false;
@@ -1822,14 +1819,14 @@ var getFileInfo = function(file) {
 		// include the template
 		var template = '<div id="preview"><img /><div id="main-title"><h1></h1><div id="tools"></div></div><dl></dl></div>';
 		template += '<form id="toolbar">';
-		template += '<button id="parentfolder" type="button" value="ParentFolder">' + lg.parentfolder + '</button>';
-		if($.inArray('select', capabilities) != -1 && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId'))) template += '<button id="select" name="select" type="button" value="Select">' + lg.select + '</button>';
-		if($.inArray('download', capabilities) != -1) template += '<button id="download" name="download" type="button" value="Download">' + lg.download + '</button>';
-		if($.inArray('rename', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="rename" name="rename" type="button" value="Rename">' + lg.rename + '</button>';
-		if($.inArray('move', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="move" name="move" type="button" value="Move">' + lg.move + '</button>';
-		if($.inArray('delete', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="delete" name="delete" type="button" value="Delete">' + lg.del + '</button>';
+		template += '<button id="parentfolder" type="button">' + lg.parentfolder + '</button>';
+		if($.inArray('select', capabilities) != -1 && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId'))) template += '<button id="select" name="select" type="button">' + lg.select + '</button>';
+		if($.inArray('download', capabilities) != -1) template += '<button id="download" name="download" type="button">' + lg.download + '</button>';
+		if($.inArray('rename', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="rename" name="rename" type="button">' + lg.rename + '</button>';
+		if($.inArray('move', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="move" name="move" type="button">' + lg.move + '</button>';
+		if($.inArray('delete', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="delete" name="delete" type="button">' + lg.del + '</button>';
 		if($.inArray('replace', capabilities) != -1 && config.options.browseOnly != true) {
-			template += '<button id="replace" name="replace" type="button" value="Replace">' + lg.replace + '</button>';
+			template += '<button id="replace" name="replace" type="button">' + lg.replace + '</button>';
 			template += '<div class="hidden-file-input"><input id="replacement" name="replacement" type="file" /></div>';
 		}
 		template += '</form>';

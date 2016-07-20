@@ -1,31 +1,29 @@
-var instantiateCodeMirror = function(CmMode, config) {
+var instantiateCodeMirror = function(CmMode, config, loadJS) {
+	var currentMode;
 
 	// if no code highlight needed, we apply default settings
 	if (!config.edit.codeHighlight) {
-
-		currentmode = 'default';
-
+		currentMode = 'default';
 	// we highlight code according to extension file
 	} else {
-
 		if (CmMode === 'txt') {
-			var currentmode = 'default';
+			currentMode = 'default';
 		}
 		if (CmMode === 'js') {
 			loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
-			var currentmode = 'javascript';
+			currentMode = 'javascript';
 		}
 		if (CmMode === 'css') {
 			loadJS('./scripts/CodeMirror/mode/css/css.js');
-			var currentmode = 'css';
+			currentMode = 'css';
 		}
 		if (CmMode === 'html') {
 			loadJS('./scripts/CodeMirror/mode/xml/xml.js');
-			var currentmode = 'text/html';
+			currentMode = 'text/html';
 		}
 		if (CmMode === 'xml') {
 			loadJS('./scripts/CodeMirror/mode/xml/xml.js');
-			var currentmode = 'application/xml';
+			currentMode = 'application/xml';
 		}
 		if (CmMode === 'php') {
 			loadJS('./scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
@@ -34,34 +32,31 @@ var instantiateCodeMirror = function(CmMode, config) {
 			loadJS('./scripts/CodeMirror/mode/css/css.js');
 			loadJS('./scripts/CodeMirror/mode/clike/clike.js');
 			loadJS('./scripts/CodeMirror/mode/php/php.js');
-			var currentmode = 'application/x-httpd-php';
+			currentMode = 'application/x-httpd-php';
 		}
 		if (CmMode === 'sql') {
 			loadJS('./scripts/CodeMirror/mode/sql/sql.js');
-			var currentmode = 'text/x-mysql';
+			currentMode = 'text/x-mysql';
 		}
-
 	}
 
 	var editor = CodeMirror.fromTextArea(document.getElementById("edit-content"), {
-		styleActiveLine : true,
-		viewportMargin : Infinity,
-		lineNumbers : config.edit.lineNumbers,
-		lineWrapping : config.edit.lineWrapping,
-		theme : config.edit.theme,
+		styleActiveLine: true,
+		viewportMargin: Infinity,
+		lineNumbers: config.edit.lineNumbers,
+		lineWrapping: config.edit.lineWrapping,
+		theme: config.edit.theme,
 		extraKeys: {
-	        "F11": function(cm) {
-	          cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-	        },
-	        "Esc": function(cm) {
-	          if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-	        }
-	      }
+			"F11": function (cm) {
+				cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+			},
+			"Esc": function (cm) {
+				if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+			}
+		}
 	});
 
-	// we finnaly set option
-	editor.setOption("mode", currentmode);
-	//console.log('CodeMirror mode  : ' + editor.getOption("mode"));
-
+	// set option finally
+	editor.setOption("mode", currentMode);
 	return editor;
-}
+};
