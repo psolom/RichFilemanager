@@ -138,6 +138,28 @@ var loadTemplate = function(id, data) {
 	return template;
 };
 
+// Test if a given url exists
+var file_exists = function(url) {
+    // http://kevin.vanzonneveld.net
+    // +   original by: Enrique Gonzalez
+    // +      input by: Jani Hartikainen
+    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+    // %        note 1: This function uses XmlHttpRequest and cannot retrieve resource from different domain.
+    // %        note 1: Synchronous so may lock up browser, mainly here for study purposes.
+    // *     example 1: file_exists('http://kevin.vanzonneveld.net/pj_test_supportfile_1.htm');
+    // *     returns 1: '123'
+    var req = this.window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
+    if (!req) {
+        throw new Error('XMLHttpRequest not supported');
+    }
+
+    // HEAD Results are usually shorter (faster) than GET
+    req.open('HEAD', url, false);
+    req.send(null);
+
+	return (req.status == 200);
+};
+
 // Common variables
 var $fileinfo = $('#fileinfo'),
 	$filetree = $('#filetree'),
@@ -270,28 +292,6 @@ var setViewButtonsFor = function(viewMode) {
         $('#list').addClass('ON');
         $('#grid').removeClass('ON');
     }
-};
-
-// Test if a given url exists
-var file_exists = function(url) {
-    // http://kevin.vanzonneveld.net
-    // +   original by: Enrique Gonzalez
-    // +      input by: Jani Hartikainen
-    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-    // %        note 1: This function uses XmlHttpRequest and cannot retrieve resource from different domain.
-    // %        note 1: Synchronous so may lock up browser, mainly here for study purposes.
-    // *     example 1: file_exists('http://kevin.vanzonneveld.net/pj_test_supportfile_1.htm');
-    // *     returns 1: '123'
-    var req = this.window.ActiveXObject ? new ActiveXObject("Microsoft.XMLHTTP") : new XMLHttpRequest();
-    if (!req) {
-        throw new Error('XMLHttpRequest not supported');
-    }
-
-    // HEAD Results are usually shorter (faster) than GET
-    req.open('HEAD', url, false);
-    req.send(null);
-
-	return (req.status == 200);
 };
 
 // Sanitize and transliterate file/folder name as server side (connector) way
