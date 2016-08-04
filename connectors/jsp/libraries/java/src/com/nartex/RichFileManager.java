@@ -332,7 +332,8 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("mode")) {
 							mode = item.getString();
-							if (!mode.equals("add") && !mode.equals("replace")) {
+							// v1.0.6 renamed mode add to upload
+							if (!mode.equals("upload")  && !mode.equals("add") && !mode.equals("replace")) {
 								//this.error(lang("INVALID_FILE_UPLOAD"));
 							} 
 						} else if (item.getFieldName().equals("currentpath")) {
@@ -344,7 +345,8 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 						//replace= true;
 						size = item.getSize();
 						targetItem =item; 
-						if (mode.equals("add")) {
+						// v1.0.6 renamed mode add to upload
+						if (mode.equals("add") || mode.equals("upload")) {
 							fileName = item.getName();
 							// set fileName
 						}
