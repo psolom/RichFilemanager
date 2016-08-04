@@ -374,6 +374,7 @@ var handleAjaxError = function(response) {
 function has_capability(data, cap) {
 	if(capabilities.indexOf(cap) === -1) return false;
 	if (data['File Type'] == 'dir' && cap == 'replace') return false;
+	if (data['File Type'] == 'dir' && cap == 'select') return false;
 	if (data['File Type'] == 'dir' && cap == 'download') {
 		return (config.security.allowFolderDownload === true);
 	}
