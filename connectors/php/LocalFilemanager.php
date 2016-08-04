@@ -872,11 +872,7 @@ class LocalFilemanager extends BaseFilemanager
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
 		$item['Thumbnail'] = $thumbPath;
-		// for preview mode only
-		if($thumbnail === false) {
-			$item['Preview'] = $this->getDynamicPath($current_path);
-		}
-
+		$item['Preview'] = $this->getDynamicPath($current_path);
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
