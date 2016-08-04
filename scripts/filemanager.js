@@ -22,6 +22,29 @@ $.urlParam = function(name) {
 	}
 };
 
+// function to normalize a path (source: https://github.com/dfkaye/simple-path-normalize)
+var normalizePath = function(path){
+	var BLANK = ''; var SLASH = '/'; var DOT = '.';var DOTS = DOT.concat(DOT);
+ 	if (!path || path === SLASH) {
+		return SLASH;
+	}
+
+	var src = path.split(SLASH);
+	var target = (path[0] === SLASH || path[0] === DOT) ? [BLANK] : [];
+	var i, len, token;
+	for (i = 0, len = src.length; i < len; ++i) {
+		token = src[i] || BLANK;
+		if (token === DOTS) {
+			if (target.length > 1) {
+				target.pop();
+			}
+		} else if (token !== BLANK && token !== DOT) {
+			target.push(token);
+		}
+	}
+	return target.join(SLASH).replace(/[\/]{2, }/g, SLASH) || SLASH;
+};
+
 /*---------------------------------------------------------
   Setup, Layout, and Status Functions
 ---------------------------------------------------------*/
@@ -513,9 +536,13 @@ var isDocumentFile = function(filename) {
 	}
 };
 
-// Build url to preview office and media files
+// Build url to preview files
 var createPreviewUrl = function(path) {
-	return location.origin + location.pathname + path;
+	// already an absolute path
+	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp')
+		return path;
+
+	return location.origin + normalizePath(location.pathname + path);
 };
 
 // Return HTML video player
@@ -842,7 +869,6 @@ var createFileTree = function() {
 	});
 };
 
-
 /*---------------------------------------------------------
   Item Actions
 ---------------------------------------------------------*/
@@ -855,9 +881,9 @@ var createFileTree = function() {
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
 	if(config.options.baseUrl !== false ) {
-		var url = smartPath(baseUrl, data['Path'].replace(fileRoot, ""));
+		var url = smartPath(baseUrl, data['Preview'].replace(fileRoot, ""));
 	} else {
-		var url = data['Path'];
+		var url = createPreviewUrl(data['Preview']);
 	}
 
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
@@ -1836,7 +1862,7 @@ var getFileInfo = function(file) {
 
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		$fileinfo.find('img').attr('src', data['Thumbnail']);
+		$fileinfo.find('img').attr('src', data["Preview"] ? createPreviewUrl(data["Preview"]) : data['Thumbnail']);
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
@@ -1854,9 +1880,9 @@ var getFileInfo = function(file) {
 		}
 
 		if(config.options.baseUrl !== false ) {
-			var url = smartPath(baseUrl, data['Path'].replace(fileRoot, ""));
+			var url = smartPath(baseUrl, data['Preview'].replace(fileRoot, ""));
 		} else {
-			var url = data['Path'];
+			var url = createPreviewUrl(data['Preview']);
 		}
 		if(data['Protected']==0) {
 			$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
