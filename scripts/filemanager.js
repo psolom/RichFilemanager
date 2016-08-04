@@ -1862,7 +1862,7 @@ var getFileInfo = function(file) {
 
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		$fileinfo.find('img').attr('src', data["Preview"] ? createPreviewUrl(data["Preview"]) : data['Thumbnail']);
+		$fileinfo.find('img').attr('src', createPreviewUrl(data["Preview"]));
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
