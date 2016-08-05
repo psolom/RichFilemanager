@@ -15,11 +15,15 @@ import java.io.InputStreamReader;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.FileItem;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -194,6 +198,129 @@ public class RichFileManager extends AbstractFM  {
 		}
 		return getError();
 	}
+	
+	@Override
+	public JSONObject add() {
+		JSONObject fileInfo = new JSONObject();
+		Iterator it = this.files.iterator();
+		String mode = "";
+		String currentPath = "";
+		boolean error = false;
+		boolean replace = false;
+		long size = 0;
+		if (!it.hasNext()) {
+			fileInfo =this.uploadError(lang("INVALID_FILE_UPLOAD"));
+		} else {
+			String allowed[] = { ".", "-" };
+			String fileName = "";
+			FileItem targetItem = null;
+			try {
+				while (it.hasNext()) {
+					FileItem item = (FileItem) it.next();
+					if (item.isFormField()) {
+						if (item.getFieldName().equals("mode")) {
+							mode = item.getString();
+							if (!mode.equals("add") && !mode.equals("replace")) {
+								//this.error(lang("INVALID_FILE_UPLOAD"));
+							} 
+						} else if (item.getFieldName().equals("currentpath")) {
+							currentPath = item.getString();
+						} else if (item.getFieldName().equals("newfilepath")){
+							currentPath = item.getString();
+						}
+					} else if ( item.getFieldName().equals("files")) { // replace
+						//replace= true;
+						size = item.getSize();
+						targetItem =item; 
+						if (mode.equals("add")) {
+							fileName = item.getName();
+							// set fileName
+						}
+					} else if (item.getFieldName().equals("newfile")) {
+						fileName = item.getName();
+						// strip possible directory (IE)
+						int pos = fileName.lastIndexOf(File.separator);
+						if (pos > 0) {
+							fileName = fileName.substring(pos + 1);
+						}
+						size = item.getSize();
+						targetItem =item;
+					}
+				}
+				if (!error) {
+					if (mode.equals("replace")) {
+						String tmp[] = currentPath.split("/");
+						fileName = tmp[tmp.length - 1];
+						int pos = fileName.lastIndexOf(File.separator);
+						if (pos > 0)
+							fileName = fileName.substring(pos + 1);
+						if (tmp.length > 1) {
+							currentPath = currentPath.replace(fileName, "");
+							currentPath = currentPath.replace("//", "/");
+						}
+					} else {
+						if (!isImage(fileName)
+								&& (config.getProperty("upload-imagesonly") != null
+										&& config.getProperty("upload-imagesonly").equals("true") || this.params
+										.get("type") != null && this.params.get("type").equals("Image"))) {
+							fileInfo = this.uploadError(lang("UPLOAD_IMAGES_ONLY"));
+							error =true;
+						}	
+						LinkedHashMap<String, String> strList = new LinkedHashMap<String, String>();
+						strList.put("fileName", fileName);
+						fileName = cleanString(strList, allowed).get("fileName");
+					}
+					long maxSize = 0;
+					if (config.getProperty("upload-size") != null) {
+						maxSize = Integer.parseInt(config.getProperty("upload-size"));
+						if (maxSize != 0 && size > (maxSize * 1024 * 1024)) {
+							fileInfo = this.uploadError(sprintf(lang("UPLOAD_FILES_SMALLER_THAN"), maxSize + "Mb"));
+							error = true;
+						}
+					}
+					if (!error) {
+						if (config.getProperty("upload-overwrite").equals("false")) {
+							fileName = this.checkFilename(this.documentRoot.resolve(currentPath).toString(), fileName, 0);
+						}
+						if (mode.equals("replace")) {
+							File saveTo = this.documentRoot.resolve(currentPath).resolve(fileName).toFile();
+							targetItem.write(saveTo);
+							log.info("saved "+ saveTo);
+						} else {
+							currentPath = currentPath.replace("/", "/").replaceFirst("^/", "");// relative
+							fileName = fileName.replace("//", "/").replaceFirst("^/", "");// relative
+							File saveTo = this.documentRoot.resolve(currentPath).resolve(fileName).toFile();
+							targetItem.write(saveTo);
+							log.info("saved "+ saveTo);
+						}
+						fileInfo.put("Path", currentPath);
+						fileInfo.put("Name", fileName);
+						fileInfo.put("Error", "");
+						fileInfo.put("Code", 0);
+					}
+				}
+			} catch (Exception e) {
+				fileInfo = this.uploadError(lang("INVALID_FILE_UPLOAD"));
+			}
+		}
+		return fileInfo;
+	}
+	
+	private JSONObject uploadError(String msg) {
+		JSONObject errorInfo = new JSONObject();
+		try {
+			errorInfo.put("Code", "-1");
+			JSONArray filesError = new JSONArray();
+			filesError.put(msg);
+			errorInfo.put("files", filesError);
+		} catch (Exception e) {
+			this.error("JSONObject error");
+		}
+		log.error( msg); 
+		this.error = errorInfo;
+		return error;
+	}
+
 
 	
 	@Override

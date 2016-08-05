@@ -99,7 +99,7 @@
     else if(request.getMethod().equals("POST")){
       mode = "upload";
       responseData = fm.add();
-      putTextarea = true;
+      //putTextarea = true; // this seems not required in new query upload 
     }
   }
   if (responseData == null){

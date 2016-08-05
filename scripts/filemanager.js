@@ -910,10 +910,11 @@ var createFileTree = function() {
 // contextual menu option in list views.
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
+	var url;
 	if(fm.config.options.baseUrl !== false ) {
-		var url = smartPath(baseUrl, data['Path'].replace(fm.fileRoot, ""));
+		url = smartPath(baseUrl, data['Path'].replace(fm.fileRoot, ""));
 	} else {
-		var url = data['Path'];
+    url = data['Path'];
 	}
 
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
@@ -2330,15 +2331,13 @@ $(function() {
   
   // added gk from simogeo, why was it removed?
   if(!fm.config.options.fileRoot) {
-        fm.fileRoot = '/' + document.location.pathname.substring(1, document.location.pathname.lastIndexOf('/') + 1) + 'userfiles/';
+				fm.fileRoot = '/' + document.location.pathname.substring(1, document.location.pathname.lastIndexOf('/') + 1) + 'userfiles/';
   } else {
      if(!fm.config.options.serverRoot) {
-        fm.fileRoot = fm.config.options.fileRoot;
+				fm.fileRoot = fm.config.options.fileRoot;
       } else {
-        fm.fileRoot = '/' + fm.config.options.fileRoot;
+				fm.fileRoot = fm.config.options.fileRoot;
       }
-      // we remove double slashes - can happen when using PHP SetFileRoot() function with fileRoot = '/' value
-      fm.fileRoot = fm.fileRoot.replace(/\/\//g, '\/');
   }
   // end gk
 
