@@ -42,7 +42,7 @@ $.urlParam = function(name) {
   Setup, Layout, and Status Functions
 ---------------------------------------------------------*/
 
-// Retrieves config settings from fm.config.json
+// Retrieves config settings from filemanager.config.json
 var loadConfigFile = function (type) {
     var json = null, pluginPath = ".";
     if (window._FMConfig && window._FMConfig.pluginPath) {
