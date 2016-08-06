@@ -44,3 +44,14 @@ Version 1.0.4
 - Fixed bug: multiple issues when filemanager is located and accessible not from root (nested) folder
 - Fixed bug: error in PHP connector while file downloading
 - Fixed bug: error in PHP connector while transliteration process
+
+
+Version 1.0.5
+---------------------------
+- Improved path processing at the client-side. Absolute path used whenever it is possible. Normalization of the preview path
+- New "outsideServerRoot" option which allows to preview images and media files for the case when the root folder is located beyond server root directory
+- Improved a way of automatically determination of `baseUrl` based on page URL
+- Fixed bug: Copy URL to clipboard does not work - #5
+- Fixed bug: Path issue upon file selection in WYSIWYG editor
+- Fixed bug: It is possible to select folders in WYSIWYG editor
+- Fixed bug: Preview of media and pdf files is broken when the path contains special chars (fixed by path encoding)

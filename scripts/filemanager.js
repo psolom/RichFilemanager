@@ -42,7 +42,7 @@ var normalizePath = function(path){
 			target.push(token);
 		}
 	}
-	return target.join(SLASH).replace(/[\/]{2, }/g, SLASH) || SLASH;
+	return target.join(SLASH).replace(/[\/]{2,}/g, SLASH) || SLASH;
 };
 
 /*---------------------------------------------------------
@@ -105,8 +105,12 @@ var HEAD_included_files = [];
 // Default relative files root, may be changed with query params during initialization
 var fileRoot = '/';
 
+// Base URL to access the filemanager
+var baseUrl;
+
 // Sets paths to connectors based on language selection.
-var fileConnector = config.options.fileConnector || config.globals.pluginPath + '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
+var langConnector = '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
+var fileConnector = config.options.fileConnector || config.globals.pluginPath + langConnector;
 
 // Read capabilities from config files if exists else apply default settings
 var capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
@@ -282,29 +286,6 @@ var displayPath = function (path, reduce) {
 	}
 };
 
-/**
- * Determine path when using baseUrl and setFileRoot connector
- * function to give back a valid path on selectItem calls
- */
-var smartPath = function(url, path) {
-	var a = url.split('/'),
-		separator = '/' + a[a.length-2] + '/',
-		position = path.indexOf(separator),
-		smart_path;
-
-	// separator is not found
-	// this can happen when not set dynamically with setFileRoot function - see  : https://github.com/simogeo/Filemanager/issues/354
-	if(position == -1) {
-		smart_path = url + path;
-	} else {
-		smart_path = url + path.substring(position + separator.length);
-	}
-	if(config.options.logger) {
-		console.log("url : " + url + " - path : " + path +  " - separator: " + separator + " - position: " + position + " - returned value : " + smart_path);
-	}
-	return smart_path;
-};
-
 // Set the view buttons state
 var setViewButtonsFor = function(viewMode) {
     if (viewMode == 'grid') {
@@ -409,9 +390,7 @@ function has_capability(data, cap) {
 
 // Test if file is authorized
 var isAuthorizedFile = function(filename) {
-
 	var ext = getExtension(filename);
-
 	// no extension is allowed
 	if(ext == '' && config.security.allowNoExtension == true) return true;
 
@@ -421,13 +400,17 @@ var isAuthorizedFile = function(filename) {
 	if(config.security.uploadPolicy == 'ALLOW_ALL') {
 		if($.inArray(ext, config.security.uploadRestrictions) == -1) return true;
 	}
-
     return false;
 };
 
 // Test if path is dir
 var isFile = function(path) {
 	return path.charAt(path.length - 1) != '/';
+};
+
+// Replace all leading or trailing slashes with an empty string
+var trimSlashes = function(string) {
+	return string.replace(/^\/+|\/+$/g, '');
 };
 
 // from http://phpjs.org/functions/basename:360
@@ -437,7 +420,6 @@ var basename = function(path, suffix) {
     if (typeof(suffix) == 'string' && b.substr(b.length-suffix.length) == suffix) {
         b = b.substr(0, b.length-suffix.length);
     }
-
     return b;
 };
 
@@ -538,17 +520,28 @@ var isDocumentFile = function(filename) {
 };
 
 // Build url to preview files
-var createPreviewUrl = function(path) {
-	// already an absolute path
-	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp')
+var createPreviewUrl = function(path, encode) {
+	encode = encode || false;
+	// already an absolute path or or a relative path to connector action
+	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp' || path.indexOf(langConnector) !== -1) {
 		return path;
+	}
+	path = trimSlashes(normalizePath(path));
 
-	return location.origin + normalizePath(location.pathname + path);
+	if(encode) {
+		var parts = [];
+		$.each(path.split('/'), function(i, part) {
+			parts.push(encodeURIComponent(part));
+		});
+		path = parts.join('/');
+	}
+	return baseUrl + path;
 };
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var code  = '<video src="' + createPreviewUrl(data['Preview']) + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
+	var url = createPreviewUrl(data['Dynamic Path'], true);
+	var code  = '<video src="' + url + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -556,7 +549,8 @@ var getVideoPlayer = function(data) {
 
 // Return HTML audio player
 var getAudioPlayer = function(data) {
-	var code  = '<audio src="' + createPreviewUrl(data['Preview']) + '" controls="controls"></audio>';
+	var url = createPreviewUrl(data['Dynamic Path'], true);
+	var code  = '<audio src="' + url + '" controls="controls"></audio>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -564,7 +558,8 @@ var getAudioPlayer = function(data) {
 
 // Return PDF Reader
 var getPdfReader = function(data) {
-	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + createPreviewUrl(data['Preview']) + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var url = createPreviewUrl(data['Dynamic Path'], true);
+	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -572,7 +567,7 @@ var getPdfReader = function(data) {
 
 // Return Google Viewer
 var getGoogleViewer = function(data) {
-	var url = encodeURIComponent(createPreviewUrl(data['Preview']));
+	var url = encodeURIComponent(createPreviewUrl(data['Dynamic Path']));
 	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
@@ -881,12 +876,7 @@ var createFileTree = function() {
 // contextual menu option in list views.
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
-	if(config.options.baseUrl !== false ) {
-		var url = smartPath(baseUrl, data['Preview'].replace(fileRoot, ""));
-	} else {
-		var url = createPreviewUrl(data['Preview']);
-	}
-
+	var url = createPreviewUrl(data['Dynamic Path']);
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 	 	if(window.tinyMCEPopup) {
         	// use TinyMCE > 3.0 integration method
@@ -1863,7 +1853,7 @@ var getFileInfo = function(file) {
 
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		$fileinfo.find('img').attr('src', createPreviewUrl(data["Preview"]));
+		$fileinfo.find('img').attr('src', createPreviewUrl(data['Image Path']));
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
@@ -1880,11 +1870,7 @@ var getFileInfo = function(file) {
 			editItem(data);
 		}
 
-		if(config.options.baseUrl !== false ) {
-			var url = smartPath(baseUrl, data['Preview'].replace(fileRoot, ""));
-		} else {
-			var url = createPreviewUrl(data['Preview']);
-		}
+		var url = createPreviewUrl(data['Dynamic Path']);
 		if(data['Protected']==0) {
 			$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
 
@@ -1921,7 +1907,7 @@ var getFileInfo = function(file) {
 // Clean up unnecessary item data
 var prepareItemInfo = function(item) {
 	var data = $.extend({}, item);
-	delete data['Thumbnail'];
+	delete data['Image Path'];
 	delete data['Error'];
 	delete data['Code'];
 	return data;
@@ -1981,7 +1967,7 @@ var getFolderInfo = function(path) {
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + item['Thumbnail'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + createPreviewUrl(item['Image Path']) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
@@ -2296,11 +2282,17 @@ $(function() {
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
 
+	// init baseUrl
 	if(config.options.baseUrl === false) {
-		baseUrl = window.location.protocol + "//" + window.location.host;
+		baseUrl = location.origin + location.pathname;
 	} else {
 		baseUrl = config.options.baseUrl;
 	}
+	// for url like http://site.com/index.html
+	if(getExtension(baseUrl).length > 0) {
+		baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+	}
+	baseUrl = trimSlashes(baseUrl) + '/';
 
 	// changes files root to restrict the view to a given folder
 	if($.urlParam('exclusiveFolder') != 0) {

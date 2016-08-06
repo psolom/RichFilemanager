@@ -536,10 +536,21 @@ class LocalFilemanager extends BaseFilemanager
 
 	/**
 	 * @inheritdoc
-	 * Local connector is able to reach all files directly, so no need to implement readfile() method
+	 * Local connector is able to reach all files directly, but it is used to preview files placed outside server root
 	 * @see BaseFilemanager::readfile() to get purpose description
 	 */
-	public function readfile() {}
+	public function readfile()
+	{
+		$current_path = $this->getFullPath($this->get['path'], true);
+
+		header('Content-type: ' . mime_content_type($current_path));
+		header("Content-Transfer-Encoding: binary");
+		header("Content-length: " . filesize($current_path));
+		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
+
+		readfile($current_path);
+		exit();
+	}
 
 	/**
 	 * @inheritdoc
@@ -824,30 +835,40 @@ class LocalFilemanager extends BaseFilemanager
 	protected function get_file_info($relative_path, $thumbnail = false)
     {
 		$current_path = $this->getFullPath($relative_path);
+		$dynamic_path = $this->getDynamicPath($current_path);
 
 		$item = $this->defaultInfo;
 		$pathInfo = pathinfo($current_path);
 		$filemtime = filemtime($current_path);
 		$iconsFolder = $this->getFmUrl($this->config['icons']['path']);
 
+		$outsideRoot = $this->config['options']['outsideServerRoot'];
+		$getImageMode = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
+		$readFileMode = $this->connector_script_url . '?mode=readfile&path=' . rawurlencode($relative_path) . '&time=' . time();
+
 		// check if file is writable and readable
 		$protected = $this->has_system_permission($current_path, array('w', 'r')) ? 0 : 1;
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
-			$thumbPath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
+			$imagePath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
 		} else {
 			$fileType = $pathInfo['extension'];
 			if($protected == 1) {
-				$thumbPath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
+				$imagePath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			} else {
-				$thumbPath = $iconsFolder . $this->config['icons']['default'];
+				$imagePath = $iconsFolder . $this->config['icons']['default'];
 				$item['Properties']['Size'] = $this->get_real_filesize($current_path);
 
-				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
+				if(in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
+
 					// svg should not be previewed as raster formats images
-					if($thumbnail && $fileType !== 'svg'){
-						$thumbPath = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time() . '&thumbnail=true' ;
+					if($fileType === 'svg') {
+						$imagePath = $outsideRoot ? $readFileMode : $dynamic_path;
+					} else if($thumbnail && $this->config['options']['showThumbs']) {
+						$imagePath = $getImageMode . '&thumbnail=true';
+					} else {
+						$imagePath = $outsideRoot ? $getImageMode : $dynamic_path;
 					}
 
 					if($item['Properties']['Size']) {
@@ -859,7 +880,7 @@ class LocalFilemanager extends BaseFilemanager
 					$item['Properties']['Height'] = $height;
 					$item['Properties']['Width'] = $width;
 				} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
-					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
+					$imagePath = $iconsFolder . strtolower($fileType) . '.png';
 				}
 			}
 		}
@@ -868,8 +889,8 @@ class LocalFilemanager extends BaseFilemanager
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
-		$item['Thumbnail'] = $thumbPath;
-		$item['Preview'] = $this->getDynamicPath($current_path);
+		$item['Image Path'] = $imagePath;
+		$item['Dynamic Path'] = $outsideRoot ? $readFileMode : $dynamic_path;
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
