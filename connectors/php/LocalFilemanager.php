@@ -846,11 +846,8 @@ class LocalFilemanager extends BaseFilemanager
 
 				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
 					// svg should not be previewed as raster formats images
-					if($fileType === 'svg') {
-						$thumbPath = $relative_path;
-					} else {
-						$thumbPath = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
-						if($thumbnail) $thumbPath .= '&thumbnail=true';
+					if($thumbnail && $fileType !== 'svg'){
+						$thumbPath = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time() . '&thumbnail=true' ;
 					}
 
 					if($item['Properties']['Size']) {
@@ -872,11 +869,7 @@ class LocalFilemanager extends BaseFilemanager
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
 		$item['Thumbnail'] = $thumbPath;
-		// for preview mode only
-		if($thumbnail === false) {
-			$item['Preview'] = $this->getDynamicPath($current_path);
-		}
-
+		$item['Preview'] = $this->getDynamicPath($current_path);
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
