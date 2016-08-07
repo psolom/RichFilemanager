@@ -841,6 +841,7 @@ class LocalFilemanager extends BaseFilemanager
 		$filemtime = filemtime($current_path);
 		$iconsFolder = $this->getFmUrl($this->config['icons']['path']);
 
+		// tell if we serve the files directly or if we should pass through the connector
 		$beyondDocRoot = stripos(realpath($this->path_to_files), realpath($this->doc_root)) !== 0;
 		$getImageMode = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
 		$readFileMode = $this->connector_script_url . '?mode=readfile&path=' . rawurlencode($relative_path) . '&time=' . time();
