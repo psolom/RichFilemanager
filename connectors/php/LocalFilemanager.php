@@ -148,10 +148,10 @@ class LocalFilemanager extends BaseFilemanager
 
 				if(is_dir($current_path . $file)) {
 					if(!in_array($file, $this->config['exclude']['unallowed_dirs']) && !preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $file)) {
-						$array[$file_path . '/'] = $this->get_file_info($file_path . '/', true);
+						$array[$file_path . '/'] = $this->get_file_info($file_path . '/');
 					}
 				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match($this->config['exclude']['unallowed_files_REGEXP'], $file)) {
-					$item = $this->get_file_info($file_path, true);
+					$item = $this->get_file_info($file_path);
 
 					if(!isset($this->refParams['type']) || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images' && in_array(strtolower($item['File Type']), array_map('strtolower', $this->config['images']['imagesExt'])))) {
 						if($this->config['upload']['imagesOnly']== false || ($this->config['upload']['imagesOnly'] === true && in_array(strtolower($item['File Type']), array_map('strtolower', $this->config['images']['imagesExt'])))) {
@@ -186,7 +186,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		return $this->get_file_info($path, false);
+		return $this->get_file_info($path);
 	}
 
 	/**
@@ -826,13 +826,12 @@ class LocalFilemanager extends BaseFilemanager
 		return true;
 	}
 
-    /**
-     * Create array with file properties
-     * @param string $relative_path
-     * @param bool $thumbnail
-	 * @return array|void
-     */
-	protected function get_file_info($relative_path, $thumbnail = false)
+  /**
+   * Create array with file properties
+   * @param string $relative_path
+ 	 * @return array|void
+   */
+	protected function get_file_info($relative_path)
     {
 		$current_path = $this->getFullPath($relative_path);
 		$dynamic_path = $this->getDynamicPath($current_path);
@@ -842,33 +841,41 @@ class LocalFilemanager extends BaseFilemanager
 		$filemtime = filemtime($current_path);
 		$iconsFolder = $this->getFmUrl($this->config['icons']['path']);
 
+		// tell if we serve the files directly or if we should pass through the connector
 		$beyondDocRoot = stripos(realpath($this->path_to_files), realpath($this->doc_root)) !== 0;
 		$getImageMode = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
 		$readFileMode = $this->connector_script_url . '?mode=readfile&path=' . rawurlencode($relative_path) . '&time=' . time();
 
 		// check if file is writable and readable
 		$protected = $this->has_system_permission($current_path, array('w', 'r')) ? 0 : 1;
+		$preview = $beyondDocRoot ? $readFileMode : $dynamic_path;
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
-			$imagePath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
+			$thumbPath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
 		} else {
 			$fileType = $pathInfo['extension'];
 			if($protected == 1) {
-				$imagePath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
+				$thumbPath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
 			} else {
-				$imagePath = $iconsFolder . $this->config['icons']['default'];
 				$item['Properties']['Size'] = $this->get_real_filesize($current_path);
+				$thumbPath = $iconsFolder . $this->config['icons']['default'];
 
-				if(in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
+				$isAllowedImage = in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']));
+				$isImageWithThumb =  $isAllowedImage && $this->config['options']['showThumbs'] ;
+				$useImageThumb = $this->config['options']['showThumbs'];
 
-					// svg should not be previewed as raster formats images
-					if($fileType === 'svg') {
-						$imagePath = $beyondDocRoot ? $readFileMode : $dynamic_path;
-					} else if($thumbnail && $this->config['options']['showThumbs']) {
-						$imagePath = $getImageMode . '&thumbnail=true';
-					} else {
-						$imagePath = $beyondDocRoot ? $getImageMode : $dynamic_path;
+				if(!$isImageWithThumb && file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
+					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
+				}
+
+				if($isAllowedImage){
+					// svg don't need to generate a thumb
+					if($useImageThumb && $fileType === 'svg'){
+						$thumbPath = $preview;
+					} else{
+						$preview = $beyondDocRoot ? $getImageMode : $dynamic_path;
+						if($useImageThumb)  $thumbPath = $beyondDocRoot ? $getImageMode . '&thumbnail=true' : $this->getDynamicPath($this->get_thumbnail($current_path));
 					}
 
 					if($item['Properties']['Size']) {
@@ -879,8 +886,6 @@ class LocalFilemanager extends BaseFilemanager
 
 					$item['Properties']['Height'] = $height;
 					$item['Properties']['Width'] = $width;
-				} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
-					$imagePath = $iconsFolder . strtolower($fileType) . '.png';
 				}
 			}
 		}
@@ -889,8 +894,8 @@ class LocalFilemanager extends BaseFilemanager
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
-		$item['Image Path'] = $imagePath;
-		$item['Dynamic Path'] = $beyondDocRoot ? $readFileMode : $dynamic_path;
+		$item['Thumbnail'] = $thumbPath;
+		$item['Preview'] = $beyondDocRoot ? $readFileMode : $dynamic_path;
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
@@ -1266,10 +1271,10 @@ class LocalFilemanager extends BaseFilemanager
 
 	/**
 	 * Creates thumbnail from the original image
-	 * @param $imagePath
+	 * @param $thumbPath
 	 * @param $thumbnailPath
 	 */
-	protected function createThumbnail($imagePath, $thumbnailPath)
+	protected function createThumbnail($thumbPath, $thumbnailPath)
 	{
 		if($this->config['images']['thumbnail']['enabled'] === true) {
 			$this->__log('generating thumbnail "' . $thumbnailPath . '"');
@@ -1280,8 +1285,8 @@ class LocalFilemanager extends BaseFilemanager
 			}
 
 			$this->initUploader(array(
-				'upload_dir' => dirname($imagePath) . '/',
-			))->create_thumbnail_image($imagePath);
+				'upload_dir' => dirname($thumbPath) . '/',
+			))->create_thumbnail_image($thumbPath);
 		}
 	}
 
