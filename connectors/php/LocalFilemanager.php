@@ -750,7 +750,6 @@ class LocalFilemanager extends BaseFilemanager
 				RecursiveIteratorIterator::SELF_FIRST
 			);
 
-			//if($fileInfo->isDot()) continue;
 			foreach ($files as $file) {
 				$file = str_replace('\\', '/', realpath($file));
 
@@ -841,7 +840,6 @@ class LocalFilemanager extends BaseFilemanager
 
 		// check if file is writable and readable
 		$protected = $this->has_system_permission($current_path, array('w', 'r')) ? 0 : 1;
-		$preview = $beyondDocRoot ? $readFileMode : $dynamic_path;
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
@@ -854,21 +852,22 @@ class LocalFilemanager extends BaseFilemanager
 				$item['Properties']['Size'] = $this->get_real_filesize($current_path);
 				$thumbPath = $iconsFolder . $this->config['icons']['default'];
 
+				$showThumbs = $this->config['options']['showThumbs'];
 				$isAllowedImage = in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']));
-				$isImageWithThumb =  $isAllowedImage && $this->config['options']['showThumbs'] ;
-				$useImageThumb = $this->config['options']['showThumbs'];
+				$isImageWithThumb =  $isAllowedImage && $showThumbs;
 
 				if(!$isImageWithThumb && file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
 					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
 				}
 
-				if($isAllowedImage){
-					// svg don't need to generate a thumb
-					if($useImageThumb && $fileType === 'svg'){
-						$thumbPath = $preview;
-					} else{
-						$preview = $beyondDocRoot ? $getImageMode : $dynamic_path;
-						if($useImageThumb)  $thumbPath = $beyondDocRoot ? $getImageMode . '&thumbnail=true' : $this->getDynamicPath($this->get_thumbnail($current_path));
+				if($isAllowedImage) {
+					if($showThumbs) {
+						// svg don't need to generate a thumb
+						if($fileType === 'svg') {
+							$thumbPath = $beyondDocRoot ? $readFileMode : $dynamic_path;
+						} else {
+							$thumbPath = $beyondDocRoot ? $getImageMode . '&thumbnail=true' : $this->getDynamicPath($this->get_thumbnail($current_path));
+						}
 					}
 
 					if($item['Properties']['Size']) {
