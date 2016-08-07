@@ -48,8 +48,8 @@ Version 1.0.4
 
 Version 1.0.5
 ---------------------------
+- Added a capability to preview images and media files when the userfiles folder is located beyond server root directory
 - Improved path processing at the client-side. Absolute path used whenever it is possible. Normalization of the preview path
-- Changed a way of path creation in PHP connector: builds either connector-related path to preview files for the case when the root folder is located beyond server root directory OR direct path otherwise
 - Improved a way of automatically determination of `baseUrl` based on page URL
 - Fixed bug: Copy URL to clipboard does not work - #5
 - Fixed bug: Path issue upon file selection in WYSIWYG editor
