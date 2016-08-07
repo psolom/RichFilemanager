@@ -540,7 +540,7 @@ var createPreviewUrl = function(path, encode) {
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var url = createPreviewUrl(data['Dynamic Path'], true);
+	var url = createPreviewUrl(data['Preview'], true);
 	var code  = '<video src="' + url + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 	$fileinfo.find('img').remove();
@@ -549,7 +549,7 @@ var getVideoPlayer = function(data) {
 
 // Return HTML audio player
 var getAudioPlayer = function(data) {
-	var url = createPreviewUrl(data['Dynamic Path'], true);
+	var url = createPreviewUrl(data['Preview'], true);
 	var code  = '<audio src="' + url + '" controls="controls"></audio>';
 
 	$fileinfo.find('img').remove();
@@ -558,7 +558,7 @@ var getAudioPlayer = function(data) {
 
 // Return PDF Reader
 var getPdfReader = function(data) {
-	var url = createPreviewUrl(data['Dynamic Path'], true);
+	var url = createPreviewUrl(data['Preview'], true);
 	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
@@ -567,7 +567,7 @@ var getPdfReader = function(data) {
 
 // Return Google Viewer
 var getGoogleViewer = function(data) {
-	var url = encodeURIComponent(createPreviewUrl(data['Dynamic Path']));
+	var url = encodeURIComponent(createPreviewUrl(data['Preview']));
 	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
@@ -876,7 +876,7 @@ var createFileTree = function() {
 // contextual menu option in list views.
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
-	var url = createPreviewUrl(data['Dynamic Path']);
+	var url = createPreviewUrl(data['Preview']);
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 	 	if(window.tinyMCEPopup) {
         	// use TinyMCE > 3.0 integration method
@@ -1853,7 +1853,8 @@ var getFileInfo = function(file) {
 
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		$fileinfo.find('img').attr('src', createPreviewUrl(data['Image Path']));
+		// if file is an image we display the preview
+		$fileinfo.find('img').attr('src', isImageFile(data['Filename']) ? createPreviewUrl(data['Preview']) : createPreviewUrl(data['Thumbnail']));
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
@@ -1870,7 +1871,7 @@ var getFileInfo = function(file) {
 			editItem(data);
 		}
 
-		var url = createPreviewUrl(data['Dynamic Path']);
+		var url = createPreviewUrl(data['Preview']);
 		if(data['Protected']==0) {
 			$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
 
@@ -1907,7 +1908,7 @@ var getFileInfo = function(file) {
 // Clean up unnecessary item data
 var prepareItemInfo = function(item) {
 	var data = $.extend({}, item);
-	delete data['Image Path'];
+	delete data['Thumbnail'];
 	delete data['Error'];
 	delete data['Code'];
 	return data;
@@ -1967,7 +1968,7 @@ var getFolderInfo = function(path) {
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + createPreviewUrl(item['Image Path']) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + createPreviewUrl(item['Thumbnail']) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
