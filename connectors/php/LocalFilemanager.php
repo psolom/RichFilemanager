@@ -826,11 +826,11 @@ class LocalFilemanager extends BaseFilemanager
 		return true;
 	}
 
-  /**
-   * Create array with file properties
-   * @param string $relative_path
- 	 * @return array|void
-   */
+	/**
+	 * Create array with file properties
+	 * @param string $relative_path
+	 * @return array
+	 */
 	protected function get_file_info($relative_path)
     {
 		$current_path = $this->getFullPath($relative_path);
@@ -1271,10 +1271,10 @@ class LocalFilemanager extends BaseFilemanager
 
 	/**
 	 * Creates thumbnail from the original image
-	 * @param $thumbPath
+	 * @param $imagePath
 	 * @param $thumbnailPath
 	 */
-	protected function createThumbnail($thumbPath, $thumbnailPath)
+	protected function createThumbnail($imagePath, $thumbnailPath)
 	{
 		if($this->config['images']['thumbnail']['enabled'] === true) {
 			$this->__log('generating thumbnail "' . $thumbnailPath . '"');
@@ -1285,8 +1285,8 @@ class LocalFilemanager extends BaseFilemanager
 			}
 
 			$this->initUploader(array(
-				'upload_dir' => dirname($thumbPath) . '/',
-			))->create_thumbnail_image($thumbPath);
+				'upload_dir' => dirname($imagePath) . '/',
+			))->create_thumbnail_image($imagePath);
 		}
 	}
 

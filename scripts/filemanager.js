@@ -1851,10 +1851,11 @@ var getFileInfo = function(file) {
 		// add the new markup to the DOM
 		getSectionContainer($fileinfo).html(template);
 
+		// if file is an image we display the preview
+		var previewPath = isImageFile(data['Filename']) ? data['Preview'] : data['Thumbnail'];
+		$fileinfo.find('img').attr('src', createPreviewUrl(previewPath));
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		// if file is an image we display the preview
-		$fileinfo.find('img').attr('src', isImageFile(data['Filename']) ? createPreviewUrl(data['Preview']) : createPreviewUrl(data['Thumbnail']));
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
