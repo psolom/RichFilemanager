@@ -24,7 +24,6 @@
         "fileRoot": false,
         "fileConnector": false,
         "fileRootSizeLimit": false,
-        "outsideServerRoot": false,
         "baseUrl": false,
         "capabilities": ["select", "upload", "download", "rename", "move", "replace", "delete"],
         "logger": false,

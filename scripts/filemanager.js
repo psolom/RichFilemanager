@@ -522,7 +522,7 @@ var isDocumentFile = function(filename) {
 // Build url to preview files
 var createPreviewUrl = function(path, encode) {
 	encode = encode || false;
-	// already an absolute path or or a relative path to connector action
+	// already an absolute path or a relative path to connector action
 	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp' || path.indexOf(langConnector) !== -1) {
 		return path;
 	}

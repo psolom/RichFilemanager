@@ -842,7 +842,7 @@ class LocalFilemanager extends BaseFilemanager
 		$filemtime = filemtime($current_path);
 		$iconsFolder = $this->getFmUrl($this->config['icons']['path']);
 
-		$outsideRoot = $this->config['options']['outsideServerRoot'];
+		$beyondDocRoot = stripos(realpath($this->path_to_files), realpath($this->doc_root)) !== 0;
 		$getImageMode = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
 		$readFileMode = $this->connector_script_url . '?mode=readfile&path=' . rawurlencode($relative_path) . '&time=' . time();
 
@@ -864,11 +864,11 @@ class LocalFilemanager extends BaseFilemanager
 
 					// svg should not be previewed as raster formats images
 					if($fileType === 'svg') {
-						$imagePath = $outsideRoot ? $readFileMode : $dynamic_path;
+						$imagePath = $beyondDocRoot ? $readFileMode : $dynamic_path;
 					} else if($thumbnail && $this->config['options']['showThumbs']) {
 						$imagePath = $getImageMode . '&thumbnail=true';
 					} else {
-						$imagePath = $outsideRoot ? $getImageMode : $dynamic_path;
+						$imagePath = $beyondDocRoot ? $getImageMode : $dynamic_path;
 					}
 
 					if($item['Properties']['Size']) {
@@ -890,7 +890,7 @@ class LocalFilemanager extends BaseFilemanager
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
 		$item['Image Path'] = $imagePath;
-		$item['Dynamic Path'] = $outsideRoot ? $readFileMode : $dynamic_path;
+		$item['Dynamic Path'] = $beyondDocRoot ? $readFileMode : $dynamic_path;
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
