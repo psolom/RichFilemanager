@@ -7,13 +7,17 @@
  */
 package com.nartex;
 
+import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -157,6 +161,53 @@ public class RichFileManager extends AbstractFM  {
 		log.debug("array size ready:"+ ((array != null)?array.toString():"") );		
 		return array;
 	}
+	
+	
+	protected void getFileInfo(String path) throws JSONException {
+		String pathTmp = path;
+		if ("".equals(pathTmp)) {
+			pathTmp = this.get.get("path");
+		}
+		String[] tmp = pathTmp.split("/");
+		File file = this.documentRoot.resolve(pathTmp).toFile();
+		this.item = new HashMap();
+		String fileName = tmp[tmp.length - 1];
+		this.item.put("filename", fileName);
+		if (file.isFile()) {
+	                this.item.put("filetype", fileName.substring(fileName.lastIndexOf(".") + 1));
+	            }
+		else {
+	                this.item.put("filetype", "dir");
+	            }
+		this.item.put("filemtime", "" + file.lastModified());
+		this.item.put("filectime", "" + file.lastModified());
+	
+		this.item.put("preview", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); // @simo
+	
+		JSONObject props = new JSONObject();
+		if (file.isDirectory()) {
+	
+			this.item.put("preview", config.getProperty("icons-path") + config.getProperty("icons-directory"));
+	
+		} else if (isImage(pathTmp)) {
+			this.item.put("preview", "connectors/jsp/filemanager.jsp?mode=preview&path=" + pathTmp);
+			Dimension imgData = getImageSize(documentRoot.resolve(pathTmp).toString());
+			props.put("Height", "" + imgData.height);
+			props.put("Width", "" + imgData.width);
+			props.put("Size", "" + file.length());
+		} else {
+			File icon = fileManagerRoot.resolve(config.getProperty("icons-path")).resolve(
+					((String) this.item.get("filetype")).toLowerCase() + ".png").toFile();
+			if (icon.exists()) {
+				this.item.put("preview",
+						config.getProperty("icons-path") + ((String) this.item.get("filetype")).toLowerCase() + ".png");
+				props.put("Size", "" + file.length());
+			}
+		}
+	
+		props.put("Date Modified", dateFormat.format(new Date(new Long((String) this.item.get("filemtime")))));
+		this.item.put("properties", props);
+	}
 	   
     /* (non-Javadoc)
 	 * @see com.nartex.FileManagerI#download(javax.servlet.http.HttpServletResponse)
@@ -254,7 +305,7 @@ public class RichFileManager extends AbstractFM  {
 						int pos = fileName.lastIndexOf(File.separator);
 						if (pos > 0)
 							fileName = fileName.substring(pos + 1);
-						if (tmp.length > 1) {
+						if (fileName != null) {
 							currentPath = currentPath.replace(fileName, "");
 							currentPath = currentPath.replace("//", "/");
 						}
@@ -279,17 +330,18 @@ public class RichFileManager extends AbstractFM  {
 						}
 					}
 					if (!error) {
-						if (config.getProperty("upload-overwrite").equals("false")) {
-							fileName = this.checkFilename(this.documentRoot.resolve(currentPath).toString(), fileName, 0);
+						currentPath = currentPath.replaceFirst("^/", "");// relative
+						Path path = currentPath.equals("")? this.documentRoot: this.documentRoot.resolve(currentPath);
+						if (config.getProperty("upload-overwrite").equals("false")) {							
+							fileName = this.checkFilename(path.toString(), fileName, 0);
 						}
 						if (mode.equals("replace")) {
-							File saveTo = this.documentRoot.resolve(currentPath).resolve(fileName).toFile();
+							File saveTo = path.resolve(fileName).toFile();
 							targetItem.write(saveTo);
 							log.info("saved "+ saveTo);
 						} else {
-							currentPath = currentPath.replace("/", "/").replaceFirst("^/", "");// relative
 							fileName = fileName.replace("//", "/").replaceFirst("^/", "");// relative
-							File saveTo = this.documentRoot.resolve(currentPath).resolve(fileName).toFile();
+							File saveTo = path.resolve(fileName).toFile();
 							targetItem.write(saveTo);
 							log.info("saved "+ saveTo);
 						}
@@ -320,6 +372,77 @@ public class RichFileManager extends AbstractFM  {
 		this.error = errorInfo;
 		return error;
 	}
+	
+	@Override
+	public JSONObject moveItem() {
+	   String itemName = this.get.get("old");
+	   boolean error = false;
+	   JSONObject array = null;
+	   String tmp[] = itemName.split("/");
+	   String filename = tmp[tmp.length - 1];
+	   int pos = itemName.lastIndexOf("/");
+	   
+	   String path = "";
+	   Path fileTo = null;
+	   if (pos > 0) {
+		   path = itemName.substring(0, pos + 1);
+		   fileTo = this.documentRoot.resolve(path); // from subfolder, folder should be ..
+	   } else {
+		   fileTo = this.documentRoot;
+	   }
+	   //String root =  this.get.get("root"); // slash at beginning and end
+	   String folder =  this.get.get("new");
+	   if (folder.trim().startsWith( "/")) { // absolute path is not allowed 
+	       folder = folder.trim().replaceFirst( "/", "" );
+	   } 
+	   Path fileFrom = null;
+
+	   try {
+	       fileFrom = this.documentRoot.resolve(itemName);
+	       fileTo = fileTo.resolve(folder).resolve(filename).normalize();
+	       
+	       if (!fileTo.toString().contains(this.documentRoot.toString())) {
+	    	   log.error( "file is not in root folder "+ this.documentRoot
+	                   +" but " + fileTo);
+	    	  return this.error(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")));
+	       }
+		   log.info( "moving file from "+ this.documentRoot.resolve(this.get.get("old"))
+                   +" to " + this.documentRoot.resolve(folder).resolve(filename));
+	       if (Files.exists(fileTo)) {
+	           if (Files.isDirectory(fileTo)) {
+	               this.error(sprintf(lang("DIRECTORY_ALREADY_EXISTS"),this.documentRoot.resolve(folder).resolve(filename).toString()));
+	               error = true;
+	           } else { // fileTo.isFile
+	               this.error(sprintf(lang("FILE_ALREADY_EXISTS"), filename ));
+	               error = true;
+	           }
+	       } else {
+	    	   Files.move(fileFrom, fileTo);
+	       }
+	   } catch (Exception e) {
+	       if (Files.isDirectory(fileFrom)) {
+	           this.error(sprintf(lang("ERROR_RENAMING_DIRECTORY"), filename + "#" + this.get.get("new")));
+	       } else {
+	           this.error(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")));
+	       }
+	       error = true;
+	   }
+	   if (!error) {
+	       array = new JSONObject();
+	       try {
+	           folder = folder.replace("..", "");// if its an allowed up mpvement
+	    	   array.put("Error", "");
+	           array.put("Code", 0);
+	           array.put("Old Path", path);
+	           array.put("Old Name", filename);
+	           array.put("New Path", folder);
+	           array.put("New Name", filename);
+	       } catch (Exception e) {
+	           this.error("JSONObject error");
+	       }
+	   } 
+	   return array;
+	}
 
 
 	
@@ -328,7 +451,7 @@ public class RichFileManager extends AbstractFM  {
 
 		// we load langCode var passed into URL if present
 		// else, we use default configuration var
-		if (language == null) {
+		if (language == null || reload) {
 			String lang = "";
 			if (params.get("langCode") != null)
 				lang = this.params.get("langCode");

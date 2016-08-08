@@ -26,16 +26,23 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.swing.ImageIcon;
 
-import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * 
+ * CHANGES
+ * - adjust document root to allow relative paths (should work also in old Filemanager?
+ * - optional reload parameter for config, lang file
+ * 
+ * @author gkallidis
+ *
+ */
 public abstract class AbstractFM implements FileManagerI {
 
 	protected static Properties config = null;
@@ -44,13 +51,14 @@ public abstract class AbstractFM implements FileManagerI {
 	protected Map<String, String> properties = new HashMap<String, String>();
 	protected Map item = new HashMap();
 	protected Map<String, String> params = new HashMap<String, String>();
-	protected Path documentRoot;
-	protected Path fileManagerRoot = null;
+	protected Path documentRoot; // make it static?
+	protected Path fileManagerRoot = null; // static?
 	protected String referer = "";
 	protected Logger log = LoggerFactory.getLogger("filemanager");
 	protected JSONObject error = null;
 	protected SimpleDateFormat dateFormat;
 	protected List files = null;
+	protected boolean reload = false;
 
 	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws IOException {
         String contextPath = request.getContextPath();
@@ -62,8 +70,8 @@ public abstract class AbstractFM implements FileManagerI {
         if (referer != null) {
             this.fileManagerRoot =  docRoot4FileManager.
         			resolve(referer.substring(referer.indexOf(contextPath) + 1 + contextPath.length(), referer.indexOf("index.html")));
-            
-        } else if (request.getServletPath().indexOf("connectors") > 0) {
+        // last resort and only if already      
+        } else if (this.fileManagerRoot == null && request.getServletPath().indexOf("connectors") > 0) {
         	this.fileManagerRoot =  docRoot4FileManager.
         			resolve(request.getServletPath().substring(1, request.getServletPath().indexOf("connectors")));
         	// no pathInfo
@@ -86,24 +94,33 @@ public abstract class AbstractFM implements FileManagerI {
 		this.properties.put("Width", null);
 		this.properties.put("Size", null);
 
-		// load config file
+		// kind of a hack, should not used except for super admin purposes
+		if (request.getParameter("reload") != null) {
+			this.reload = true;
+		}
+		
+		// load config file		
 		loadConfig();
 
-		if (config.getProperty("doc_root") != null) {
-			// contextpath starts with slash
-		    this.documentRoot = Paths.get(config.getProperty("doc_root") +  request.getContextPath()); 
-		} else {
-			if (this.documentRoot == null ) {
+		if (this.documentRoot == null || reload) {
+			if (config.getProperty("doc_root") != null) {
+			    this.documentRoot = 
+			    		config.getProperty("doc_root").startsWith("/") ? 
+			    		Paths.get(config.getProperty("doc_root")) : 
+			    	docRoot4FileManager.resolve(config.getProperty("doc_root")); 
+			} else {
 				this.documentRoot =  docRoot4FileManager.toRealPath(LinkOption.NOFOLLOW_LINKS);
 			}
+		    log.debug("final documentRoot:"+ this.documentRoot);
 		}
 
-	    log.info("final documentRoot:"+ this.documentRoot);
 		dateFormat = new SimpleDateFormat(config.getProperty("date"));
 
 		this.setParams();
 		
 		loadLanguageFile();
+		
+		this.reload = false;
 
 	}
 
@@ -297,67 +314,7 @@ public abstract class AbstractFM implements FileManagerI {
 		return array;
 	}
 
-	@Override
-	public JSONObject moveItem() {
-	   if ((this.get.get("old")).endsWith("/")) {
-	       this.get.put("old", (this.get.get("old")).substring(0, ((this.get.get("old")).length() - 1)));
-	   }
-	   boolean error = false;
-	   JSONObject array = null;
-	   String tmp[] = (this.get.get("old")).split("/");
-	   String filename = tmp[tmp.length - 1];
-	   int pos = this.get.get("old").lastIndexOf("/");
-	   String path = (this.get.get("old")).substring(0, pos + 1);
-	   String root =  this.get.get("root"); // slash at beginning and end
-	   String folder =  this.get.get("new");
-	   if (folder.trim().startsWith( "/")) {
-	       folder = folder.trim().replaceFirst( "/", "" );
-	   } 
-	   if (!folder.equals( "" )) {
-	       folder = (folder.endsWith( "/" ))? folder:folder+"/";
-	   }
-	   File fileFrom = null;
-	   File fileTo = null;
-	   log.info( "moving file from "+ this.documentRoot.resolve(this.get.get("old"))
-	                   +" to " + this.documentRoot.resolve(root).resolve(folder).resolve(filename));
-	   try {
-	       fileFrom = this.documentRoot.resolve(this.get.get("old")).toFile();
-	       fileTo = this.documentRoot.resolve(root).resolve(folder).resolve(filename).toFile();
-	       if (fileTo.exists()) {
-	           if (fileTo.isDirectory()) {
-	               this.error(sprintf(lang("DIRECTORY_ALREADY_EXISTS"),this.documentRoot.resolve(root).resolve(folder).resolve(filename).toString()));
-	               error = true;
-	           } else { // fileTo.isFile
-	               this.error(sprintf(lang("FILE_ALREADY_EXISTS"), folder + filename ));
-	               error = true;
-	           }
-	       } else if (!fileFrom.renameTo(fileTo)) {
-	           this.error(sprintf(lang("ERROR_RENAMING_DIRECTORY"), filename + "#" + this.get.get("new")));
-	           error = true;
-	       }
-	   } catch (Exception e) {
-	       if (fileFrom.isDirectory()) {
-	           this.error(sprintf(lang("ERROR_RENAMING_DIRECTORY"), filename + "#" + this.get.get("new")));
-	       } else {
-	           this.error(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")));
-	       }
-	       error = true;
-	   }
-	   if (!error) {
-	       array = new JSONObject();
-	       try {
-	           array.put("Error", "");
-	           array.put("Code", 0);
-	           array.put("Old Path", path);
-	           array.put("Old Name", filename);
-	           array.put("New Path", root + folder);
-	           array.put("New Name", filename);
-	       } catch (Exception e) {
-	           this.error("JSONObject error");
-	       }
-	   } 
-	   return array;
-	}
+
 
 	protected void readFile(HttpServletResponse resp, File file) {
 		OutputStream os = null;
@@ -392,6 +349,10 @@ public abstract class AbstractFM implements FileManagerI {
 			resp.setHeader("Content-Transfer-Encoding", "Binary");
 			resp.setHeader("Content-length", "" + file.length());
 			resp.setHeader("Content-Disposition", "inline; filename=\"" + getFileBaseName(file.getName()) + "\"");
+			// handle caching
+			resp.setHeader("Pragma", "no-cache");
+			resp.setHeader("Expires", "0");
+			resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 			readFile(resp, file);
 		} else {
 			error(sprintf(lang("FILE_DOES_NOT_EXIST"), this.get.get("path")));
@@ -441,51 +402,6 @@ public abstract class AbstractFM implements FileManagerI {
 		return this.documentRoot;
 	}
 
-	protected void getFileInfo(String path) throws JSONException {
-		String pathTmp = path;
-		if ("".equals(pathTmp)) {
-			pathTmp = this.get.get("path");
-		}
-		String[] tmp = pathTmp.split("/");
-		File file = this.documentRoot.resolve(pathTmp).toFile();
-		this.item = new HashMap();
-		String fileName = tmp[tmp.length - 1];
-		this.item.put("filename", fileName);
-		if (file.isFile()) {
-	                this.item.put("filetype", fileName.substring(fileName.lastIndexOf(".") + 1));
-	            }
-		else {
-	                this.item.put("filetype", "dir");
-	            }
-		this.item.put("filemtime", "" + file.lastModified());
-		this.item.put("filectime", "" + file.lastModified());
-	
-		this.item.put("preview", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); // @simo
-	
-		JSONObject props = new JSONObject();
-		if (file.isDirectory()) {
-	
-			this.item.put("preview", config.getProperty("icons-path") + config.getProperty("icons-directory"));
-	
-		} else if (isImage(pathTmp)) {
-			this.item.put("preview", "connectors/jsp/filemanager.jsp?mode=preview&path=" + pathTmp);
-			Dimension imgData = getImageSize(documentRoot.resolve(pathTmp).toString());
-			props.put("Height", "" + imgData.height);
-			props.put("Width", "" + imgData.width);
-			props.put("Size", "" + file.length());
-		} else {
-			File icon = fileManagerRoot.resolve(config.getProperty("icons-path")).resolve(
-					((String) this.item.get("filetype")).toLowerCase() + ".png").toFile();
-			if (icon.exists()) {
-				this.item.put("preview",
-						config.getProperty("icons-path") + ((String) this.item.get("filetype")).toLowerCase() + ".png");
-				props.put("Size", "" + file.length());
-			}
-		}
-	
-		props.put("Date Modified", dateFormat.format(new Date(new Long((String) this.item.get("filemtime")))));
-		this.item.put("properties", props);
-	}
 
 	protected boolean isImage(String fileName) {
 		boolean isImage = false;
@@ -589,7 +505,7 @@ public abstract class AbstractFM implements FileManagerI {
 
 	protected void loadConfig() {
 		InputStream is;
-		if (config == null) {
+		if (config == null || reload) {
 			try {
 				//log.info("reading from " + this.fileManagerRoot.resolve("connectors/jsp/config.properties").toString());
 				is = new FileInputStream( this.fileManagerRoot.resolve("connectors/jsp/config.properties").toString());
@@ -617,6 +533,5 @@ public abstract class AbstractFM implements FileManagerI {
 	public void log(String msg) {
 		log.debug(msg);
 	}
-
 
 }

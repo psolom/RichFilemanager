@@ -27,6 +27,8 @@ var promiseDefault = jQuery.Deferred();
 var promiseUser = jQuery.Deferred();
 // <head> included files collector
 var  HEAD_included_files = new Array();
+// this is probably needed only once, but could be reinitialized and reevaluated, if needed
+fm.fileTreeloaded = jQuery.Deferred();
 
 // function to retrieve GET params
 $.urlParam = function(name) {
@@ -778,7 +780,7 @@ var updateFolderSummary = function() {
 var adjustFileTree = function($node) {
 	// search function
 	if (fm.config.options.searchBox == true) {
-		$('#q').liveUpdate('#filetree ul').blur();
+		$('#q').liveUpdate($node).blur();// '#filetree ul'
 		$('#search span.q-inactive').html(fm.lg.search);
 		$('#search a.q-reset').attr('title', fm.lg.search_reset);
 	}
@@ -810,6 +812,7 @@ var adjustFileTree = function($node) {
 
 // Create FileTree and bind events
 var createFileTree = function() {
+	fm.fileTreeloaded = jQuery.Deferred();
 	var $treeNode = getSectionContainer($filetree),
 		slideAnimation = false;
 
@@ -854,6 +857,7 @@ var createFileTree = function() {
 		.on('filetreeinitiated', function (e, data) {
 			var $el = $(e.target).find('ul');
 			expandFolderDefault($el, data);
+			fm.fileTreeloaded.resolve(true);
 		})
 		.on('filetreeexpand', function (e, data) {
 			//var $el = data.li.children('ul');
@@ -914,7 +918,7 @@ var selectItem = function(data) {
 	if(fm.config.options.baseUrl !== false ) {
 		url = smartPath(baseUrl, data['Path'].replace(fm.fileRoot, ""));
 	} else {
-    url = data['Path'];
+		url = data['Path'];
 	}
 
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
@@ -1726,7 +1730,7 @@ var updateNodeItem = function(branchPath, nodePathOld, nodePathNew) {
 // Use after adding new item to filetree ("addNode", "addFolder" and "upload" actions)
 var reloadFileTreeNode = function(targetPath) {
 	var $targetNode,
-		isRoot = targetPath === fm.fileRoot;
+		isRoot = targetPath === fm.fileRoot; // should be /, not empty
 
 	if(isRoot) {
 		$targetNode = getSectionContainer($filetree).children('ul');
@@ -1862,6 +1866,8 @@ var getFileInfo = function(file) {
 	$('.context-menu-root').hide();
 
 	var currentpath = file.substr(0, file.lastIndexOf('/') + 1);
+	
+	//if (currentpath == "") currentpath = "/";
 
 	// update location for status, upload, & new folder functions
 	setUploader(currentpath);
@@ -2329,17 +2335,6 @@ $(function() {
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
   
-  // added gk from simogeo, why was it removed?
-  if(!fm.config.options.fileRoot) {
-				fm.fileRoot = '/' + document.location.pathname.substring(1, document.location.pathname.lastIndexOf('/') + 1) + 'userfiles/';
-  } else {
-     if(!fm.config.options.serverRoot) {
-				fm.fileRoot = fm.config.options.fileRoot;
-      } else {
-				fm.fileRoot = fm.config.options.fileRoot;
-      }
-  }
-  // end gk
 
 	if(fm.config.options.baseUrl === false) {
 		baseUrl = window.location.protocol + "//" + window.location.host;
@@ -2864,7 +2859,7 @@ $(function() {
 		var csTheme = fm.config.customScrollbar.theme != undefined ? fm.config.customScrollbar.theme : 'inset-2-dark';
 		var csButton = fm.config.customScrollbar.button != undefined ? fm.config.customScrollbar.button : true;
     
-    var fileTreeloaded = jQuery.Deferred();
+
     $("#filetree").append('<div style="height:3000px"></div>'); // because if #filetree has height equal to 0, mCustomScrollbar is not applied
     $("#filetree").mCustomScrollbar({
       theme:csTheme,
@@ -2876,13 +2871,12 @@ $(function() {
       callbacks:{
         onInit:function(){ 
           createFileTree(); 
-          fileTreeloaded.resolve(true);
         }			
       },
       axis: "yx"
       });
 
-    fileTreeloaded.done(function(result) {
+    fm.fileTreeloaded.done(function(result) {
         $("#fileinfo").mCustomScrollbar({
           theme:csTheme,
           scrollButtons:{ 
