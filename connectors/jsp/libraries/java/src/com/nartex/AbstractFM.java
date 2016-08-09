@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -26,10 +25,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.swing.ImageIcon;
 
+import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +48,7 @@ public abstract class AbstractFM implements FileManagerI {
 	protected static JSONObject language = null;
 	protected Map<String, String> get = new HashMap<String, String>();
 	protected Map<String, String> properties = new HashMap<String, String>();
-	protected Map item = new HashMap();
+	protected Map<String, Object> item = new HashMap<String, Object>();
 	protected Map<String, String> params = new HashMap<String, String>();
 	protected Path documentRoot; // make it static?
 	protected Path fileManagerRoot = null; // static?
@@ -57,8 +56,10 @@ public abstract class AbstractFM implements FileManagerI {
 	protected Logger log = LoggerFactory.getLogger("filemanager");
 	protected JSONObject error = null;
 	protected SimpleDateFormat dateFormat;
-	protected List files = null;
+	protected List<FileItem> files = null;
 	protected boolean reload = false;
+	protected String previewPath = null; //static?
+	protected boolean previewPathRelative = false; // needed as it is exposed either relative or absolute
 
 	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws IOException {
         String contextPath = request.getContextPath();
@@ -104,14 +105,18 @@ public abstract class AbstractFM implements FileManagerI {
 
 		if (this.documentRoot == null || reload) {
 			if (config.getProperty("doc_root") != null) {
-			    this.documentRoot = 
+				Path documentRoot = 
 			    		config.getProperty("doc_root").startsWith("/") ? 
 			    		Paths.get(config.getProperty("doc_root")) : 
-			    	docRoot4FileManager.resolve(config.getProperty("doc_root")); 
+			    	docRoot4FileManager.resolve(config.getProperty("doc_root"));
+				this.documentRoot = documentRoot.normalize();		
 			} else {
 				this.documentRoot =  docRoot4FileManager.toRealPath(LinkOption.NOFOLLOW_LINKS);
 			}
 		    log.debug("final documentRoot:"+ this.documentRoot);
+		}
+		if (reload) {
+				this.previewPath = null;	
 		}
 
 		dateFormat = new SimpleDateFormat(config.getProperty("date"));
@@ -123,6 +128,7 @@ public abstract class AbstractFM implements FileManagerI {
 		this.reload = false;
 
 	}
+
 
 	@Override
 	public JSONObject error(String msg, Throwable ex) {
@@ -186,13 +192,13 @@ public abstract class AbstractFM implements FileManagerI {
 	protected boolean checkImageType() {
 		return this.params
 				.get("type").equals("Image")
-				&& contains(config.getProperty("images"), (String) this.item.get("filetype"));
+				&& contains(config.getProperty("images"), (String)this.item.get("filetype"));
 	}
 
 	protected boolean checkFlashType() {
 		return this.params
 				.get("type").equals("Flash")
-				&& contains(config.getProperty("flash"), (String) this.item.get("filetype"));
+				&& contains(config.getProperty("flash"),  (String)this.item.get("filetype"));
 	}
 
 	@Override
@@ -251,7 +257,7 @@ public abstract class AbstractFM implements FileManagerI {
 	@Override
 	public JSONObject delete() {
 		JSONObject array = null;
-		File file = this.documentRoot .resolve( this.get.get("path")).toFile();
+		File file = this.documentRoot.resolve( this.get.get("path")).toFile();
 				//new File(this.documentRoot + this.get.get("path"));
 		if (file.isDirectory()) {
 			array = new JSONObject();

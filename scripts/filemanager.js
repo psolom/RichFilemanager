@@ -15,18 +15,26 @@
   // keep variables in non global object
 var fm = {};
 fm.lg = [];
+
 // Default relative files root, may be changed with query params during initialization
 fm.fileRoot = '/';
+
+// Base URL to access the filemanager
+var baseUrl;
+
 fm.config = {};
 var initConfigLastPromise = jQuery.Deferred();
 
 var promisePluginPath = jQuery.Deferred();
+
 // loading default configuration file
 var promiseDefault = jQuery.Deferred();
 // loading user configuration file
 var promiseUser = jQuery.Deferred();
+
 // <head> included files collector
-var  HEAD_included_files = new Array();
+var HEAD_included_files = new Array();
+
 // this is probably needed only once, but could be reinitialized and reevaluated, if needed
 fm.fileTreeloaded = jQuery.Deferred();
 
@@ -38,6 +46,36 @@ $.urlParam = function(name) {
 	} else {
 		return 0;
 	}
+};
+
+// function to normalize a path (source: https://github.com/dfkaye/simple-path-normalize)
+var normalizePath = function(path){
+	var BLANK = ''; var SLASH = '/'; var DOT = '.';var DOTS = DOT.concat(DOT);var SCHEME = '://';
+ 	if (!path || path === SLASH) {
+		return SLASH;
+	}
+	var src; var scheme; 
+	if (path.indexOf(SCHEME) > 0) {    
+			var parts = path.split(SCHEME);
+			scheme = parts[0];
+			src = parts[1].split(SLASH);
+	} else {
+			src = path.split(SLASH);
+	}
+	var target = (path[0] === SLASH || path[0] === DOT) ? [BLANK] : [];
+	var i, len, token;
+	for (i = 0, len = src.length; i < len; ++i) {
+		token = src[i] || BLANK;
+		if (token === DOTS) {
+			if (target.length > 1) {
+				target.pop();
+			}
+		} else if (token !== BLANK && token !== DOT) {
+			target.push(token);
+		}
+	}
+	var result =  target.join(SLASH).replace(/[\/]{2,}/g, SLASH) || SLASH;
+	return (scheme ? scheme + SCHEME : '') + result;
 };
 
 /*---------------------------------------------------------
@@ -92,58 +130,61 @@ var loadConfigFile = function (type) {
   }, err);
   
   $.when(promiseDefault, promiseUser, promisePluginPath).done(function(configd,config, configpp) {
-         // remove version from user config file
-         if (fm.config != undefined && fm.config !== null) delete fm.config.version;
-         // merge default config and user config file
-         fm.config = $.extend({}, configd, config, configpp); 	
-         
-         if(fm.config.options.logger) fm.start = new Date().getTime();
-         
-         // Sets paths to connectors based on language selection.
-         fm.fileConnector = fm.config.options.fileConnector ||  fm.config.globals.pluginPath + '/connectors/' + fm.config.options.lang + '/filemanager.' + fm.config.options.lang;
-         
-         // Read capabilities from config files if exists else apply default settings
-         fm.capabilities = fm.config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
-         
-         // Defines sort params
-        var chunks = [];
-        if(fm.config.options.fileSorting) {
-          chunks = fm.config.options.fileSorting.toLowerCase().split('_');
-        }
-        
-        fm.config.configSortField = chunks[0] || 'name';
-        fm.config.configSortOrder = chunks[1] || 'asc';
-   
-         // Get localized messages from file through culture var or from URL
-        if($.urlParam('langCode') != 0) {
-             file_exists( fm.config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done( 
-              function(result) {
-                if (result) {
-                  fm.config.options.culture = $.urlParam('langCode');
-                } else {
-                  var urlLang = $.urlParam('langCode').substring(0, 2);
-                  file_exists( fm.config.globals.pluginPath + '/scripts/languages/'  + fm.urlLang + '.json').done( 
-                    function(result) {
-                      if(result) { 
-                        fm.config.options.culture = urlLang;
-                      }
-                    }
-                  );
-                }
-             });
-        }
-        
-        wrapperInitConfigLastPromise = $.Deferred(function() {
-           var self = this;
-           $.ajax({
-              url: fm.config.globals.pluginPath + '/scripts/languages/'  + fm.config.options.culture + '.json',
-              dataType: 'json'
-           }).done( function (json) {
-                fm.lg = json;
-                initConfigLastPromise.resolve(json);
-                self.resolve(json);
-            });
-        }).promise(); 
+				 // remove version from user config file
+				if (fm.config != undefined && fm.config !== null) delete fm.config.version;
+				// merge default config and user config file
+				fm.config = $.extend({}, configd, config, configpp); 	
+
+				if(fm.config.options.logger) fm.start = new Date().getTime();
+
+				// Sets paths to connectors based on language selection.
+				fm.fileConnector = fm.config.options.fileConnector ||  fm.config.globals.pluginPath + '/connectors/' + fm.config.options.lang + '/filemanager.' + fm.config.options.lang;
+
+				 // Sets paths to connectors based on language selection.
+				fm.langConnector = '/connectors/' + fm.config.options.lang + '/filemanager.' + fm.config.options.lang;
+				
+				// Read capabilities from config files if exists else apply default settings
+				fm.capabilities = fm.config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+				 
+				 // Defines sort params
+				var chunks = [];
+				if(fm.config.options.fileSorting) {
+					chunks = fm.config.options.fileSorting.toLowerCase().split('_');
+				}
+
+				fm.config.configSortField = chunks[0] || 'name';
+				fm.config.configSortOrder = chunks[1] || 'asc';
+
+				 // Get localized messages from file through culture var or from URL
+				if($.urlParam('langCode') != 0) {
+						 file_exists( fm.config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done( 
+							function(result) {
+								if (result) {
+									fm.config.options.culture = $.urlParam('langCode');
+								} else {
+									var urlLang = $.urlParam('langCode').substring(0, 2);
+									file_exists( fm.config.globals.pluginPath + '/scripts/languages/'  + fm.urlLang + '.json').done( 
+										function(result) {
+											if(result) { 
+												fm.config.options.culture = urlLang;
+											}
+										}
+									);
+								}
+						 });
+				}
+
+				wrapperInitConfigLastPromise = $.Deferred(function() {
+					 var self = this;
+					 $.ajax({
+							url: fm.config.globals.pluginPath + '/scripts/languages/'  + fm.config.options.culture + '.json',
+							dataType: 'json'
+					 }).done( function (json) {
+								fm.lg = json;
+								initConfigLastPromise.resolve(json);
+								self.resolve(json);
+						});
+				}).promise(); 
   });
 
 
@@ -305,29 +346,6 @@ var displayPath = function (path, reduce) {
 	}
 };
 
-/**
- * Determine path when using baseUrl and setFileRoot connector
- * function to give back a valid path on selectItem calls
- */
-var smartPath = function(url, path) {
-	var a = url.split('/'),
-		separator = '/' + a[a.length-2] + '/',
-		position = path.indexOf(separator),
-		smart_path;
-
-	// separator is not found
-	// this can happen when not set dynamically with setFileRoot function - see  : https://github.com/simogeo/Filemanager/issues/354
-	if(position == -1) {
-		smart_path = url + path;
-	} else {
-		smart_path = url + path.substring(position + separator.length);
-	}
-	if(fm.config.options.logger) {
-		console.log("url : " + url + " - path : " + path +  " - separator: " + separator + " - position: " + position + " - returned value : " + smart_path);
-	}
-	return smart_path;
-};
-
 // Set the view buttons state
 var setViewButtonsFor = function(viewMode) {
     if (viewMode == 'grid') {
@@ -432,9 +450,7 @@ function has_capability(data, cap) {
 
 // Test if file is authorized
 var isAuthorizedFile = function(filename) {
-
 	var ext = getExtension(filename);
-
 	// no extension is allowed
 	if(ext == '' && fm.config.security.allowNoExtension == true) return true;
 
@@ -444,13 +460,17 @@ var isAuthorizedFile = function(filename) {
 	if(fm.config.security.uploadPolicy == 'ALLOW_ALL') {
 		if($.inArray(ext, fm.config.security.uploadRestrictions) == -1) return true;
 	}
-
     return false;
 };
 
 // Test if path is dir
 var isFile = function(path) {
 	return path.charAt(path.length - 1) != '/';
+};
+
+// Replace all leading or trailing slashes with an empty string
+var trimSlashes = function(string) {
+	return string.replace(/^\/+|\/+$/g, '');
 };
 
 // from http://phpjs.org/functions/basename:360
@@ -460,7 +480,6 @@ var basename = function(path, suffix) {
     if (typeof(suffix) == 'string' && b.substr(b.length-suffix.length) == suffix) {
         b = b.substr(0, b.length-suffix.length);
     }
-
     return b;
 };
 
@@ -560,14 +579,32 @@ var isDocumentFile = function(filename) {
 	}
 };
 
-// Build url to preview office and media files
-var createPreviewUrl = function(path) {
-	return location.origin + location.pathname + path;
+// Build url to preview files
+var createPreviewUrl = function(path, encode) {
+	encode = encode || false;
+	// already an absolute path or a relative path to connector action
+	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp' || path.indexOf(fm.langConnector) !== -1) {
+		return path;
+	}
+	if(encode) {
+		var parts = [];
+		$.each(path.split('/'), function(i, part) {
+			parts.push(encodeURIComponent(part));
+		});
+		path = parts.join('/');
+	}
+	var tmpPath = trimSlashes(normalizePath(path));
+	if (tmpPath == path) {
+		return baseUrl + tmpPath;
+	} else {
+		return normalizePath(baseUrl + trimSlashes(path));
+	}
 };
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var code  = '<video src="' + createPreviewUrl(data['Preview']) + '" width=' + fm.config.videos.videosPlayerWidth + ' height=' + fm.config.videos.videosPlayerHeight + ' controls="controls"></video>';
+	var url = createPreviewUrl(data['Preview'], true);
+	var code  = '<video src="' + url + '" width=' +  fm.config.videos.videosPlayerWidth + ' height=' +  fm.config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -575,7 +612,8 @@ var getVideoPlayer = function(data) {
 
 // Return HTML audio player
 var getAudioPlayer = function(data) {
-	var code  = '<audio src="' + createPreviewUrl(data['Preview']) + '" controls="controls"></audio>';
+	var url = createPreviewUrl(data['Preview'], true);
+	var code  = '<audio src="' + url + '" controls="controls"></audio>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -583,7 +621,8 @@ var getAudioPlayer = function(data) {
 
 // Return PDF Reader
 var getPdfReader = function(data) {
-	var code = '<iframe id="fm-pdf-viewer" src="' + fm.config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + createPreviewUrl(data['Preview']) + '" width="' + fm.config.pdfs.pdfsReaderWidth + '" height="' + fm.config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var url = createPreviewUrl(data['Preview'], true);
+	var code = '<iframe id="fm-pdf-viewer" src="' +  fm.config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' +  fm.config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -902,7 +941,6 @@ var createFileTree = function() {
 	});
 };
 
-
 /*---------------------------------------------------------
   Item Actions
 ---------------------------------------------------------*/
@@ -914,13 +952,7 @@ var createFileTree = function() {
 // contextual menu option in list views.
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
-	var url;
-	if(fm.config.options.baseUrl !== false ) {
-		url = smartPath(baseUrl, data['Path'].replace(fm.fileRoot, ""));
-	} else {
-		url = data['Path'];
-	}
-
+	var url = createPreviewUrl(data['Preview']);
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 	 	if(window.tinyMCEPopup) {
         	// use TinyMCE > 3.0 integration method
@@ -1898,9 +1930,11 @@ var getFileInfo = function(file) {
 		// add the new markup to the DOM
 		getSectionContainer($fileinfo).html(template);
 
+		// if file is an image we display the preview
+		var previewPath = isImageFile(data['Filename']) ? data['Preview'] : data['Thumbnail'];
+		$fileinfo.find('img').attr('src', createPreviewUrl(previewPath));
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		$fileinfo.find('img').attr('src', data['Thumbnail']);
 		if(isVideoFile(data['Filename']) && fm.config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
@@ -1917,11 +1951,7 @@ var getFileInfo = function(file) {
 			editItem(data);
 		}
 
-		if(fm.config.options.baseUrl !== false ) {
-			var url = smartPath(baseUrl, data['Path'].replace(fm.fileRoot, ""));
-		} else {
-			var url = data['Path'];
-		}
+		var url = createPreviewUrl(data['Preview']);
 		if(data['Protected']==0) {
 			$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + fm.lg.copy_to_clipboard + '" href="#"><span>' + fm.lg.copy_to_clipboard + '</span></a>');
 
@@ -2018,7 +2048,7 @@ var getFolderInfo = function(path) {
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + item['Thumbnail'] + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + createPreviewUrl(item['Thumbnail']) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
@@ -2336,11 +2366,18 @@ $(function() {
 	}
   
 
+	// init baseUrl
 	if(fm.config.options.baseUrl === false) {
-		baseUrl = window.location.protocol + "//" + window.location.host;
+		baseUrl = location.origin + location.pathname;
+
 	} else {
 		baseUrl = fm.config.options.baseUrl;
 	}
+	// for url like http://site.com/index.html
+	if(getExtension(baseUrl).length > 0) {
+		baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+	}
+	baseUrl = trimSlashes(baseUrl) + '/';
 
 	// changes files root to restrict the view to a given folder
 	if($.urlParam('exclusiveFolder') != 0) {

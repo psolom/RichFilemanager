@@ -13,10 +13,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -47,6 +49,10 @@ import org.json.JSONObject;
  */
 public class RichFileManager extends AbstractFM  {
 
+	private static final String THUMBNAIL_PATH = "connectors/jsp/filemanager.jsp?mode=preview&path=";
+
+
+
 	/**
 	 * 
 	 * @param servletContext
@@ -62,7 +68,7 @@ public class RichFileManager extends AbstractFM  {
 	
 	@Override
 	public JSONObject getInfo() throws JSONException {
-		this.item = new HashMap();
+		this.item = new HashMap<String,Object>();
 		this.item.put("properties", this.properties);
 		this.getFileInfo("");
 		JSONObject array = new JSONObject();
@@ -71,7 +77,8 @@ public class RichFileManager extends AbstractFM  {
 			array.put("Path", this.get.get("path"));
 			array.put("Filename", this.item.get("filename"));
 			array.put("File Type", this.item.get("filetype"));
-			array.put("Thumbnail", this.item.get("preview"));
+			array.put("Thumbnail", this.item.get("thumbnail"));
+			array.put("Preview", this.item.get("preview"));
 			array.put("Properties", this.item.get("properties"));
 			array.put("Error", "");
 			array.put("Code", 0);
@@ -128,7 +135,7 @@ public class RichFileManager extends AbstractFM  {
 						}
 					} else if (file.canRead() && (!contains(config.getProperty("unallowed_files"), files[i])) ) {
 						//this.item = new HashMap();
-						this.item = new HashMap();
+						this.item = new HashMap<String,Object>();
 						this.item.put("properties", this.properties);
 						this.getFileInfo(this.get.get("path") + files[i]);
 	
@@ -141,7 +148,8 @@ public class RichFileManager extends AbstractFM  {
 								data.put("Path", this.get.get("path") + files[i]);
 								data.put("Filename", this.item.get("filename"));
 								data.put("File Type", this.item.get("filetype"));
-								data.put("Thumbnail", this.item.get("preview"));
+								data.put("Thumbnail", this.item.get("thumbnail"));
+								data.put("Preview", this.item.get("preview"));
 								data.put("Properties", this.item.get("properties"));
 								data.put("Error", "");
 								data.put("Code", 0);
@@ -170,7 +178,7 @@ public class RichFileManager extends AbstractFM  {
 		}
 		String[] tmp = pathTmp.split("/");
 		File file = this.documentRoot.resolve(pathTmp).toFile();
-		this.item = new HashMap();
+		this.item = new HashMap<String,Object>();
 		String fileName = tmp[tmp.length - 1];
 		this.item.put("filename", fileName);
 		if (file.isFile()) {
@@ -183,14 +191,17 @@ public class RichFileManager extends AbstractFM  {
 		this.item.put("filectime", "" + file.lastModified());
 	
 		this.item.put("preview", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); // @simo
+		this.item.put("thumbnail", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); // @simo
 	
 		JSONObject props = new JSONObject();
 		if (file.isDirectory()) {
 	
 			this.item.put("preview", config.getProperty("icons-path") + config.getProperty("icons-directory"));
+			this.item.put("thumbnail", config.getProperty("icons-path") + config.getProperty("icons-directory"));
 	
 		} else if (isImage(pathTmp)) {
-			this.item.put("preview", "connectors/jsp/filemanager.jsp?mode=preview&path=" + pathTmp);
+			this.item.put("thumbnail", THUMBNAIL_PATH + pathTmp);
+			this.item.put("preview", getPreviewFolder() + pathTmp);
 			Dimension imgData = getImageSize(documentRoot.resolve(pathTmp).toString());
 			props.put("Height", "" + imgData.height);
 			props.put("Width", "" + imgData.width);
@@ -208,8 +219,45 @@ public class RichFileManager extends AbstractFM  {
 		props.put("Date Modified", dateFormat.format(new Date(new Long((String) this.item.get("filemtime")))));
 		this.item.put("properties", props);
 	}
+	
+	/**
+	 * constructs previewFolder from property preview.
+	 * 
+	 * delegated to allow overriding
+	 * 
+	 * If preview is not set, use {@link #THUMBNAIL_PATH}.
+	 * 
+	 * @return previewFolder
+	 */
+	protected String getPreviewFolder() {
+		if (this.previewPath == null) {
+			String preview = config.getProperty("preview");
+			Path previewPath = null;
+			if (preview != null && preview.startsWith("http")) {
+				try {
+					previewPath = Paths.get(new URI(preview));
+				} catch (URISyntaxException e) {
+					log.error("is not a valid URI preview config:"+ preview);
+				}
+			}
+			if (previewPath != null) {
+				this.previewPath = previewPath.normalize().toString();
+			} else {
+				// relative ?
+				this.previewPath = preview;		
+			}	
+			if (this.previewPath == null || this.previewPath.equals("")) {
+				// set it to thumbnail path
+				this.previewPath = THUMBNAIL_PATH;
+			}
+			this.previewPath = this.previewPath + "/"; // has to end with a slash probably
+			log.debug("previewPath:"+ this.previewPath);
+		}
+		return this.previewPath;
+	}
 	   
-    /* (non-Javadoc)
+
+	/* (non-Javadoc)
 	 * @see com.nartex.FileManagerI#download(javax.servlet.http.HttpServletResponse)
 	 */
 	@Override
@@ -253,11 +301,10 @@ public class RichFileManager extends AbstractFM  {
 	@Override
 	public JSONObject add() {
 		JSONObject fileInfo = new JSONObject();
-		Iterator it = this.files.iterator();
+		Iterator<FileItem> it = this.files.iterator();
 		String mode = "";
 		String currentPath = "";
 		boolean error = false;
-		boolean replace = false;
 		long size = 0;
 		if (!it.hasNext()) {
 			fileInfo =this.uploadError(lang("INVALID_FILE_UPLOAD"));
@@ -267,7 +314,7 @@ public class RichFileManager extends AbstractFM  {
 			FileItem targetItem = null;
 			try {
 				while (it.hasNext()) {
-					FileItem item = (FileItem) it.next();
+					FileItem item = it.next();
 					if (item.isFormField()) {
 						if (item.getFieldName().equals("mode")) {
 							mode = item.getString();
@@ -332,7 +379,7 @@ public class RichFileManager extends AbstractFM  {
 					if (!error) {
 						currentPath = currentPath.replaceFirst("^/", "");// relative
 						Path path = currentPath.equals("")? this.documentRoot: this.documentRoot.resolve(currentPath);
-						if (config.getProperty("upload-overwrite").equals("false")) {							
+						if (config.getProperty("upload-overwrite").toLowerCase().equals("false")) {							
 							fileName = this.checkFilename(path.toString(), fileName, 0);
 						}
 						if (mode.equals("replace")) {
