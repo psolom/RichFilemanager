@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Solo i seguenti files sono permessi: ",
     "AUTHORIZATION_REQUIRED": "Non sei autorizzato ad utilizzare filemanager.",
     "DIRECTORY_ALREADY_EXISTS": "La cartella '%s' esiste già.",
+    "DIRECTORY_EMPTY" : "La cartella '%s' è vuota.",
     "DIRECTORY_NOT_EXIST": "La cartella %s non esiste.",
     "DISALLOWED_FILE_TYPE": "I seguenti files non sono permessi: ",
     "ERROR_CREATING_ZIP": "Errore nel creare l'archivio ZIP.",

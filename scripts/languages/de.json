@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Es sind nur folgende Formate erlaubt: ",
     "AUTHORIZATION_REQUIRED": "Sie haben keine Berechtigung für den Datei-Manager.",
     "DIRECTORY_ALREADY_EXISTS": "Das Verzeichnis existiert bereits.",
+    "DIRECTORY_EMPTY":"The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "Das Verzeichnis %s ist nicht vorhanden.",
     "DISALLOWED_FILE_TYPE": "Folgende Dateien sind nicht erlaubt: ",
     "ERROR_CREATING_ZIP": "Fehler beim Erstellen des Zip-Archivs",

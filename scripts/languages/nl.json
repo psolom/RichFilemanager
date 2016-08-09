@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "De volgende bestandtypes zijn toegestaan : ",
     "AUTHORIZATION_REQUIRED": "Je hebt niet de nodige rechten om filemanager te gebruiken.",
     "DIRECTORY_ALREADY_EXISTS": "De map '%s' bestaat al.",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "De map %s bestaat niet.",
     "DISALLOWED_FILE_TYPE": "De volgende bestandtypes zijn niet toegestaan : ",
     "ERROR_CREATING_ZIP": "Error creating Zip archive",

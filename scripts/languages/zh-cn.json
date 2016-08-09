@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Only following files are allowed : ",
     "AUTHORIZATION_REQUIRED": "您没有被授权使用文件管理器。",
     "DIRECTORY_ALREADY_EXISTS": "目录'%s'已经存在。",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "目录%s不存在。",
     "DISALLOWED_FILE_TYPE": "Following files are not allowed : ",
     "ERROR_CREATING_ZIP": "Error creating Zip archive",

@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Разрешены только указанные типы файлов: ",
     "AUTHORIZATION_REQUIRED": "У вас не хватает прав для работы с менеджером файлов.",
     "DIRECTORY_ALREADY_EXISTS": "Папка '%s' уже существует.",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "Папка %s не существует.",
     "DISALLOWED_FILE_TYPE": "Указанные типы файлов запрещены: ",
     "ERROR_CREATING_ZIP": "Неудалось создать Zip архив.",
