@@ -15,6 +15,7 @@
 // ini_set('display_errors', '1');
 
 require_once('BaseHelper.php');
+require_once('application/Fm.php');
 
 function auth()
 {
@@ -24,7 +25,7 @@ function auth()
     return true;
 }
 
-$fm = BaseHelper::getInstance();
+$fm = Fm::app()->getInstance();
 
 // use to setup files root folder
 //$fm->setFileRoot('userfiles', true);

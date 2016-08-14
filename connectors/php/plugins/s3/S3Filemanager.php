@@ -224,7 +224,7 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		// end application to prevent double response (uploader and filemanager)
-		die();
+		exit;
 	}
 
 	/**
@@ -251,7 +251,7 @@ class S3Filemanager extends LocalFilemanager
 			'Error' => "",
 			'Code' => 0,
 		);
-		$this->__log(__METHOD__ . ' - adding folder ' . $new_dir);
+		Log::info(__METHOD__ . ' - adding folder ' . $new_dir);
 
 		return $array;
 	}
@@ -520,7 +520,7 @@ class S3Filemanager extends LocalFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$this->__log(__METHOD__ . ' - editing file '. $current_path);
+		Log::info(__METHOD__ . ' - editing file '. $current_path);
 
 		$content = file_get_contents($current_path);
 		$content = htmlspecialchars($content);
@@ -550,7 +550,7 @@ class S3Filemanager extends LocalFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$this->__log(__METHOD__ . ' - saving file '. $current_path);
+		Log::info(__METHOD__ . ' - saving file '. $current_path);
 
 		$content =  htmlspecialchars_decode($this->post['content']);
 		$r = file_put_contents($current_path, $content);
@@ -569,22 +569,61 @@ class S3Filemanager extends LocalFilemanager
 	}
 
 	/**
+	 * Seekable stream: http://stackoverflow.com/a/23046071/1789808
 	 * @inheritdoc
-	 * TODO: audio and video files at S3 are not seekable with html5 player, also they hang filemanager,
-	 * TODO: until it's fully loaded from S3. Perhaps that may be solved via streaming from CloudFront
-	 * @see http://stackoverflow.com/questions/13115618/player-for-video-streaming-from-amazon-s3-cloudfront
 	 */
 	public function readfile()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
+		$filesize = filesize($current_path);
+		$length = $filesize;
+		$context = null;
 
-		header('Content-type: ' . $this->getMimeType($current_path));
+		if(isset($_SERVER['HTTP_RANGE'])) {
+			if(!preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches)) {
+				header('HTTP/1.1 416 Requested Range Not Satisfiable');
+				header('Content-Range: bytes */' . $filesize);
+				exit;
+			}
+
+			$offset = intval($matches[1]);
+
+			if(isset($matches[2])) {
+				$end = intval($matches[2]);
+				if($offset > $end) {
+					header('HTTP/1.1 416 Requested Range Not Satisfiable');
+					header('Content-Range: bytes */' . $filesize);
+					exit;
+				}
+				$length = $end - $offset;
+			} else {
+				$length = $filesize - $offset;
+			}
+
+			$bytes_start = $offset;
+			$bytes_end = $offset + $length - 1;
+			$context = stream_context_create(array(
+				's3' => array(
+					'seekable' => true,
+					'Range' => "bytes={$bytes_start}-{$bytes_end}",
+				)
+			));
+
+			header('HTTP/1.1 206 Partial Content');
+			// A full-length file will indeed be "bytes 0-x/x+1", think of 0-indexed array counts
+			header('Content-Range: bytes ' . $bytes_start . '-' . $bytes_end . '/' . $filesize);
+			// While playing media by direct link (not via FM) FireFox and IE doesn't allow seeking (rewind) it in player
+			// This header can fix this behavior if to put it out of this condition, but it breaks PDF preview
+			header('Accept-Ranges: bytes');
+		}
+
+		header('Content-Type: ' . $this->getMimeType($current_path));
 		header("Content-Transfer-Encoding: binary");
-		header("Content-length: " . filesize($current_path));
+		header("Content-Length: " . $length);
 		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
 
-		readfile($current_path);
-		exit();
+		readfile($current_path, null, $context);
+		exit;
 	}
 
 	/**
@@ -684,9 +723,9 @@ class S3Filemanager extends LocalFilemanager
 		header('Expires: 0');
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-		$this->__log(__METHOD__ . ' - downloading '. $current_path);
+		Log::info(__METHOD__ . ' - downloading '. $current_path);
 		readfile($current_path);
-		$this->__log(__METHOD__ . ' - downloaded '. $current_path);
+		Log::info(__METHOD__ . ' - downloaded '. $current_path);
 		exit();
 	}
 
@@ -801,71 +840,22 @@ class S3Filemanager extends LocalFilemanager
 		$item = $this->defaultInfo;
 		$pathInfo = pathinfo($current_path);
 		$filemtime = @filemtime($current_path);
-		$iconsFolder = $this->getFmUrl($this->config['icons']['path']);
-
-		// check comment in "getinfo()" method
-		$protected = false;
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
-			$thumbPath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
 		} else {
 			$fileType = $pathInfo['extension'];
-			if($protected) {
-				$thumbPath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
-			} else {
-				$thumbPath = $iconsFolder . $this->config['icons']['default'];
-				$item['Properties']['Size'] = filesize($current_path);
-
-				if($this->config['options']['showThumbs'] && in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
-					// svg should not be previewed as raster formats images
-					$is_svg = ($fileType === 'svg');
-
-					if($this->config['s3']['thumbsRetrieveMode'] === self::RETRIEVE_MODE_BROWSER || $is_svg) {
-						$thumbPath = $this->getS3Url($current_path, $thumbnail && !$is_svg);
-					} else {
-						$thumbPath = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
-						if($thumbnail) $thumbPath .= '&thumbnail=true';
-					}
-				} else if(file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
-					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
-				}
-			}
+			$item['Properties']['Size'] = filesize($current_path);
 		}
 
 		$item['Path'] = $this->getDynamicPath($current_path);
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
-		$item['Protected'] = (int)$protected;
-		$item['Thumbnail'] = $thumbPath;
-		// for preview mode only
-		if($thumbnail === false) {
-			$item['Preview'] = $this->connector_script_url . '?mode=readfile&path=' . $relative_path;
-		}
-
+		$item['Protected'] = 0; // check comment in "getinfo()" method
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
 		return $item;
-	}
-
-	/**
-	 * Creates url to S3 object
-	 * @param string $filePath
-	 * @param boolean $thumbnail
-	 * @return mixed
-	 */
-	protected function getS3Url($filePath, $thumbnail = false)
-	{
-		$path = $thumbnail ? $this->get_thumbnail($filePath) : $filePath;
-
-		if($this->config['s3']['presignUrl']) {
-			return $this->s3->getPresignedUrl($path, '+10 minutes');
-		} else {
-			// TODO: is non-presigned url might be created in place, without extra request ?
-			//sprintf('//%s/%s', $this->domain, $this->bucket.'/'.$path)
-			return $this->s3->getUrl($path);
-		}
 	}
 
 	/**
@@ -1089,7 +1079,7 @@ class S3Filemanager extends LocalFilemanager
 	protected function createThumbnail($imagePath, $thumbnailPath)
 	{
 		if($this->config['images']['thumbnail']['enabled'] === true) {
-			$this->__log(__METHOD__ . ' - generating thumbnail:  '. $thumbnailPath);
+			Log::info(__METHOD__ . ' - generating thumbnail:  '. $thumbnailPath);
 
 			$this->initUploader(array(
 				'upload_dir' => dirname($imagePath) . '/',

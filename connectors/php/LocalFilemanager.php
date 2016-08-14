@@ -21,7 +21,6 @@ class LocalFilemanager extends BaseFilemanager
 	protected $allowed_actions = array();
 	protected $doc_root;
 	protected $path_to_files;
-	protected $connector_script_url;
 	protected $dynamic_fileroot = 'userfiles';
 
 	public function __construct($extraConfig = array())
@@ -48,18 +47,10 @@ class LocalFilemanager extends BaseFilemanager
 		}
 		$this->path_to_files = $this->cleanPath($this->path_to_files);
 
-		// set path to the connector script file
-		if($this->config['options']['fileConnector']) {
-			$this->connector_script_url = $this->config['options']['fileConnector'];
-		} else {
-			$script_path = str_replace($_SERVER['DOCUMENT_ROOT'], '', $_SERVER['SCRIPT_FILENAME']);
-			$this->connector_script_url = $this->cleanPath('/' . $script_path);
-		}
-
-		$this->__log('$this->fm_path: "' . $this->fm_path . '"');
-		$this->__log('$this->path_to_files: "' . $this->path_to_files . '"');
-		$this->__log('$this->doc_root: "' . $this->doc_root . '"');
-		$this->__log('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
+		Log::info('$this->fm_path: "' . $this->fm_path . '"');
+		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
+		Log::info('$this->doc_root: "' . $this->doc_root . '"');
+		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
 
 		$this->setParams();
 		$this->setPermissions();
@@ -81,13 +72,13 @@ class LocalFilemanager extends BaseFilemanager
 			$this->path_to_files = $this->cleanPath($path);
 		}
 
-		$this->__log('Overwritten with setFileRoot() method:');
-		$this->__log('$this->path_to_files: "' . $this->path_to_files . '"');
-		$this->__log('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
+		Log::info('Overwritten with setFileRoot() method:');
+		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
+		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
 
 		if($mkdir && !file_exists($this->path_to_files)) {
 			mkdir($this->path_to_files, 0755, true);
-			$this->__log('creating "' . $this->path_to_files . '" folder through mkdir()');
+			Log::info('creating "' . $this->path_to_files . '" folder through mkdir()');
 		}
 	}
 
@@ -122,7 +113,7 @@ class LocalFilemanager extends BaseFilemanager
 		$files_list = array();
 		$current_path = $this->getFullPath($this->get['path'], true);
 
-		$this->__log('opening folder "' . $current_path . '"');
+		Log::info('opening folder "' . $current_path . '"');
 
 		if(!is_dir($current_path)) {
 			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $this->get['path']));
@@ -174,7 +165,7 @@ class LocalFilemanager extends BaseFilemanager
 		$current_path = $this->getFullPath($path, true);
 		$filename = basename($current_path);
 
-		$this->__log('opening file "' . $current_path . '"');
+		Log::info('opening file "' . $current_path . '"');
 
 		// check if file is readable
 		if(!$this->has_system_permission($current_path, array('r'))) {
@@ -196,7 +187,7 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$current_path = $this->getFullPath($this->post['currentpath'], true);
 
-		$this->__log('uploading to "' . $current_path . '"');
+		Log::info('uploading to "' . $current_path . '"');
 
 		// check if file is writable
 		if(!$this->has_system_permission($current_path, array('w'))) {
@@ -224,7 +215,7 @@ class LocalFilemanager extends BaseFilemanager
 		$new_dir = $this->normalizeString($this->get['name']);
 		$new_path = $current_path . $new_dir;
 
-		$this->__log('adding folder "' . $new_path . '"');
+		Log::info('adding folder "' . $new_path . '"');
 
 		if(is_dir($new_path)) {
 			$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $this->get['name']));
@@ -263,7 +254,7 @@ class LocalFilemanager extends BaseFilemanager
 		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
 		$new_file = $this->getFullPath($newPath, true) . '/' . $newName . $suffix;
 
-		$this->__log('renaming "' . $old_file . '" to "' . $new_file . '"');
+		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
 		if(!$this->has_permission('rename')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -305,7 +296,7 @@ class LocalFilemanager extends BaseFilemanager
 				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $newName));
 			}
 		} else {
-			$this->__log('renamed "' . $old_file . '" to "' . $new_file . '"');
+			Log::info('renamed "' . $old_file . '" to "' . $new_file . '"');
 
 			// for image only - rename thumbnail if original image was successfully renamed
 			if(!is_dir($new_file)) {
@@ -346,7 +337,7 @@ class LocalFilemanager extends BaseFilemanager
 		$newFullPath = $newPath . $filename . $suffix;
 		$isDirOldPath = is_dir($oldPath);
 
-		$this->__log('moving "' . $oldPath . '" to "' . $newFullPath . '"');
+		Log::info('moving "' . $oldPath . '" to "' . $newFullPath . '"');
 
 		// check if file is writable
 		if(!$this->has_system_permission($oldPath, array('w')) || !$this->has_system_permission($newPath, array('w'))) {
@@ -389,7 +380,7 @@ class LocalFilemanager extends BaseFilemanager
 				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $this->get['new']));
 			}
 		} else {
-			$this->__log('moved "' . $oldPath . '" to "' . $newFullPath . '"');
+			Log::info('moved "' . $oldPath . '" to "' . $newFullPath . '"');
 
 			// move thumbnail file or thumbnails folder if exists
 			if(file_exists($old_thumbnail)) {
@@ -422,7 +413,7 @@ class LocalFilemanager extends BaseFilemanager
 		$old_path = $this->getFullPath($this->post['newfilepath']);
 		$upload_dir = dirname($old_path) . '/';
 
-		$this->__log('replacing "' . $old_path . '"');
+		Log::info('replacing "' . $old_path . '"');
 
 		if(!$this->has_permission('replace') || !$this->has_permission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -449,7 +440,7 @@ class LocalFilemanager extends BaseFilemanager
 		// success upload
 		if(!property_exists($result['files'][0], 'error')) {
 			$new_path = $upload_dir . $result['files'][0]->name;
-			$this->__log('replacing "' . $old_path . '" with "' . $new_path . '"');
+			Log::info('replacing "' . $old_path . '" with "' . $new_path . '"');
 
 			rename($new_path, $old_path);
 
@@ -471,7 +462,7 @@ class LocalFilemanager extends BaseFilemanager
     {
 		$current_path = $this->getFullPath($this->get['path'], true);
 
-		$this->__log('opening "' . $current_path . '"');
+		Log::info('opening "' . $current_path . '"');
 
 		// check if file is writable
 		if(!$this->has_system_permission($current_path, array('w'))) {
@@ -506,7 +497,7 @@ class LocalFilemanager extends BaseFilemanager
     {
 		$current_path = $this->getFullPath($this->post['path'], true);
 
-		$this->__log('saving "' . $current_path . '"');
+		Log::info('saving "' . $current_path . '"');
 
 		if(!$this->has_permission('edit') || !$this->is_editable($current_path)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -523,7 +514,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('ERROR_SAVING_FILE')));
 		}
 
-		$this->__log('saved "' . $current_path . '"');
+		Log::info('saved "' . $current_path . '"');
 
 		$array = array(
 			'Error' => "",
@@ -535,21 +526,67 @@ class LocalFilemanager extends BaseFilemanager
 	}
 
 	/**
+	 * Seekable stream: http://stackoverflow.com/a/23046071/1789808
 	 * @inheritdoc
-	 * Local connector is able to reach all files directly, but it is used to preview files placed outside server root
-	 * @see BaseFilemanager::readfile() to get purpose description
 	 */
 	public function readfile()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
+		$filesize = filesize($current_path);
+		$length = $filesize;
+		$offset = 0;
 
-		header('Content-type: ' . mime_content_type($current_path));
+		if(isset($_SERVER['HTTP_RANGE'])) {
+			if(!preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches)) {
+				header('HTTP/1.1 416 Requested Range Not Satisfiable');
+				header('Content-Range: bytes */' . $filesize);
+				exit;
+			}
+
+			$offset = intval($matches[1]);
+
+			if(isset($matches[2])) {
+				$end = intval($matches[2]);
+				if($offset > $end) {
+					header('HTTP/1.1 416 Requested Range Not Satisfiable');
+					header('Content-Range: bytes */' . $filesize);
+					exit;
+				}
+				$length = $end - $offset;
+			} else {
+				$length = $filesize - $offset;
+			}
+
+			$bytes_start = $offset;
+			$bytes_end = $offset + $length - 1;
+
+			header('HTTP/1.1 206 Partial Content');
+			// A full-length file will indeed be "bytes 0-x/x+1", think of 0-indexed array counts
+			header('Content-Range: bytes ' . $bytes_start . '-' . $bytes_end . '/' . $filesize);
+			// While playing media by direct link (not via FM) FireFox and IE doesn't allow seeking (rewind) it in player
+			// This header can fix this behavior if to put it out of this condition, but it breaks PDF preview
+			header('Accept-Ranges: bytes');
+		}
+
+		header('Content-Type: ' . mime_content_type($current_path));
 		header("Content-Transfer-Encoding: binary");
-		header("Content-length: " . filesize($current_path));
+		header("Content-Length: " . $length);
 		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
 
-		readfile($current_path);
-		exit();
+		$fp = fopen($current_path, 'r');
+		fseek($fp, $offset);
+		$position = 0;
+
+		while($position < $length) {
+			$chunk = min($length - $position, 1024 * 8);
+
+			echo fread($fp, $chunk);
+			flush();
+			ob_flush();
+
+			$position += $chunk;
+		}
+		exit;
 	}
 
 	/**
@@ -559,7 +596,7 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 
-		$this->__log('loading image "' . $current_path . '"');
+		Log::info('loading image "' . $current_path . '"');
 
 		// if $thumbnail is set to true we return the thumbnail
 		if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
@@ -586,7 +623,7 @@ class LocalFilemanager extends BaseFilemanager
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$thumbnail_path = $this->get_thumbnail_path($current_path);
 
-		$this->__log('deleting "' . $current_path . '"');
+		Log::info('deleting "' . $current_path . '"');
 
 		if(!$this->has_permission('delete')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -604,7 +641,7 @@ class LocalFilemanager extends BaseFilemanager
 
 		if(is_dir($current_path)) {
 			$this->unlinkRecursive($current_path);
-			$this->__log('deleted "' . $current_path . '"');
+			Log::info('deleted "' . $current_path . '"');
 
 			// delete thumbnails if exists
 			if(file_exists($thumbnail_path)) {
@@ -612,7 +649,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		} else {
 			unlink($current_path);
-			$this->__log('deleted "' . $current_path . '"');
+			Log::info('deleted "' . $current_path . '"');
 
 			// delete thumbnails if exists
 			if(file_exists($thumbnail_path)) {
@@ -635,7 +672,7 @@ class LocalFilemanager extends BaseFilemanager
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$filename = basename($current_path);
 
-		$this->__log('file downloading "' . $current_path . '"');
+		Log::info('file downloading "' . $current_path . '"');
 
 		if(!$this->has_permission('download')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -692,7 +729,7 @@ class LocalFilemanager extends BaseFilemanager
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
 		readfile($current_path);
-		$this->__log('file downloaded "' . $current_path . '"');
+		Log::info('file downloaded "' . $current_path . '"');
 		exit();
 	}
 
@@ -805,13 +842,13 @@ class LocalFilemanager extends BaseFilemanager
     {
 		if(in_array('r', $permissions)) {
 			if(!is_readable($filepath)) {
-				$this->__log('Not readable path "' . $filepath . '"');
+				Log::info('Not readable path "' . $filepath . '"');
 				return false;
 			};
 		}
 		if(in_array('w', $permissions)) {
 			if(!is_writable($filepath)) {
-				$this->__log('Not writable path "' . $filepath . '"');
+				Log::info('Not writable path "' . $filepath . '"');
 				return false;
 			}
 		}
@@ -826,59 +863,29 @@ class LocalFilemanager extends BaseFilemanager
 	protected function get_file_info($relative_path)
     {
 		$current_path = $this->getFullPath($relative_path);
-		$dynamic_path = $this->getDynamicPath($current_path);
 
 		$item = $this->defaultInfo;
 		$pathInfo = pathinfo($current_path);
 		$filemtime = filemtime($current_path);
-		$iconsFolder = $this->getFmUrl($this->config['icons']['path']);
-
-		// tell if we serve the files directly or if we should pass through the connector
-		$beyondDocRoot = stripos(realpath($this->path_to_files), realpath($this->doc_root)) !== 0;
-		$getImageMode = $this->connector_script_url . '?mode=getimage&path=' . rawurlencode($relative_path) . '&time=' . time();
-		$readFileMode = $this->connector_script_url . '?mode=readfile&path=' . rawurlencode($relative_path) . '&time=' . time();
 
 		// check if file is writable and readable
 		$protected = $this->has_system_permission($current_path, array('w', 'r')) ? 0 : 1;
 
 		if(is_dir($current_path)) {
 			$fileType = self::FILE_TYPE_DIR;
-			$thumbPath = $iconsFolder . ($protected ? 'locked_' : '') . $this->config['icons']['directory'];
 		} else {
 			$fileType = $pathInfo['extension'];
-			if($protected == 1) {
-				$thumbPath = $iconsFolder . 'locked_' . $this->config['icons']['default'];
-			} else {
-				$item['Properties']['Size'] = $this->get_real_filesize($current_path);
-				$thumbPath = $iconsFolder . $this->config['icons']['default'];
+			$item['Properties']['Size'] = $this->get_real_filesize($current_path);
 
-				$showThumbs = $this->config['options']['showThumbs'];
-				$isAllowedImage = in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']));
-				$isImageWithThumb =  $isAllowedImage && $showThumbs;
-
-				if(!$isImageWithThumb && file_exists($this->fm_path . '/' . $this->config['icons']['path'] . strtolower($fileType) . '.png')) {
-					$thumbPath = $iconsFolder . strtolower($fileType) . '.png';
+			if(in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
+				if($item['Properties']['Size']) {
+					list($width, $height, $type, $attr) = getimagesize($current_path);
+				} else {
+					list($width, $height) = array(0, 0);
 				}
 
-				if($isAllowedImage) {
-					if($showThumbs) {
-						// svg don't need to generate a thumb
-						if($fileType === 'svg') {
-							$thumbPath = $beyondDocRoot ? $readFileMode : $dynamic_path;
-						} else {
-							$thumbPath = $beyondDocRoot ? $getImageMode . '&thumbnail=true' : $this->getDynamicPath($this->get_thumbnail($current_path));
-						}
-					}
-
-					if($item['Properties']['Size']) {
-						list($width, $height, $type, $attr) = getimagesize($current_path);
-					} else {
-						list($width, $height) = array(0, 0);
-					}
-
-					$item['Properties']['Height'] = $height;
-					$item['Properties']['Width'] = $width;
-				}
+				$item['Properties']['Height'] = $height;
+				$item['Properties']['Width'] = $width;
 			}
 		}
 
@@ -886,8 +893,6 @@ class LocalFilemanager extends BaseFilemanager
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
-		$item['Thumbnail'] = $thumbPath;
-		$item['Preview'] = $beyondDocRoot ? $readFileMode : $dynamic_path;
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;
@@ -961,9 +966,9 @@ class LocalFilemanager extends BaseFilemanager
 		$match = ($rp_substr === $rp_files);
 
 		if(!$match) {
-			$this->__log('Invalid path "' . $path . '"');
-			$this->__log('real path: "' . $rp_substr . '"');
-			$this->__log('path to files: "' . $rp_files . '"');
+			Log::info('Invalid path "' . $path . '"');
+			Log::info('real path: "' . $rp_substr . '"');
+			Log::info('path to files: "' . $rp_files . '"');
 		}
 		return $match;
 	}
@@ -1269,7 +1274,7 @@ class LocalFilemanager extends BaseFilemanager
 	protected function createThumbnail($imagePath, $thumbnailPath)
 	{
 		if($this->config['images']['thumbnail']['enabled'] === true) {
-			$this->__log('generating thumbnail "' . $thumbnailPath . '"');
+			Log::info('generating thumbnail "' . $thumbnailPath . '"');
 
 			// create folder if it does not exist
 			if(!file_exists(dirname($thumbnailPath))) {
