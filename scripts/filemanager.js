@@ -52,7 +52,7 @@ var normalizePath = function(path){
 // Retrieves config settings from filemanager.config.json
 var loadConfigFile = function (type) {
 	var json = null,
-		pluginPath = ".";
+		pluginPath = '.';
 	type = (typeof type === "undefined") ? "user" : type;
 
 	if (window._FMConfig && window._FMConfig.pluginPath) {
@@ -108,9 +108,8 @@ var fileRoot = '/';
 // Base URL to access the filemanager
 var baseUrl;
 
-// Sets paths to connectors based on language selection.
-var langConnector = '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
-var fileConnector = config.options.fileConnector || config.globals.pluginPath + langConnector;
+// URL to API connector, based on `baseUrl` if not specified explicitly
+var fileConnector;
 
 // Read capabilities from config files if exists else apply default settings
 var capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
@@ -413,6 +412,14 @@ var trimSlashes = function(string) {
 	return string.replace(/^\/+|\/+$/g, '');
 };
 
+var encodePath = function(path) {
+	var parts = [];
+	$.each(path.split('/'), function(i, part) {
+		parts.push(encodeURIComponent(part));
+	});
+	return parts.join('/');
+};
+
 // from http://phpjs.org/functions/basename:360
 var basename = function(path, suffix) {
     var b = path.replace(/^.*[\/\\]/g, '');
@@ -519,28 +526,60 @@ var isDocumentFile = function(filename) {
 	}
 };
 
-// Build url to preview files
-var createPreviewUrl = function(path, encode) {
-	encode = encode || false;
-	// already an absolute path or a relative path to connector action
-	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp' || path.indexOf(langConnector) !== -1) {
-		return path;
-	}
-	path = trimSlashes(normalizePath(path));
+var buildConnectorUrl = function(params) {
+	var defaults = {
+		config: userconfig,
+		time: new Date().getTime()
+	};
+	var queryParams = $.extend({}, params || {}, defaults);
+	return fileConnector + '?' + $.param(queryParams);
+};
 
-	if(encode) {
-		var parts = [];
-		$.each(path.split('/'), function(i, part) {
-			parts.push(encodeURIComponent(part));
-		});
-		path = parts.join('/');
+// Build url to preview files
+var createPreviewUrl = function(path) {
+	return buildConnectorUrl({
+		mode: 'readfile',
+		path: path
+	});
+};
+
+var createImageUrl = function(data, thumbnail) {
+	var imagePath;
+	if(!isFile(data['Path'])) {
+		imagePath = baseUrl + config.icons.path + (data['Protected'] == 1 ? 'locked_' : '') + config.icons.folder;
+	} else {
+		if(data['Protected'] == 1) {
+			imagePath = baseUrl + config.icons.path + 'locked_' + config.icons.folder;
+		} else {
+			var fileType = getExtension(data['Path']);
+			var isAllowedImage = isImageFile(data['Path']);
+			var fileTypeIcon = baseUrl + config.icons.path + fileType + '.png';
+			imagePath = baseUrl + config.icons.path + config.icons.default;
+
+			if(!(isAllowedImage && config.options.showThumbs) && file_exists(fileTypeIcon)) {
+				imagePath = fileTypeIcon;
+			}
+			if(isAllowedImage) {
+				var queryParams = {path: data['Path']};
+				if(fileType === 'svg') {
+					queryParams.mode = 'readfile';
+				} else {
+					queryParams.mode = 'getimage';
+					if(thumbnail) {
+						queryParams.thumbnail = 'true';
+					}
+				}
+				imagePath = buildConnectorUrl(queryParams);
+			}
+		}
 	}
-	return baseUrl + path;
+	console.log('imagePath', imagePath);
+	return imagePath;
 };
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var url = createPreviewUrl(data['Preview'], true);
+	var url = createPreviewUrl(data['Path']);
 	var code  = '<video src="' + url + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 	$fileinfo.find('img').remove();
@@ -549,7 +588,7 @@ var getVideoPlayer = function(data) {
 
 // Return HTML audio player
 var getAudioPlayer = function(data) {
-	var url = createPreviewUrl(data['Preview'], true);
+	var url = createPreviewUrl(data['Path']);
 	var code  = '<audio src="' + url + '" controls="controls"></audio>';
 
 	$fileinfo.find('img').remove();
@@ -558,7 +597,7 @@ var getAudioPlayer = function(data) {
 
 // Return PDF Reader
 var getPdfReader = function(data) {
-	var url = createPreviewUrl(data['Preview'], true);
+	var url = createPreviewUrl(data['Path']);
 	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
@@ -567,7 +606,7 @@ var getPdfReader = function(data) {
 
 // Return Google Viewer
 var getGoogleViewer = function(data) {
-	var url = encodeURIComponent(createPreviewUrl(data['Preview']));
+	var url = encodeURIComponent(createPreviewUrl(data['Path']));
 	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
@@ -604,7 +643,11 @@ var setUploader = function(path) {
 
 			if(fname != '') {
 				foldername = cleanString(fname);
-				$.getJSON(fileConnector + '?mode=addfolder&path=' + getCurrentPath() + '&config=' + userconfig + '&name=' + encodeURIComponent(foldername) + '&time=' + new Date().getTime(), function(result) {
+				$.getJSON(buildConnectorUrl({
+					mode: 'addfolder',
+					path: getCurrentPath(),
+					name: foldername
+				}), function(result) {
 					if(result['Code'] == 0) {
 						addFolder(result['Parent']);
 						getFolderInfo(result['Parent']);
@@ -876,7 +919,7 @@ var createFileTree = function() {
 // contextual menu option in list views.
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
-	var url = createPreviewUrl(data['Preview']);
+	var url = createPreviewUrl(data['Path']);
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 	 	if(window.tinyMCEPopup) {
         	// use TinyMCE > 3.0 integration method
@@ -993,11 +1036,13 @@ var renameItem = function(data) {
 				return false;
 			}
 
-			var connectString = fileConnector + '?mode=rename&old=' + encodeURIComponent(data['Path']) + '&new=' + encodeURIComponent(givenName) + '&config=' + userconfig;
-
 			$.ajax({
 				type: 'GET',
-				url: connectString,
+				url: buildConnectorUrl({
+					mode: 'rename',
+					old: data['Path'],
+					new: givenName
+				}),
 				dataType: 'json',
 				async: false,
 				success: function(result) {
@@ -1075,7 +1120,7 @@ var replaceItem = function(itemData) {
 			.fileupload({
 				autoUpload: true,
 				dataType: 'json',
-				url: fileConnector + '?config=' + userconfig,
+				url: buildConnectorUrl(),
 				paramName: config.upload.paramName
 			})
 
@@ -1172,11 +1217,13 @@ var moveItemPrompt = function(data) {
 // Called by clicking the "Move" button in detail views
 // or choosing the "Move" contextual menu option in list views.
 var moveItem = function(oldPath, newPath) {
-	var connectString = fileConnector + '?mode=move&old=' + encodeURIComponent(oldPath) + '&new=' + encodeURIComponent(newPath) + '&config=' + userconfig;
-
 	$.ajax({
 		type: 'GET',
-		url: connectString,
+		url: buildConnectorUrl({
+			mode: 'move',
+			old: oldPath,
+			new: newPath
+		}),
 		dataType: 'json',
 		async: false,
 		success: function(result) {
@@ -1231,11 +1278,13 @@ var deleteItem = function(data) {
 
 	var doDelete = function(e, value, message, formVals) {
 		if(!value) return;
-		var connectString = fileConnector + '?mode=delete&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig + '&time=' + new Date().getTime();
 
 		$.ajax({
 			type: 'GET',
-			url: connectString,
+			url: buildConnectorUrl({
+				mode: 'delete',
+				path: data['Path']
+			}),
 			dataType: 'json',
 			async: false,
 			success: function(result) {
@@ -1283,16 +1332,20 @@ var deleteItem = function(data) {
 // Called by clicking the "Download" button in detail views
 // or choosing the "Download" contextual menu item in list views.
 var downloadItem = function(data) {
-	var connectString = fileConnector + '?mode=download&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig;
+	var queryParams = {
+		mode: 'download',
+		path: data['Path']
+	};
 
 	$.ajax({
 		type: 'GET',
-		url: connectString + '&time=' + new Date().getTime(),
+		url: buildConnectorUrl(queryParams),
 		dataType: 'json',
 		async: false,
 		success: function(result) {
 			if(result['Code'] == 0) {
-				window.location = connectString + '&force=true&time=' + new Date().getTime();
+				queryParams.force = 'true';
+				window.location = buildConnectorUrl(queryParams);
 			} else {
 				$.prompt(result['Error']);
 			}
@@ -1310,11 +1363,13 @@ var editItem = function(data) {
 
 	$('#edit-file').click(function() {
 		$(this).hide(); // hiding Edit link
-		var connectString = fileConnector + '?mode=editfile&path=' + encodeURIComponent(data['Path']) + '&config=' + userconfig + '&time=' + new Date().getTime();
 
 		$.ajax({
 			type: 'GET',
-			url: connectString,
+			url: buildConnectorUrl({
+				mode: 'editfile',
+				path: data['Path']
+			}),
 			dataType: 'json',
 			async: false,
 			success: function (result) {
@@ -1352,7 +1407,7 @@ var editItem = function(data) {
 
 						$.ajax({
 							type: 'POST',
-							url: fileConnector + '?config=' + userconfig,
+							url: buildConnectorUrl(),
 							dataType: 'json',
 							data: postData,
 							async: false,
@@ -1781,7 +1836,10 @@ function getContextMenuItems($item) {
 
 // Binds contextual menus to items in list and grid views.
 var setMenus = function(action, path) {
-	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + new Date().getTime(), function(data) {
+	$.getJSON(buildConnectorUrl({
+		mode: 'getinfo',
+		path: path
+	}), function(data) {
 		switch(action) {
 			case 'select':
 				selectItem(data);
@@ -1826,7 +1884,10 @@ var getFileInfo = function(file) {
 	setUploader(currentpath);
 
 	// Retrieve the data & populate the template.
-	$.getJSON(fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file) + '&config=' + userconfig + '&time=' + new Date().getTime(), function(data) {
+	$.getJSON(buildConnectorUrl({
+		mode: 'getinfo',
+		path: file
+	}), function(data) {
 		// is there any error or user is unauthorized
 		if(data.Code == '-1') {
 			handleError(data.Error);
@@ -1851,9 +1912,7 @@ var getFileInfo = function(file) {
 		// add the new markup to the DOM
 		getSectionContainer($fileinfo).html(template);
 
-		// if file is an image we display the preview
-		var previewPath = isImageFile(data['Filename']) ? data['Preview'] : data['Thumbnail'];
-		$fileinfo.find('img').attr('src', createPreviewUrl(previewPath));
+		$fileinfo.find('img').attr('src', createImageUrl(data));
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
 		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
@@ -1868,13 +1927,12 @@ var getFileInfo = function(file) {
 		if(isDocumentFile(data['Filename']) && config.docs.showGoogleViewer == true) {
 			getGoogleViewer(data);
 		}
-		if(isEditableFile(data['Filename']) && config.edit.enabled == true && data['Protected']==0) {
+		if(isEditableFile(data['Filename']) && config.edit.enabled == true && data['Protected'] == 0) {
 			editItem(data);
 		}
 
-		var url = createPreviewUrl(data['Preview']);
-		if(data['Protected']==0) {
-			$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
+		if(data['Protected'] == 0) {
+			$fileinfo.find('div#tools').append('<a id="copy-button" data-clipboard-text="'+ createPreviewUrl(data['Path']) + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
 
 			// zeroClipboard code
 			ZeroClipboard.config({swfPath: config.globals.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
@@ -1909,7 +1967,6 @@ var getFileInfo = function(file) {
 // Clean up unnecessary item data
 var prepareItemInfo = function(item) {
 	var data = $.extend({}, item);
-	delete data['Thumbnail'];
 	delete data['Error'];
 	delete data['Code'];
 	return data;
@@ -1950,7 +2007,7 @@ var getFolderInfo = function(path) {
 
 			if(!isFile(path) && path !== fileRoot) {
 				parentNode = '<li class="directory-parent" data-path="' + getParentDirname(path) + '" oncontextmenu="return false;">';
-				parentNode += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/_Parent.png" alt="Parent" /></div>';
+				parentNode += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/' + config.icons.parent +'" alt="Parent" /></div>';
 				parentNode += '</li>';
 				$ul.append(parentNode);
 			}
@@ -1969,7 +2026,7 @@ var getFolderInfo = function(path) {
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + createPreviewUrl(item['Thumbnail']) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + createImageUrl(item, true) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
@@ -2164,12 +2221,19 @@ var getFolderData = function(path) {
 	// TODO: it is also possible to cache based on "source" (filetree / main window list)
 	// caches result for specified path to get rid of redundant requests
 	if(!loadedFolderData[path] || (Date.now() - loadedFolderData[path].cached) > 2000) {
-		var url = fileConnector + '?mode=getfolder&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&showThumbs=' + config.options.showThumbs + '&time=' + new Date().getTime();
-		if ($.urlParam('type')) url += '&type=' + $.urlParam('type');
+		var queryParams = {
+			mode: 'getfolder',
+			path: path,
+			showThumbs: config.options.showThumbs
+		};
+
+		if($.urlParam('type')) {
+			queryParams.type = $.urlParam('type');
+		}
 
 		$.ajax({
 			'async': false,
-			'url': url,
+			'url': buildConnectorUrl(queryParams),
 			'dataType': "json",
 			'cache': false,
 			'success': function(data) {
@@ -2284,7 +2348,7 @@ $(function() {
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
 
-	// init baseUrl
+	// set baseUrl
 	if(config.options.baseUrl === false) {
 		baseUrl = location.origin + location.pathname;
 	} else {
@@ -2295,6 +2359,10 @@ $(function() {
 		baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
 	}
 	baseUrl = trimSlashes(baseUrl) + '/';
+
+	// set fileConnector
+	var langConnector = 'connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
+	fileConnector = config.options.fileConnector || baseUrl + langConnector;
 
 	// changes files root to restrict the view to a given folder
 	if($.urlParam('exclusiveFolder') != 0) {
@@ -2383,7 +2451,9 @@ $(function() {
 		var message = '<div class="title">' + lg.summary_title + '</div>';
 		var $prompt = $.prompt(message).addClass('summary-popup');
 
-		$.getJSON(fileConnector + '?mode=summarize&config=' + userconfig, function(result) {
+		$.getJSON(buildConnectorUrl({
+			mode: 'summarize'
+		}), function(result) {
 			if(result['Code'] == 0) {
 				var $content = $prompt.find('.jqimessage'),
 					size = formatBytes(result['Size'], true);
@@ -2499,11 +2569,11 @@ $(function() {
 					file = data.files[0];
 
 				if(file.chunkUploaded) {
-					var path = currentPath + file.serverName,
-						url = fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + new Date().getTime();
-
 					$.ajax({
-						'url': url,
+						'url': buildConnectorUrl({
+							mode: 'getinfo',
+							path: currentPath + file.serverName
+						}),
 						'dataType': "json",
 						'async': false,
 						'success': function(result) {
@@ -2532,10 +2602,10 @@ $(function() {
 					file = data.files[0];
 
 				if(file.chunkUploaded) {
-					var path = currentPath + file.serverName,
-						url = fileConnector + '?mode=delete&path=' + encodeURIComponent(path) + '&config=' + userconfig + '&time=' + new Date().getTime();
-
-					$.getJSON(url, function(result) {
+					$.getJSON(buildConnectorUrl({
+						mode: 'delete',
+						path: currentPath + file.serverName
+					}), function(result) {
 						if(result['Code'] == 0) {
 							var path = result['Path'];
 							removeNode(path);
@@ -2576,7 +2646,7 @@ $(function() {
 					dataType: 'json',
 					dropZone: $dropzone,
 					maxChunkSize: config.upload.chunkSize,
-					url: fileConnector + '?config=' + userconfig,
+					url: buildConnectorUrl(),
 					paramName: config.upload.paramName,
 					formData: {
 						mode: 'add',
@@ -2751,7 +2821,7 @@ $(function() {
 			.fileupload({
 				autoUpload: false,
 				dataType: 'json',
-				url: fileConnector + '?config=' + userconfig,
+				url: buildConnectorUrl(),
 				paramName: config.upload.paramName
 			})
 

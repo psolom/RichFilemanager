@@ -39,4 +39,8 @@ $config['fmUrl'] = null;
 //$config['plugin'] = 's3';
 $config['plugin'] = null;
 
+$config['logger'] = array(
+    'enabled' => true,
+);
+
 return $config;
