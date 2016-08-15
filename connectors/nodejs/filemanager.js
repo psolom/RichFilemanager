@@ -21,6 +21,12 @@
  Next, you will need a copy of your filemanager.config.json file in /config .  This is to keep from having to do an ajax request back to the ui
  for every single request.  Hopefully in future we will get the server side and client side config seperated into two seperate files.  In the
  mean-time, this means keeping two copies of your config when using nodejs, not ideal, sorry.
+ 
+ Lastly, you will need to require this file and use it as a route.  My call looks like this
+
+ router.use('/filemanager', require('./filemanager')());
+ 
+ If you are new to nodejs and express, the first parameter defines the endpoint, and the second the loading of this file.
  */
 
 var express = require('express');
@@ -172,9 +178,9 @@ module.exports = function () {
                 callback(errors(err));
             } else {
                 var loopInfo = {
-                        results: {},
-                        total: files.length
-                    },
+                    results: {},
+                    total: files.length
+                },
                     i;
 
                 if (loopInfo.total === 0) {
@@ -237,8 +243,8 @@ module.exports = function () {
     function renameIndividualFile(loopInfo, files, pp, callback, $index) {
         if (loopInfo.error === false) {
             var oldfilename = paths.join(__appRoot, files[$index].path),
-                // new files comes with a directory, replaced files with a filename.  I think there is a better way to handle this
-                // but this works as a starting point
+            // new files comes with a directory, replaced files with a filename.  I think there is a better way to handle this
+            // but this works as a starting point
                 newfilename = paths.join(
                     pp.osFullDirectory,
                     pp.isDirectory ? pp.relativePath : "",
@@ -307,95 +313,95 @@ module.exports = function () {
                 path = req.query.path;
 
             switch (mode.trim()) {
-                case "getinfo":
-                    parsePath(path, function (pp) {
-                        getinfo(pp, function (result) {
-                            respond(res, result);
-                        });//getinfo
+            case "getinfo":
+                parsePath(path, function (pp) {
+                    getinfo(pp, function (result) {
+                        respond(res, result);
+                    });//getinfo
+                });//parsePath
+                break;
+            case "getfolder":
+                parsePath(path, function (pp) {
+                    getfolder(pp, function (result) {
+                        respond(res, result);
+                    });//getfolder
+                });//parsePath
+                break;
+            case "getimage":
+            // until I implement the thumbnail feature, getimage is just returning the entire file
+            // so this falls through to download.
+            case "download":
+                parsePath(path, function (pp) {
+                    if (req.query.force === 'true' || req.query.thumbnail === "true") {
+                        res.setHeader("content-disposition", "attachment; filename=" + pp.filename);
+                        res.setHeader("content-type", "application/octet-stream");
+                        res.sendFile(pp.osFullPath);
+                    } else {
+                        respond(res, {Code: 0});
+                    }//if
+                });//parsePath
+                break;
+            case "addfolder":
+                parsePath(path, function (pp) {
+                    addfolder(pp, req.query.name, function (result) {
+                        respond(res, result);
+                    });//addfolder
+                });//parsePath
+                break;
+            case "delete":
+                parsePath(path, function (pp) {
+                    deleteItem(pp, function (result) {
+                        respond(res, result);
                     });//parsePath
-                    break;
-                case "getfolder":
-                    parsePath(path, function (pp) {
-                        getfolder(pp, function (result) {
-                            respond(res, result);
-                        });//getfolder
-                    });//parsePath
-                    break;
-                case "getimage":
-                // until I implement the thumbnail feature, getimage is just returning the entire file
-                // so this falls through to download.
-                case "download":
-                    parsePath(path, function (pp) {
-                        if (req.query.force === 'true' || req.query.thumbnail === "true") {
-                            res.setHeader("content-disposition", "attachment; filename=" + pp.filename);
-                            res.setHeader("content-type", "application/octet-stream");
-                            res.sendFile(pp.osFullPath);
-                        } else {
-                            respond(res, {Code: 0});
-                        }//if
-                    });//parsePath
-                    break;
-                case "addfolder":
-                    parsePath(path, function (pp) {
-                        addfolder(pp, req.query.name, function (result) {
-                            respond(res, result);
-                        });//addfolder
-                    });//parsePath
-                    break;
-                case "delete":
-                    parsePath(path, function (pp) {
-                        deleteItem(pp, function (result) {
-                            respond(res, result);
-                        });//parsePath
-                    });//parsePath
-                    break;
-                case "rename":
-                    parsePath(req.query.old, function (opp) {
-                        var newPath = paths.posix.parse(opp.uiPath).dir,
-                            newish = paths.posix.join(newPath, req.query.new);
+                });//parsePath
+                break;
+            case "rename":
+                parsePath(req.query.old, function (opp) {
+                    var newPath = paths.posix.parse(opp.uiPath).dir,
+                        newish = paths.posix.join(newPath, req.query.new);
 
-                        parseNewPath(newish, function (npp) {
-                            rename(opp, npp, function (result) {
-                                respond(res, result);
-                            });//rename
-                        });//parseNewPath
-                    });//parsePath
-                    break;
-                case "move":
-                    parsePath(req.query.old, function (opp) {
-                        parseNewPath(paths.posix.join("/", req.query.new, opp.filename), function (npp) {
-                            rename(opp, npp, function (result) {
-                                respond(res, result);
-                            });//rename
-                        });//parseNewPath
-                    });//parsePath
-                    break;
-                default:
-                    console.log("no matching GET route found with mode: '", mode.trim(), " query -> ", req.query);
-                    respond(res, {Code: 0});
+                    parseNewPath(newish, function (npp) {
+                        rename(opp, npp, function (result) {
+                            respond(res, result);
+                        });//rename
+                    });//parseNewPath
+                });//parsePath
+                break;
+            case "move":
+                parsePath(req.query.old, function (opp) {
+                    parseNewPath(paths.posix.join("/", req.query.new, opp.filename), function (npp) {
+                        rename(opp, npp, function (result) {
+                            respond(res, result);
+                        });//rename
+                    });//parseNewPath
+                });//parsePath
+                break;
+            default:
+                console.log("no matching GET route found with mode: '", mode.trim(), " query -> ", req.query);
+                respond(res, {Code: 0});
             }//switch
         })//get
         .post(upload.array("files", 5), function (req, res) {
             var mode = req.body.mode;
 
             switch (mode.trim()) {
-                case "add":
-                    parsePath(req.body.currentpath, function (pp) {
-                        savefiles(pp, req.files, function (result) {
-                            respond(res, result);
-                        });//savefiles
-                    });//parsePath
-                    break;
-                case "replace":
-                    parsePath(req.body.newfilepath, function (pp) {
-                        savefiles(pp, req.files, function (result) {
-                            respond(res, result);
-                        });//savefiles
-                    });//parsePath
-                    break;
-                default:
-                    console.log("no matching POST route found with mode: '", mode.trim(), " query -> ", req.query);
-                    respond(res, {Code: 0});
+            case "add":
+                parsePath(req.body.currentpath, function (pp) {
+                    savefiles(pp, req.files, function (result) {
+                        respond(res, result);
+                    });//savefiles
+                });//parsePath
+                break;
+            case "replace":
+                parsePath(req.body.newfilepath, function (pp) {
+                    savefiles(pp, req.files, function (result) {
+                        respond(res, result);
+                    });//savefiles
+                });//parsePath
+                break;
+            default:
+                console.log("no matching POST route found with mode: '", mode.trim(), " query -> ", req.query);
+                respond(res, {Code: 0});
             }//switch
         }); //post
 
