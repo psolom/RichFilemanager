@@ -44,20 +44,23 @@ abstract class BaseFilemanager
         ),
     );
 
-
-    public function __construct($extraConfig)
+    /**
+     * BaseFilemanager constructor.
+     * @param array $config
+     */
+    public function __construct($config = array())
     {
         // fix display non-latin chars correctly
         // https://github.com/servocoder/RichFilemanager/issues/7
         setlocale(LC_CTYPE, 'en_US.UTF-8');
 
-        $this->fm_path = isset($extraConfig['fmPath']) && !empty($extraConfig['fmPath'])
-            ? $extraConfig['fmPath']
+        $this->fm_path = isset($config['fmPath']) && !empty($config['fmPath'])
+            ? $config['fmPath']
             : dirname(dirname(dirname(__FILE__)));
 
         // getting default config file
         $content = file_get_contents($this->fm_path . "/scripts/filemanager.config.default.json");
-        $config_default = json_decode($content, true);
+        $config_json_default = json_decode($content, true);
 
         // getting user config file
         if(isset($_REQUEST['config'])) {
@@ -72,32 +75,12 @@ abstract class BaseFilemanager
         } else {
             $content = file_get_contents($this->fm_path . "/scripts/filemanager.config.json");
         }
-        $config = json_decode($content, true);
+        $config_json = json_decode($content, true);
 
-        // Prevent following bug https://github.com/simogeo/Filemanager/issues/398
-        $config_default['security']['uploadRestrictions'] = array();
-
-        if(!$config) {
+        if(!$config_json) {
             $this->error("Error parsing the settings file! Please check your JSON syntax.");
         }
-        $this->config = array_replace_recursive($config_default, $config);
-
-        // override config options if needed
-        if(!empty($extraConfig)) {
-            $this->setup($extraConfig);
-        }
-    }
-
-    /**
-     * Extend config from file
-     * @param array $extraConfig Should be formatted as json config array.
-     */
-    public function setup($extraConfig)
-    {
-        // Prevent following bug https://github.com/simogeo/Filemanager/issues/398
-        $config_default['security']['uploadRestrictions'] = array();
-
-        $this->config = array_replace_recursive($this->config, $extraConfig);
+        $this->config = FmHelper::mergeConfigs($config_json_default, $config_json, $config);
     }
 
     /**

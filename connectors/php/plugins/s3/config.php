@@ -35,32 +35,6 @@ $config['s3']['localThumbsPath'] = 'userfilesS3';
  */
 $config['s3']['allowBulk'] = true;
 
-/**
- * Image preview obtain/send mode.
- * NOTE: used only if thumbnails are stored at S3 server.
- *
- * @see S3Filemanager::RETRIEVE_MODE_BROWSER
- * 1) Your server generate URL to S3 object (send GET request to retrieve temporary URL for non-public S3 object);
- * 2) Browser makes GET request for the S3 object by generated URL - AWS sends image to browser.
- * (2 requests to S3; extra costs for Data Transfer "OUT From Amazon S3 To Internet")
- *
- * @see S3Filemanager::RETRIEVE_MODE_SERVER
- * 1) Your server makes GET request to obtain image stream and send it to browser directly.
- * There is no extra charge for data transfer if you use AWS EC2 server in the same region as your S3 bucket.
- * (1 request to S3; extra load to your server; no or lower costs for data transfer in comparison with "OUT From Amazon S3 To Internet")
- *
- * @link https://aws.amazon.com/s3/pricing/
- * @var string
- */
-$config['s3']['thumbsRetrieveMode'] = S3Filemanager::RETRIEVE_MODE_SERVER;
-
-/**
- * Presign url for non-public S3 objects.
- * Currently used only for thumbnails if "thumbsRetrieveMode" === S3Filemanager::RETRIEVE_MODE_BROWSER
- * @var boolean
- */
-$config['s3']['presignUrl'] = true;
-
 
 /*******************************************************************************
  * S3 SETTINGS

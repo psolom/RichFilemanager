@@ -1,8 +1,9 @@
 <?php
 require_once('FmApplication.php');
 
+// path to "application" folder
 defined('FM_APP_PATH') or define('FM_APP_PATH', dirname(__FILE__));
-
+// path to PHP connector root folder
 defined('FM_ROOT_PATH') or define('FM_ROOT_PATH', dirname(dirname(__FILE__)));
 
 /**

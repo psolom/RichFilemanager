@@ -1,36 +1,52 @@
 <?php
 /**
- *	BaseHelper PHP class
+ *	FmHelper PHP class
  *
  *	@license	MIT License
  *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
 
-class BaseHelper
+class FmHelper
 {
-    public static function getInstance()
+    /**
+     * Merges two or more arrays into one recursively.
+     * If each array has an element with the same string key value, the latter will overwrite the former.
+     * Recursive merging will be conducted if both arrays have an element of array type and are having the same key.
+     * For array elements which are entirely integer-keyed, latter will straight overwrite the former.
+     * For integer-keyed elements, the elements from the latter array will be appended to the former array.
+     * @param array $a array to be merged to
+     * @param array $b array to be merged from. You can specify additional
+     * arrays via third argument, fourth argument etc.
+     * @return array the merged array (the original arrays are not changed.)
+     */
+    public static function mergeConfigs($a, $b)
     {
-        $baseConfig = require_once('config.php');
-
-        if (isset($baseConfig['plugin']) && !empty($baseConfig['plugin'])) {
-            $pluginName = $baseConfig['plugin'];
-            $pluginPath = 'plugins' . DIRECTORY_SEPARATOR . $pluginName . DIRECTORY_SEPARATOR;
-            $className = ucfirst($pluginName) . 'Filemanager';
-            require_once($pluginPath . $className . '.php');
-            $pluginConfig = require_once($pluginPath . 'config.php');
-            $config = array_replace_recursive($baseConfig, $pluginConfig);
-            $fm = new $className($config);
-        } else {
-            require_once('LocalFilemanager.php');
-            $fm = new LocalFilemanager($baseConfig);
+        $args = func_get_args();
+        $res = array_shift($args);
+        while (!empty($args)) {
+            $next = array_shift($args);
+            foreach ($next as $k => $v) {
+                if (is_int($k)) {
+                    if (isset($res[$k])) {
+                        $res[] = $v;
+                    } else {
+                        $res[$k] = $v;
+                    }
+                } elseif (is_array($v) && isset($res[$k]) && is_array($res[$k])) {
+                    // check if array keys is sequential to consider its as indexed array
+                    // http://stackoverflow.com/questions/173400/how-to-check-if-php-array-is-associative-or-sequential
+                    if (array_keys($res[$k]) === range(0, count($res[$k]) - 1)) {
+                        $res[$k] = $v;
+                    } else {
+                        $res[$k] = self::mergeConfigs($res[$k], $v);
+                    }
+                } else {
+                    $res[$k] = $v;
+                }
+            }
         }
-
-        if(!auth()) {
-            $fm->error($fm->lang('AUTHORIZATION_REQUIRED'));
-        }
-
-        return $fm;
+        return $res;
     }
 }
 

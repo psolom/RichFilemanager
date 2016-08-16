@@ -14,8 +14,8 @@
 // error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 // ini_set('display_errors', '1');
 
-require_once('BaseHelper.php');
 require_once('application/Fm.php');
+require_once('application/FmHelper.php');
 
 function auth()
 {
@@ -25,7 +25,19 @@ function auth()
     return true;
 }
 
-$fm = Fm::app()->getInstance();
+$config = array();
+
+// example to override the default config
+//$config = array(
+//    'security' => array(
+//        'uploadPolicy' => 'DISALLOW_ALL',
+//        'uploadRestrictions' => array(
+//            'pdf',
+//        ),
+//    ),
+//);
+
+$fm = Fm::app()->getInstance($config);
 
 // use to setup files root folder
 //$fm->setFileRoot('userfiles', true);

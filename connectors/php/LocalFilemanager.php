@@ -23,9 +23,9 @@ class LocalFilemanager extends BaseFilemanager
 	protected $path_to_files;
 	protected $dynamic_fileroot = 'userfiles';
 
-	public function __construct($extraConfig = array())
+	public function __construct($config = array())
     {
-		parent::__construct($extraConfig);
+		parent::__construct($config);
 
 		$fileRoot = $this->config['options']['fileRoot'];
 		if ($fileRoot !== false) {
