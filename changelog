@@ -55,3 +55,15 @@ Version 1.0.5
 - Fixed bug: Path issue upon file selection in WYSIWYG editor
 - Fixed bug: It is possible to select folders in WYSIWYG editor
 - Fixed bug: Preview of media and pdf files is broken when the path contains special chars (fixed by path encoding)
+
+
+Version 1.0.6
+---------------------------
+- removed `fileConnector` option from server-side;
+- removed 'Preview' and 'Thumbnail' params from `getinfo` response;
+- all preview paths (images, media, office files) are now associated to connector. Absolute paths for icons exclusively;
+- all preview paths are now built at the client-side (connector independent) for better API support;
+- added support of seeking for media files in PHP connector (including S3 storage plugin);
+- added capability to pass custom configuration options in filemanager.php to override the default config;
+- PHP connector refactored, following OOP practices;
+- added icons for OpenOffice files;
