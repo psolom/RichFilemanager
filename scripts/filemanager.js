@@ -22,29 +22,6 @@ $.urlParam = function(name) {
 	}
 };
 
-// function to normalize a path (source: https://github.com/dfkaye/simple-path-normalize)
-var normalizePath = function(path){
-	var BLANK = ''; var SLASH = '/'; var DOT = '.';var DOTS = DOT.concat(DOT);
- 	if (!path || path === SLASH) {
-		return SLASH;
-	}
-
-	var src = path.split(SLASH);
-	var target = (path[0] === SLASH || path[0] === DOT) ? [BLANK] : [];
-	var i, len, token;
-	for (i = 0, len = src.length; i < len; ++i) {
-		token = src[i] || BLANK;
-		if (token === DOTS) {
-			if (target.length > 1) {
-				target.pop();
-			}
-		} else if (token !== BLANK && token !== DOT) {
-			target.push(token);
-		}
-	}
-	return target.join(SLASH).replace(/[\/]{2,}/g, SLASH) || SLASH;
-};
-
 /*---------------------------------------------------------
   Setup, Layout, and Status Functions
 ---------------------------------------------------------*/
@@ -573,7 +550,6 @@ var createImageUrl = function(data, thumbnail) {
 			}
 		}
 	}
-	console.log('imagePath', imagePath);
 	return imagePath;
 };
 
