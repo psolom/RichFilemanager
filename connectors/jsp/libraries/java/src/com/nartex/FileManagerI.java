@@ -31,7 +31,7 @@ public interface FileManagerI {
 
 	public abstract JSONObject getInfo() throws JSONException;
 
-	public abstract JSONObject getFolder() throws JSONException, IOException;
+	public abstract JSONObject getFolder(HttpServletRequest request) throws JSONException, IOException;
 
 	public abstract JSONObject rename();
 
@@ -45,7 +45,7 @@ public interface FileManagerI {
 
 	public abstract JSONObject download(HttpServletRequest request, HttpServletResponse resp);
 
-	public abstract void preview(HttpServletResponse resp);
+	public abstract void preview(HttpServletRequest request, HttpServletResponse resp);
 
 	public abstract String getConfigString(String key);
 

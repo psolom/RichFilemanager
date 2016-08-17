@@ -1,4 +1,6 @@
 <?php
+require_once('application/facade/Log.php');
+
 /**
  *	BaseFilemanager PHP class
  *
@@ -19,8 +21,6 @@ abstract class BaseFilemanager
     protected $language = array();
     protected $get = array();
     protected $post = array();
-    protected $logger = false;
-    protected $logfile = '';
     protected $fm_path = '';
 
     /**
@@ -32,8 +32,6 @@ abstract class BaseFilemanager
         'Filename'  => '',
         'File Type' => '',
         'Protected' => 0,
-        'Thumbnail' => '',
-        'Preview'   => '',
         'Error'     => '',
         'Code'      => 0,
         'Properties' => array(
@@ -46,73 +44,43 @@ abstract class BaseFilemanager
         ),
     );
 
-
-    public function __construct($extraConfig)
+    /**
+     * BaseFilemanager constructor.
+     * @param array $config
+     */
+    public function __construct($config = array())
     {
         // fix display non-latin chars correctly
         // https://github.com/servocoder/RichFilemanager/issues/7
         setlocale(LC_CTYPE, 'en_US.UTF-8');
 
-        $this->fm_path = isset($extraConfig['fmPath']) && !empty($extraConfig['fmPath'])
-            ? $extraConfig['fmPath']
+        $this->fm_path = isset($config['fmPath']) && !empty($config['fmPath'])
+            ? $config['fmPath']
             : dirname(dirname(dirname(__FILE__)));
 
         // getting default config file
         $content = file_get_contents($this->fm_path . "/scripts/filemanager.config.default.json");
-        $config_default = json_decode($content, true);
+        $config_json_default = json_decode($content, true);
 
         // getting user config file
         if(isset($_REQUEST['config'])) {
             $this->getvar('config');
             if (file_exists($this->fm_path . "/scripts/" . $_REQUEST['config'])) {
-                $this->__log('Loading ' . basename($this->get['config']) . ' config file.');
+                Log::info('Loading ' . basename($this->get['config']) . ' config file.');
                 $content = file_get_contents($this->fm_path . "/scripts/" . basename($this->get['config']));
             } else {
-                $this->__log($this->get['config'] . ' config file does not exists.');
+                Log::info($this->get['config'] . ' config file does not exists.');
                 $this->error("Given config file (".basename($this->get['config']).") does not exist !");
             }
         } else {
             $content = file_get_contents($this->fm_path . "/scripts/filemanager.config.json");
         }
-        $config = json_decode($content, true);
+        $config_json = json_decode($content, true);
 
-        // Prevent following bug https://github.com/simogeo/Filemanager/issues/398
-        $config_default['security']['uploadRestrictions'] = array();
-
-        if(!$config) {
+        if(!$config_json) {
             $this->error("Error parsing the settings file! Please check your JSON syntax.");
         }
-        $this->config = array_replace_recursive($config_default, $config);
-
-        // override config options if needed
-        if(!empty($extraConfig)) {
-            $this->setup($extraConfig);
-        }
-
-        // set logfile path according to system if not set into config file
-        if(!isset($this->config['options']['logfile'])) {
-            $this->config['options']['logfile'] = sys_get_temp_dir() . '/filemanager.log';
-        }
-
-        // Log actions or not?
-        if ($this->config['options']['logger'] == true ) {
-            if(isset($this->config['options']['logfile'])) {
-                $this->logfile = $this->config['options']['logfile'];
-            }
-            $this->enableLog();
-        }
-    }
-
-    /**
-     * Extend config from file
-     * @param array $extraConfig Should be formatted as json config array.
-     */
-    public function setup($extraConfig)
-    {
-        // Prevent following bug https://github.com/simogeo/Filemanager/issues/398
-        $config_default['security']['uploadRestrictions'] = array();
-
-        $this->config = array_replace_recursive($this->config, $extraConfig);
+        $this->config = FmHelper::mergeConfigs($config_json_default, $config_json, $config);
     }
 
     /**
@@ -182,8 +150,7 @@ abstract class BaseFilemanager
     abstract function getimage($thumbnail);
 
     /**
-     * Read file data - filemanager action
-     * Intended to read and output file contents when it's not possible to get file by direct URL (e.g. protected file).
+     * Read and output file contents data - filemanager action
      * Initially implemented for viewing audio/video/docs/pdf and other files hosted on AWS S3 remote server.
      * @see S3Filemanager::readfile()
      */
@@ -312,7 +279,7 @@ abstract class BaseFilemanager
         }
 
         echo json_encode($response);
-        die();
+        exit;
     }
 
     /**
@@ -327,10 +294,10 @@ abstract class BaseFilemanager
             'Properties' => $this->defaultInfo['Properties'],
         );
 
-        $this->__log('error message: "' . $string . '"', 2);
+        Log::info('error message: "' . $string . '"');
 
         echo json_encode($array);
-        die();
+        exit;
     }
 
     /**
@@ -345,64 +312,6 @@ abstract class BaseFilemanager
         } else {
             return 'Language string error on ' . $string;
         }
-    }
-
-    /**
-     * Write log to file
-     * @param string $msg
-     * @param int $traceLevel
-     */
-    protected function __log($msg, $traceLevel = 1)
-    {
-        if($this->logger == true) {
-            $backtrace = debug_backtrace();
-            $entry = $backtrace[$traceLevel];
-            $info = "{$entry['class']}::{$entry['function']}()";
-
-            $fp = fopen($this->logfile, "a");
-            $str = "[" . date("d/m/Y h:i:s", time()) . "]#".  $this->get_user_ip() . "#" . $info . " - " . $msg;
-            fwrite($fp, $str . PHP_EOL);
-            fclose($fp);
-        }
-    }
-
-    public function enableLog($logfile = '')
-    {
-        $this->logger = true;
-
-        if($logfile != '') {
-            $this->logfile = $logfile;
-        }
-
-        $this->__log(__METHOD__ . ' - Log enabled (in '. $this->logfile. ' file)');
-    }
-
-    public function disableLog()
-    {
-        $this->logger = false;
-
-        $this->__log(__METHOD__ . ' - Log disabled');
-    }
-
-    /**
-     * Return user IP address
-     * @return mixed
-     */
-    protected function get_user_ip()
-    {
-        $client  = @$_SERVER['HTTP_CLIENT_IP'];
-        $forward = @$_SERVER['HTTP_X_FORWARDED_FOR'];
-        $remote  = $_SERVER['REMOTE_ADDR'];
-
-        if (filter_var($client, FILTER_VALIDATE_IP)) {
-            $ip = $client;
-        } elseif (filter_var($forward, FILTER_VALIDATE_IP)) {
-            $ip = $forward;
-        } else {
-            $ip = $remote;
-        }
-
-        return $ip;
     }
 
     /**

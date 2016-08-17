@@ -14,15 +14,19 @@
   
   // keep variables in non global object
 var fm = {};
-fm.lg = [];
+var lg = [];
 
 // Default relative files root, may be changed with query params during initialization
-fm.fileRoot = '/';
+var fileRoot = '/';
 
 // Base URL to access the filemanager
 var baseUrl;
 
-fm.config = {};
+var start;
+var langConnector;
+var capabilities;
+
+var config = {};
 var initConfigLastPromise = jQuery.Deferred();
 
 var promisePluginPath = jQuery.Deferred();
@@ -35,8 +39,13 @@ var promiseUser = jQuery.Deferred();
 // <head> included files collector
 var HEAD_included_files = new Array();
 
+// URL to API connector, based on `baseUrl` if not specified explicitly
+//var fileConnector;
+
 // this is probably needed only once, but could be reinitialized and reevaluated, if needed
-fm.fileTreeloaded = jQuery.Deferred();
+var fileTreeloaded = jQuery.Deferred();
+
+var userconfig;
 
 // function to retrieve GET params
 $.urlParam = function(name) {
@@ -84,7 +93,7 @@ var normalizePath = function(path){
 
 // Retrieves config settings from filemanager.config.json
 var loadConfigFile = function (type) {
-    var json = null, pluginPath = ".";
+    var json = null, pluginPath = '.';
     if (window._FMConfig && window._FMConfig.pluginPath) {
       pluginPath = window._FMConfig.pluginPath;
     }
@@ -95,10 +104,10 @@ var loadConfigFile = function (type) {
     if(type == 'user') {
       if($.urlParam('config') != 0) {
         url = pluginPath + '/scripts/' + $.urlParam('config');
-        fm.userconfig = $.urlParam('config');
+        userconfig = $.urlParam('config');
       } else {
         url = pluginPath + '/scripts/filemanager.config.json';
-        fm.userconfig = 'filemanager.config.json';
+        userconfig = 'filemanager.config.json';
       }
     } else {
       url = pluginPath + '/scripts/filemanager.config.default.json';
@@ -129,64 +138,61 @@ var loadConfigFile = function (type) {
        promiseUser.resolve(json);
   }, err);
   
-  $.when(promiseDefault, promiseUser, promisePluginPath).done(function(configd,config, configpp) {
+  $.when(promiseDefault, promiseUser, promisePluginPath).done(function(configd,configu, configpp) {
 				 // remove version from user config file
-				if (fm.config != undefined && fm.config !== null) delete fm.config.version;
+				if (config != undefined && config !== null) delete config.version;
 				// merge default config and user config file
-				fm.config = $.extend({}, configd, config, configpp); 	
+				config = $.extend({}, configd, configu, configpp); 	
 
-				if(fm.config.options.logger) fm.start = new Date().getTime();
+				if(config.options.logger) start = new Date().getTime();
 
 				// Sets paths to connectors based on language selection.
-				fm.fileConnector = fm.config.options.fileConnector ||  fm.config.globals.pluginPath + '/connectors/' + fm.config.options.lang + '/filemanager.' + fm.config.options.lang;
+				fileConnector = config.options.fileConnector ||  config.globals.pluginPath + '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
 
 				 // Sets paths to connectors based on language selection.
-				fm.langConnector = '/connectors/' + fm.config.options.lang + '/filemanager.' + fm.config.options.lang;
+				langConnector = '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
 				
 				// Read capabilities from config files if exists else apply default settings
-				fm.capabilities = fm.config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+				capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
 				 
 				 // Defines sort params
 				var chunks = [];
-				if(fm.config.options.fileSorting) {
-					chunks = fm.config.options.fileSorting.toLowerCase().split('_');
+				if(config.options.fileSorting) {
+					chunks = config.options.fileSorting.toLowerCase().split('_');
 				}
-
-				fm.config.configSortField = chunks[0] || 'name';
-				fm.config.configSortOrder = chunks[1] || 'asc';
+				config.configSortField = chunks[0] || 'name';
+				config.configSortOrder = chunks[1] || 'asc';
 
 				 // Get localized messages from file through culture var or from URL
 				if($.urlParam('langCode') != 0) {
-						 file_exists( fm.config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done( 
+						 file_exists( config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done( 
 							function(result) {
 								if (result) {
-									fm.config.options.culture = $.urlParam('langCode');
+									config.options.culture = $.urlParam('langCode');
 								} else {
 									var urlLang = $.urlParam('langCode').substring(0, 2);
-									file_exists( fm.config.globals.pluginPath + '/scripts/languages/'  + fm.urlLang + '.json').done( 
+									file_exists( config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.json').done( 
 										function(result) {
 											if(result) { 
-												fm.config.options.culture = urlLang;
+												config.options.culture = urlLang;
 											}
 										}
 									);
 								}
 						 });
 				}
-
 				wrapperInitConfigLastPromise = $.Deferred(function() {
 					 var self = this;
 					 $.ajax({
-							url: fm.config.globals.pluginPath + '/scripts/languages/'  + fm.config.options.culture + '.json',
+							url: config.globals.pluginPath + '/scripts/languages/'  + config.options.culture + '.json',
 							dataType: 'json'
 					 }).done( function (json) {
-								fm.lg = json;
+								lg = json;
 								initConfigLastPromise.resolve(json);
 								self.resolve(json);
 						});
 				}).promise(); 
   });
-
 
 // Stores path to be automatically expanded by filetree plugin
 var fullexpandedFolder = null;
@@ -196,7 +202,7 @@ var loadedFolderData = {};
 
 // Loads a given css file into header if not already included
 var loadCSS = function(href) {
-	href = fm.config.globals.pluginPath + href;
+	href = config.globals.pluginPath + href;
 	// check if already included
 	if($.inArray(href, HEAD_included_files) == -1) {
 		var cssLink = $("<link rel='stylesheet' type='text/css' href='" + href + "'>");
@@ -207,7 +213,7 @@ var loadCSS = function(href) {
 
 // Loads a given js file into header if not already included
 var loadJS = function(src) {
-	src = fm.config.globals.pluginPath + src;
+	src = config.globals.pluginPath + src;
 	// check if already included
 	if($.inArray(src, HEAD_included_files) == -1) {
 		var jsLink = $("<script type='text/javascript' src='" + src + "'>");
@@ -221,7 +227,7 @@ var loadTemplate = function(id, data) {
 	//loadJS('/scripts/JavaScript-Templates/js/tmpl.min.js');
 	var template;
 	$.ajax({
-		url: fm.config.globals.pluginPath + '/scripts/templates/' + id + '.html',
+		url: config.globals.pluginPath + '/scripts/templates/' + id + '.html',
 		async: false,
 		success: function(response) {
 			template = tmpl(response, data);
@@ -329,8 +335,8 @@ var adjustScrollbar = function($selector) {
 var displayPath = function (path, reduce) {
 	reduce = (typeof reduce === "undefined");
 
-	if (fm.config.options.showFullPath === false) {
-		path = path.replace(fm.fileRoot, "/");
+	if (config.options.showFullPath === false) {
+		path = path.replace(fileRoot, "/");
 		// if a "displayPathDecorator" function is defined, use it to decorate path
 		if ('function' === typeof displayPathDecorator) {
 			return displayPathDecorator(path);
@@ -360,14 +366,14 @@ var setViewButtonsFor = function(viewMode) {
 
 // Sanitize and transliterate file/folder name as server side (connector) way
 var cleanString = function(string, allowed) {
-	if(fm.config.security.normalizeFilename) {
+	if(config.security.normalizeFilename) {
 		// replace chars which are not related to any language
 		var replacements = {' ': '_', '\'': '_', '/': '', '\\': ''};
 		string = string.replace(/[\s\S]/g, function(c) {return replacements[c] || c});
 	}
 
 	// allow only latin alphabet
-	if(fm.config.options.charsLatinOnly) {
+	if(config.options.charsLatinOnly) {
 		loadJS('/scripts/speakingurl/speakingurl.min.js');
 		if (typeof allowed == "undefined") {
 			allowed = [];
@@ -406,7 +412,7 @@ var formatBytes = function(bytes, round) {
 	var n = parseFloat(bytes);
 	var d = parseFloat(round ? 1000 : 1024);
 	var c = 0;
-	var u = [fm.lg.bytes, fm.lg.kb, fm.lg.mb, fm.lg.gb];
+	var u = [lg.bytes, lg.kb, lg.mb, lg.gb];
 
 	while(true) {
 		if(n < d) {
@@ -430,17 +436,17 @@ var handleError = function(errMsg) {
 
 // Handle ajax request error.
 var handleAjaxError = function(response) {
-	$.prompt(fm.lg.ERROR_SERVER);
+	$.prompt(lg.ERROR_SERVER);
 };
 
 // Test if item has the 'cap' capability
 // 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'move'
 function has_capability(data, cap) {
-	if(fm.capabilities.indexOf(cap) === -1) return false;
+	if(capabilities.indexOf(cap) === -1) return false;
 	if (data['File Type'] == 'dir' && cap == 'replace') return false;
 	if (data['File Type'] == 'dir' && cap == 'select') return false;
 	if (data['File Type'] == 'dir' && cap == 'download') {
-		return (fm.config.security.allowFolderDownload === true);
+		return (config.security.allowFolderDownload === true);
 	}
 	if (typeof(data['Capabilities']) !== "undefined") {
 		return $.inArray(cap, data['Capabilities']) > -1
@@ -452,13 +458,13 @@ function has_capability(data, cap) {
 var isAuthorizedFile = function(filename) {
 	var ext = getExtension(filename);
 	// no extension is allowed
-	if(ext == '' && fm.config.security.allowNoExtension == true) return true;
+	if(ext == '' && config.security.allowNoExtension == true) return true;
 
-	if(fm.config.security.uploadPolicy == 'DISALLOW_ALL') {
-		if($.inArray(ext, fm.config.security.uploadRestrictions) != -1) return true;
+	if(config.security.uploadPolicy == 'DISALLOW_ALL') {
+		if($.inArray(ext, config.security.uploadRestrictions) != -1) return true;
 	}
-	if(fm.config.security.uploadPolicy == 'ALLOW_ALL') {
-		if($.inArray(ext, fm.config.security.uploadRestrictions) == -1) return true;
+	if(config.security.uploadPolicy == 'ALLOW_ALL') {
+		if($.inArray(ext, config.security.uploadRestrictions) == -1) return true;
 	}
     return false;
 };
@@ -471,6 +477,14 @@ var isFile = function(path) {
 // Replace all leading or trailing slashes with an empty string
 var trimSlashes = function(string) {
 	return string.replace(/^\/+|\/+$/g, '');
+};
+
+var encodePath = function(path) {
+	var parts = [];
+	$.each(path.split('/'), function(i, part) {
+		parts.push(encodeURIComponent(part));
+	});
+	return parts.join('/');
 };
 
 // from http://phpjs.org/functions/basename:360
@@ -527,7 +541,7 @@ var getClosestNode = function(path) {
 
 // Test if is editable file
 var isEditableFile = function(filename) {
-	if($.inArray(getExtension(filename), fm.config.edit.editExt) != -1) {
+	if($.inArray(getExtension(filename), config.edit.editExt) != -1) {
 		return true;
 	} else {
 		return false;
@@ -536,7 +550,7 @@ var isEditableFile = function(filename) {
 
 // Test if is image file
 var isImageFile = function(filename) {
-	if($.inArray(getExtension(filename), fm.config.images.imagesExt) != -1) {
+	if($.inArray(getExtension(filename), config.images.imagesExt) != -1) {
 		return true;
 	} else {
 		return false;
@@ -545,7 +559,7 @@ var isImageFile = function(filename) {
 
 // Test if file is supported web video file
 var isVideoFile = function(filename) {
-	if($.inArray(getExtension(filename), fm.config.videos.videosExt) != -1) {
+	if($.inArray(getExtension(filename), config.videos.videosExt) != -1) {
 		return true;
 	} else {
 		return false;
@@ -554,7 +568,7 @@ var isVideoFile = function(filename) {
 
 // Test if file is supported web audio file
 var isAudioFile = function(filename) {
-	if($.inArray(getExtension(filename), fm.config.audios.audiosExt) != -1) {
+	if($.inArray(getExtension(filename), config.audios.audiosExt) != -1) {
 		return true;
 	} else {
 		return false;
@@ -563,7 +577,7 @@ var isAudioFile = function(filename) {
 
 // Test if file is pdf file
 var isPdfFile = function(filename) {
-	if($.inArray(getExtension(filename), fm.config.pdfs.pdfsExt) != -1) {
+	if($.inArray(getExtension(filename), config.pdfs.pdfsExt) != -1) {
 		return true;
 	} else {
 		return false;
@@ -572,39 +586,68 @@ var isPdfFile = function(filename) {
 
 // Test if file is document file
 var isDocumentFile = function(filename) {
-	if($.inArray(getExtension(filename), fm.config.docs.docsExt) != -1) {
+	if($.inArray(getExtension(filename), config.docs.docsExt) != -1) {
 		return true;
 	} else {
 		return false;
 	}
 };
 
+var buildConnectorUrl = function(params) {
+	var defaults = {
+		config: userconfig,
+		time: new Date().getTime()
+	};
+	var queryParams = $.extend({}, params || {}, defaults);
+	return fileConnector + '?' + $.param(queryParams);
+};
+
 // Build url to preview files
-var createPreviewUrl = function(path, encode) {
-	encode = encode || false;
-	// already an absolute path or a relative path to connector action
-	if(path.substr(0,4) === 'http' || path.substr(0,3) === 'ftp' || path.indexOf(fm.langConnector) !== -1) {
-		return path;
-	}
-	if(encode) {
-		var parts = [];
-		$.each(path.split('/'), function(i, part) {
-			parts.push(encodeURIComponent(part));
-		});
-		path = parts.join('/');
-	}
-	var tmpPath = trimSlashes(normalizePath(path));
-	if (tmpPath == path) {
-		return baseUrl + tmpPath;
+var createPreviewUrl = function(path) {
+	return buildConnectorUrl({
+		mode: 'readfile',
+		path: path
+	});
+};
+
+var createImageUrl = function(data, thumbnail) {
+	var imagePath;
+	if(!isFile(data['Path'])) {
+		imagePath = baseUrl + config.icons.path + (data['Protected'] == 1 ? 'locked_' : '') + config.icons.folder;
 	} else {
-		return normalizePath(baseUrl + trimSlashes(path));
+		if(data['Protected'] == 1) {
+			imagePath = baseUrl + config.icons.path + 'locked_' + config.icons.folder;
+		} else {
+			var fileType = getExtension(data['Path']);
+			var isAllowedImage = isImageFile(data['Path']);
+			var fileTypeIcon = baseUrl + config.icons.path + fileType + '.png';
+			imagePath = baseUrl + config.icons.path + config.icons.default;
+
+			if(!(isAllowedImage && config.options.showThumbs) && file_exists(fileTypeIcon)) {
+				imagePath = fileTypeIcon;
+			}
+			if(isAllowedImage) {
+				var queryParams = {path: data['Path']};
+				if(fileType === 'svg') {
+					queryParams.mode = 'readfile';
+				} else {
+					queryParams.mode = 'getimage';
+					if(thumbnail) {
+						queryParams.thumbnail = 'true';
+					}
+				}
+				imagePath = buildConnectorUrl(queryParams);
+			}
+		}
 	}
+	console.log('imagePath', imagePath);
+	return imagePath;
 };
 
 // Return HTML video player
 var getVideoPlayer = function(data) {
-	var url = createPreviewUrl(data['Preview'], true);
-	var code  = '<video src="' + url + '" width=' +  fm.config.videos.videosPlayerWidth + ' height=' +  fm.config.videos.videosPlayerHeight + ' controls="controls"></video>';
+	var url = createPreviewUrl(data['Path']);
+	var code  = '<video src="' + url + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -612,7 +655,7 @@ var getVideoPlayer = function(data) {
 
 // Return HTML audio player
 var getAudioPlayer = function(data) {
-	var url = createPreviewUrl(data['Preview'], true);
+	var url = createPreviewUrl(data['Path']);
 	var code  = '<audio src="' + url + '" controls="controls"></audio>';
 
 	$fileinfo.find('img').remove();
@@ -621,8 +664,8 @@ var getAudioPlayer = function(data) {
 
 // Return PDF Reader
 var getPdfReader = function(data) {
-	var url = createPreviewUrl(data['Preview'], true);
-	var code = '<iframe id="fm-pdf-viewer" src="' +  fm.config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' +  fm.config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var url = createPreviewUrl(data['Path']);
+	var code = '<iframe id="fm-pdf-viewer" src="' + config.globals.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -630,8 +673,8 @@ var getPdfReader = function(data) {
 
 // Return Google Viewer
 var getGoogleViewer = function(data) {
-	var url = encodeURIComponent(createPreviewUrl(data['Preview']));
-	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + fm.config.docs.docsReaderWidth + '" height="' + fm.config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
+	var url = encodeURIComponent(createPreviewUrl(data['Path']));
+	var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 	$fileinfo.find('img').remove();
 	$fileinfo.find('#preview #main-title').before(code);
@@ -658,8 +701,8 @@ var setUploader = function(path) {
 	setCurrentPath(path);
 
 	$('#newfolder').unbind().click(function() {
-		var foldername =  fm.lg.default_foldername;
-		var msg = fm.lg.prompt_foldername + ' : <input id="fname" name="fname" type="text" value="' + foldername + '" />';
+		var foldername =  lg.default_foldername;
+		var msg = lg.prompt_foldername + ' : <input id="fname" name="fname" type="text" value="' + foldername + '" />';
 
 		var getFolderName = function(e, value, message, formVals) {
 			if(!value) return;
@@ -667,7 +710,12 @@ var setUploader = function(path) {
 
 			if(fname != '') {
 				foldername = cleanString(fname);
-				$.getJSON(fm.fileConnector + '?mode=addfolder&path=' + getCurrentPath() + '&config=' + fm.userconfig + '&name=' + encodeURIComponent(foldername) + '&time=' + new Date().getTime(), function(result) {
+				
+				$.getJSON(buildConnectorUrl({
+					mode: 'addfolder',
+					path: getCurrentPath(),
+					name: foldername
+				}), function(result) {
 					if(result['Code'] == 0) {
 						addFolder(result['Parent']);
 						getFolderInfo(result['Parent']);
@@ -676,13 +724,13 @@ var setUploader = function(path) {
 					}
 				});
 			} else {
-				$.prompt(fm.lg.no_foldername);
+				$.prompt(lg.no_foldername);
 			}
 		};
 		var btns = {};
 
-		btns[fm.lg.create_folder] = true;
-		btns[fm.lg.cancel] = false;
+		btns[lg.create_folder] = true;
+		btns[lg.cancel] = false;
 		$.prompt(msg, {
 			submit: getFolderName,
 			buttons: btns
@@ -706,7 +754,7 @@ var bindToolbar = function(data) {
         $fileinfo.find('button#select').click(function () { selectItem(data); }).show();
         if(window.opener || window.tinyMCEPopup) {
 	        $('#preview').find('img')
-				.attr('title', fm.lg.select)
+				.attr('title', lg.select)
 				.css("cursor", "pointer")
 				.click(function() {selectItem(data);});
         }
@@ -776,7 +824,7 @@ var getCurrentPath = function() {
 // Set current active path
 var setCurrentPath = function(path) {
 	$('#currentpath').val(path);
-	$uploader.find('h1').text(fm.lg.current_folder + displayPath(path)).attr('title', displayPath(path, false));
+	$uploader.find('h1').text(lg.current_folder + displayPath(path)).attr('title', displayPath(path, false));
 };
 
 // Returns container for filetree or fileinfo section based on scrollbar plugin state
@@ -811,17 +859,17 @@ var updateFolderSummary = function() {
 		sizeTotal += Number(data['Properties']['Size']);
 	});
 
-	$('#items-counter').text(itemsTotal + ' ' + fm.lg.items);
-	$('#items-size').text(fm.lg.size + ': ' + formatBytes(sizeTotal));
+	$('#items-counter').text(itemsTotal + ' ' + lg.items);
+	$('#items-size').text(lg.size + ': ' + formatBytes(sizeTotal));
 };
 
 // Apply actions after manipulating with filetree or its single node
 var adjustFileTree = function($node) {
 	// search function
-	if (fm.config.options.searchBox == true) {
+	if (config.options.searchBox == true) {
 		$('#q').liveUpdate($node).blur();// '#filetree ul'
-		$('#search span.q-inactive').html(fm.lg.search);
-		$('#search a.q-reset').attr('title', fm.lg.search_reset);
+		$('#search span.q-inactive').html(lg.search);
+		$('#search a.q-reset').attr('title', lg.search_reset);
 	}
 
 	// drag-and-drop
@@ -851,7 +899,7 @@ var adjustFileTree = function($node) {
 
 // Create FileTree and bind events
 var createFileTree = function() {
-	fm.fileTreeloaded = jQuery.Deferred();
+	fileTreeloaded = jQuery.Deferred();
 	var $treeNode = getSectionContainer($filetree),
 		slideAnimation = false;
 
@@ -896,7 +944,7 @@ var createFileTree = function() {
 		.on('filetreeinitiated', function (e, data) {
 			var $el = $(e.target).find('ul');
 			expandFolderDefault($el, data);
-			fm.fileTreeloaded.resolve(true);
+			fileTreeloaded.resolve(true);
 		})
 		.on('filetreeexpand', function (e, data) {
 			//var $el = data.li.children('ul');
@@ -914,7 +962,7 @@ var createFileTree = function() {
 		})
 		// Creates file tree.
 		.fileTree({
-			root: fm.fileRoot,
+			root: fileRoot,
 			script: buildFileTreeBranch,
 			multiFolder: true,
 			expandSpeed: 300,
@@ -952,7 +1000,7 @@ var createFileTree = function() {
 // contextual menu option in list views.
 // NOTE: closes the window when finished.
 var selectItem = function(data) {
-	var url = createPreviewUrl(data['Preview']);
+	var url = createPreviewUrl(data['Path']);
 	if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 	 	if(window.tinyMCEPopup) {
         	// use TinyMCE > 3.0 integration method
@@ -1029,7 +1077,7 @@ var selectItem = function(data) {
 			window.close();
 		}
 	} else {
-		$.prompt(fm.lg.fck_select_integration);
+		$.prompt(lg.fck_select_integration);
 	}
 };
 
@@ -1037,8 +1085,8 @@ var selectItem = function(data) {
 // Called by clicking the "Rename" button in detail views
 // or choosing the "Rename" contextual menu option in list views.
 var renameItem = function(data) {
-	var fileName = fm.config.security.allowChangeExtensions ? data['Filename'] : getFilename(data['Filename']);
-	var msg = fm.lg.new_filename + ' : <input id="rname" name="rname" type="text" value="' + fileName + '" />';
+	var fileName = config.security.allowChangeExtensions ? data['Filename'] : getFilename(data['Filename']);
+	var msg = lg.new_filename + ' : <input id="rname" name="rname" type="text" value="' + fileName + '" />';
 
 	var getNewName = function(e, value, message, formVals) {
 		if(!value) return;
@@ -1047,7 +1095,7 @@ var renameItem = function(data) {
 		if(rname != '') {
 			var givenName = rname;
 
- 			if (! fm.config.security.allowChangeExtensions) {
+ 			if (! config.security.allowChangeExtensions) {
 				givenName = nameFormat(rname);
 				var suffix = getExtension(data['Filename']);
 				if(suffix.length > 0) {
@@ -1057,23 +1105,25 @@ var renameItem = function(data) {
 
  			// File only - Check if file extension is allowed
 			if (isFile(data['Path']) && !isAuthorizedFile(givenName)) {
-				var str = '<p>' + fm.lg.INVALID_FILE_TYPE + '</p>';
-				if(fm.config.security.uploadPolicy == 'DISALLOW_ALL') {
-					str += '<p>' + fm.lg.ALLOWED_FILE_TYPE +  fm.config.security.uploadRestrictions.join(', ') + '.</p>';
+				var str = '<p>' + lg.INVALID_FILE_TYPE + '</p>';
+				if(config.security.uploadPolicy == 'DISALLOW_ALL') {
+					str += '<p>' + lg.ALLOWED_FILE_TYPE +  config.security.uploadRestrictions.join(', ') + '.</p>';
 				}
-				if(fm.config.security.uploadPolicy == 'ALLOW_ALL') {
-					str += '<p>' + fm.lg.DISALLOWED_FILE_TYPE +  fm.config.security.uploadRestrictions.join(', ') + '.</p>';
+				if(config.security.uploadPolicy == 'ALLOW_ALL') {
+					str += '<p>' + lg.DISALLOWED_FILE_TYPE +  config.security.uploadRestrictions.join(', ') + '.</p>';
 				}
 				$("#filepath").val('');
 				$.prompt(str);
 				return false;
 			}
 
-			var connectString = fm.fileConnector + '?mode=rename&old=' + encodeURIComponent(data['Path']) + '&new=' + encodeURIComponent(givenName) + '&config=' + fm.userconfig;
-
 			$.ajax({
 				type: 'GET',
-				url: connectString,
+				url: buildConnectorUrl({
+					mode: 'rename',
+					old: data['Path'],
+					new: givenName
+				}),
 				dataType: 'json',
 				async: false,
 				success: function(result) {
@@ -1121,7 +1171,7 @@ var renameItem = function(data) {
 						sortViewItems();
 						updateFolderSummary();
 
-						if(fm.config.options.showConfirmation) $.prompt(fm.lg.successful_rename);
+						if(config.options.showConfirmation) $.prompt(lg.successful_rename);
 					} else {
 						$.prompt(result['Error']);
 					}
@@ -1131,8 +1181,8 @@ var renameItem = function(data) {
 		}
 	};
 	var btns = {};
-	btns[fm.lg.rename] = true;
-	btns[fm.lg.cancel] = false;
+	btns[lg.rename] = true;
+	btns[lg.cancel] = false;
 	$.prompt(msg, {
 		submit: getNewName,
 		buttons: btns
@@ -1151,15 +1201,15 @@ var replaceItem = function(itemData) {
 			.fileupload({
 				autoUpload: true,
 				dataType: 'json',
-				url: fm.fileConnector + '?config=' + fm.userconfig,
-				paramName: fm.config.upload.paramName
+				url: buildConnectorUrl(),
+				paramName: config.upload.paramName
 			})
 
 			.on('fileuploadadd', function(e, data) {
 				var file = data.files[0];
 				// Check if file extension is matching with the original
 				if(getExtension(file.name) != itemData['File Type']) {
-					$.prompt(fm.lg.ERROR_REPLACING_FILE + " ." + itemData['File Type']);
+					$.prompt(lg.ERROR_REPLACING_FILE + " ." + itemData['File Type']);
 					return false;
 				}
 				data.submit();
@@ -1171,12 +1221,12 @@ var replaceItem = function(itemData) {
 					newfilepath: itemData["Path"]
 				};
 				$uploadButton.addClass('loading').prop('disabled', true);
-				$uploadButton.children('span').text(fm.lg.loading_data);
+				$uploadButton.children('span').text(lg.loading_data);
 			})
 
 			.on('fileuploadalways', function(e, data) {
 				$uploadButton.removeData().removeClass('loading').prop('disabled', false);
-				$uploadButton.children('span').text(fm.lg.upload);
+				$uploadButton.children('span').text(lg.upload);
 
 				var errorMessage,
 					result = data.result;
@@ -1191,7 +1241,7 @@ var replaceItem = function(itemData) {
 				}
 
 				if(errorMessage) {
-					$.prompt(fm.lg.upload_failed + "<br>" + errorMessage);
+					$.prompt(lg.upload_failed + "<br>" + errorMessage);
 				} else {
 					// success upload
 					var filePath = $fileinfo.find('#main-title > h1').attr('title');
@@ -1204,15 +1254,15 @@ var replaceItem = function(itemData) {
 					$('#preview').find('img').hide().fadeIn('slow'); // on preview panel
 					$filetree.find('a[data-path="' + filePath + '"]').parent().hide().fadeIn('slow'); // on fileTree
 
-					if(fm.config.options.showConfirmation) {
-						$.prompt(fm.lg.successful_replace);
+					if(config.options.showConfirmation) {
+						$.prompt(lg.successful_replace);
 					}
 				}
 			})
 
 			.on('fileuploadfail', function(e, data) {
 				// server error 500, etc.
-				$.prompt(fm.lg.upload_failed);
+				$.prompt(lg.upload_failed);
 			});
 	}
 
@@ -1224,8 +1274,8 @@ var replaceItem = function(itemData) {
 // Called by clicking the "Move" button in detail views
 // or choosing the "Move" contextual menu option in list views.
 var moveItemPrompt = function(data) {
-	var msg  = fm.lg.move + ' : <input id="rname" name="rname" type="text" value="" />';
-		msg += '<div class="prompt-info">' + fm.lg.help_move + '</div>';
+	var msg  = lg.move + ' : <input id="rname" name="rname" type="text" value="" />';
+		msg += '<div class="prompt-info">' + lg.help_move + '</div>';
 
 	var doMove = function(e, value, message, formVals) {
 		if(!value) return;
@@ -1236,8 +1286,8 @@ var moveItemPrompt = function(data) {
 		}
 	};
 	var btns = {};
-	btns[fm.lg.move] = true;
-	btns[fm.lg.cancel] = false;
+	btns[lg.move] = true;
+	btns[lg.cancel] = false;
 	$.prompt(msg, {
 		submit: doMove,
 		buttons: btns
@@ -1248,11 +1298,14 @@ var moveItemPrompt = function(data) {
 // Called by clicking the "Move" button in detail views
 // or choosing the "Move" contextual menu option in list views.
 var moveItem = function(oldPath, newPath) {
-	var connectString = fm.fileConnector + '?mode=move&old=' + encodeURIComponent(oldPath) + '&new=' + encodeURIComponent(newPath) + '&config=' + fm.userconfig;
 
 	$.ajax({
 		type: 'GET',
-		url: connectString,
+		url: buildConnectorUrl({
+			mode: 'move',
+			old: oldPath,
+			new: newPath
+		}),
 		dataType: 'json',
 		async: false,
 		success: function(result) {
@@ -1289,7 +1342,7 @@ var moveItem = function(oldPath, newPath) {
 					updateFolderSummary();
 				}
 
-				if(fm.config.options.showConfirmation) $.prompt(fm.lg.successful_moved);
+				if(config.options.showConfirmation) $.prompt(lg.successful_moved);
 			} else {
 				$.prompt(result['Error']);
 			}
@@ -1303,15 +1356,17 @@ var moveItem = function(oldPath, newPath) {
 // or choosing the "Delete" contextual menu item in list views.
 var deleteItem = function(data) {
 	var isDeleted = false;
-	var msg = fm.lg.confirmation_delete;
+	var msg = lg.confirmation_delete;
 
 	var doDelete = function(e, value, message, formVals) {
 		if(!value) return;
-		var connectString = fm.fileConnector + '?mode=delete&path=' + encodeURIComponent(data['Path']) + '&config=' + fm.userconfig + '&time=' + new Date().getTime();
 
 		$.ajax({
 			type: 'GET',
-			url: connectString,
+			url: buildConnectorUrl({
+				mode: 'delete',
+				path: data['Path']
+			}),
 			dataType: 'json',
 			async: false,
 			success: function(result) {
@@ -1334,7 +1389,7 @@ var deleteItem = function(data) {
 						getDetailView(getDirname(path));
 					}
 
-					if(fm.config.options.showConfirmation) $.prompt(fm.lg.successful_delete);
+					if(config.options.showConfirmation) $.prompt(lg.successful_delete);
 				} else {
 					isDeleted = false;
 					$.prompt(result['Error']);
@@ -1345,8 +1400,8 @@ var deleteItem = function(data) {
 	};
 
 	var btns = {};
-	btns[fm.lg.yes] = true;
-	btns[fm.lg.no] = false;
+	btns[lg.yes] = true;
+	btns[lg.no] = false;
 	$.prompt(msg, {
 		submit: doDelete,
 		buttons: btns
@@ -1359,12 +1414,25 @@ var deleteItem = function(data) {
 // Called by clicking the "Download" button in detail views
 // or choosing the "Download" contextual menu item in list views.
 var downloadItem = function(data) {
-	var connectString = fm.fileConnector + '?mode=download&path=' + encodeURIComponent(data['Path']) + '&config=' + fm.userconfig;
+	var queryParams = {
+		mode: 'download',
+		path: data['Path']
+	};
 
 	return $.ajax({
 		type: 'GET',
-		url: connectString + '&time=' + new Date().getTime(),
-		dataType: 'json'
+		url: buildConnectorUrl(queryParams),
+		dataType: 'json',
+		async: false,
+		success: function(result) {
+			if(result['Code'] == 0) {
+				queryParams.force = 'true';
+				window.location = buildConnectorUrl(queryParams);
+			} else {
+				$.prompt(result['Error']);
+			}
+		},
+		error: handleAjaxError
 	});
 };
 
@@ -1373,15 +1441,17 @@ var downloadItem = function(data) {
 // Save action is handled by the method using ajax
 var editItem = function(data) {
 	var isEdited = false;
-	$fileinfo.find('div#tools').append(' <a id="edit-file" href="#" title="' + fm.lg.edit + '"><span>' + fm.lg.edit + '</span></a>');
+	$fileinfo.find('div#tools').append(' <a id="edit-file" href="#" title="' + lg.edit + '"><span>' + lg.edit + '</span></a>');
 
 	$('#edit-file').click(function() {
 		$(this).hide(); // hiding Edit link
-		var connectString = fm.fileConnector + '?mode=editfile&path=' + encodeURIComponent(data['Path']) + '&config=' + fm.userconfig + '&time=' + new Date().getTime();
 
 		$.ajax({
 			type: 'GET',
-			url: connectString,
+			url: buildConnectorUrl({
+				mode: 'editfile',
+				path: data['Path']
+			}),
 			dataType: 'json',
 			async: false,
 			success: function (result) {
@@ -1393,8 +1463,8 @@ var editItem = function(data) {
 					content += '<textarea id="edit-content" name="content">' + result['Content'] + '</textarea>';
 					content += '<input type="hidden" name="mode" value="savefile" />';
 					content += '<input type="hidden" name="path" value="' + data['Path'] + '" />';
-					content += '<button id="edit-cancel" class="edition" type="button">' + fm.lg.quit_editor + '</button>';
-					content += '<button id="edit-save" class="edition" type="button">' + fm.lg.save + '</button>';
+					content += '<button id="edit-cancel" class="edition" type="button">' + lg.quit_editor + '</button>';
+					content += '<button id="edit-save" class="edition" type="button">' + lg.save + '</button>';
 					content += '</form>';
 
 					$preview.find('img').hide();
@@ -1419,15 +1489,15 @@ var editItem = function(data) {
 
 						$.ajax({
 							type: 'POST',
-							url: fm.fileConnector + '?config=' + fm.userconfig,
+							url: buildConnectorUrl(),
 							dataType: 'json',
 							data: postData,
 							async: false,
 							success: function (result) {
 								if (result['Code'] == 0) {
 									isEdited = true;
-									// if (fm.config.options.showConfirmation) $.prompt(fm.lg.successful_edit);
-									$.prompt(fm.lg.successful_edit);
+									// if (config.options.showConfirmation) $.prompt(lg.successful_edit);
+									$.prompt(lg.successful_edit);
 								} else {
 									isEdited = false;
 									$.prompt(result['Error']);
@@ -1483,8 +1553,8 @@ var removeFileTreeItem = function(path, speed) {
 // Called after a new folder is successfully created.
 var addFolder = function(parent) {
 	reloadFileTreeNode(parent);
-	if(fm.config.options.showConfirmation) {
-		$.prompt(fm.lg.successful_added_folder);
+	if(config.options.showConfirmation) {
+		$.prompt(lg.successful_added_folder);
 	}
 };
 
@@ -1492,8 +1562,8 @@ var addFolder = function(parent) {
 // Called after a successful file upload.
 var addNode = function(path) {
 	reloadFileTreeNode(path);
-	if(fm.config.options.showConfirmation) {
-		$.prompt(fm.lg.successful_added_file);
+	if(config.options.showConfirmation) {
+		$.prompt(lg.successful_added_file);
 	}
 };
 
@@ -1543,7 +1613,7 @@ var moveNode = function(newPath, newName, oldFullPath, forceExpand) {
 	}
 
 	// ON move to file root
-	if(newPath === fm.fileRoot) {
+	if(newPath === fileRoot) {
 		$targetNode = getSectionContainer($filetree).children('ul');
 		$adjustNode = $filetree;
 	}
@@ -1674,7 +1744,7 @@ var actualizeChildrenItems = function(oldPath, newPath, $items) {
 };
 
 var getSortValueCallback = function(el) {
-	var sortField = fm.config.configSortField,
+	var sortField = config.configSortField,
 		itemData = $(el).data('itemdata');
 
 	// list view sorting may differ from config
@@ -1698,10 +1768,10 @@ var getSortValueCallback = function(el) {
 };
 
 var arrangeFolders = function($parent, selector) {
-	if(fm.config.options.folderPosition === 'bottom') {
+	if(config.options.folderPosition === 'bottom') {
 		$parent.find(selector + '.directory').appendTo($parent);
 	}
-	if(fm.config.options.folderPosition === 'top') {
+	if(config.options.folderPosition === 'top') {
 		$parent.find(selector + '.directory').prependTo($parent);
 		$parent.find(selector + '.directory-parent').prependTo($parent);
 	}
@@ -1712,7 +1782,7 @@ var sortFileTreeItems = function($node) {
 	var $items = $node.find('> li');
 	if($items.length === 0) return;
 
-	$items.tsort({selector: 'a', callback: getSortValueCallback, order: fm.config.configSortOrder, natural: true});
+	$items.tsort({selector: 'a', callback: getSortValueCallback, order: config.configSortOrder, natural: true});
 	arrangeFolders($node, '> li');
 };
 
@@ -1726,7 +1796,7 @@ var sortViewItems = function() {
 		$items = $contents.find('li.file, li.directory');
 		if($items.length === 0) return;
 
-		$items.tsort({callback: getSortValueCallback, order: fm.config.configSortOrder, natural: true});
+		$items.tsort({callback: getSortValueCallback, order: config.configSortOrder, natural: true});
 		arrangeFolders($contents, 'li');
 	} else {
 		var data = $fileinfo.data('list-sort'),
@@ -1734,8 +1804,8 @@ var sortViewItems = function() {
 			sortField, order, $targetHeader;
 
 		// retrieve stored sort settings or use defaults
-		order = data ? data.order : fm.config.configSortOrder;
-		sortField = data ? data.column : fm.config.configSortField;
+		order = data ? data.order : config.configSortOrder;
+		sortField = data ? data.column : config.configSortField;
 
 		// apply sort classes to table headers
 		$targetHeader = $headers.filter('.column-' + sortField);
@@ -1762,7 +1832,7 @@ var updateNodeItem = function(branchPath, nodePathOld, nodePathNew) {
 // Use after adding new item to filetree ("addNode", "addFolder" and "upload" actions)
 var reloadFileTreeNode = function(targetPath) {
 	var $targetNode,
-		isRoot = targetPath === fm.fileRoot; // should be /, not empty
+		isRoot = targetPath === fileRoot; // should be /, not empty
 
 	if(isRoot) {
 		$targetNode = getSectionContainer($filetree).children('ul');
@@ -1823,21 +1893,21 @@ var getDetailView = function(path) {
 // Options for context menu plugin
 function getContextMenuItems($item) {
 	var contextMenuItems = {
-		select: {name: fm.lg.select, className: 'select'},
-		download: {name: fm.lg.download, className: 'download'},
-		rename: {name: fm.lg.rename, className: 'rename'},
-		move: {name: fm.lg.move, className: 'move'},
-		replace: {name: fm.lg.replace, className: 'replace'},
+		select: {name: lg.select, className: 'select'},
+		download: {name: lg.download, className: 'download'},
+		rename: {name: lg.rename, className: 'rename'},
+		move: {name: lg.move, className: 'move'},
+		replace: {name: lg.replace, className: 'replace'},
 		separator1: "-----",
-		delete: {name: fm.lg.del, className: 'delete'}
+		delete: {name: lg.del, className: 'delete'}
 	};
 
 	var data = $item.data('itemdata');
 
 	if(!has_capability(data, 'download')) delete contextMenuItems.download;
-	if(!has_capability(data, 'rename') || fm.config.options.browseOnly === true) delete contextMenuItems.rename;
-	if(!has_capability(data, 'delete') || fm.config.options.browseOnly === true) delete contextMenuItems.delete;
-	if(!has_capability(data, 'move') || fm.config.options.browseOnly === true) delete contextMenuItems.move;
+	if(!has_capability(data, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
+	if(!has_capability(data, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
+	if(!has_capability(data, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
 	// remove 'select' if there is no window.opener
 	if(!has_capability(data, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
 	// remove 'replace' since it is implemented on #preview panel only (for FF and Chrome, need to check in Opera)
@@ -1848,7 +1918,10 @@ function getContextMenuItems($item) {
 
 // Binds contextual menus to items in list and grid views.
 var setMenus = function(action, path) {
-	$.getJSON(fm.fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + fm.userconfig + '&time=' + new Date().getTime(), function(data) {
+	$.getJSON(buildConnectorUrl({
+		mode: 'getinfo',
+		path: path
+	}), function(data) {
 		switch(action) {
 			case 'select':
 				selectItem(data);
@@ -1905,7 +1978,10 @@ var getFileInfo = function(file) {
 	setUploader(currentpath);
 
 	// Retrieve the data & populate the template.
-	$.getJSON(fm.fileConnector + '?mode=getinfo&path=' + encodeURIComponent(file) + '&config=' + fm.userconfig + '&time=' + new Date().getTime(), function(data) {
+	$.getJSON(buildConnectorUrl({
+		mode: 'getinfo',
+		path: file
+	}), function(data) {
 		// is there any error or user is unauthorized
 		if(data.Code == '-1') {
 			handleError(data.Error);
@@ -1915,14 +1991,14 @@ var getFileInfo = function(file) {
 		// include the template
 		var template = '<div id="preview"><img /><div id="main-title"><h1></h1><div id="tools"></div></div><dl></dl></div>';
 		template += '<form id="toolbar">';
-		template += '<button id="parentfolder" type="button">' + fm.lg.parentfolder + '</button>';
-		if($.inArray('select', fm.capabilities) != -1 && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId'))) template += '<button id="select" name="select" type="button">' + fm.lg.select + '</button>';
-		if($.inArray('download', fm.capabilities) != -1) template += '<button id="download" name="download" type="button">' + fm.lg.download + '</button>';
-		if($.inArray('rename', fm.capabilities) != -1 && fm.config.options.browseOnly != true) template += '<button id="rename" name="rename" type="button">' + fm.lg.rename + '</button>';
-		if($.inArray('move', fm.capabilities) != -1 && fm.config.options.browseOnly != true) template += '<button id="move" name="move" type="button">' + fm.lg.move + '</button>';
-		if($.inArray('delete', fm.capabilities) != -1 && fm.config.options.browseOnly != true) template += '<button id="delete" name="delete" type="button">' + fm.lg.del + '</button>';
-		if($.inArray('replace', fm.capabilities) != -1 && fm.config.options.browseOnly != true) {
-			template += '<button id="replace" name="replace" type="button">' + fm.lg.replace + '</button>';
+		template += '<button id="parentfolder" type="button">' + lg.parentfolder + '</button>';
+		if($.inArray('select', capabilities) != -1 && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId'))) template += '<button id="select" name="select" type="button">' + lg.select + '</button>';
+		if($.inArray('download', capabilities) != -1) template += '<button id="download" name="download" type="button">' + lg.download + '</button>';
+		if($.inArray('rename', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="rename" name="rename" type="button">' + lg.rename + '</button>';
+		if($.inArray('move', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="move" name="move" type="button">' + lg.move + '</button>';
+		if($.inArray('delete', capabilities) != -1 && config.options.browseOnly != true) template += '<button id="delete" name="delete" type="button">' + lg.del + '</button>';
+		if($.inArray('replace', capabilities) != -1 && config.options.browseOnly != true) {
+			template += '<button id="replace" name="replace" type="button">' + lg.replace + '</button>';
 			template += '<div class="hidden-file-input"><input id="replacement" name="replacement" type="file" /></div>';
 		}
 		template += '</form>';
@@ -1930,33 +2006,30 @@ var getFileInfo = function(file) {
 		// add the new markup to the DOM
 		getSectionContainer($fileinfo).html(template);
 
-		// if file is an image we display the preview
-		var previewPath = isImageFile(data['Filename']) ? data['Preview'] : data['Thumbnail'];
-		$fileinfo.find('img').attr('src', createPreviewUrl(previewPath));
+		$fileinfo.find('img').attr('src', createImageUrl(data));
 		$fileinfo.find('#main-title > h1').text(data['Filename']).attr('title', file);
 
-		if(isVideoFile(data['Filename']) && fm.config.videos.showVideoPlayer == true) {
+		if(isVideoFile(data['Filename']) && config.videos.showVideoPlayer == true) {
 			getVideoPlayer(data);
 		}
-		if(isAudioFile(data['Filename']) && fm.config.audios.showAudioPlayer == true) {
+		if(isAudioFile(data['Filename']) && config.audios.showAudioPlayer == true) {
 			getAudioPlayer(data);
 		}
-		if(isPdfFile(data['Filename']) && fm.config.pdfs.showPdfReader == true) {
+		if(isPdfFile(data['Filename']) && config.pdfs.showPdfReader == true) {
 			getPdfReader(data);
 		}
-		if(isDocumentFile(data['Filename']) && fm.config.docs.showGoogleViewer == true) {
+		if(isDocumentFile(data['Filename']) && config.docs.showGoogleViewer == true) {
 			getGoogleViewer(data);
 		}
-		if(isEditableFile(data['Filename']) && fm.config.edit.enabled == true && data['Protected']==0) {
+		if(isEditableFile(data['Filename']) && config.edit.enabled == true && data['Protected'] == 0) {
 			editItem(data);
 		}
 
-		var url = createPreviewUrl(data['Preview']);
-		if(data['Protected']==0) {
-			$fileinfo.find('div#tools').append(' <a id="copy-button" data-clipboard-text="'+ url + '" title="' + fm.lg.copy_to_clipboard + '" href="#"><span>' + fm.lg.copy_to_clipboard + '</span></a>');
+		if(data['Protected'] == 0) {
+			$fileinfo.find('div#tools').append('<a id="copy-button" data-clipboard-text="'+ createPreviewUrl(data['Path']) + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
 
 			// zeroClipboard code
-			ZeroClipboard.config({swfPath: fm.config.globals.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
+			ZeroClipboard.config({swfPath: config.globals.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
 			var client = new ZeroClipboard(document.getElementById("copy-button"));
 			client.on("ready", function(readyEvent) {
 				client.on("aftercopy", function(event) {
@@ -1965,17 +2038,17 @@ var getFileInfo = function(file) {
 			});
 
 			$('#copy-button').click(function () {
-				$fileinfo.find('div#tools').append('<span id="copied">' + fm.lg.copied + '</span>');
+				$fileinfo.find('div#tools').append('<span id="copied">' + lg.copied + '</span>');
 				$('#copied').delay(500).fadeOut(1000, function() { $(this).remove(); });
 			});
 		}
 
 		var properties = '';
 		if(data['Protected'] == 0) {
-			if(data['Properties']['Width'] && data['Properties']['Width'] != '') properties += '<dt>' + fm.lg.dimensions + '</dt><dd>' + data['Properties']['Width'] + 'x' + data['Properties']['Height'] + '</dd>';
-			if(data['Properties']['Date Created'] && data['Properties']['Date Created'] != '') properties += '<dt>' + fm.lg.created + '</dt><dd>' + data['Properties']['Date Created'] + '</dd>';
-			if(data['Properties']['Date Modified'] && data['Properties']['Date Modified'] != '') properties += '<dt>' + fm.lg.modified + '</dt><dd>' + data['Properties']['Date Modified'] + '</dd>';
-			if(data['Properties']['Size'] || parseInt(data['Properties']['Size'])==0) properties += '<dt>' + fm.lg.size + '</dt><dd>' + formatBytes(data['Properties']['Size']) + '</dd>';
+			if(data['Properties']['Width'] && data['Properties']['Width'] != '') properties += '<dt>' + lg.dimensions + '</dt><dd>' + data['Properties']['Width'] + 'x' + data['Properties']['Height'] + '</dd>';
+			if(data['Properties']['Date Created'] && data['Properties']['Date Created'] != '') properties += '<dt>' + lg.created + '</dt><dd>' + data['Properties']['Date Created'] + '</dd>';
+			if(data['Properties']['Date Modified'] && data['Properties']['Date Modified'] != '') properties += '<dt>' + lg.modified + '</dt><dd>' + data['Properties']['Date Modified'] + '</dd>';
+			if(data['Properties']['Size'] || parseInt(data['Properties']['Size'])==0) properties += '<dt>' + lg.size + '</dt><dd>' + formatBytes(data['Properties']['Size']) + '</dd>';
 		}
 		$fileinfo.find('dl').html(properties);
 
@@ -1988,7 +2061,6 @@ var getFileInfo = function(file) {
 // Clean up unnecessary item data
 var prepareItemInfo = function(item) {
 	var data = $.extend({}, item);
-	delete data['Thumbnail'];
 	delete data['Error'];
 	delete data['Code'];
 	return data;
@@ -2003,7 +2075,7 @@ var getFolderInfo = function(path) {
 	setUploader(path);
 
 	var container = getSectionContainer($fileinfo),
-		loading = '<img id="activity" src="' + fm.config.globals.pluginPath + '/themes/' + fm.config.options.theme + '/images/wait30trans.gif" width="30" height="30" />',
+		loading = '<img id="activity" src="' + config.globals.pluginPath + '/themes/' + config.options.theme + '/images/wait30trans.gif" width="30" height="30" />',
 		item, node, parentNode, props;
 
 	// display an activity indicator
@@ -2027,9 +2099,9 @@ var getFolderInfo = function(path) {
 		if($fileinfo.data('view') == 'grid') {
 			var $ul = $('<ul>', {id: "contents", class: "grid"});
 
-			if(!isFile(path) && path !== fm.fileRoot) {
+			if(!isFile(path) && path !== fileRoot) {
 				parentNode = '<li class="directory-parent" data-path="' + getParentDirname(path) + '" oncontextmenu="return false;">';
-				parentNode += '<div class="clip"><img src="' + fm.config.globals.pluginPath + '/' + fm.config.icons.path + '/_Parent.png" alt="Parent" /></div>';
+				parentNode += '<div class="clip"><img src="' + config.globals.pluginPath + '/' + config.icons.path + '/' + config.icons.parent +'" alt="Parent" /></div>';
 				parentNode += '</li>';
 				$ul.append(parentNode);
 			}
@@ -2044,11 +2116,11 @@ var getFolderInfo = function(path) {
 
 				var $li = $('<li>', {
 					class: (item['File Type'] == 'dir') ? 'directory' : 'file',
-					title: fm.config.options.showTitleAttr ? item['Path'] : null,
+					title: config.options.showTitleAttr ? item['Path'] : null,
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
-				node = '<div class="clip"><img src="' + createPreviewUrl(item['Thumbnail']) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
+				node = '<div class="clip"><img src="' + createImageUrl(item, true) + '" width="' + scaledWidth + '" alt="' + item['Path'] + '" /></div>';
 				node += '<p>' + item['Filename'] + '</p>';
 				if(props['Width'] && props['Width'] != '') node += '<span class="meta dimensions">' + props['Width'] + 'x' + props['Height'] + '</span>';
 				if(props['Size'] && props['Size'] != '') node += '<span class="meta size">' + props['Size'] + '</span>';
@@ -2063,17 +2135,17 @@ var getFolderInfo = function(path) {
 			var $table = $('<table>', {id: "contents", class: "list"});
 
 			var thead = '<thead><tr class="rowHeader">';
-			thead += '<th class="column-name" data-colname="name"><span>' + fm.lg.name + '</span></th>';
-			thead += '<th class="column-type" data-colname="type"><span>' + fm.lg.type + '</span></th>';
-			thead += '<th class="column-dimensions" data-colname="dimensions"><span>' + fm.lg.dimensions + '</span></th>';
-			thead += '<th class="column-size" data-colname="size"><span>' + fm.lg.size + '</span></th>';
-			thead += '<th class="column-modified" data-colname="modified"><span>' + fm.lg.modified + '</span></th>';
+			thead += '<th class="column-name" data-colname="name"><span>' + lg.name + '</span></th>';
+			thead += '<th class="column-type" data-colname="type"><span>' + lg.type + '</span></th>';
+			thead += '<th class="column-dimensions" data-colname="dimensions"><span>' + lg.dimensions + '</span></th>';
+			thead += '<th class="column-size" data-colname="size"><span>' + lg.size + '</span></th>';
+			thead += '<th class="column-modified" data-colname="modified"><span>' + lg.modified + '</span></th>';
 			thead += '</tr></thead>';
 
 			$table.append(thead);
 			$table.append('<tbody>');
 
-			if(!isFile(path) && path !== fm.fileRoot) {
+			if(!isFile(path) && path !== fileRoot) {
 				parentNode = '<tr class="directory-parent" data-path="' + getParentDirname(path) + '" oncontextmenu="return false;">';
 				parentNode += '<td>..</td>';
 				parentNode += '<td></td>';
@@ -2090,7 +2162,7 @@ var getFolderInfo = function(path) {
 
 				var $tr = $('<tr>', {
 					class: (item['File Type'] == 'dir') ? 'directory' : 'file',
-					title: fm.config.options.showTitleAttr ? item['Path'] : null,
+					title: config.options.showTitleAttr ? item['Path'] : null,
 					'data-path': item['Path']
 				}).data('itemdata', prepareItemInfo(item));
 
@@ -2128,7 +2200,7 @@ var getFolderInfo = function(path) {
 			result = $table;
 		}
 	} else {
-		result += '<h1>' + fm.lg.could_not_retrieve_folder + '</h1>';
+		result += '<h1>' + lg.could_not_retrieve_folder + '</h1>';
 	}
 
 	// add the new markup to the DOM
@@ -2174,7 +2246,7 @@ var getFolderInfo = function(path) {
 		// bind click event to load and display detail view
 		$contents.find('li').click(function() {
 			var path = $(this).attr('data-path');
-			if(fm.config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
+			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
 			} else {
 				getDetailView(path);
@@ -2214,7 +2286,7 @@ var getFolderInfo = function(path) {
 		// bind click event to load and display detail view
 		$contents.find('tbody > tr').click(function() {
 			var path = $(this).attr('data-path');
-			if(fm.config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
+			if(config.options.quickSelect && data[path]['File Type'] != 'dir' && has_capability(data[path], 'select')) {
 				selectItem(data[path]);
 			} else {
 				getDetailView(path);
@@ -2243,12 +2315,19 @@ var getFolderData = function(path) {
 	// TODO: it is also possible to cache based on "source" (filetree / main window list)
 	// caches result for specified path to get rid of redundant requests
 	if(!loadedFolderData[path] || (Date.now() - loadedFolderData[path].cached) > 2000) {
-		var url = fm.fileConnector + '?mode=getfolder&path=' + encodeURIComponent(path) + '&config=' + fm.userconfig + '&showThumbs=' + fm.config.options.showThumbs + '&time=' + new Date().getTime();
-		if ($.urlParam('type')) url += '&type=' + $.urlParam('type');
+		var queryParams = {
+			mode: 'getfolder',
+			path: path,
+			showThumbs: config.options.showThumbs
+		};
+
+		if($.urlParam('type')) {
+			queryParams.type = $.urlParam('type');
+		}
 
 		$.ajax({
 			'async': false,
-			'url': url,
+			'url': buildConnectorUrl(queryParams),
 			'dataType': "json",
 			'cache': false,
 			'success': function(data) {
@@ -2291,7 +2370,7 @@ var buildFileTreeBranch = function(options, itemPath) {
 		adjustFileTree($ul);
 		result = $ul;
 	} else {
-		result = $('<h1>').text(fm.lg.could_not_retrieve_folder);
+		result = $('<h1>').text(lg.could_not_retrieve_folder);
 	}
 	return result;
 };
@@ -2308,7 +2387,7 @@ var buildFileTreeItem = function(item) {
 		extraClass = item['Protected'] == 0 ? '' : ' directory-locked';
 		result = $('<li>', {class: "directory collapsed" + extraClass}).append($link);
 	} else {
-		if(fm.config.options.listFiles) {
+		if(config.options.listFiles) {
 			extraClass = item['Protected'] == 0 ? '' : ' file-locked';
 			result = $('<li>', {class: "file ext_" + item['File Type'].toLowerCase() + extraClass}).append($link);
 		}
@@ -2327,23 +2406,23 @@ $(function() {
   
   initConfigLastPromise.done(function(res) {
 
-	if(fm.config.extras.extra_js) {
-		for(var i=0; i< fm.config.extras.extra_js.length; i++) {
+	if(config.extras != undefined && config.extras.extra_js) {
+		for(var i=0; i< config.extras.extra_js.length; i++) {
 			$.ajax({
-				url: fm.config.extras.extra_js[i],
+				url: config.extras.extra_js[i],
 				dataType: "script",
-				async: fm.config.extras.extra_js_async
+				async: config.extras.extra_js_async
 			});
 		}
 	}
 
-	$('#link-to-project').attr('href', fm.config.url).attr('target', '_blank').attr('title', fm.lg.support_fm + ' [' + fm.lg.version + ' : ' + fm.config.version + ']');
-	$('div.version').html(fm.config.version);
+	$('#link-to-project').attr('href', config.url).attr('target', '_blank').attr('title', lg.support_fm + ' [' + lg.version + ' : ' + config.version + ']');
+	$('div.version').html(config.version);
 
 	// Loading theme
-	loadCSS('/themes/' + fm.config.options.theme + '/styles/filemanager.css');
+	loadCSS('/themes/' + config.options.theme + '/styles/filemanager.css');
 	$.ajax({
-	    url: fm.config.globals.pluginPath + '/themes/' + fm.config.options.theme + '/styles/ie.css',
+	    url: config.globals.pluginPath + '/themes/' + config.options.theme + '/styles/ie.css',
 	    async: false,
 	    success: function(data)
 	    {
@@ -2355,9 +2434,9 @@ $(function() {
 	loadJS('/scripts/zeroclipboard/dist/ZeroClipboard.js');
 
 	// Loading CodeMirror if enabled for online edition
-	if(fm.config.edit.enabled) {
+	if(config.edit.enabled) {
 		loadCSS('/scripts/CodeMirror/lib/codemirror.css');
-		loadCSS('/scripts/CodeMirror/theme/' + fm.config.edit.theme + '.css');
+		loadCSS('/scripts/CodeMirror/theme/' + config.edit.theme + '.css');
 		loadJS('/scripts/CodeMirror/lib/codemirror.js');
 		loadJS('/scripts/CodeMirror/addon/selection/active-line.js');
 		loadCSS('/scripts/CodeMirror/addon/display/fullscreen.css');
@@ -2365,13 +2444,12 @@ $(function() {
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
   
-
-	// init baseUrl
-	if(fm.config.options.baseUrl === false) {
+	// set baseUrl
+	if(config.options.baseUrl === false) {
 		baseUrl = location.origin + location.pathname;
 
 	} else {
-		baseUrl = fm.config.options.baseUrl;
+		baseUrl = config.options.baseUrl;
 	}
 	// for url like http://site.com/index.html
 	if(getExtension(baseUrl).length > 0) {
@@ -2379,31 +2457,35 @@ $(function() {
 	}
 	baseUrl = trimSlashes(baseUrl) + '/';
 
+	// set fileConnector
+	var langConnector = 'connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
+	fileConnector = config.options.fileConnector || baseUrl + langConnector;
+
 	// changes files root to restrict the view to a given folder
 	if($.urlParam('exclusiveFolder') != 0) {
-		fm.fileRoot += $.urlParam('exclusiveFolder');
-		if(isFile(fm.fileRoot)) fm.fileRoot += '/'; // add last '/' if needed
-		fm.fileRoot = fm.fileRoot.replace(/\/\//g, '\/');
+		fileRoot += $.urlParam('exclusiveFolder');
+		if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
+		fileRoot = fileRoot.replace(/\/\//g, '\/');
 	}
 
 	// get folder that should be expanded after filemanager is loaded
 	var expandedFolder = '';
 	if($.urlParam('expandedFolder') != 0) {
 		expandedFolder = $.urlParam('expandedFolder');
-		fullexpandedFolder = fm.fileRoot + expandedFolder;
+		fullexpandedFolder = fileRoot + expandedFolder;
 	}
 
 	// finalize the FileManager UI initialization with localized text
-	if(fm.config.options.localizeGUI === true) {
-        $uploadButton.append(fm.lg.upload);
-        $('#newfolder').append(fm.lg.new_folder);
-        $('#grid').attr('title', fm.lg.grid_view);
-        $('#list').attr('title', fm.lg.list_view);
+	if(config.options.localizeGUI === true) {
+        $uploadButton.append(lg.upload);
+        $('#newfolder').append(lg.new_folder);
+        $('#grid').attr('title', lg.grid_view);
+        $('#list').attr('title', lg.list_view);
 	}
 
 	// adding a close button triggering callback function if CKEditorCleanUpFuncNum passed
 	if($.urlParam('CKEditorCleanUpFuncNum')) {
-		$("body").append('<button id="close-btn" type="button">' + fm.lg.close + '</button>');
+		$("body").append('<button id="close-btn" type="button">' + lg.close + '</button>');
 
 		$('#close-btn').click(function () {
 			parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
@@ -2411,13 +2493,13 @@ $(function() {
 	}
 
 	// input file replacement
-	$('#browse').append('+').attr('title', fm.lg.browse);
+	$('#browse').append('+').attr('title', lg.browse);
 	$("#newfile").change(function() {
 		$("#filepath").val($(this).val().replace(/.+[\\\/]/, ""));
 	});
 
 	// load searchbox
-	if(fm.config.options.searchBox === true)  {
+	if(config.options.searchBox === true)  {
 		loadJS('/scripts/filemanager.liveSearch.min.js');
 	} else {
 		$('#search').remove();
@@ -2427,12 +2509,12 @@ $(function() {
 	$('button').wrapInner('<span></span>');
 
 	// Set initial view state.
-	$fileinfo.data('view', fm.config.options.defaultViewMode);
-	setViewButtonsFor(fm.config.options.defaultViewMode);
+	$fileinfo.data('view', config.options.defaultViewMode);
+	setViewButtonsFor(config.options.defaultViewMode);
 
 	$('#home').click(function() {
 		createFileTree();
-		getFolderInfo(fm.fileRoot);
+		getFolderInfo(fileRoot);
 	});
 
 	$('#level-up').click(function() {
@@ -2440,7 +2522,7 @@ $(function() {
 			isPreview = $('#preview').length > 0;
 
 		// already in root folder
-		if(currentPath == fm.fileRoot && !isPreview) {
+		if(currentPath == fileRoot && !isPreview) {
 			return false;
 		}
 		// loads current path in preview mode or parent folder otherwise
@@ -2463,26 +2545,28 @@ $(function() {
 
 	// display storage summary info
 	$('#summary').click(function() {
-		var message = '<div class="title">' + fm.lg.summary_title + '</div>';
+		var message = '<div class="title">' + lg.summary_title + '</div>';
 		var $prompt = $.prompt(message).addClass('summary-popup');
 
-		$.getJSON(fm.fileConnector + '?mode=summarize&config=' + fm.userconfig, function(result) {
+		$.getJSON(buildConnectorUrl({
+			mode: 'summarize'
+		}), function(result) {
 			if(result['Code'] == 0) {
 				var $content = $prompt.find('.jqimessage'),
 					size = formatBytes(result['Size'], true);
 
-				if(fm.config.options.fileRootSizeLimit > 0) {
-					var sizeTotal = formatBytes(fm.config.options.fileRootSizeLimit, true);
-					var ratio = result['Size'] * 100 / fm.config.options.fileRootSizeLimit;
+				if(config.options.fileRootSizeLimit > 0) {
+					var sizeTotal = formatBytes(config.options.fileRootSizeLimit, true);
+					var ratio = result['Size'] * 100 / config.options.fileRootSizeLimit;
 					var percentage = Math.round(ratio * 100) / 100;
-					size += ' (' + percentage + '%) ' + fm.lg.of + ' ' + sizeTotal;
+					size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
 				}
 
-				$content.append($('<div>', {class: 'line', text: fm.lg.summary_files + ': ' + result['Files']}));
+				$content.append($('<div>', {class: 'line', text: lg.summary_files + ': ' + result['Files']}));
 				if(result['Folders']) {
-					$content.append($('<div>', {class: 'line', text: fm.lg.summary_folders + ': ' + result['Folders']}));
+					$content.append($('<div>', {class: 'line', text: lg.summary_folders + ': ' + result['Folders']}));
 				}
-				$content.append($('<div>', {class: 'line', text: fm.lg.summary_size + ': ' + size}));
+				$content.append($('<div>', {class: 'line', text: lg.summary_size + ': ' + size}));
 			} else {
 				$.prompt(result['Error']);
 			}
@@ -2490,13 +2574,13 @@ $(function() {
 	});
 
 	// Provide initial values for upload form, status, etc.
-	setUploader(fm.fileRoot);
+	setUploader(fileRoot);
 
 
 	/** Handling File upload **/
 
 	// Multiple Uploads
-	if(fm.config.upload.multiple) {
+	if(config.upload.multiple) {
 		// Load jquery file upload library
 		loadCSS('/scripts/jQuery-File-Upload/css/dropzone.css');
 
@@ -2504,32 +2588,32 @@ $(function() {
 		$('#file-input-container').remove();
 
 		$uploadButton.unbind().click(function() {
-			if(fm.capabilities.indexOf('upload') === -1) {
-				$.prompt(fm.lg.NOT_ALLOWED);
+			if(capabilities.indexOf('upload') === -1) {
+				$.prompt(lg.NOT_ALLOWED);
 				return false;
 			}
 
 			var allowedFileTypes,
 				currentPath = getCurrentPath(),
 				templateContainer = loadTemplate('upload-container', {
-					folder: fm.lg.current_folder + currentPath,
-					info: fm.lg.upload_files_number_limit.replace('%s', fm.config.upload.numberOfFiles) + ' ' + fm.lg.upload_file_size_limit + formatBytes(fm.config.upload.fileSizeLimit, true),
-					lang: fm.lg
+					folder: lg.current_folder + currentPath,
+					info: lg.upload_files_number_limit.replace('%s', config.upload.numberOfFiles) + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true),
+					lang: lg
 				});
 
-			if(fm.config.security.uploadPolicy == 'DISALLOW_ALL') {
-				allowedFileTypes = new RegExp('(\\.|\\/)(' + fm.config.security.uploadRestrictions.join('|') + ')$', 'i');
+			if(config.security.uploadPolicy == 'DISALLOW_ALL') {
+				allowedFileTypes = new RegExp('(\\.|\\/)(' + config.security.uploadRestrictions.join('|') + ')$', 'i');
 			} else {
 				// allow any extension since we have no easy way to handle the the built-in `acceptedFiles` params
 				allowedFileTypes = null;
 			}
 
-			if ($.urlParam('type').toString().toLowerCase() == 'images' || fm.config.upload.imagesOnly) {
-				allowedFileTypes = new RegExp('(\\.|\\/)(' + fm.config.images.imagesExt.join('|') + ')$', 'i');
+			if ($.urlParam('type').toString().toLowerCase() == 'images' || config.upload.imagesOnly) {
+				allowedFileTypes = new RegExp('(\\.|\\/)(' + config.images.imagesExt.join('|') + ')$', 'i');
 			}
 
 			var btns = {};
-			btns[fm.lg.close] = false;
+			btns[lg.close] = false;
 			$.prompt(templateContainer, {
 				buttons: btns,
 				persistent: true
@@ -2567,7 +2651,7 @@ $(function() {
 					$node = data.files[0].context;
 
 				data.abort();
-				$node.find('.error-message').text(fm.lg.upload_aborted);
+				$node.find('.error-message').text(lg.upload_aborted);
 				$node.addClass('aborted');
 			});
 
@@ -2582,11 +2666,11 @@ $(function() {
 					file = data.files[0];
 
 				if(file.chunkUploaded) {
-					var path = currentPath + file.serverName,
-						url = fm.fileConnector + '?mode=getinfo&path=' + encodeURIComponent(path) + '&config=' + fm.userconfig + '&time=' + new Date().getTime();
-
 					$.ajax({
-						'url': url,
+						'url': buildConnectorUrl({
+							mode: 'getinfo',
+							path: currentPath + file.serverName
+						}),
 						'dataType': "json",
 						'async': false,
 						'success': function(result) {
@@ -2615,10 +2699,10 @@ $(function() {
 					file = data.files[0];
 
 				if(file.chunkUploaded) {
-					var path = currentPath + file.serverName,
-						url = fm.fileConnector + '?mode=delete&path=' + encodeURIComponent(path) + '&config=' + fm.userconfig + '&time=' + new Date().getTime();
-
-					$.getJSON(url, function(result) {
+					$.getJSON(buildConnectorUrl({
+						mode: 'delete',
+						path: currentPath + file.serverName
+					}), function(result) {
 						if(result['Code'] == 0) {
 							var path = result['Path'];
 							removeNode(path);
@@ -2658,22 +2742,22 @@ $(function() {
 					sequentialUploads: true,
 					dataType: 'json',
 					dropZone: $dropzone,
-					maxChunkSize: fm.config.upload.chunkSize,
-					url: fm.fileConnector + '?config=' + fm.userconfig,
-					paramName: fm.config.upload.paramName,
+					maxChunkSize: config.upload.chunkSize,
+					url: buildConnectorUrl(),
+					paramName: config.upload.paramName,
 					formData: {
 						mode: 'add',
 						currentpath: currentPath
 					},
 					// validation
 					// maxNumberOfFiles works only for single "add" call when "singleFileUploads" is set to "false"
-					maxNumberOfFiles: fm.config.upload.numberOfFiles,
+					maxNumberOfFiles: config.upload.numberOfFiles,
 					acceptFileTypes: allowedFileTypes,
-					maxFileSize: fm.config.upload.fileSizeLimit,
+					maxFileSize: config.upload.fileSizeLimit,
 					messages: {
-						maxNumberOfFiles: fm.lg.upload_files_number_limit.replace("%s", fm.config.upload.numberOfFiles),
-						acceptFileTypes: fm.lg.upload_file_type_invalid,
-						maxFileSize: fm.lg.upload_file_too_big + ' ' + fm.lg.upload_file_size_limit + formatBytes(fm.config.upload.fileSizeLimit, true)
+						maxNumberOfFiles: lg.upload_files_number_limit.replace("%s", config.upload.numberOfFiles),
+						acceptFileTypes: lg.upload_file_type_invalid,
+						maxFileSize: lg.upload_file_too_big + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true)
 					},
 					// image preview options
 					previewMaxHeight: 120,
@@ -2685,15 +2769,15 @@ $(function() {
 					var $items = $dropzone.children('.upload-item');
 					$.each(data.files, function (index, file) {
 						// skip selected files if total files number exceed "maxNumberOfFiles"
-						if($items.length >= fm.config.upload.numberOfFiles) {
+						if($items.length >= config.upload.numberOfFiles) {
 							return false;
 						}
 						// to display in item template
 						file.formattedSize = formatBytes(file.size);
 						var $template = $(loadTemplate('upload-item', {
 							file: file,
-							lang: fm.lg,
-							imagesPath: fm.config.globals.pluginPath + '/scripts/jQuery-File-Upload/img'
+							lang: lg,
+							imagesPath: config.globals.pluginPath + '/scripts/jQuery-File-Upload/img'
 						}));
 						file.context = $template;
 						$template.find('.buttons').data(data);
@@ -2717,7 +2801,7 @@ $(function() {
 
 				.on('fileuploadfail', function(e, data) {
 					$.each(data.files, function (index, file) {
-						file.error = fm.lg.upload_failed;
+						file.error = lg.upload_failed;
 						var $node = file.context;
 						$node.removeClass('added process').addClass('error');
 					});
@@ -2757,13 +2841,13 @@ $(function() {
 						// all files were successfully uploaded
 						if($items.length === 0) {
 							$.prompt.close();
-							if (fm.config.options.showConfirmation) {
-								$.prompt(fm.lg.upload_successful_files);
+							if (config.options.showConfirmation) {
+								$.prompt(lg.upload_successful_files);
 							}
 						}
 						// errors occurred
 						if($items.filter('.error').length) {
-							$.prompt(fm.lg.upload_partially + "<br>" + fm.lg.upload_failed_details);
+							$.prompt(lg.upload_partially + "<br>" + lg.upload_failed_details);
 						}
 						getFolderInfo(currentPath);
 						reloadFileTreeNode(currentPath);
@@ -2817,14 +2901,14 @@ $(function() {
 	} else {
 
 		$uploadButton.click(function() {
-			if(fm.capabilities.indexOf('upload') === -1) {
-				$.prompt(fm.lg.NOT_ALLOWED);
+			if(capabilities.indexOf('upload') === -1) {
+				$.prompt(lg.NOT_ALLOWED);
 				return false;
 			}
 
 			var data = $(this).data();
 			if($.isEmptyObject(data)) {
-				$.prompt(fm.lg.upload_choose_file);
+				$.prompt(lg.upload_choose_file);
 			} else {
 				data.submit();
 			}
@@ -2834,8 +2918,8 @@ $(function() {
 			.fileupload({
 				autoUpload: false,
 				dataType: 'json',
-				url: fm.fileConnector + '?config=' + fm.userconfig,
-				paramName: fm.config.upload.paramName
+				url: buildConnectorUrl(),
+				paramName: config.upload.paramName
 			})
 
 			.on('fileuploadadd', function(e, data) {
@@ -2848,13 +2932,13 @@ $(function() {
 					currentpath: getCurrentPath()
 				};
 				$uploadButton.addClass('loading').prop('disabled', true);
-				$uploadButton.children('span').text(fm.lg.loading_data);
+				$uploadButton.children('span').text(lg.loading_data);
 			})
 
 			.on('fileuploadalways', function(e, data) {
 				$("#filepath").val('');
 				$uploadButton.removeData().removeClass('loading').prop('disabled', false);
-				$uploadButton.children('span').text(fm.lg.upload);
+				$uploadButton.children('span').text(lg.upload);
 
 				var errorMessage,
 					result = data.result;
@@ -2869,32 +2953,32 @@ $(function() {
 				}
 
 				if(errorMessage) {
-					$.prompt(fm.lg.upload_failed + "<br>" + errorMessage);
+					$.prompt(lg.upload_failed + "<br>" + errorMessage);
 				} else {
 					// success upload
 					var currentPath = getCurrentPath();
 					getFolderInfo(currentPath);
 					reloadFileTreeNode(currentPath);
-					if(fm.config.options.showConfirmation) {
-						$.prompt(fm.lg.upload_successful_file);
+					if(config.options.showConfirmation) {
+						$.prompt(lg.upload_successful_file);
 					}
 				}
 			})
 
 			.on('fileuploadfail', function(e, data) {
 				// server error 500, etc.
-				$.prompt(fm.lg.upload_failed);
+				$.prompt(lg.upload_failed);
 			});
 	}
 
 	// Loading CustomScrollbar if enabled
 	// Important, the script should be called after calling createFileTree() to prevent bug
-	if(fm.config.customScrollbar.enabled) {
+	if(config.customScrollbar.enabled) {
 		loadCSS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
 		loadJS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
 
-		var csTheme = fm.config.customScrollbar.theme != undefined ? fm.config.customScrollbar.theme : 'inset-2-dark';
-		var csButton = fm.config.customScrollbar.button != undefined ? fm.config.customScrollbar.button : true;
+		var csTheme = config.customScrollbar.theme != undefined ? config.customScrollbar.theme : 'inset-2-dark';
+		var csButton = config.customScrollbar.button != undefined ? config.customScrollbar.button : true;
     
 
     $("#filetree").append('<div style="height:3000px"></div>'); // because if #filetree has height equal to 0, mCustomScrollbar is not applied
@@ -2913,7 +2997,7 @@ $(function() {
       axis: "yx"
       });
 
-    fm.fileTreeloaded.done(function(result) {
+    fileTreeloaded.done(function(result) {
         $("#fileinfo").mCustomScrollbar({
           theme:csTheme,
           scrollButtons:{ 
@@ -2932,7 +3016,7 @@ $(function() {
 	}
 
 	// keep only browseOnly features if needed
-	if(fm.config.options.browseOnly == true) {
+	if(config.options.browseOnly == true) {
 		$('#file-input-container').remove();
 		$uploadButton.remove();
 		$('#newfolder').remove();
@@ -2945,20 +3029,20 @@ $(function() {
 
       // Provides support for adjustible columns.
     $('#splitter').splitter({
-      sizeLeft: fm.config.options.splitterMinWidth,
-      minLeft: fm.config.options.splitterMinWidth,
+      sizeLeft: config.options.splitterMinWidth,
+      minLeft: config.options.splitterMinWidth,
       minRight: 200
     });
 
-    getDetailView(fm.fileRoot + expandedFolder);
+    getDetailView(fileRoot + expandedFolder);
 
     // add useragent string to html element for IE 10/11 detection
     var doc = document.documentElement;
     doc.setAttribute('data-useragent', navigator.userAgent);
 
-    if(fm.config.options.logger) {
+    if(config.options.logger) {
       var end = new Date().getTime();
-      var time = end - fm.start;
+      var time = end - start;
       console.log('Total execution time : ' + time + ' ms');
     }
 

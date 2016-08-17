@@ -17,8 +17,11 @@
  *  - dynamic content type setting  8/16
  */ 
  
-  //use new rich manager 
-  FileManagerI fm = new RichFileManager(getServletContext(), request);
+//use new rich manager  - or not
+ boolean rich = true;
+ 
+ 
+ FileManagerI fm = (rich)? new RichFileManager(getServletContext(), request) : new FileManager(getServletContext(), request);
  
   boolean strictServletCompliance = false; // default value is ISO-8859-1.
 
@@ -54,7 +57,7 @@
         }
         else if (mode.equals("getfolder")){
           if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-            responseData = fm.getFolder();
+            responseData = fm.getFolder(request);
           }
         }
         else if (mode.equals("rename")){
@@ -79,14 +82,13 @@
         	  responseData = fm.download(request, response);
           }
         }
-        else if (mode.equals("preview")){
+        else if (mode.equals("getimage")){
           if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-            fm.preview(response);
+            fm.preview(request, response);
           }
         } else if (mode.equals("move")){
             if(fm.setGetVar("old",  (strictServletCompliance)? qpm.get("old"):request.getParameter("old")) && 
-                    fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new")) &&
-                    fm.setGetVar("root",  (strictServletCompliance)? qpm.get("root"):request.getParameter("root"))
+                    fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new")) 
                     ) {
                 responseData = fm.moveItem();
                 }
@@ -99,7 +101,7 @@
     else if(request.getMethod().equals("POST")){
       mode = "upload";
       responseData = fm.add();
-      //putTextarea = true; // this seems not required in new query upload 
+      //putTextarea = true;
     }
   }
   if (responseData == null){
@@ -117,7 +119,7 @@
       String responseStr = responseData.toString();
       if (putTextarea)
         responseStr = "<textarea>" + responseStr + "</textarea>";
-      //fm.log("mode:" + mode + ",response:" + responseStr);
+      //fm.log("d:\\logs\\logfilej.txt", "mode:" + mode + ",response:" + responseStr);
       pw.print(responseStr);
       pw.close();
   }

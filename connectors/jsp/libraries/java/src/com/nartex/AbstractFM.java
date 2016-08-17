@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author gkallidis
  *
  */
-public abstract class AbstractFM implements FileManagerI {
+public abstract class AbstractFM  implements FileManagerI{
 
 	protected static Properties config = null;
 	protected static JSONObject language = null;
@@ -58,7 +58,7 @@ public abstract class AbstractFM implements FileManagerI {
 	protected SimpleDateFormat dateFormat;
 	protected List<FileItem> files = null;
 	protected boolean reload = false;
-	protected String previewPath = null; //static?
+	protected Path previewBasePath = null; //static?
 	protected boolean previewPathRelative = false; // needed as it is exposed either relative or absolute
 
 	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws IOException {
@@ -116,7 +116,11 @@ public abstract class AbstractFM implements FileManagerI {
 		    log.debug("final documentRoot:"+ this.documentRoot);
 		}
 		if (reload) {
-				this.previewPath = null;	
+				this.previewBasePath = null;	
+		}
+		// a relative path
+		if (this.previewBasePath == null) {
+			this.previewBasePath = Paths.get(contextPath);
 		}
 
 		dateFormat = new SimpleDateFormat(config.getProperty("date"));
@@ -128,7 +132,6 @@ public abstract class AbstractFM implements FileManagerI {
 		this.reload = false;
 
 	}
-
 
 	@Override
 	public JSONObject error(String msg, Throwable ex) {
@@ -201,124 +204,7 @@ public abstract class AbstractFM implements FileManagerI {
 				&& contains(config.getProperty("flash"),  (String)this.item.get("filetype"));
 	}
 
-	@Override
-	public JSONObject rename() {
-		if ((this.get.get("old")).endsWith("/")) {
-			this.get.put("old", (this.get.get("old")).substring(0, ((this.get.get("old")).length() - 1)));
-		}
-		boolean error = false;
-		JSONObject array = null;
-		String tmp[] = (this.get.get("old")).split("/");
-		String filename = tmp[tmp.length - 1];
-		int pos = this.get.get("old").lastIndexOf("/");
-		String path = (this.get.get("old")).substring(0, pos + 1);
-		Path fileFrom = null;
-		Path fileTo = null;
-		try {
-			fileFrom = this.documentRoot.resolve(path).resolve(filename);
-			fileTo = this.documentRoot.resolve(path).resolve( this.get.get("new"));
-			if (fileTo.toFile().exists()) {
-				if (fileTo.toFile().isDirectory()) {
-					this.error(sprintf(lang("DIRECTORY_ALREADY_EXISTS"), this.get.get("new")));
-					error = true;
-				} else { // fileTo.isFile
-					// Files.isSameFile(fileFrom, fileTo);
-					this.error(sprintf(lang("FILE_ALREADY_EXISTS"), this.get.get("new")));
-					error = true;
-				}
-			} else {
-				//if (fileFrom.equals(fileTo));
-				Files.move(fileFrom, fileTo, StandardCopyOption.REPLACE_EXISTING);
-			}
-		} catch (Exception e) {
-			if (fileFrom.toFile().isDirectory()) {
-				this.error(sprintf(lang("ERROR_RENAMING_DIRECTORY"), filename + "#" + this.get.get("new")),e);
-			} else {
-				this.error(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")),e);
-			}
-			error = true;
-		}
-		if (!error) {
-			array = new JSONObject();
-			try {
-				array.put("Error", "");
-				array.put("Code", 0);
-				array.put("Old Path", this.get.get("old"));
-				array.put("Old Name", filename);
-				array.put("New Path", path + this.get.get("new"));
-				array.put("New Name", this.get.get("new"));
-			} catch (Exception e) {
-				this.error("JSONObject error");
-			}
-		}
-		return array;
-	}
-
-	@Override
-	public JSONObject delete() {
-		JSONObject array = null;
-		File file = this.documentRoot.resolve( this.get.get("path")).toFile();
-				//new File(this.documentRoot + this.get.get("path"));
-		if (file.isDirectory()) {
-			array = new JSONObject();
-			this.unlinkRecursive(this.documentRoot.resolve( this.get.get("path")).toFile(), true);
-			try {
-				array.put("Error", "");
-				array.put("Code", 0);
-				array.put("Path", this.get.get("path"));
-			} catch (Exception e) {
-				this.error("JSONObject error");
-			}
-		} else if (file.exists()) {
-			array = new JSONObject();
-			if (file.delete()) {
-				try {
-					array.put("Error", "");
-					array.put("Code", 0);
-					array.put("Path", this.get.get("path"));
-				} catch (Exception e) {
-					this.error("JSONObject error");
-				}
-			} else
-				this.error(sprintf(lang("ERROR_DELETING FILE"), this.get.get("path")));
-			return array;
-		} else {
-			this.error(lang("INVALID_DIRECTORY_OR_FILE"));
-		}
-		return array;
-	}
-
-
-	@Override
-	public JSONObject addFolder() {
-		JSONObject array = null;
-		String allowed[] = { "-", " " };
-		LinkedHashMap<String, String> strList = new LinkedHashMap<String, String>();
-		strList.put("fileName", this.get.get("name"));
-		String filename = cleanString(strList, allowed).get("fileName");
-		if (filename.length() == 0) // the name existed of only special
-									// characters
-			this.error(sprintf(lang("UNABLE_TO_CREATE_DIRECTORY"), this.get.get("name")));
-		else {
-			File file = this.documentRoot.resolve(this.get.get("path")).resolve(filename).toFile();
-			if (file.isDirectory()) {
-				this.error(sprintf(lang("DIRECTORY_ALREADY_EXISTS"), filename));
-			} else if (!file.mkdir()) {
-				this.error(sprintf(lang("UNABLE_TO_CREATE_DIRECTORY"), filename));
-			} else {
-				try {
-					array = new JSONObject();
-					array.put("Parent", this.get.get("path"));
-					array.put("Name", filename);
-					array.put("Error", "");
-					array.put("Code", 0);
-				} catch (Exception e) {
-					this.error("JSONObject error");
-				}
-			}
-		}
-		return array;
-	}
+	
 
 
 
@@ -347,23 +233,6 @@ public abstract class AbstractFM implements FileManagerI {
 		}
 	}
 
-	@Override
-	public void preview(HttpServletResponse resp) {
-		File file =this.documentRoot.resolve(this.get.get("path")).toFile();
-		if (this.get.get("path") != null && file.exists()) {
-			resp.setHeader("Content-type", "image/" + getFileExtension(file.getName()));
-			resp.setHeader("Content-Transfer-Encoding", "Binary");
-			resp.setHeader("Content-length", "" + file.length());
-			resp.setHeader("Content-Disposition", "inline; filename=\"" + getFileBaseName(file.getName()) + "\"");
-			// handle caching
-			resp.setHeader("Pragma", "no-cache");
-			resp.setHeader("Expires", "0");
-			resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-			readFile(resp, file);
-		} else {
-			error(sprintf(lang("FILE_DOES_NOT_EXIST"), this.get.get("path")));
-		}
-	}
 
 	protected String getFileBaseName(String filename) {
 		String retval = filename;

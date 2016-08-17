@@ -13,12 +13,14 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -47,9 +49,8 @@ import org.json.JSONObject;
  * @author gkallidis
  *
  */
-public class RichFileManager extends AbstractFM  {
+public class RichFileManager extends AbstractFM implements FileManagerI  {
 
-	private static final String THUMBNAIL_PATH = "connectors/jsp/filemanager.jsp?mode=preview&path=";
 
 
 
@@ -70,15 +71,13 @@ public class RichFileManager extends AbstractFM  {
 	public JSONObject getInfo() throws JSONException {
 		this.item = new HashMap<String,Object>();
 		this.item.put("properties", this.properties);
-		this.getFileInfo("");
+		this.getFileInfo("", false);
 		JSONObject array = new JSONObject();
 	
 		try {
 			array.put("Path", this.get.get("path"));
 			array.put("Filename", this.item.get("filename"));
 			array.put("File Type", this.item.get("filetype"));
-			array.put("Thumbnail", this.item.get("thumbnail"));
-			array.put("Preview", this.item.get("preview"));
 			array.put("Properties", this.item.get("properties"));
 			array.put("Error", "");
 			array.put("Code", 0);
@@ -89,9 +88,69 @@ public class RichFileManager extends AbstractFM  {
 	}
 	
 	@Override
-	public JSONObject getFolder() throws JSONException, IOException {
+	public void preview(HttpServletRequest request, HttpServletResponse resp) {
+		
+		Path file =this.documentRoot.resolve(cleanPreview(this.get.get("path")));
+		boolean thumbnail = false;
+		String paramThumbs  =request.getParameter("thumbnail");
+		if (paramThumbs != null && paramThumbs.equals("true")) {
+			thumbnail = true;
+		}
+		long size = 0;
+		try {
+			size = Files.size(file);
+		} catch (IOException e) {
+			this.error(sprintf(lang("INVALID_DIRECTORY_OR_FILE"), file.toFile().getName()));
+		}
+		
+		if (this.get.get("path") != null && Files.exists(file)) {
+			resp.setHeader("Content-type", "image/octet-stream"); // + getFileExtension(file.toFile().getName()));
+			resp.setHeader("Content-Transfer-Encoding", "Binary");
+			resp.setHeader("Content-length", "" + size);
+			resp.setHeader("Content-Disposition", "inline; filename=\"" + getFileBaseName(file.toFile().getName()) + "\"");
+			// handle caching
+			resp.setHeader("Pragma", "no-cache");
+			resp.setHeader("Expires", "0");
+			resp.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+			readSmallFile(resp, file);
+		} else {
+			error(sprintf(lang("FILE_DOES_NOT_EXIST"), this.get.get("path")));
+		}
+	}
+
+	private String cleanPreview(String filecontextpath) {
+		String preview =getPreviewFolder(); //	config.getProperty("preview");		
+		return filecontextpath.replace(preview.replaceFirst("^/", ""), "");
+	}
+
+	// expect small filesw
+	protected void readSmallFile(HttpServletResponse resp, Path file) {
+		OutputStream os = null;
+		try {
+			os = resp.getOutputStream();
+			os.write(Files.readAllBytes(file));
+		} catch (Exception e) {
+			this.error(sprintf(lang("INVALID_DIRECTORY_OR_FILE"), file.toFile().getName()));
+		} finally {
+			try {
+				if (os != null)
+					os.close();
+			} catch (Exception e2) {
+			}
+		}
+	}
+	
+
+	
+	@Override
+	public JSONObject getFolder(HttpServletRequest request) throws JSONException, IOException {
 		JSONObject array = null;
-		//uri
+
+		boolean showThumbs = false;
+		String paramshowThumbs = request.getParameter("showThumbs");
+		if (paramshowThumbs != null ) {
+			showThumbs = true;
+		}
 		Path root = documentRoot.resolve(this.get.get("path"));
 		log.debug("path absolute:" + root.toAbsolutePath());
 		Path docDir = documentRoot.resolve(this.get.get("path")).toRealPath(LinkOption.NOFOLLOW_LINKS);
@@ -137,7 +196,7 @@ public class RichFileManager extends AbstractFM  {
 						//this.item = new HashMap();
 						this.item = new HashMap<String,Object>();
 						this.item.put("properties", this.properties);
-						this.getFileInfo(this.get.get("path") + files[i]);
+						this.getFileInfo(this.get.get("path") + files[i], showThumbs);
 	
 						//if (this.params.get("type") == null || (this.params.get("type") != null && (!this.params.get("type").equals("Image") || checkImageType()))) {
 						if (this.params.get("type") == null || 
@@ -145,11 +204,12 @@ public class RichFileManager extends AbstractFM  {
 										!this.params.get("type").equals("Flash")) ||
 										checkImageType() || checkFlashType() ))) {
 							try {
-								data.put("Path", this.get.get("path") + files[i]);
+								//data.put("Path", this.get.get("path") + files[i]);
+								data.put("Path", this.item.get("path"));								
 								data.put("Filename", this.item.get("filename"));
 								data.put("File Type", this.item.get("filetype"));
-								data.put("Thumbnail", this.item.get("thumbnail"));
-								data.put("Preview", this.item.get("preview"));
+//								data.put("Thumbnail", this.item.get("thumbnail"));
+//								data.put("Preview", this.item.get("preview"));
 								data.put("Properties", this.item.get("properties"));
 								data.put("Error", "");
 								data.put("Code", 0);
@@ -171,37 +231,39 @@ public class RichFileManager extends AbstractFM  {
 	}
 	
 	
-	protected void getFileInfo(String path) throws JSONException {
+	protected void getFileInfo(String path, boolean thumbs) throws JSONException {
 		String pathTmp = path;
 		if ("".equals(pathTmp)) {
 			pathTmp = this.get.get("path");
 		}
 		String[] tmp = pathTmp.split("/");
-		File file = this.documentRoot.resolve(pathTmp).toFile();
+		File file = this.documentRoot.resolve(cleanPreview(pathTmp)).toFile();
 		this.item = new HashMap<String,Object>();
 		String fileName = tmp[tmp.length - 1];
 		this.item.put("filename", fileName);
 		if (file.isFile()) {
-	                this.item.put("filetype", fileName.substring(fileName.lastIndexOf(".") + 1));
-	            }
-		else {
+	          this.item.put("filetype", fileName.substring(fileName.lastIndexOf(".") + 1));
+	    } else {
 	                this.item.put("filetype", "dir");
-	            }
+	    }
 		this.item.put("filemtime", "" + file.lastModified());
 		this.item.put("filectime", "" + file.lastModified());
 	
-		this.item.put("preview", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); // @simo
-		this.item.put("thumbnail", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); // @simo
+		this.item.put("path", config.getProperty("icons-path") + "/" + config.getProperty("icons-default")); 
 	
 		JSONObject props = new JSONObject();
 		if (file.isDirectory()) {
 	
-			this.item.put("preview", config.getProperty("icons-path") + config.getProperty("icons-directory"));
-			this.item.put("thumbnail", config.getProperty("icons-path") + config.getProperty("icons-directory"));
+			this.item.put("path", config.getProperty("icons-path") + config.getProperty("icons-directory")); 
 	
 		} else if (isImage(pathTmp)) {
-			this.item.put("thumbnail", THUMBNAIL_PATH + pathTmp);
-			this.item.put("preview", getPreviewFolder() + pathTmp);
+
+			String imagePath = getPreviewFolder() + pathTmp;
+			if (thumbs) { // not yet implemented
+				this.item.put("path", imagePath );
+			} else {
+				this.item.put("path", imagePath);
+			}
 			Dimension imgData = getImageSize(documentRoot.resolve(pathTmp).toString());
 			props.put("Height", "" + imgData.height);
 			props.put("Width", "" + imgData.width);
@@ -223,37 +285,36 @@ public class RichFileManager extends AbstractFM  {
 	/**
 	 * constructs previewFolder from property preview.
 	 * 
-	 * delegated to allow overriding
+	 * If it starts with / is an absulte URL else it resolves relative to contextpath
 	 * 
-	 * If preview is not set, use {@link #THUMBNAIL_PATH}.
+	 * Result start with a slash for client call
+	 * 
+	 * Better use org.apache.http.client.utils.URIUtils resolve ? 
 	 * 
 	 * @return previewFolder
 	 */
 	protected String getPreviewFolder() {
-		if (this.previewPath == null) {
-			String preview = config.getProperty("preview");
-			Path previewPath = null;
-			if (preview != null && preview.startsWith("http")) {
-				try {
-					previewPath = Paths.get(new URI(preview));
-				} catch (URISyntaxException e) {
-					log.error("is not a valid URI preview config:"+ preview);
-				}
+		Path tmpPreviewPath = null;
+		String previewPath = null;
+		String preview = config.getProperty("preview");
+		if (preview != null && preview.startsWith("/")) {
+			try {
+				tmpPreviewPath = Paths.get(new URI(preview));
+			} catch (URISyntaxException e) {
+				log.error("is not a valid URI preview config:"+ preview);
 			}
-			if (previewPath != null) {
-				this.previewPath = previewPath.normalize().toString();
-			} else {
-				// relative ?
-				this.previewPath = preview;		
-			}	
-			if (this.previewPath == null || this.previewPath.equals("")) {
-				// set it to thumbnail path
-				this.previewPath = THUMBNAIL_PATH;
-			}
-			this.previewPath = this.previewPath + "/"; // has to end with a slash probably
-			log.debug("previewPath:"+ this.previewPath);
 		}
-		return this.previewPath;
+		if (tmpPreviewPath != null) {
+			previewPath = tmpPreviewPath.normalize().toString();
+		} else {
+			// relative ? 
+			if (previewBasePath != null) {
+				previewPath = this.previewBasePath.resolve(preview).normalize().toString();
+			} else {
+				previewPath = Paths.get(preview).normalize().toString();
+			}
+		}	
+		return previewPath.replace("\\", "/") + "/";
 	}
 	   
 
@@ -262,7 +323,7 @@ public class RichFileManager extends AbstractFM  {
 	 */
 	@Override
 	public JSONObject download(HttpServletRequest request, HttpServletResponse resp) {
-		File file = this.documentRoot.resolve(this.get.get("path")).toFile();
+		File file = this.documentRoot.resolve(cleanPreview(this.get.get("path"))).toFile();
 		if (this.get.get("path") != null && file.exists()) {
 			
 			if (request.getParameter("force") == null || !request.getParameter("force").equals("true")) {
@@ -377,7 +438,7 @@ public class RichFileManager extends AbstractFM  {
 						}
 					}
 					if (!error) {
-						currentPath = currentPath.replaceFirst("^/", "");// relative
+						currentPath = cleanPreview(currentPath.replaceFirst("^/", ""));// relative
 						Path path = currentPath.equals("")? this.documentRoot: this.documentRoot.resolve(currentPath);
 						if (config.getProperty("upload-overwrite").toLowerCase().equals("false")) {							
 							fileName = this.checkFilename(path.toString(), fileName, 0);
@@ -392,7 +453,7 @@ public class RichFileManager extends AbstractFM  {
 							targetItem.write(saveTo);
 							log.info("saved "+ saveTo);
 						}
-						fileInfo.put("Path", currentPath);
+						fileInfo.put("Path", getPreviewFolder() + currentPath);
 						fileInfo.put("Name", fileName);
 						fileInfo.put("Error", "");
 						fileInfo.put("Code", 0);
@@ -433,7 +494,7 @@ public class RichFileManager extends AbstractFM  {
 	   Path fileTo = null;
 	   if (pos > 0) {
 		   path = itemName.substring(0, pos + 1);
-		   fileTo = this.documentRoot.resolve(path); // from subfolder, folder should be ..
+		   fileTo = this.documentRoot.resolve(cleanPreview(path)); // from subfolder, folder should be ..
 	   } else {
 		   fileTo = this.documentRoot;
 	   }
@@ -445,7 +506,7 @@ public class RichFileManager extends AbstractFM  {
 	   Path fileFrom = null;
 
 	   try {
-	       fileFrom = this.documentRoot.resolve(itemName);
+	       fileFrom = this.documentRoot.resolve(cleanPreview(itemName));
 	       fileTo = fileTo.resolve(folder).resolve(filename).normalize();
 	       
 	       if (!fileTo.toString().contains(this.documentRoot.toString())) {
@@ -453,7 +514,7 @@ public class RichFileManager extends AbstractFM  {
 	                   +" but " + fileTo);
 	    	  return this.error(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")));
 	       }
-		   log.info( "moving file from "+ this.documentRoot.resolve(this.get.get("old"))
+		   log.info( "moving file from "+ this.documentRoot.resolve(cleanPreview(this.get.get("old")))
                    +" to " + this.documentRoot.resolve(folder).resolve(filename));
 	       if (Files.exists(fileTo)) {
 	           if (Files.isDirectory(fileTo)) {
@@ -480,15 +541,143 @@ public class RichFileManager extends AbstractFM  {
 	           folder = folder.replace("..", "");// if its an allowed up mpvement
 	    	   array.put("Error", "");
 	           array.put("Code", 0);
-	           array.put("Old Path", path);
+	           array.put("Old Path", itemName);
 	           array.put("Old Name", filename);
-	           array.put("New Path", folder);
+	           array.put("New Path", getPreviewFolder() + folder);
 	           array.put("New Name", filename);
 	       } catch (Exception e) {
 	           this.error("JSONObject error");
 	       }
 	   } 
 	   return array;
+	}
+	
+	@Override
+	public JSONObject rename() {
+		String relativePath = cleanPreview(this.get.get("old"));
+		if (relativePath.endsWith("/")) {
+			//this.get.put("old", (this.get.get("old")).substring(0, ((this.get.get("old")).length() - 1)));
+			relativePath = relativePath.replaceFirst("/$", "");
+		}
+		boolean error = false;
+		JSONObject array = null;
+		String tmp[] = relativePath.split("/");
+		String filename = tmp[tmp.length - 1];
+		int pos = relativePath.lastIndexOf("/");
+		String path = relativePath.substring(0, pos + 1);
+		Path fileFrom = null;
+		Path fileTo = null;
+		try {
+			fileFrom = this.documentRoot.resolve(path).resolve(filename);
+			fileTo = this.documentRoot.resolve(path).resolve(cleanPreview( this.get.get("new")));
+			if (fileTo.toFile().exists()) {
+				if (fileTo.toFile().isDirectory()) {
+					this.error(sprintf(lang("DIRECTORY_ALREADY_EXISTS"), this.get.get("new")));
+					error = true;
+				} else { // fileTo.isFile
+					// Files.isSameFile(fileFrom, fileTo);
+					this.error(sprintf(lang("FILE_ALREADY_EXISTS"), this.get.get("new")));
+					error = true;
+				}
+			} else {
+				//if (fileFrom.equals(fileTo));
+				Files.move(fileFrom, fileTo, StandardCopyOption.REPLACE_EXISTING);
+			}
+		} catch (Exception e) {
+			if (fileFrom.toFile().isDirectory()) {
+				this.error(sprintf(lang("ERROR_RENAMING_DIRECTORY"), filename + "#" + this.get.get("new")),e);
+			} else {
+				this.error(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")),e);
+			}
+			error = true;
+		}
+		if (!error) {
+			array = new JSONObject();
+			try {
+				String prefix = "";
+				if (!this.get.get("old").startsWith("/")) {
+					prefix= "/";
+				}
+				array.put("Error", "");
+				array.put("Code", 0);
+				array.put("Old Path", prefix + this.get.get("old"));
+				array.put("Old Name", filename);
+				array.put("New Path",  getPreviewFolder() + path + this.get.get("new"));
+				array.put("New Name", this.get.get("new"));
+			} catch (Exception e) {
+				this.error("JSONObject error");
+			}
+		}
+		return array;
+	}
+
+	@Override
+	public JSONObject delete() {
+		JSONObject array = null;
+		String targetPath = cleanPreview( this.get.get("path"));
+		File file = this.documentRoot.resolve(targetPath).toFile();
+				//new File(this.documentRoot + this.get.get("path"));
+		if (file.isDirectory()) {
+			array = new JSONObject();
+			this.unlinkRecursive(this.documentRoot.resolve(targetPath).toFile(), true);
+			try {
+				array.put("Error", "");
+				array.put("Code", 0);
+				array.put("Path", this.get.get("path"));
+			} catch (Exception e) {
+				this.error("JSONObject error");
+			}
+		} else if (file.exists()) {
+			array = new JSONObject();
+			if (file.delete()) {
+				try {
+					array.put("Error", "");
+					array.put("Code", 0);
+					array.put("Path", this.get.get("path"));
+				} catch (Exception e) {
+					this.error("JSONObject error");
+				}
+			} else
+				this.error(sprintf(lang("ERROR_DELETING FILE"), this.get.get("path")));
+			return array;
+		} else {
+			this.error(lang("INVALID_DIRECTORY_OR_FILE"));
+		}
+		return array;
+	}
+
+
+	@Override
+	public JSONObject addFolder() {
+		JSONObject array = null;
+		String allowed[] = { "-", " " };
+		LinkedHashMap<String, String> strList = new LinkedHashMap<String, String>();
+		strList.put("fileName", this.get.get("name"));
+		String filename = cleanString(strList, allowed).get("fileName");
+		if (filename.length() == 0) // the name existed of only special
+									// characters
+			this.error(sprintf(lang("UNABLE_TO_CREATE_DIRECTORY"), this.get.get("name")));
+		else {
+			String targetPath = cleanPreview( this.get.get("path"));
+			File file = this.documentRoot.resolve(targetPath).resolve(filename).toFile();
+			if (file.isDirectory()) {
+				this.error(sprintf(lang("DIRECTORY_ALREADY_EXISTS"), filename));
+			} else if (!file.mkdir()) {
+				this.error(sprintf(lang("UNABLE_TO_CREATE_DIRECTORY"), filename));
+			} else {
+				try {
+					String parent = (this.get.get("path").equals(""))? "/": this.get.get("path");
+					array = new JSONObject();
+					array.put("Parent", parent);
+					array.put("Name", filename);
+					array.put("Error", "");
+					array.put("Code", 0);
+				} catch (Exception e) {
+					this.error("JSONObject error");
+				}
+			}
+		}
+		return array;
 	}
 
 
