@@ -247,7 +247,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	
 		} else if (isImage(pathTmp)) {
 
-			String imagePath = getPreviewFolder() + pathTmp;
+			String imagePath = getPreviewFolder() + cleanPreview(pathTmp);
 			if (thumbs) { // TODO not yet implemented
 				this.item.put("path", imagePath );
 			} else {
