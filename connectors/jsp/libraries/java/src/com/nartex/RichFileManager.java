@@ -14,12 +14,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,6 +42,7 @@ import org.json.JSONObject;
  * - added mode replace
  * - added interface
  * - adapted download to new two-step mode
+ * - optional indirection methods cleanPreview and getPreviewFolder to allow for URL-mapping  
  * 
  * @author gkallidis
  *
@@ -52,8 +50,7 @@ import org.json.JSONObject;
 public class RichFileManager extends AbstractFM implements FileManagerI  {
 
 
-
-
+	
 	/**
 	 * 
 	 * @param servletContext
@@ -64,7 +61,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	public RichFileManager(ServletContext servletContext, HttpServletRequest request) throws IOException {
 		
 		super(servletContext,request);
-	
+					
 	}
 	
 	@Override
@@ -104,7 +101,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		}
 		
 		if (this.get.get("path") != null && Files.exists(file)) {
-			resp.setHeader("Content-type", "image/octet-stream"); // + getFileExtension(file.toFile().getName()));
+			resp.setHeader("Content-type", "image/"+ getFileExtension(file.toFile().getName())); // octet-stream" + getFileExtension(file.toFile().getName()));
 			resp.setHeader("Content-Transfer-Encoding", "Binary");
 			resp.setHeader("Content-length", "" + size);
 			resp.setHeader("Content-Disposition", "inline; filename=\"" + getFileBaseName(file.toFile().getName()) + "\"");
@@ -116,11 +113,6 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		} else {
 			error(sprintf(lang("FILE_DOES_NOT_EXIST"), this.get.get("path")));
 		}
-	}
-
-	private String cleanPreview(String filecontextpath) {
-		String preview =getPreviewFolder(); //	config.getProperty("preview");		
-		return filecontextpath.replace(preview.replaceFirst("^/", ""), "");
 	}
 
 	// expect small filesw
@@ -193,7 +185,6 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 							this.error("JSONObject error");
 						}
 					} else if (file.canRead() && (!contains(config.getProperty("unallowed_files"), files[i])) ) {
-						//this.item = new HashMap();
 						this.item = new HashMap<String,Object>();
 						this.item.put("properties", this.properties);
 						this.getFileInfo(this.get.get("path") + files[i], showThumbs);
@@ -208,8 +199,6 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 								data.put("Path", this.item.get("path"));								
 								data.put("Filename", this.item.get("filename"));
 								data.put("File Type", this.item.get("filetype"));
-//								data.put("Thumbnail", this.item.get("thumbnail"));
-//								data.put("Preview", this.item.get("preview"));
 								data.put("Properties", this.item.get("properties"));
 								data.put("Error", "");
 								data.put("Code", 0);
@@ -259,7 +248,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		} else if (isImage(pathTmp)) {
 
 			String imagePath = getPreviewFolder() + pathTmp;
-			if (thumbs) { // not yet implemented
+			if (thumbs) { // TODO not yet implemented
 				this.item.put("path", imagePath );
 			} else {
 				this.item.put("path", imagePath);
@@ -282,42 +271,6 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		this.item.put("properties", props);
 	}
 	
-	/**
-	 * constructs previewFolder from property preview.
-	 * 
-	 * If it starts with / is an absulte URL else it resolves relative to contextpath
-	 * 
-	 * Result start with a slash for client call
-	 * 
-	 * Better use org.apache.http.client.utils.URIUtils resolve ? 
-	 * 
-	 * @return previewFolder
-	 */
-	protected String getPreviewFolder() {
-		Path tmpPreviewPath = null;
-		String previewPath = null;
-		String preview = config.getProperty("preview");
-		if (preview != null && preview.startsWith("/")) {
-			try {
-				tmpPreviewPath = Paths.get(new URI(preview));
-			} catch (URISyntaxException e) {
-				log.error("is not a valid URI preview config:"+ preview);
-			}
-		}
-		if (tmpPreviewPath != null) {
-			previewPath = tmpPreviewPath.normalize().toString();
-		} else {
-			// relative ? 
-			if (previewBasePath != null) {
-				previewPath = this.previewBasePath.resolve(preview).normalize().toString();
-			} else {
-				previewPath = Paths.get(preview).normalize().toString();
-			}
-		}	
-		return previewPath.replace("\\", "/") + "/";
-	}
-	   
-
 	/* (non-Javadoc)
 	 * @see com.nartex.FileManagerI#download(javax.servlet.http.HttpServletResponse)
 	 */
@@ -490,17 +443,16 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	   String filename = tmp[tmp.length - 1];
 	   int pos = itemName.lastIndexOf("/");
 	   
-	   String path = "";
 	   Path fileTo = null;
-	   if (pos > 0) {
-		   path = itemName.substring(0, pos + 1);
-		   fileTo = this.documentRoot.resolve(cleanPreview(path)); // from subfolder, folder should be ..
+	   if (pos > 0 && itemName.contains("..")) {
+		   String path = itemName.substring(0, pos + 1);
+		   fileTo = this.documentRoot.resolve(cleanPreview(path)); // from subfolder, folder could be .. check later in root
 	   } else {
 		   fileTo = this.documentRoot;
 	   }
 	   //String root =  this.get.get("root"); // slash at beginning and end
 	   String folder =  this.get.get("new");
-	   if (folder.trim().startsWith( "/")) { // absolute path is not allowed 
+	   if (folder.trim().startsWith( "/")) { // absolute path is not allowed, this is then just root folder
 	       folder = folder.trim().replaceFirst( "/", "" );
 	   } 
 	   Path fileFrom = null;
@@ -594,13 +546,9 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		if (!error) {
 			array = new JSONObject();
 			try {
-				String prefix = "";
-				if (!this.get.get("old").startsWith("/")) {
-					prefix= "/";
-				}
 				array.put("Error", "");
 				array.put("Code", 0);
-				array.put("Old Path", prefix + this.get.get("old"));
+				array.put("Old Path", this.get.get("old"));
 				array.put("Old Name", filename);
 				array.put("New Path",  getPreviewFolder() + path + this.get.get("new"));
 				array.put("New Name", this.get.get("new"));
@@ -723,6 +671,29 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 				}
 			}
 		}
+	}
+	
+	/**
+	 * constructs mapping from property preview.
+	 * 
+	 * Suspended, due to https://github.com/servocoder/RichFilemanager/issues/27
+	 * 
+	 */
+	protected String getPreviewFolder() {
+		// TODO	not yet implemented
+		//if (directURL) { } 
+		return "";
+	}
+	
+	/**
+	 * clean mapping  
+	 * @param filecontextpath
+	 * @return filecontextpath
+	 */
+	protected String cleanPreview(String filecontextpath) {
+		// TODO	 not yet implemented
+		//if (directURL) { } 	
+		return filecontextpath;
 	}
 
 }

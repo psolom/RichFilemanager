@@ -52,14 +52,12 @@ public abstract class AbstractFM  implements FileManagerI{
 	protected Map<String, String> params = new HashMap<String, String>();
 	protected Path documentRoot; // make it static?
 	protected Path fileManagerRoot = null; // static?
-	protected String referer = "";
 	protected Logger log = LoggerFactory.getLogger("filemanager");
 	protected JSONObject error = null;
 	protected SimpleDateFormat dateFormat;
 	protected List<FileItem> files = null;
 	protected boolean reload = false;
-	protected Path previewBasePath = null; //static?
-	protected boolean previewPathRelative = false; // needed as it is exposed either relative or absolute
+
 
 	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws IOException {
         String contextPath = request.getContextPath();
@@ -67,12 +65,14 @@ public abstract class AbstractFM  implements FileManagerI{
         Path localPath = Paths.get(servletContext.getRealPath("/")); 
         Path docRoot4FileManager = localPath.toRealPath(LinkOption.NOFOLLOW_LINKS);
         		
-        this.referer = request.getHeader("referer");
-        if (referer != null) {
+        String referer = request.getHeader("referer");
+        // this is 
+        if (referer != null && referer.indexOf("index.html") > 0 ) {
             this.fileManagerRoot =  docRoot4FileManager.
-        			resolve(referer.substring(referer.indexOf(contextPath) + 1 + contextPath.length(), referer.indexOf("index.html")));
-        // last resort and only if already      
-        } else if (this.fileManagerRoot == null && request.getServletPath().indexOf("connectors") > 0) {
+        			resolve(referer.substring(referer.indexOf(contextPath) + 1 + contextPath.length(), referer.indexOf("index.html")));    
+        }
+        // last resort and only if already  
+        if (this.fileManagerRoot == null && request.getServletPath().indexOf("connectors") > 0) {
         	this.fileManagerRoot =  docRoot4FileManager.
         			resolve(request.getServletPath().substring(1, request.getServletPath().indexOf("connectors")));
         	// no pathInfo
@@ -115,17 +115,11 @@ public abstract class AbstractFM  implements FileManagerI{
 			}
 		    log.debug("final documentRoot:"+ this.documentRoot);
 		}
-		if (reload) {
-				this.previewBasePath = null;	
-		}
-		// a relative path
-		if (this.previewBasePath == null) {
-			this.previewBasePath = Paths.get(contextPath);
-		}
+
 
 		dateFormat = new SimpleDateFormat(config.getProperty("date"));
 
-		this.setParams();
+		this.setParams(referer);
 		
 		loadLanguageFile();
 		
@@ -250,9 +244,9 @@ public abstract class AbstractFM  implements FileManagerI{
 		return retval;
 	}
 
-	protected void setParams() {
-		if (this.referer != null) {
-			String[] tmp = this.referer.split("\\?");
+	protected void setParams(String referer) {
+		if (referer != null) {
+			String[] tmp = referer.split("\\?");
 			String[] params_tmp = null;
 			LinkedHashMap<String, String> params = new LinkedHashMap<String, String>();
 			if (tmp.length > 1 && tmp[1] != "") {

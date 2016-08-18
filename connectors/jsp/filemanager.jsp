@@ -16,17 +16,11 @@
  *  - check strictServletCompliance 8/16
  *  - dynamic content type setting  8/16
  */ 
- 
-//use new rich manager  - or not
- boolean rich = true;
- 
- 
- FileManagerI fm = (rich)? new RichFileManager(getServletContext(), request) : new FileManager(getServletContext(), request);
- 
+  //use new rich manager  - or not
+  boolean rich = true;
+  FileManagerI fm = (rich)? new RichFileManager(getServletContext(), request) : new FileManager(getServletContext(), request);
   boolean strictServletCompliance = false; // default value is ISO-8859-1.
-
   JSONObject responseData = null;
-
   String mode = "";
     boolean putTextarea = false;
   if(!auth(request)) {
@@ -84,9 +78,16 @@
         }
         else if (mode.equals("getimage")){
           if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
+            String paramThumbs  =request.getParameter("thumbnail");
             fm.preview(request, response);
           }
-        } else if (mode.equals("move")){
+        } 
+        else if (mode.equals("readfile")){
+          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) { 
+            fm.preview(request, response);
+          }
+        }
+        else if (mode.equals("move")){
             if(fm.setGetVar("old",  (strictServletCompliance)? qpm.get("old"):request.getParameter("old")) && 
                     fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new")) 
                     ) {
