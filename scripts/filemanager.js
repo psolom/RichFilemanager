@@ -1,5 +1,5 @@
 /**
- *	Filemanager JS core
+ *	Rich Filemanager JS core
  *
  *	filemanager.js
  *
@@ -9,8 +9,43 @@
  *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
-
+ 
 (function($) {
+  
+  // keep variables in non global object
+var fm = {};
+var lg = [];
+
+// Default relative files root, may be changed with query params during initialization
+var fileRoot = '/';
+
+// Base URL to access the filemanager
+var baseUrl;
+
+var start;
+var langConnector;
+var capabilities;
+
+var config = {};
+var initConfigLastPromise = jQuery.Deferred();
+
+var promisePluginPath = jQuery.Deferred();
+
+// loading default configuration file
+var promiseDefault = jQuery.Deferred();
+// loading user configuration file
+var promiseUser = jQuery.Deferred();
+
+// <head> included files collector
+var HEAD_included_files = new Array();
+
+// URL to API connector, based on `baseUrl` if not specified explicitly
+//var fileConnector;
+
+// this is probably needed only once, but could be reinitialized and reevaluated, if needed
+var fileTreeloaded = jQuery.Deferred();
+
+var userconfig;
 
 // function to retrieve GET params
 $.urlParam = function(name) {
@@ -24,12 +59,18 @@ $.urlParam = function(name) {
 
 // function to normalize a path (source: https://github.com/dfkaye/simple-path-normalize)
 var normalizePath = function(path){
-	var BLANK = ''; var SLASH = '/'; var DOT = '.';var DOTS = DOT.concat(DOT);
+	var BLANK = ''; var SLASH = '/'; var DOT = '.';var DOTS = DOT.concat(DOT);var SCHEME = '://';
  	if (!path || path === SLASH) {
 		return SLASH;
 	}
-
-	var src = path.split(SLASH);
+	var src; var scheme; 
+	if (path.indexOf(SCHEME) > 0) {    
+			var parts = path.split(SCHEME);
+			scheme = parts[0];
+			src = parts[1].split(SLASH);
+	} else {
+			src = path.split(SLASH);
+	}
 	var target = (path[0] === SLASH || path[0] === DOT) ? [BLANK] : [];
 	var i, len, token;
 	for (i = 0, len = src.length; i < len; ++i) {
@@ -42,7 +83,8 @@ var normalizePath = function(path){
 			target.push(token);
 		}
 	}
-	return target.join(SLASH).replace(/[\/]{2,}/g, SLASH) || SLASH;
+	var result =  target.join(SLASH).replace(/[\/]{2,}/g, SLASH) || SLASH;
+	return (scheme ? scheme + SCHEME : '') + result;
 };
 
 /*---------------------------------------------------------
@@ -51,82 +93,112 @@ var normalizePath = function(path){
 
 // Retrieves config settings from filemanager.config.json
 var loadConfigFile = function (type) {
-	var json = null,
-		pluginPath = '.';
-	type = (typeof type === "undefined") ? "user" : type;
+    var json = null, pluginPath = '.';
+    if (window._FMConfig && window._FMConfig.pluginPath) {
+      pluginPath = window._FMConfig.pluginPath;
+    }
+    promisePluginPath.resolve( { globals : {pluginPath: pluginPath} }  );
+    var url;
+    type = (typeof type === "undefined") ? "user" : type;
+    
+    if(type == 'user') {
+      if($.urlParam('config') != 0) {
+        url = pluginPath + '/scripts/' + $.urlParam('config');
+        userconfig = $.urlParam('config');
+      } else {
+        url = pluginPath + '/scripts/filemanager.config.json';
+        userconfig = 'filemanager.config.json';
+      }
+    } else {
+      url = pluginPath + '/scripts/filemanager.config.default.json';
+    }
+      
+    return $.ajax({
+                'url': url,
+                'dataType': "json",
+                cache: false
+        }) ; 
+  };
 
-	if (window._FMConfig && window._FMConfig.pluginPath) {
-		pluginPath = window._FMConfig.pluginPath;
-	}
 
-	if(type == 'user') {
-		if($.urlParam('config') != 0) {
-			var url = pluginPath + '/scripts/' + $.urlParam('config');
-			userconfig = $.urlParam('config');
-		} else {
-			var url = pluginPath + '/scripts/filemanager.config.json';
-			userconfig = 'filemanager.config.json';
-		}
-	} else {
-		var url = pluginPath + '/scripts/filemanager.config.default.json';
-	}
+   var err = function( req, status, err ) {
+    alert( '<p>something went wrong</p>'+ err );
+  };
+  
+  // loading default configuration file
+  var promiseA = loadConfigFile('default');
+  promiseA.then( function (data) {
+       json = data;
+       promiseDefault.resolve(json);
+  },err);
+  // loading user configuration file
+  var promiseB = loadConfigFile('user');
+  promiseB.then( function (data) {
+       json = data;
+       promiseUser.resolve(json);
+  }, err);
+  
+  $.when(promiseDefault, promiseUser, promisePluginPath).done(function(configd,configu, configpp) {
+				 // remove version from user config file
+				if (config != undefined && config !== null) delete config.version;
+				// merge default config and user config file
+				config = $.extend({}, configd, configu, configpp); 	
 
-    $.ajax({
-        'async': false,
-        'url': url,
-        'dataType': "json",
-        cache: false,
-        'success': function (data) {
-            json = data;
-        }
-    });
+				if(config.options.logger) start = new Date().getTime();
 
-	if(type == 'default') {
-		json.globals = {pluginPath: pluginPath};
-	}
+				// Sets paths to connectors based on language selection.
+				fileConnector = config.options.fileConnector ||  config.globals.pluginPath + '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
 
-    return json;
-};
+				 // Sets paths to connectors based on language selection.
+				langConnector = '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
+				
+				// Read capabilities from config files if exists else apply default settings
+				capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+				 
+				 // Defines sort params
+				var chunks = [];
+				if(config.options.fileSorting) {
+					chunks = config.options.fileSorting.toLowerCase().split('_');
+				}
+				config.configSortField = chunks[0] || 'name';
+				config.configSortOrder = chunks[1] || 'asc';
 
-// loading default configuration file
-var configd = loadConfigFile('default');
-// loading user configuration file
-var config = loadConfigFile();
-// remove version from user config file
-if (config !== null) delete config.version;
-// merge default config and user config file
-config = $.extend({}, configd, config);
-
-if(config.options.logger) var start = new Date().getTime();
-
-// <head> included files collector
-var HEAD_included_files = [];
-
-// Default relative files root, may be changed with query params during initialization
-var fileRoot = '/';
-
-// Base URL to access the filemanager
-var baseUrl;
-
-// URL to API connector, based on `baseUrl` if not specified explicitly
-var fileConnector;
-
-// Read capabilities from config files if exists else apply default settings
-var capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+				 // Get localized messages from file through culture var or from URL
+				if($.urlParam('langCode') != 0) {
+						 file_exists( config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done( 
+							function(result) {
+								if (result) {
+									config.options.culture = $.urlParam('langCode');
+								} else {
+									var urlLang = $.urlParam('langCode').substring(0, 2);
+									file_exists( config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.json').done( 
+										function(result) {
+											if(result) { 
+												config.options.culture = urlLang;
+											}
+										}
+									);
+								}
+						 });
+				}
+				wrapperInitConfigLastPromise = $.Deferred(function() {
+					 var self = this;
+					 $.ajax({
+							url: config.globals.pluginPath + '/scripts/languages/'  + config.options.culture + '.json',
+							dataType: 'json'
+					 }).done( function (json) {
+								lg = json;
+								initConfigLastPromise.resolve(json);
+								self.resolve(json);
+						});
+				}).promise(); 
+  });
 
 // Stores path to be automatically expanded by filetree plugin
 var fullexpandedFolder = null;
 
 // Stores file/folder listing data for jqueryFileTree and list/grid view
 var loadedFolderData = {};
-
-// Defines sort params
-var chunks = [];
-if(config.options.fileSorting) {
-	chunks = config.options.fileSorting.toLowerCase().split('_');
-}
-var configSortField = chunks[0] || 'name';
-var configSortOrder = chunks[1] || 'asc';
 
 // Loads a given css file into header if not already included
 var loadCSS = function(href) {
@@ -178,13 +250,26 @@ var file_exists = function(url) {
     if (!req) {
         throw new Error('XMLHttpRequest not supported');
     }
+    var deferred = $.Deferred(function() {
+            var self = this;
+            // HEAD Results are usually shorter (faster) than GET
+            req.open('HEAD', url, true);
+            req.send(null);
 
-    // HEAD Results are usually shorter (faster) than GET
-    req.open('HEAD', url, false);
-    req.send(null);
-
-	return (req.status == 200);
+            req.onreadystatechange = function() {
+              if(this.readyState == this.HEADERS_RECEIVED) {
+                if (req.status == 200) {
+                     self.resolve(true);
+                } else {
+                  self.resolve(false);
+                }
+              }
+            };
+             
+    }).promise();
+  return deferred;;
 };
+
 
 // Common variables
 var $fileinfo = $('#fileinfo'),
@@ -193,25 +278,7 @@ var $fileinfo = $('#fileinfo'),
 	$uploadButton = $('#upload');
 
 
-// Get localized messages from file through culture var or from URL
-if($.urlParam('langCode') != 0) {
-    if(file_exists (config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json')) {
-        config.options.culture = $.urlParam('langCode');
-    } else {
-        var urlLang = $.urlParam('langCode').substring(0, 2);
-        if(file_exists (config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.json')) config.options.culture = urlLang;
-    }
-}
-
-var lg = [];
-$.ajax({
-  url: config.globals.pluginPath + '/scripts/languages/'  + config.options.culture + '.json',
-  async: false,
-  dataType: 'json',
-  success: function (json) {
-    lg = json;
-  }
-});
+//lang
 
 // Options for alert, prompt, and confirm dialogues.
 $.prompt.setDefaults({
@@ -643,6 +710,7 @@ var setUploader = function(path) {
 
 			if(fname != '') {
 				foldername = cleanString(fname);
+				
 				$.getJSON(buildConnectorUrl({
 					mode: 'addfolder',
 					path: getCurrentPath(),
@@ -728,7 +796,18 @@ var bindToolbar = function(data) {
 		$fileinfo.find('button#download').hide();
 	} else {
 		$fileinfo.find('button#download').click(function() {
-			downloadItem(data);
+			downloadItem(data).then(
+				function(result,textStatus, jqXHR) {
+						if(result['Code'] == 0) {
+							// this is a a reference to the Ajax settings themselves ,cft. jQuery ajax
+							window.location = this.url.replace(/&time=\d+/,'') + '&force=true&time=' + new Date().getTime();
+						} else {
+							$.prompt(result['Error']);
+						}
+			}, function( jqXHR, textStatus, errorThrown ) {
+				  handleAjaxError(textStatus);
+			}
+			);
 		}).show();
 	}
 
@@ -788,7 +867,7 @@ var updateFolderSummary = function() {
 var adjustFileTree = function($node) {
 	// search function
 	if (config.options.searchBox == true) {
-		$('#q').liveUpdate('#filetree ul').blur();
+		$('#q').liveUpdate($node).blur();// '#filetree ul'
 		$('#search span.q-inactive').html(lg.search);
 		$('#search a.q-reset').attr('title', lg.search_reset);
 	}
@@ -820,6 +899,7 @@ var adjustFileTree = function($node) {
 
 // Create FileTree and bind events
 var createFileTree = function() {
+	fileTreeloaded = jQuery.Deferred();
 	var $treeNode = getSectionContainer($filetree),
 		slideAnimation = false;
 
@@ -864,6 +944,7 @@ var createFileTree = function() {
 		.on('filetreeinitiated', function (e, data) {
 			var $el = $(e.target).find('ul');
 			expandFolderDefault($el, data);
+			fileTreeloaded.resolve(true);
 		})
 		.on('filetreeexpand', function (e, data) {
 			//var $el = data.li.children('ul');
@@ -1217,6 +1298,7 @@ var moveItemPrompt = function(data) {
 // Called by clicking the "Move" button in detail views
 // or choosing the "Move" contextual menu option in list views.
 var moveItem = function(oldPath, newPath) {
+
 	$.ajax({
 		type: 'GET',
 		url: buildConnectorUrl({
@@ -1337,7 +1419,7 @@ var downloadItem = function(data) {
 		path: data['Path']
 	};
 
-	$.ajax({
+	return $.ajax({
 		type: 'GET',
 		url: buildConnectorUrl(queryParams),
 		dataType: 'json',
@@ -1662,7 +1744,7 @@ var actualizeChildrenItems = function(oldPath, newPath, $items) {
 };
 
 var getSortValueCallback = function(el) {
-	var sortField = configSortField,
+	var sortField = config.configSortField,
 		itemData = $(el).data('itemdata');
 
 	// list view sorting may differ from config
@@ -1700,7 +1782,7 @@ var sortFileTreeItems = function($node) {
 	var $items = $node.find('> li');
 	if($items.length === 0) return;
 
-	$items.tsort({selector: 'a', callback: getSortValueCallback, order: configSortOrder, natural: true});
+	$items.tsort({selector: 'a', callback: getSortValueCallback, order: config.configSortOrder, natural: true});
 	arrangeFolders($node, '> li');
 };
 
@@ -1714,7 +1796,7 @@ var sortViewItems = function() {
 		$items = $contents.find('li.file, li.directory');
 		if($items.length === 0) return;
 
-		$items.tsort({callback: getSortValueCallback, order: configSortOrder, natural: true});
+		$items.tsort({callback: getSortValueCallback, order: config.configSortOrder, natural: true});
 		arrangeFolders($contents, 'li');
 	} else {
 		var data = $fileinfo.data('list-sort'),
@@ -1722,8 +1804,8 @@ var sortViewItems = function() {
 			sortField, order, $targetHeader;
 
 		// retrieve stored sort settings or use defaults
-		order = data ? data.order : configSortOrder;
-		sortField = data ? data.column : configSortField;
+		order = data ? data.order : config.configSortOrder;
+		sortField = data ? data.column : config.configSortField;
 
 		// apply sort classes to table headers
 		$targetHeader = $headers.filter('.column-' + sortField);
@@ -1750,7 +1832,7 @@ var updateNodeItem = function(branchPath, nodePathOld, nodePathNew) {
 // Use after adding new item to filetree ("addNode", "addFolder" and "upload" actions)
 var reloadFileTreeNode = function(targetPath) {
 	var $targetNode,
-		isRoot = targetPath === fileRoot;
+		isRoot = targetPath === fileRoot; // should be /, not empty
 
 	if(isRoot) {
 		$targetNode = getSectionContainer($filetree).children('ul');
@@ -1846,7 +1928,17 @@ var setMenus = function(action, path) {
 				break;
 
 			case 'download':
-				downloadItem(data);
+				downloadItem(data).then(
+					function(result, textStatus, jqXHR) {
+						if(result['Code'] == 0) {
+							window.location = this.url.replace(/&time=\d+/,'') + '&force=true&time=' + new Date().getTime();
+						} else {
+							$.prompt(result['Error']);
+						}
+					}, function( jqXHR, textStatus, errorThrown ) {
+						handleAjaxError(textStatus);
+					}
+				);
 				break;
 
 			case 'rename':
@@ -1879,6 +1971,8 @@ var getFileInfo = function(file) {
 	$('.context-menu-root').hide();
 
 	var currentpath = file.substr(0, file.lastIndexOf('/') + 1);
+	
+	//if (currentpath == "") currentpath = "/";
 
 	// update location for status, upload, & new folder functions
 	setUploader(currentpath);
@@ -2309,8 +2403,10 @@ var buildFileTreeItem = function(item) {
 ---------------------------------------------------------*/
 
 $(function() {
+  
+  initConfigLastPromise.done(function(res) {
 
-	if(config.extras.extra_js) {
+	if(config.extras != undefined && config.extras.extra_js) {
 		for(var i=0; i< config.extras.extra_js.length; i++) {
 			$.ajax({
 				url: config.extras.extra_js[i],
@@ -2347,10 +2443,11 @@ $(function() {
 		loadJS('/scripts/CodeMirror/addon/display/fullscreen.js');
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
-
+  
 	// set baseUrl
 	if(config.options.baseUrl === false) {
 		baseUrl = location.origin + location.pathname;
+
 	} else {
 		baseUrl = config.options.baseUrl;
 	}
@@ -2882,39 +2979,38 @@ $(function() {
 
 		var csTheme = config.customScrollbar.theme != undefined ? config.customScrollbar.theme : 'inset-2-dark';
 		var csButton = config.customScrollbar.button != undefined ? config.customScrollbar.button : true;
+    
 
-		$(window).load(function() {
-			$filetree.append('<div style="height:3000px"></div>'); // because if #filetree has height equal to 0, mCustomScrollbar is not applied
-			$filetree.mCustomScrollbar({
-				theme: csTheme,
-				scrollButtons: {
-					enable:csButton
-				},
-				advanced: {
-					autoExpandHorizontalScroll: true,
-					updateOnContentResize: true
-				},
-				callbacks: {
-					onInit: function() {
-						createFileTree();
-					}
-				},
-				axis: "yx"
-			});
+    $("#filetree").append('<div style="height:3000px"></div>'); // because if #filetree has height equal to 0, mCustomScrollbar is not applied
+    $("#filetree").mCustomScrollbar({
+      theme:csTheme,
+      scrollButtons:{enable:csButton},
+      advanced:{ 
+        autoExpandHorizontalScroll:true,
+        updateOnContentResize: true 
+      },
+      callbacks:{
+        onInit:function(){ 
+          createFileTree(); 
+        }			
+      },
+      axis: "yx"
+      });
 
-			$fileinfo.mCustomScrollbar({
-				theme: csTheme,
-				scrollButtons: {
-					enable:csButton
-				},
-				advanced: {
-					autoExpandHorizontalScroll:true,
-					updateOnContentResize: true
-				},
-				axis: "y",
-				alwaysShowScrollbar: 1
-			});
-		});
+    fileTreeloaded.done(function(result) {
+        $("#fileinfo").mCustomScrollbar({
+          theme:csTheme,
+          scrollButtons:{ 
+            enable:csButton
+          },
+          advanced:{ 
+            autoExpandHorizontalScroll:true, 
+            updateOnContentResize: true 
+          },
+          axis: "y",
+          alwaysShowScrollbar: 1
+        });
+     });
 	} else {
 		createFileTree();
 	}
@@ -2927,44 +3023,48 @@ $(function() {
 		$('#toolbar').remove('#rename');
 	}
 
-	// Adjust layout.
-	setDimensions();
-	$(window).resize(setDimensions);
+    // Adjust layout.
+    setDimensions();
+    $(window).resize(setDimensions);
 
-    // Provides support for adjustible columns.
-	$('#splitter').splitter({
-		sizeLeft: config.options.splitterMinWidth,
-		minLeft: config.options.splitterMinWidth,
-		minRight: 200
-	});
+      // Provides support for adjustible columns.
+    $('#splitter').splitter({
+      sizeLeft: config.options.splitterMinWidth,
+      minLeft: config.options.splitterMinWidth,
+      minRight: 200
+    });
 
     getDetailView(fileRoot + expandedFolder);
-});
 
-// add useragent string to html element for IE 10/11 detection
-var doc = document.documentElement;
-doc.setAttribute('data-useragent', navigator.userAgent);
+    // add useragent string to html element for IE 10/11 detection
+    var doc = document.documentElement;
+    doc.setAttribute('data-useragent', navigator.userAgent);
 
-if(config.options.logger) {
-	var end = new Date().getTime();
-	var time = end - start;
-	console.log('Total execution time : ' + time + ' ms');
-}
+    if(config.options.logger) {
+      var end = new Date().getTime();
+      var time = end - start;
+      console.log('Total execution time : ' + time + ' ms');
+    }
 
-$(window).load(function() {
-	setDimensions();
-});
+    $(window).load(function() {
+      setDimensions();
+    });
+    
+    // add location.origin for IE
+    if (!window.location.origin) {
+      window.location.origin = window.location.protocol + "//"
+        + window.location.hostname
+        + (window.location.port ? ':' + window.location.port : '');
+    }
+
+    $(window).load(function() {
+        $('#fileinfo').css({'left':$('#splitter .vsplitbar').width() + $('#filetree').width()});
+    });
+    
+   }); // promise done
+
+ });
+
 
 })(jQuery);
 
-
-// add location.origin for IE
-if (!window.location.origin) {
-	window.location.origin = window.location.protocol + "//"
-		+ window.location.hostname
-		+ (window.location.port ? ':' + window.location.port : '');
-}
-
-$(window).load(function() {
-    $('#fileinfo').css({'left':$('#splitter .vsplitbar').width() + $('#filetree').width()});
-});
