@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="assets/bootstrap-3.3.7/css/bootstrap.min.css">
+</head>
+
+<body>
+	<div class="input-append">
+		<input id="fm-bs-modal-input" type="text" value="">
+		<a data-toggle="modal" data-target="#fm-bs-modal" class="btn" type="button">Select</a>
+	</div>
+
+	<div class="modal fade" id="fm-bs-modal" >
+		<div class="modal-dialog" style="width: 1000px">
+			<div class="modal-content">
+				<div class="modal-header">
+					<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+					<h4 class="modal-title">Modal title</h4>
+				</div>
+				<div class="modal-body" style="width: 100%; height: 600px">
+					<iframe width="100%" height="100%" src="" frameborder="0"></iframe>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script type="text/javascript" src="assets/jquery-1.11.3.min.js"></script>
+	<script type="text/javascript" src="assets/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		$(function() {
+			//$('#fm-bs-modal').on('shown.bs.modal',function() {
+			$('#fm-bs-modal').on('show.bs.modal',function() {
+				$(this).find('iframe').attr('src', './../index.html');
+			})
+		});
+	</script>
+</body>
+
+</html>

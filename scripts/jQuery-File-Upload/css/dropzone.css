@@ -2,13 +2,17 @@
     box-sizing: border-box;
 }
 
-.dropzone {
-    min-height: 200px;
+.dropzone-wrapper {
+    overflow-y: auto;
+    height: 215px;
     border: 2px solid rgba(0, 0, 0, 0.3);
     background: white;
-    padding: 20px 20px;
     margin-top: 1em;
     cursor: pointer;
+}
+
+.dropzone {
+    padding: 10px 20px 20px;
 }
 
 .dropzone * {
@@ -33,7 +37,7 @@
     font-size: 1.5em;
     font-weight: bold;
     text-align: center;
-    margin: 2em 0;
+    margin: 4em 0;
 }
 
 .dropzone .default-message span {
@@ -270,8 +274,8 @@
 .dropzone .upload-item .preview .error-message {
     z-index: 1000;
     position: absolute;
-    display: none;
     opacity: 0;
+    white-space: normal;
     -webkit-transition: opacity 0.3s ease;
     -moz-transition: opacity 0.3s ease;
     -ms-transition: opacity 0.3s ease;
@@ -279,25 +283,18 @@
     transition: opacity 0.3s ease;
     border-radius: 8px;
     font-size: 13px;
-    top: 150px;
+    top: -500px;
     left: -10px;
     width: 140px;
     background: #be2626;
-    background: linear-gradient(to bottom, #be2626, #a92222);
+    /*background: linear-gradient(to bottom, #be2626, #a92222);*/
     padding: 0.5em 0.8em;
     color: white;
 }
 
 .dropzone .upload-item.error .preview:hover .error-message {
     opacity: 1 !important;
-}
-
-.dropzone .upload-item.error .preview:hover .error-message:hover {
-    opacity: 0 !important;
-}
-
-.dropzone .upload-item.error .preview .error-message {
-    display: block;
+    top: 125px;
 }
 
 .dropzone .upload-item .preview .error-message:after {

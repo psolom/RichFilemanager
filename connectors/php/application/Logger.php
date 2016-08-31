@@ -17,8 +17,7 @@ class Logger {
 
     public function __construct()
     {
-        //$this->file = sys_get_temp_dir() . '/filemanager.log';
-        $this->file ='C:/filemanager.log';
+        $this->file = sys_get_temp_dir() . '/filemanager.log';
     }
 
     /**
