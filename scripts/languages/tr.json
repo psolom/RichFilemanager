@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Only following files are allowed : ",
     "AUTHORIZATION_REQUIRED": "Filemanager kullanma yetkiniz bulunmamaktadır.",
     "DIRECTORY_ALREADY_EXISTS": "'%s' isimli klasör mevcut.",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "%s isminde bir klasör bulunamadı.",
     "DISALLOWED_FILE_TYPE": "Following files are not allowed : ",
     "ERROR_CREATING_ZIP": "Error creating Zip archive",

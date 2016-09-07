@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Only following files are allowed : ",
     "AUTHORIZATION_REQUIRED": "Du har ikke adgang til at bruge fil manageren.",
     "DIRECTORY_ALREADY_EXISTS": "Mappen '%s'  eksisterer allerede.",
+    "DIRECTORY_EMPTY":"The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "Mappen %s eksisterer ikke.",
     "DISALLOWED_FILE_TYPE": "Following files are not allowed : ",
     "ERROR_CREATING_ZIP": "Error creating Zip archive",

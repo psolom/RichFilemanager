@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "فقط الملفات الاتية هي المسموحة : ",
     "AUTHORIZATION_REQUIRED": "غير مصرح لك باستخدام مدير الملفات.",
     "DIRECTORY_ALREADY_EXISTS": "المجلد '%s' موجود مسبقا.",
+    "DIRECTORY_EMPTY":"The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "المجلد %s غير موجود.",
     "DISALLOWED_FILE_TYPE": "الملفات الاتية غير مسموحة : ",
     "ERROR_CREATING_ZIP": "خطا في انشاء الملف المضغوط",
