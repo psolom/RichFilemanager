@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Només els següents arxius són permesos : ",
     "AUTHORIZATION_REQUIRED": "No estàs autoritzat a fer ser servir l'administrador d'arxius.",
     "DIRECTORY_ALREADY_EXISTS": "La carpeta '%s' ja existeix.",
+    "DIRECTORY_EMPTY":"The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "La carpeta %s no existeix.",
     "DISALLOWED_FILE_TYPE": "Els següents arxius no són permesos : ",
     "ERROR_CREATING_ZIP": "Error creant l'arxiu Zip",

@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "許可されているファイルタイプ: ",
     "AUTHORIZATION_REQUIRED": "ファイルマネージャーは使用できません。許可が必要です。",
     "DIRECTORY_ALREADY_EXISTS": "フォルダー名'%s' は既に使用されています。",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "フォルダー %s は存在しません。",
     "DISALLOWED_FILE_TYPE": "次のファイルは許可されていません: ",
     "ERROR_CREATING_ZIP": "Zipアーカイブを作成中にエラーが発生しました。",

@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Dozvoljene su samo datoteke sljedećeg tipa : ",
     "AUTHORIZATION_REQUIRED": "Niste ovlašteni da koristite filemanager.",
     "DIRECTORY_ALREADY_EXISTS": "Direktorij '%s' već postoji.",
+    "DIRECTORY_EMPTY":"The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "Direktorij %s nije pronađen.",
     "DISALLOWED_FILE_TYPE": "Sljedeće datoteke nisu podržane : ",
     "ERROR_CREATING_ZIP": "Error creating Zip archive",

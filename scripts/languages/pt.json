@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Somente os seguintes arquivos são aceitos: ",
     "AUTHORIZATION_REQUIRED": "Sem permissão para usar o gerenciador.",
     "DIRECTORY_ALREADY_EXISTS": "A pasta '%s' já existe.",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "A pasta %s não existe.",
     "DISALLOWED_FILE_TYPE": "Os seguintes arquivos não são aceitos : ",
     "ERROR_CREATING_ZIP": "Erro ao criar o arquivo Zip",

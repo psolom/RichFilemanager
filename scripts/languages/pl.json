@@ -2,6 +2,7 @@
     "ALLOWED_FILE_TYPE": "Dozwolone są tylko następujące rozszerzenia : ",
     "AUTHORIZATION_REQUIRED": "Nie jesteś upoważniony do używania menadżera plików.",
     "DIRECTORY_ALREADY_EXISTS": "Lokalizacja '%s' już istnieje.",
+    "DIRECTORY_EMPTY" : "The directory '%s' is empty.",
     "DIRECTORY_NOT_EXIST": "Lokalizacja %s nie istnieje.",
     "DISALLOWED_FILE_TYPE": "Następujące rozszerzenia plików są niedozwolone : ",
     "ERROR_CREATING_ZIP": "Wystąpił błąd w trakcie tworzenia archiwum Zip",
