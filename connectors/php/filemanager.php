@@ -16,6 +16,7 @@
 
 require_once('application/Fm.php');
 require_once('application/FmHelper.php');
+date_default_timezone_set("Europe/London");
 
 function auth()
 {
