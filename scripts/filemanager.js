@@ -55,7 +55,7 @@ $.richFmPlugin = function(element, options)
 		lg = null,					// localized messages
 		fileRoot = '/',				// relative files root, may be changed with some query params
 		baseUrl = null,				// base URL to access the FM
-		fileConnector = null,		// API connector URL, based on `baseUrl` if not specified explicitly
+		apiConnector = null,		// API connector URL, based on `baseUrl` if not specified explicitly
 		capabilities = [],			// allowed actions to perform in FM
 		configSortField = null,		// items sort field name
 		configSortOrder = null,		// items sort order 'asc'/'desc'
@@ -91,10 +91,9 @@ $.richFmPlugin = function(element, options)
 		var options = $.extend({}, {
 			reset: true,
 			delay: 5000,
-			maxLogItems: 5,
+			logMaxItems: 5,
 			logPosition: 'bottom right',
 			logContainerClass: 'fm-log',
-			closeLogOnClick: true,
 			parent: $('.fm-popup').is(':visible') ? document.body : $fileinfo[0],
 			onClick: undefined,
 			unique: false,
@@ -109,11 +108,10 @@ $.richFmPlugin = function(element, options)
 
 		if(options.reset) log.reset();
 		if(options.parent) log.parent(options.parent);
-		log.delay(options.delay);
-		log.maxLogItems(options.maxLogItems);
+		log.logDelay(options.delay);
+		log.logMaxItems(options.logMaxItems);
 		log.logPosition(options.logPosition);
 		log.logContainerClass(options.logContainerClass);
-		log.closeLogOnClick(options.closeLogOnClick);
 		log.log(message, options.onClick, options.type + ' ' + options.logClass);
 		return log;
 	};
@@ -151,11 +149,10 @@ $.richFmPlugin = function(element, options)
 	fm.prompt = function(obj) {
 		alertify
 			.reset()
-			.defaultValue(obj.value)
 			.dialogWidth(obj.width)
 			.dialogPersistent(obj.persistent)
 			.dialogContainerClass('fm-popup')
-			.prompt(obj.message, obj.okBtn, obj.cancelBtn);
+			.prompt(obj.message, obj.value || '', obj.okBtn, obj.cancelBtn);
 	};
 
 	fm.dialog = function(obj) {
@@ -204,18 +201,20 @@ $.richFmPlugin = function(element, options)
 	var construct = function() {
 		configure()
 			.then(function(conf_d, conf_u) {
+				return initConnector();
+			})
+			.then(function() {
 				return localize();
 			})
 			.then(function() {
 				return readIcons();
 			})
-			.then(function(conf_lg) {
-				initialize();
+			.then(function() {
 				return includeTemplates();
 			})
 			.then(function() {
 				includeAssets();
-				build();
+				initialize();
 			});
 	};
 
@@ -233,6 +232,35 @@ $.richFmPlugin = function(element, options)
 			}
 			// merge default config and user config file
 			config = $.extend({}, config_default, config_user);
+
+			// setup baseUrl
+			if(config.options.baseUrl === false) {
+				baseUrl = location.origin + location.pathname;
+			} else {
+				baseUrl = config.options.baseUrl;
+			}
+			// for url like http://site.com/index.html
+			if(getExtension(baseUrl).length > 0) {
+				baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
+			}
+			baseUrl = trimSlashes(baseUrl) + '/';
+
+			// setup apiConnector
+			var langConnector = 'connectors/' + config.api.lang + '/filemanager.' + config.api.lang;
+			apiConnector = config.api.connectorUrl || baseUrl + langConnector;
+		});
+	};
+
+	// get initial data from the connector
+	var initConnector = function() {
+		return $.getJSON(buildConnectorUrl({
+			mode: 'getinfo'
+		}), function(result) {
+			if(result) {
+				// TODO: some actions here
+			}
+		}).error(function(response) {
+			fm.error('Unable to handle "getinfo" request!');
 		});
 	};
 
@@ -298,35 +326,6 @@ $.richFmPlugin = function(element, options)
 		});
 	};
 
-	var initialize = function () {
-		// reads capabilities from config files if exists else apply default settings
-		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
-
-		// defines sort params
-		var chunks = [];
-		if(config.options.fileSorting) {
-			chunks = config.options.fileSorting.toLowerCase().split('_');
-		}
-		configSortField = chunks[0] || 'name';
-		configSortOrder = chunks[1] || 'asc';
-
-		// setup baseUrl
-		if(config.options.baseUrl === false) {
-			baseUrl = location.origin + location.pathname;
-		} else {
-			baseUrl = config.options.baseUrl;
-		}
-		// for url like http://site.com/index.html
-		if(getExtension(baseUrl).length > 0) {
-			baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-		}
-		baseUrl = trimSlashes(baseUrl) + '/';
-
-		// setup fileConnector
-		var langConnector = 'connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
-		fileConnector = config.options.fileConnector || baseUrl + langConnector;
-	};
-
 	var includeTemplates = function() {
 		return $.when(loadTemplate('upload-container'), loadTemplate('upload-item')).done(function(uc, ui) {
 			var tmpl_upload_container = uc[0];
@@ -382,7 +381,18 @@ $.richFmPlugin = function(element, options)
 		}
 	};
 
-	var build = function() {
+	var initialize = function () {
+		// reads capabilities from config files if exists else apply default settings
+		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+
+		// defines sort params
+		var chunks = [];
+		if(config.options.fileSorting) {
+			chunks = config.options.fileSorting.toLowerCase().split('_');
+		}
+		configSortField = chunks[0] || 'name';
+		configSortOrder = chunks[1] || 'asc';
+
 		if(config.extras.extra_js) {
 			for(var i=0; i<config.extras.extra_js.length; i++) {
 				$.ajax({
@@ -395,22 +405,6 @@ $.richFmPlugin = function(element, options)
 
 		$('#link-to-project').attr('href', config.url).attr('target', '_blank').attr('title', lg.support_fm + ' [' + lg.version + ' : ' + config.version + ']');
 		$('div.version').html(config.version);
-
-		// set baseUrl
-		if(config.options.baseUrl === false) {
-			baseUrl = location.origin + location.pathname;
-		} else {
-			baseUrl = config.options.baseUrl;
-		}
-		// for url like http://site.com/index.html
-		if(getExtension(baseUrl).length > 0) {
-			baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-		}
-		baseUrl = trimSlashes(baseUrl) + '/';
-
-		// set fileConnector
-		var langConnector = 'connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
-		fileConnector = config.options.fileConnector || baseUrl + langConnector;
 
 		// changes files root to restrict the view to a given folder
 		if($.urlParam('exclusiveFolder') != 0) {
@@ -671,13 +665,13 @@ $.richFmPlugin = function(element, options)
 
 					if(file.chunkUploaded) {
 						$.ajax({
-							'url': buildConnectorUrl({
-								mode: 'getinfo',
+							url: buildConnectorUrl({
+								mode: 'getfile',
 								path: currentPath + file.serverName
 							}),
-							'dataType': "json",
-							'async': false,
-							'success': function(result) {
+							dataType: "json",
+							async: false,
+							success: function(result) {
 								if(result['Code'] == 0) {
 									data.uploadedBytes = Number(result['Properties']['Size']);
 									if(!data.uploadedBytes) {
@@ -746,7 +740,7 @@ $.richFmPlugin = function(element, options)
 						url: buildConnectorUrl(),
 						paramName: config.upload.paramName,
 						formData: {
-							mode: 'add',
+							mode: 'upload',
 							currentpath: currentPath
 						},
 						// validation
@@ -937,7 +931,7 @@ $.richFmPlugin = function(element, options)
 
 				.on('fileuploadsubmit', function(e, data) {
 					data.formData = {
-						mode: 'add',
+						mode: 'upload',
 						currentpath: getCurrentPath()
 					};
 					$uploadButton.addClass('loading').prop('disabled', true);
@@ -1237,7 +1231,6 @@ $.richFmPlugin = function(element, options)
 
 	// Handle ajax request error.
 	var handleAjaxError = function(response) {
-		console.log('handleAjaxError', response);
 		fm.error(lg.ERROR_SERVER);
 	};
 
@@ -1401,15 +1394,19 @@ $.richFmPlugin = function(element, options)
 			time: new Date().getTime()
 		};
 		var queryParams = $.extend({}, params || {}, defaults);
-		return fileConnector + '?' + $.param(queryParams);
+		return apiConnector + '?' + $.param(queryParams);
 	};
 
 	// Build url to preview files
-	var createPreviewUrl = function(path) {
-		return buildConnectorUrl({
-			mode: 'readfile',
-			path: path
-		});
+	var createPreviewUrl = function(data) {
+		if(config.preview.absolutePath && data['PreviewPath']) {
+			return buildAbsolutePath(data['PreviewPath']);
+		} else {
+			return buildConnectorUrl({
+				mode: 'readfile',
+				path: data['Path']
+			});
+		}
 	};
 
 	var createImageUrl = function(data, thumbnail) {
@@ -1431,25 +1428,34 @@ $.richFmPlugin = function(element, options)
 					imagePath = iconsFolderPath + iconFilename;
 				}
 				if(isAllowedImage) {
-					var queryParams = {path: data['Path']};
-					if(fileType === 'svg') {
-						queryParams.mode = 'readfile';
+					if(config.preview.absolutePath && !thumbnail && data['PreviewPath']) {
+						imagePath = buildAbsolutePath(data['PreviewPath']);
 					} else {
-						queryParams.mode = 'getimage';
-						if(thumbnail) {
-							queryParams.thumbnail = 'true';
+						var queryParams = {path: data['Path']};
+						if (fileType === 'svg') {
+							queryParams.mode = 'readfile';
+						} else {
+							queryParams.mode = 'getimage';
+							if (thumbnail) {
+								queryParams.thumbnail = 'true';
+							}
 						}
+						imagePath = buildConnectorUrl(queryParams);
 					}
-					imagePath = buildConnectorUrl(queryParams);
 				}
 			}
 		}
 		return imagePath;
 	};
 
+	var buildAbsolutePath = function(path) {
+		var url = (typeof config.preview.previewUrl === "string") ? config.preview.previewUrl : baseUrl;
+		return trimSlashes(url) + '/' + path;
+	};
+
 	// Return HTML video player
 	var getVideoPlayer = function(data) {
-		var url = createPreviewUrl(data['Path']);
+		var url = createPreviewUrl(data);
 		var code  = '<video src="' + url + '" width=' + config.videos.videosPlayerWidth + ' height=' + config.videos.videosPlayerHeight + ' controls="controls"></video>';
 
 		$fileinfo.find('img').remove();
@@ -1458,7 +1464,7 @@ $.richFmPlugin = function(element, options)
 
 	// Return HTML audio player
 	var getAudioPlayer = function(data) {
-		var url = createPreviewUrl(data['Path']);
+		var url = createPreviewUrl(data);
 		var code  = '<audio src="' + url + '" controls="controls"></audio>';
 
 		$fileinfo.find('img').remove();
@@ -1467,7 +1473,7 @@ $.richFmPlugin = function(element, options)
 
 	// Return PDF Reader
 	var getPdfReader = function(data) {
-		var url = createPreviewUrl(data['Path']);
+		var url = createPreviewUrl(data);
 		var code = '<iframe id="fm-pdf-viewer" src="' + fm.settings.pluginPath + '/scripts/ViewerJS/index.html#' + url + '" width="' + config.pdfs.pdfsReaderWidth + '" height="' + config.pdfs.pdfsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 		$fileinfo.find('img').remove();
@@ -1476,7 +1482,7 @@ $.richFmPlugin = function(element, options)
 
 	// Return Google Viewer
 	var getGoogleViewer = function(data) {
-		var url = encodeURIComponent(createPreviewUrl(data['Path']));
+		var url = encodeURIComponent(createPreviewUrl(data));
 		var code = '<iframe id="fm-google-viewer" src="http://docs.google.com/viewer?url=' + url + '&embedded=true" width="' + config.docs.docsReaderWidth + '" height="' + config.docs.docsReaderHeight + '" allowfullscreen webkitallowfullscreen></iframe>';
 
 		$fileinfo.find('img').remove();
@@ -1797,7 +1803,7 @@ $.richFmPlugin = function(element, options)
 	// contextual menu option in list views.
 	// NOTE: closes the window when finished.
 	var selectItem = function(data) {
-		var url = createPreviewUrl(data['Path']);
+		var url = createPreviewUrl(data);
 		if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 			if(window.tinyMCEPopup) {
 				// use TinyMCE > 3.0 integration method
@@ -2742,7 +2748,7 @@ $.richFmPlugin = function(element, options)
 	// Binds contextual menus to items in list and grid views.
 	var setMenus = function(action, path) {
 		$.getJSON(buildConnectorUrl({
-			mode: 'getinfo',
+			mode: 'getfile',
 			path: path
 		}), function(data) {
 			switch(action) {
@@ -2790,7 +2796,7 @@ $.richFmPlugin = function(element, options)
 
 		// Retrieve the data & populate the template.
 		$.getJSON(buildConnectorUrl({
-			mode: 'getinfo',
+			mode: 'getfile',
 			path: file
 		}), function(data) {
 			// is there any error or user is unauthorized
@@ -2837,7 +2843,7 @@ $.richFmPlugin = function(element, options)
 			}
 
 			if(data['Protected'] == 0) {
-				$fileinfo.find('div#tools').append('<a id="copy-button" data-clipboard-text="'+ createPreviewUrl(data['Path']) + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
+				$fileinfo.find('div#tools').append('<a id="copy-button" data-clipboard-text="'+ createPreviewUrl(data) + '" title="' + lg.copy_to_clipboard + '" href="#"><span>' + lg.copy_to_clipboard + '</span></a>');
 
 				// zeroClipboard code
 				ZeroClipboard.config({swfPath: fm.settings.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});

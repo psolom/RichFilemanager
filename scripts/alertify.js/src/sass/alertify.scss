@@ -1,29 +1,10 @@
 $box-shadow: 0 2px 5px 0 rgba(0,0,0,.2);
 $padding-base: 12px;
 $success-color: rgba(76, 175, 80, .9);
-$danger-color: rgba(244, 67, 54, .8);
+$warning-color: rgba(255, 125, 25, .9);
+$danger-color: rgba(244, 67, 54, .9);
 $text-color: rgba(0, 0, 0, .8);
 $border-radius: 1px;
-
-.alertify-logs {
-    > * {
-        padding: $padding-base $padding-base * 2;
-        color: #fff;
-        box-shadow: $box-shadow;
-        border-radius: $border-radius;
-        transition: .2s all;
-        display: block !important;
-        &, &.default {
-            background: rgba(0, 0, 0, .8);
-        }
-        &.error {
-          background: $danger-color;
-        }
-        &.success {
-          background: $success-color;
-        }
-    }
-}
 
 .alertify {
     position: fixed;
@@ -73,7 +54,6 @@ $border-radius: 1px;
         }
 
         input[data-alertify-input]:not(.form-control){
-            margin-bottom: 12px;
             width: 100%;
             font-size: 100%;
             padding: 8px;
@@ -84,6 +64,7 @@ $border-radius: 1px;
 
         [data-alertify-btn-holder] {
             text-align: right;
+            margin-top: 12px;
 
             [data-alertify-btn]:not(.btn):not(.pure-button):not(.md-button):not(.mdl-button) {
                 background: transparent;
@@ -94,7 +75,7 @@ $border-radius: 1px;
                 display: inline-block;
                 align-items: center;
                 padding: 0 6px;
-                margin: 6px 0 0 15px;
+                margin-left: 15px;
                 line-height: 36px;
                 min-height: 36px;
                 white-space: nowrap;
@@ -213,9 +194,28 @@ $border-radius: 1px;
             margin-top: $padding-base;
             opacity: 1;
             max-height: 1000px;
-            padding: $padding-base;
             pointer-events: auto;
         }
     }
 
+    [data-alertify-log-msg] {
+        padding: $padding-base $padding-base * 2;
+        color: #fff;
+        box-shadow: $box-shadow;
+        border-radius: $border-radius;
+        transition: .2s all;
+        display: block !important;
+        &, &.default {
+            background: rgba(0, 0, 0, .8);
+        }
+        &.success {
+            background: $success-color;
+        }
+        &.warning {
+            background: $warning-color;
+        }
+        &.error {
+            background: $danger-color;
+        }
+    }
 }

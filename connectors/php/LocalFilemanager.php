@@ -107,6 +107,14 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
+	public function getinfo()
+	{
+		return array();
+	}
+
+	/**
+	 * @inheritdoc
+	 */
 	public function getfolder()
     {
 		$array = array();
@@ -159,7 +167,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getinfo()
+	public function getfile()
 	{
 		$path = $this->get['path'];
 		$current_path = $this->getFullPath($path, true);
@@ -183,7 +191,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function add()
+	public function upload()
 	{
 		$current_path = $this->getFullPath($this->post['currentpath'], true);
 
@@ -893,6 +901,7 @@ class LocalFilemanager extends BaseFilemanager
 		$item['Filename'] = $pathInfo['basename'];
 		$item['File Type'] = $fileType;
 		$item['Protected'] = $protected;
+		$item['PreviewPath'] = $this->getDynamicPath($current_path);
 		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
 		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
 		$item['Properties']['filemtime'] = $filemtime;

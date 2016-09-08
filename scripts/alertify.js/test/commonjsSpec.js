@@ -23,16 +23,14 @@ describe("commonjs test suite", function() {
             expect(typeof alertify.cancelBtn).toBe("function");
             expect(typeof alertify.okBtn).toBe("function");
             expect(typeof alertify.delay).toBe("function");
-            expect(typeof alertify.placeholder).toBe("function");
-            expect(typeof alertify.defaultValue).toBe("function");
-            expect(typeof alertify.maxLogItems).toBe("function");
-            expect(typeof alertify.closeLogOnClick).toBe("function");
+            expect(typeof alertify.inputDefaultValue).toBe("function");
+            expect(typeof alertify.logMaxItems).toBe("function");
         });
     });
 
     it("should be different instances", function() {
         var alertify = new Alertify();
-        alertify.defaultValue("foo");
+        alertify.inputDefaultValue("foo");
         expect(alertify._$$alertify).not.toEqual(Alertify._$$alertify);
     });
 

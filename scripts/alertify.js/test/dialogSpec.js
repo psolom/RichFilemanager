@@ -68,7 +68,7 @@ describe("Dialog Unit Tests:", function () {
 
         it("should set the default value of prompt element", function(done) {
             var val = "This is a test";
-            alertify.defaultValue(val).prompt("Test");
+            alertify.inputDefaultValue(val).prompt("Test");
             setTimeout(function() {
                 expect(document.querySelector(".alertify .dialog input").value).toBe(val);
                 done();

@@ -32,28 +32,21 @@
     // ==============================
     // Alert Dialog
     demo("#alert", function (event) {
-        alertify.alert("This is an alert dialog");
+        alertify
+            .alert("This is an alert dialog", function (e, ui) {
+                // you can handle click event here
+                e.preventDefault();
+            });
     });
 
     // ==============================
     // Confirm Dialog
     demo("#confirm", function (event) {
         alertify
-            .confirm("This is a confirm dialog",
-            {
-                click: function (e, ui) {
-                    // The click event is in the event variable, so you can use it here.
-                    e.preventDefault();
-
-                    alertify.success("You've clicked \"OK\"");
-                }
-            },{
-                click: function (e, ui) {
-                    // The click event is in the event variable, so you can use it here.
-                    e.preventDefault();
-
-                    alertify.error("You've clicked \"Cancel\"");
-                }
+            .confirm("This is a confirm dialog", function (e, ui) {
+                alertify.success("You've clicked 'OK'");
+            }, function (e, ui) {
+                alertify.error("You've clicked 'Cancel'");
             });
     });
 
@@ -61,22 +54,13 @@
     // Prompt Dialog
     demo("#prompt", function (event) {
         alertify
-            .defaultValue("Default value")
-            .prompt("This is a prompt dialog",
-            {
-                click: function (e, ui) {
-                    e.preventDefault();
+            .prompt("This is a prompt dialog", "Default value", function (e, ui) {
+                // the value entered in the prompt input
+                var inputValue = ui.getInputValue();
 
-                    // the value entered in the prompt input
-                    var inputValue = ui.getInputValue();
-
-                    alertify.success("You've clicked \"OK\" and typed: " + inputValue);
-                }
-            },{
-                click: function (e, ui) {
-                    e.preventDefault();
-                    alertify.error("You've clicked \"Cancel\"");
-                }
+                alertify.success("You've clicked 'OK' and typed: " + inputValue);
+            }, function (e, ui) {
+                alertify.error("You've clicked 'Cancel'");
             });
     });
 
@@ -201,12 +185,12 @@
                     }
                 }
             },{
+                type: "custom",
                 label: "New quiz",
                 autoClose: false,
                 click: function (e, ui) {
                     buildQuiz(ui);
-                },
-                template: '<button data-alertify-btn style="font-weight: bold"></button>'
+                }
             },{
                 type: "cancel",
                 label: "Close"
@@ -269,37 +253,70 @@
             });
     });
 
-    demo("#click-to-close", function (event) {
-        alertify
-            .closeLogOnClick(true)
-            .log("Click me to close!");
+
+    /********** Log Messages **********/
+
+    // ==============================
+    // Standard Log
+    demo("#notification", function (event) {
+        alertify.log("Standard log message");
     });
 
-    demo("#disable-click-to-close", function (event) {
-        alertify
-            .closeLogOnClick(true)
-            .log("Click me to close!")
-            .closeLogOnClick(false)
-            .log("You can't click to close this!");
+    // ==============================
+    // Log types
+    demo("#success", function (event) {
+        alertify.success("Success log message");
+    });
+    demo("#warning", function (event) {
+        alertify.warning("Warning log message");
+    });
+    demo("#error", function (event) {
+        alertify.error("Error log message");
     });
 
-    demo("#reset", function (event) {
+    // ==============================
+    // Log With HTML
+    demo("#notification-html", function (event) {
+        alertify.log("<img src='https://placehold.it/256x128'><h3>This is HTML</h3><p>It's great, right?</p>");
+    });
+
+    // ==============================
+    // Log with callback
+    demo("#notification-callback", function(event) {
+        alertify.log("Log message with callback", function(e, ui) {
+            // you can use click event here
+            e.preventDefault();
+
+            // method to close current log message
+            ui.closeLog();
+
+            alertify.log("You clicked the notification");
+        });
+    });
+
+    // ==============================
+    // Hide in 10 seconds
+    demo("#delay", function (event) {
         alertify
-            .reset()
-            .alert("Custom values were reset", {
-                label: "Go For It!"
+            .logDelay(10000)
+            .log("Hiding in 10 seconds");
+    });
+
+    // ==============================
+    // Persistent Log
+    demo("#forever", function (event) {
+        alertify
+            .logDelay(0)
+            .log("Will stay until clicked", function(e, ui) {
+                ui.closeLog();
             });
     });
 
-    demo("#log-template", function (event) {
-        alertify
-            .setLogTemplate(function (input) { return 'log message: ' + input; })
-            .log("This is the message");
-    });
-
+    // ==============================
+    // Maximum Number of Log Messages
     demo("#max-log-items", function (event) {
         alertify
-            .maxLogItems(1)
+            .logMaxItems(1)
             .log("This is the first message");
 
         // The timeout is just for visual effect.
@@ -309,59 +326,17 @@
     });
 
     // ==============================
-    // Standard Dialogs
-    demo("#notification", function (event) {
-        alertify.log("Standard log message");
-    });
-
-    demo("#notification-html", function (event) {
-        alertify.log("<img src='https://placehold.it/256x128'><h3>This is HTML</h3><p>It's great, right?</p>");
-    });
-
-    demo("#notification-callback", function(event) {
-        alertify.log("Standard log message with callback", function(ev) {
-            ev.preventDefault();
-            alertify.log("You clicked the notification");
-        });
-    });
-
-    demo("#success", function (event) {
-        alertify.success("Success log message");
-    });
-
-    demo("#success-callback", function(event) {
-        alertify.success("Standard log message with callback", function() {
-            alertify.success("You clicked the notification");
-        });
-    });
-
-    demo("#error", function (event) {
-        alertify.error("Error log message");
-    });
-
-    demo("#error-callback", function(event) {
-        alertify.error("Standard log message with callback", function(ev) {
-            ev.preventDefault();
-            alertify.error("You clicked the notification");
-        });
+    // Template for Log messages
+    demo("#log-message-template", function (event) {
+        alertify
+            .logMessageTemplate(function (input) { return 'log message: ' + input; })
+            .log("This is the message");
     });
 
     // ==============================
-    // Custom Properties
-    demo("#delay", function (event) {
-        alertify
-            .delay(10000)
-            .log("Hiding in 10 seconds");
-    });
-
-    demo("#forever", function (event) {
-        alertify
-            .delay(0)
-            .log("Will stay until clicked");
-    });
-
+    // Setting the Position
     demo("#log-position", function(event) {
-        alertify.delay(1000); // This is just to make the demo go faster.
+        alertify.logDelay(1000); // This is just to make the demo go faster.
         alertify.log("Default bottom left position");
         setTimeout(function() {
             alertify.logPosition("top left");
@@ -381,6 +356,77 @@
         }, 6000);
     });
 
+
+    /********** Template Customization **********/
+
+    // ==============================
+    // Predefined themes
+    demo("#theme-predefined", function (event) {
+        alertify
+            .theme("bootstrap")
+            .prompt("Bootstrap theme message");
+    });
+
+    demo("#theme-reset", function (event) {
+        alertify
+            .theme("default")
+            .prompt("Default theme message");
+    });
+
+    // ==============================
+    // Log templates
+    demo("#template-log", function (event) {
+        alertify.
+            theme({
+                logMessage: '<div class="wrapper">' +
+                    '<div data-alertify-log-msg style="background: rgb(78, 150, 193);"></div>' +
+                    '</div>'
+            })
+            .log("Log message with custom theme.");
+
+        // set default options
+        setTimeout(function() {alertify.reset()}, 500);
+    });
+
+    // ==============================
+    // Dialog templates
+    demo("#template-dialog", function (event) {
+        alertify.
+            theme({
+                dialogMessage: '<div style="text-align: center; color: #3F51B5;">' +
+                    '<div data-alertify-msg style="font-weight: bold"></div>' +
+                    '</div>',
+                dialogInput: '<div>' +
+                    '<label for="template-dialog-input">LABEL - click to focus:</label>' +
+                    '<input data-alertify-input id="template-dialog-input" type="text">' +
+                    '<div style="font-size: 12px">Note: write any text to the input.</div>' +
+                    '</div>',
+                dialogButtonsHolder: '<nav data-alertify-btn-holder style="text-align: center"></nav>'
+            })
+            .prompt("Dialog prompt with custom template.", "Default value",
+            {
+                click: function (e, ui) {
+                    alertify.success("You've typed: " + ui.getInputValue());
+                }
+            });
+
+        // set default options
+        setTimeout(function() {alertify.reset()}, 500);
+    });
+
+
+    /********** Other Options **********/
+
+    // ==============================
+    // Reset
+    demo("#reset", function (event) {
+        alertify
+            .reset()
+            .alert("Custom values were reset", {
+                label: "Go For It!"
+            });
+    });
+
 })();
 
 var app = angular.module("alertifyDemo", ["ngAlertify"]);
@@ -391,15 +437,14 @@ app.controller("alertifyLogDemoCtrl", function($scope, $log, alertify) {
     $scope.log = alertify.log;
     $scope.error = alertify.error;
     $scope.success = alertify.success;
-    $scope.maxLogItems = 2;
-    $scope.delay = 5000;
+    $scope.logMaxItems = 2;
+    $scope.logDelay = 5000;
 
     $scope.show = function(msg) {
         alertify[$scope.type](msg);
     };
 
-    $scope.$watch("closeLogOnClick", alertify.closeLogOnClick);
-    $scope.$watch("maxLogItems", alertify.maxLogItems);
-    $scope.$watch("delay", alertify.delay);
+    $scope.$watch("logMaxItems", alertify.logMaxItems);
+    $scope.$watch("logDelay", alertify.logDelay);
 
 });

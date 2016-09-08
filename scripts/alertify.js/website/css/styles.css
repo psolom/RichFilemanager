@@ -194,6 +194,10 @@ pre {
 /* Need for sure */
 .layout-transparent {
   background: linear-gradient(to right, #2193b0, #6dd5ed);
+  background-color: #3facc7;
+}
+.layout-transparent .mdl-layout__content {
+    width: 100%;
 }
 .layout-transparent .mdl-layout__header,
 .layout-transparent .mdl-layout__drawer-button,
