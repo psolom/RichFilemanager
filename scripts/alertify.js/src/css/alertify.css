@@ -128,10 +128,14 @@
     transition: .2s all;
     display: block !important; }
     .alertify-logs [data-alertify-log-msg], .alertify-logs [data-alertify-log-msg].default {
+      color: #fff;
       background: rgba(0, 0, 0, 0.8); }
     .alertify-logs [data-alertify-log-msg].success {
+      color: #fff;
       background: rgba(76, 175, 80, 0.9); }
     .alertify-logs [data-alertify-log-msg].warning {
+      color: #fff;
       background: rgba(255, 125, 25, 0.9); }
     .alertify-logs [data-alertify-log-msg].error {
+      color: #fff;
       background: rgba(244, 67, 54, 0.9); }

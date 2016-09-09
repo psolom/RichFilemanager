@@ -97,8 +97,7 @@ $.richFmPlugin = function(element, options)
 			parent: $('.fm-popup').is(':visible') ? document.body : $fileinfo[0],
 			onClick: undefined,
 			unique: false,
-			type: 'default',
-			logClass: ''
+			type: 'log'
 		}, obj);
 
 		// display only one log for the specified 'logClass'
@@ -112,13 +111,20 @@ $.richFmPlugin = function(element, options)
 		log.logMaxItems(options.logMaxItems);
 		log.logPosition(options.logPosition);
 		log.logContainerClass(options.logContainerClass);
-		log.log(message, options.onClick, options.type + ' ' + options.logClass);
+		log[options.type](message, options.onClick);
 		return log;
 	};
 
 	fm.error = function(message, options) {
 		return fm.log(message, $.extend({}, {
 			type: 'error',
+			delay: 10000
+		}, options));
+	};
+
+	fm.warning = function(message, options) {
+		return fm.log(message, $.extend({}, {
+			type: 'warning',
 			delay: 10000
 		}, options));
 	};
@@ -152,13 +158,13 @@ $.richFmPlugin = function(element, options)
 			.dialogWidth(obj.width)
 			.dialogPersistent(obj.persistent)
 			.dialogContainerClass('fm-popup')
+			.theme(obj.template)
 			.prompt(obj.message, obj.value || '', obj.okBtn, obj.cancelBtn);
 	};
 
 	fm.dialog = function(obj) {
 		alertify
 			.reset()
-			.defaultValue(obj.value)
 			.dialogWidth(obj.width)
 			.dialogPersistent(obj.persistent)
 			.dialogContainerClass('fm-popup')
@@ -294,9 +300,8 @@ $.richFmPlugin = function(element, options)
 					// try to load general lang file for the language
 					return file_exists(buildLangPath(subCode))
 						.done(function() {
-							// TODO: display warning instead of success
 							setTimeout(function() {
-								fm.success('General language file (' + buildLangPath(subCode) + ') was loaded!');
+								fm.warning('General language file (' + buildLangPath(subCode) + ') was loaded!');
 							}, 500);
 							config.options.culture = subCode;
 						});
@@ -1231,6 +1236,9 @@ $.richFmPlugin = function(element, options)
 
 	// Handle ajax request error.
 	var handleAjaxError = function(response) {
+		if(config.options.logger) {
+			console.log(response.responseText || response);
+		}
 		fm.error(lg.ERROR_SERVER);
 	};
 
@@ -1450,7 +1458,7 @@ $.richFmPlugin = function(element, options)
 
 	var buildAbsolutePath = function(path) {
 		var url = (typeof config.preview.previewUrl === "string") ? config.preview.previewUrl : baseUrl;
-		return trimSlashes(url) + '/' + path;
+		return trimSlashes(url) + path;
 	};
 
 	// Return HTML video player
@@ -1529,7 +1537,7 @@ $.richFmPlugin = function(element, options)
 
 						ui.closeDialog();
 						if(config.options.showConfirmation) {
-							// TODO: new folder sucessfully created
+							// TODO: "new folder sucessfully created" message in lg file
 						}
 					} else {
 						fm.error(result['Error']);
@@ -2084,37 +2092,31 @@ $.richFmPlugin = function(element, options)
 	// or choosing the "Move" contextual menu option in list views.
 	var moveItemPrompt = function(data) {
 		var doMove = function(e, ui) {
-			// TODO: rewrite to fm.confirm and check "value" as:
-			//if(!value) {
-			//	fm.error(lg.prompt_foldername);
-			//	return;
-			//}
-			var newPath = $(ui.dialog).find('[data-alertify-input]').val();
-
-
-			if(newPath != '') {
-				moveItem(data['Path'], newPath);
-			} else {
-				// TODO: new message: enter folder name
+			var newPath = ui.getInputValue();
+			if(!newPath) {
 				fm.error(lg.prompt_foldername);
+				return;
 			}
+
+			moveItem(data['Path'], newPath);
 		};
 
-		var msg = '<div data-alertify-msg>' + lg.move  + '</div>'
-			+ '<input data-alertify-input type="text" value="" />'
-			+ '<div class="prompt-info">' + lg.help_move + '</div>';
-
-		fm.dialog({
-			message: msg,
-			buttons: [{
-				type: "ok",
+		fm.prompt({
+			message: lg.move,
+			value: config.security.allowChangeExtensions ? data['Filename'] : getFilename(data['Filename']),
+			okBtn: {
 				label: lg.move,
 				autoClose: false,
 				click: doMove
-			},{
-				type: "cancel",
+			},
+			cancelBtn: {
 				label: lg.cancel
-			}]
+			},
+			template: {
+				dialogInput:
+				'<input data-alertify-input type="text" value="" />' +
+				'<div class="prompt-info">' + lg.help_move + '</div>'
+			}
 		});
 	};
 
@@ -2165,7 +2167,7 @@ $.richFmPlugin = function(element, options)
 						updateFolderSummary();
 					}
 
-					ui.closeDialog();
+					alertify.clearDialogs();
 					if(config.options.showConfirmation) {
 						fm.success(lg.successful_moved);
 					}

@@ -90,10 +90,16 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Returns file info - filemanager action
+     * Fetch server information - filemanager action
      * @return array
      */
     abstract function getinfo();
+
+    /**
+     * Return file data - filemanager action
+     * @return array
+     */
+    abstract function getfile();
 
     /**
      * Open specified folder - filemanager action
@@ -135,7 +141,7 @@ abstract class BaseFilemanager
     /**
      * Upload new file - filemanager action
      */
-    abstract function add();
+    abstract function upload();
 
     /**
      * Create new folder - filemanager action
@@ -189,8 +195,12 @@ abstract class BaseFilemanager
                         break;
 
                     case 'getinfo':
+                        $response = $this->getinfo();
+                        break;
+
+                    case 'getfile':
                         if($this->getvar('path')) {
-                            $response = $this->getinfo();
+                            $response = $this->getfile();
                         }
                         break;
 
@@ -263,9 +273,9 @@ abstract class BaseFilemanager
                         $this->error($this->lang('MODE_ERROR'));
                         break;
 
-                    case 'add':
+                    case 'upload':
                         if($this->postvar('currentpath')) {
-                            $this->add();
+                            $this->upload();
                         }
                         break;
 

@@ -679,7 +679,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-popup.alertify div.prompt-info {
     line-height: 12px;
     min-height: 15px;
-    margin-bottom: 10px;
+    margin-top: 5px;
     padding-left: 25px;
     color: #444;
     background: transparent url(../images/info.png) no-repeat 0 0;

@@ -206,15 +206,19 @@ $border-radius: 1px;
         transition: .2s all;
         display: block !important;
         &, &.default {
+            color: #fff;
             background: rgba(0, 0, 0, .8);
         }
         &.success {
+            color: #fff;
             background: $success-color;
         }
         &.warning {
+            color: #fff;
             background: $warning-color;
         }
         &.error {
+            color: #fff;
             background: $danger-color;
         }
     }
