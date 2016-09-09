@@ -9,9 +9,9 @@
  *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
- 
+
 (function($) {
-  
+
   // keep variables in non global object
 var fm = {};
 var lg = [];
@@ -63,8 +63,8 @@ var normalizePath = function(path){
  	if (!path || path === SLASH) {
 		return SLASH;
 	}
-	var src; var scheme; 
-	if (path.indexOf(SCHEME) > 0) {    
+	var src; var scheme;
+	if (path.indexOf(SCHEME) > 0) {
 			var parts = path.split(SCHEME);
 			scheme = parts[0];
 			src = parts[1].split(SLASH);
@@ -100,7 +100,7 @@ var loadConfigFile = function (type) {
     promisePluginPath.resolve( { globals : {pluginPath: pluginPath} }  );
     var url;
     type = (typeof type === "undefined") ? "user" : type;
-    
+
     if(type == 'user') {
       if($.urlParam('config') != 0) {
         url = pluginPath + '/scripts/' + $.urlParam('config');
@@ -112,19 +112,19 @@ var loadConfigFile = function (type) {
     } else {
       url = pluginPath + '/scripts/filemanager.config.default.json';
     }
-      
+
     return $.ajax({
                 'url': url,
                 'dataType': "json",
                 cache: false
-        }) ; 
+        }) ;
   };
 
 
    var err = function( req, status, err ) {
     alert( '<p>something went wrong</p>'+ err );
   };
-  
+
   // loading default configuration file
   var promiseA = loadConfigFile('default');
   promiseA.then( function (data) {
@@ -137,12 +137,12 @@ var loadConfigFile = function (type) {
        json = data;
        promiseUser.resolve(json);
   }, err);
-  
+
   $.when(promiseDefault, promiseUser, promisePluginPath).done(function(configd,configu, configpp) {
 				 // remove version from user config file
 				if (config != undefined && config !== null) delete config.version;
 				// merge default config and user config file
-				config = $.extend({}, configd, configu, configpp); 	
+				config = $.extend({}, configd, configu, configpp);
 
 				if(config.options.logger) start = new Date().getTime();
 
@@ -151,10 +151,10 @@ var loadConfigFile = function (type) {
 
 				 // Sets paths to connectors based on language selection.
 				langConnector = '/connectors/' + config.options.lang + '/filemanager.' + config.options.lang;
-				
+
 				// Read capabilities from config files if exists else apply default settings
 				capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
-				 
+
 				 // Defines sort params
 				var chunks = [];
 				if(config.options.fileSorting) {
@@ -165,15 +165,15 @@ var loadConfigFile = function (type) {
 
 				 // Get localized messages from file through culture var or from URL
 				if($.urlParam('langCode') != 0) {
-						 file_exists( config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done( 
+						 file_exists( config.globals.pluginPath + '/scripts/languages/'  + $.urlParam('langCode') + '.json').done(
 							function(result) {
 								if (result) {
 									config.options.culture = $.urlParam('langCode');
 								} else {
 									var urlLang = $.urlParam('langCode').substring(0, 2);
-									file_exists( config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.json').done( 
+									file_exists( config.globals.pluginPath + '/scripts/languages/'  + urlLang + '.json').done(
 										function(result) {
-											if(result) { 
+											if(result) {
 												config.options.culture = urlLang;
 											}
 										}
@@ -191,7 +191,7 @@ var loadConfigFile = function (type) {
 								initConfigLastPromise.resolve(json);
 								self.resolve(json);
 						});
-				}).promise(); 
+				}).promise();
   });
 
 // Stores path to be automatically expanded by filetree plugin
@@ -265,7 +265,7 @@ var file_exists = function(url) {
                 }
               }
             };
-             
+
     }).promise();
   return deferred;;
 };
@@ -710,7 +710,7 @@ var setUploader = function(path) {
 
 			if(fname != '') {
 				foldername = cleanString(fname);
-				
+
 				$.getJSON(buildConnectorUrl({
 					mode: 'addfolder',
 					path: getCurrentPath(),
@@ -1971,7 +1971,7 @@ var getFileInfo = function(file) {
 	$('.context-menu-root').hide();
 
 	var currentpath = file.substr(0, file.lastIndexOf('/') + 1);
-	
+
 	//if (currentpath == "") currentpath = "/";
 
 	// update location for status, upload, & new folder functions
@@ -2403,7 +2403,7 @@ var buildFileTreeItem = function(item) {
 ---------------------------------------------------------*/
 
 $(function() {
-  
+
   initConfigLastPromise.done(function(res) {
 
 	if(config.extras != undefined && config.extras.extra_js) {
@@ -2443,7 +2443,7 @@ $(function() {
 		loadJS('/scripts/CodeMirror/addon/display/fullscreen.js');
 		loadJS('/scripts/CodeMirror/dynamic-mode.js');
 	}
-  
+
 	// set baseUrl
 	if(config.options.baseUrl === false) {
 		baseUrl = location.origin + location.pathname;
@@ -2979,20 +2979,20 @@ $(function() {
 
 		var csTheme = config.customScrollbar.theme != undefined ? config.customScrollbar.theme : 'inset-2-dark';
 		var csButton = config.customScrollbar.button != undefined ? config.customScrollbar.button : true;
-    
+
 
     $("#filetree").append('<div style="height:3000px"></div>'); // because if #filetree has height equal to 0, mCustomScrollbar is not applied
     $("#filetree").mCustomScrollbar({
       theme:csTheme,
       scrollButtons:{enable:csButton},
-      advanced:{ 
+      advanced:{
         autoExpandHorizontalScroll:true,
-        updateOnContentResize: true 
+        updateOnContentResize: true
       },
       callbacks:{
-        onInit:function(){ 
-          createFileTree(); 
-        }			
+        onInit:function(){
+          createFileTree();
+        }
       },
       axis: "yx"
       });
@@ -3000,12 +3000,12 @@ $(function() {
     fileTreeloaded.done(function(result) {
         $("#fileinfo").mCustomScrollbar({
           theme:csTheme,
-          scrollButtons:{ 
+          scrollButtons:{
             enable:csButton
           },
-          advanced:{ 
-            autoExpandHorizontalScroll:true, 
-            updateOnContentResize: true 
+          advanced:{
+            autoExpandHorizontalScroll:true,
+            updateOnContentResize: true
           },
           axis: "y",
           alwaysShowScrollbar: 1
@@ -3049,7 +3049,7 @@ $(function() {
     $(window).load(function() {
       setDimensions();
     });
-    
+
     // add location.origin for IE
     if (!window.location.origin) {
       window.location.origin = window.location.protocol + "//"
@@ -3060,11 +3060,10 @@ $(function() {
     $(window).load(function() {
         $('#fileinfo').css({'left':$('#splitter .vsplitbar').width() + $('#filetree').width()});
     });
-    
+
    }); // promise done
 
  });
 
 
 })(jQuery);
-
