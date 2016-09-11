@@ -17,7 +17,6 @@ require_once('LocalUploadHandler.php');
 class LocalFilemanager extends BaseFilemanager
 {
 	protected $refParams = array();
-	protected $languages = array();
 	protected $allowed_actions = array();
 	protected $doc_root;
 	protected $path_to_files;
@@ -54,7 +53,6 @@ class LocalFilemanager extends BaseFilemanager
 
 		$this->setParams();
 		$this->setPermissions();
-		$this->availableLanguages();
 		$this->loadLanguageFile();
 	}
 
@@ -107,20 +105,11 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getinfo()
-	{
-		return array();
-	}
-
-	/**
-	 * @inheritdoc
-	 */
 	public function getfolder()
     {
 		$array = array();
 		$files_list = array();
 		$current_path = $this->getFullPath($this->get['path'], true);
-
 		Log::info('opening folder "' . $current_path . '"');
 
 		if(!is_dir($current_path)) {
@@ -152,8 +141,8 @@ class LocalFilemanager extends BaseFilemanager
 				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match($this->config['exclude']['unallowed_files_REGEXP'], $file)) {
 					$item = $this->get_file_info($file_path);
 
-					if(!isset($this->refParams['type']) || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images' && in_array(strtolower($item['File Type']), array_map('strtolower', $this->config['images']['imagesExt'])))) {
-						if($this->config['upload']['imagesOnly']== false || ($this->config['upload']['imagesOnly'] === true && in_array(strtolower($item['File Type']), array_map('strtolower', $this->config['images']['imagesExt'])))) {
+					if(!isset($this->refParams['type']) || (strtolower($this->refParams['type']) === 'images' && $this->is_image_type($item['File Type']))) {
+						if($this->config['upload']['imagesOnly'] === false || ($this->config['upload']['imagesOnly'] === true && $this->is_image_type($item['File Type']))) {
 							$array[$file_path] = $item;
 						}
 					}
@@ -172,7 +161,6 @@ class LocalFilemanager extends BaseFilemanager
 		$path = $this->get['path'];
 		$current_path = $this->getFullPath($path, true);
 		$filename = basename($current_path);
-
 		Log::info('opening file "' . $current_path . '"');
 
 		// check if file is readable
@@ -194,7 +182,6 @@ class LocalFilemanager extends BaseFilemanager
 	public function upload()
 	{
 		$current_path = $this->getFullPath($this->post['currentpath'], true);
-
 		Log::info('uploading to "' . $current_path . '"');
 
 		// check if file is writable
@@ -222,7 +209,6 @@ class LocalFilemanager extends BaseFilemanager
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$new_dir = $this->normalizeString($this->get['name']);
 		$new_path = $current_path . $new_dir;
-
 		Log::info('adding folder "' . $new_path . '"');
 
 		if(is_dir($new_path)) {
@@ -261,7 +247,6 @@ class LocalFilemanager extends BaseFilemanager
 
 		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
 		$new_file = $this->getFullPath($newPath, true) . '/' . $newName . $suffix;
-
 		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
 		if(!$this->has_permission('rename')) {
@@ -344,7 +329,6 @@ class LocalFilemanager extends BaseFilemanager
 		$newPath = $this->getFullPath($newPath, true);
 		$newFullPath = $newPath . $filename . $suffix;
 		$isDirOldPath = is_dir($oldPath);
-
 		Log::info('moving "' . $oldPath . '" to "' . $newFullPath . '"');
 
 		// check if file is writable
@@ -420,7 +404,6 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$old_path = $this->getFullPath($this->post['newfilepath']);
 		$upload_dir = dirname($old_path) . '/';
-
 		Log::info('replacing "' . $old_path . '"');
 
 		if(!$this->has_permission('replace') || !$this->has_permission('upload')) {
@@ -469,7 +452,6 @@ class LocalFilemanager extends BaseFilemanager
 	public function editfile()
     {
 		$current_path = $this->getFullPath($this->get['path'], true);
-
 		Log::info('opening "' . $current_path . '"');
 
 		// check if file is writable
@@ -504,7 +486,6 @@ class LocalFilemanager extends BaseFilemanager
 	public function savefile()
     {
 		$current_path = $this->getFullPath($this->post['path'], true);
-
 		Log::info('saving "' . $current_path . '"');
 
 		if(!$this->has_permission('edit') || !$this->is_editable($current_path)) {
@@ -603,7 +584,6 @@ class LocalFilemanager extends BaseFilemanager
 	public function getimage($thumbnail)
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
-
 		Log::info('loading image "' . $current_path . '"');
 
 		// if $thumbnail is set to true we return the thumbnail
@@ -630,7 +610,6 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$thumbnail_path = $this->get_thumbnail_path($current_path);
-
 		Log::info('deleting "' . $current_path . '"');
 
 		if(!$this->has_permission('delete')) {
@@ -679,8 +658,7 @@ class LocalFilemanager extends BaseFilemanager
     {
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$filename = basename($current_path);
-
-		Log::info('file downloading "' . $current_path . '"');
+		Log::info('downloading "' . $current_path . '"');
 
 		if(!$this->has_permission('download')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -737,7 +715,7 @@ class LocalFilemanager extends BaseFilemanager
 		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
 		readfile($current_path);
-		Log::info('file downloaded "' . $current_path . '"');
+		Log::info('downloaded "' . $current_path . '"');
 		exit();
 	}
 
@@ -752,6 +730,7 @@ class LocalFilemanager extends BaseFilemanager
 			'Folders' => 0,
 			'Error' => "",
 			'Code' => 0,
+            'SizeLimit' => $this->config['options']['fileRootSizeLimit'],
 		);
 
 		$path = rtrim($this->path_to_files, '/') . '/';
@@ -885,7 +864,7 @@ class LocalFilemanager extends BaseFilemanager
 			$fileType = $pathInfo['extension'];
 			$item['Properties']['Size'] = $this->get_real_filesize($current_path);
 
-			if(in_array(strtolower($fileType), array_map('strtolower', $this->config['images']['imagesExt']))) {
+			if($this->is_image_file($current_path)) {
 				if($item['Properties']['Size']) {
 					list($width, $height, $type, $attr) = getimagesize($current_path);
 				} else {
@@ -1080,40 +1059,11 @@ class LocalFilemanager extends BaseFilemanager
      */
 	protected function loadLanguageFile()
     {
-		$lang = $this->config['options']['culture'];
-		if(isset($this->refParams['langCode']) && in_array($this->refParams['langCode'], $this->languages)) {
-			$lang = $this->refParams['langCode'];
-		}
-
-		if(file_exists($this->fm_path . '/scripts/languages/'.$lang.'.json')) {
-			$stream =file_get_contents($this->fm_path . '/scripts/languages/'.$lang.'.json');
-			$this->language = json_decode($stream, true);
-		} else {
-			$l = substr($lang,0,2); // we try with 2 chars language file
-			if(file_exists($this->fm_path. '/scripts/languages/'.$l.'.json')) {
-				$stream = file_get_contents($this->fm_path . '/scripts/languages/'.$l.'.json');
-				$this->language = json_decode($stream, true);
-			} else {
-				// we include default language file
-				$stream = file_get_contents($this->fm_path . '/scripts/languages/'.$this->config['options']['culture'].'.json');
-				$this->language = json_decode($stream, true);
-			}
-		}
-	}
-
-    /**
-     * Prepare available languages
-     */
-	protected function availableLanguages()
-    {
-		if ($handle = opendir($this->fm_path . '/scripts/languages/')) {
-			while (false !== ($file = readdir($handle))) {
-				if ($file != "." && $file != "..") {
-					array_push($this->languages, pathinfo($file, PATHINFO_FILENAME));
-				}
-			}
-			closedir($handle);
-		}
+        $lang = $this->config['options']['culture'];
+        if(isset($this->refParams['langCode'])) {
+            $lang = $this->refParams['langCode'];
+        }
+        $this->language = $this->retrieve_json_file("/scripts/languages/{$lang}.json");
 	}
 
     /**
@@ -1134,9 +1084,9 @@ class LocalFilemanager extends BaseFilemanager
 	protected function is_editable($file)
     {
 		$path_parts = pathinfo($file);
-		$exts = array_map('strtolower', $this->config['edit']['editExt']);
+		$types = array_map('strtolower', $this->config['edit']['editExt']);
 
-		return in_array($path_parts['extension'], $exts);
+		return in_array($path_parts['extension'], $types);
 	}
 
 	/**
@@ -1194,9 +1144,9 @@ class LocalFilemanager extends BaseFilemanager
 	 * Returns summary info for specified folder
 	 * @param $dir $path
 	 * @param array $result
-	 * @return int
+	 * @return array
 	 */
-	public function getDirSummary($dir, &$result = array('Size'=>0, 'Files'=>0, 'Folders'=>0))
+	public function getDirSummary($dir, &$result = array('Size' => 0, 'Files' => 0, 'Folders' => 0))
 	{
 		// suppress permission denied and other errors
 		$files = @scandir($dir);

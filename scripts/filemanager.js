@@ -207,9 +207,6 @@ $.richFmPlugin = function(element, options)
 	var construct = function() {
 		configure()
 			.then(function(conf_d, conf_u) {
-				return initConnector();
-			})
-			.then(function() {
 				return localize();
 			})
 			.then(function() {
@@ -257,19 +254,6 @@ $.richFmPlugin = function(element, options)
 		});
 	};
 
-	// get initial data from the connector
-	var initConnector = function() {
-		return $.getJSON(buildConnectorUrl({
-			mode: 'getinfo'
-		}), function(result) {
-			if(result) {
-				// TODO: some actions here
-			}
-		}).error(function(response) {
-			fm.error('Unable to handle "getinfo" request!');
-		});
-	};
-
 	// localize messages based on culture var or from URL
 	var localize = function() {
 		var langCode = $.urlParam('langCode');
@@ -291,19 +275,6 @@ $.richFmPlugin = function(element, options)
 							setTimeout(function() {
 								fm.error('Given language file (' + buildLangPath(langCode) + ') does not exist!');
 							}, 500);
-						});
-				}
-			})
-			.then(null, function() {
-				var subCode = langCode.substring(0, 2);
-				if(langCode !== subCode) {
-					// try to load general lang file for the language
-					return file_exists(buildLangPath(subCode))
-						.done(function() {
-							setTimeout(function() {
-								fm.warning('General language file (' + buildLangPath(subCode) + ') was loaded!');
-							}, 500);
-							config.options.culture = subCode;
 						});
 				}
 			})
@@ -512,9 +483,9 @@ $.richFmPlugin = function(element, options)
 					var size = formatBytes(result['Size'], true),
 						$content = $('<div>', {class: 'summary-popup'});
 
-					if(config.options.fileRootSizeLimit > 0) {
-						var sizeTotal = formatBytes(config.options.fileRootSizeLimit, true);
-						var ratio = result['Size'] * 100 / config.options.fileRootSizeLimit;
+					if(result['SizeLimit'] > 0) {
+						var sizeTotal = formatBytes(result['SizeLimit'], true);
+						var ratio = result['Size'] * 100 / result['SizeLimit'];
 						var percentage = Math.round(ratio * 100) / 100;
 						size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
 					}
@@ -1041,7 +1012,7 @@ $.richFmPlugin = function(element, options)
 		setTimeout(function() {
 			// Provides support for adjustible columns.
 			$splitter.splitter({
-				sizeLeft: config.options.splitterMinWidth,
+				sizeLeft: config.options.splitterWidth,
 				minLeft: config.options.splitterMinWidth,
 				minRight: 200
 			});
@@ -1432,7 +1403,7 @@ $.richFmPlugin = function(element, options)
 				var iconFilename = fileType + '.png';
 				imagePath = iconsFolderPath + config.icons.default;
 
-				if(!(isAllowedImage && config.options.showThumbs) && fileIcons.indexOf(iconFilename) !== -1) {
+				if(!(isAllowedImage && config.images.showThumbs) && fileIcons.indexOf(iconFilename) !== -1) {
 					imagePath = iconsFolderPath + iconFilename;
 				}
 				if(isAllowedImage) {
@@ -3131,8 +3102,7 @@ $.richFmPlugin = function(element, options)
 		if(!loadedFolderData[path] || (Date.now() - loadedFolderData[path].cached) > 2000) {
 			var queryParams = {
 				mode: 'getfolder',
-				path: path,
-				showThumbs: config.options.showThumbs
+				path: path
 			};
 
 			if($.urlParam('type')) {

@@ -28,13 +28,14 @@ abstract class BaseFilemanager
      * @var array
      */
     protected $defaultInfo = array(
-        'Path'      => '',
-        'Filename'  => '',
-        'File Type' => '',
-        'Protected' => 0,
-        'Error'     => '',
-        'Code'      => 0,
-        'Properties' => array(
+        'Path'          => '',
+        'Filename'      => '',
+        'File Type'     => '',
+        'Protected'     => 0,
+        'PreviewPath'   => '',
+        'Error'         => '',
+        'Code'          => 0,
+        'Properties'    => array(
             'Date Created'  => '',
             'Date Modified' => '',
             'filemtime'     => '',
@@ -60,40 +61,29 @@ abstract class BaseFilemanager
             date_default_timezone_set('GMT');
         }
 
-        $this->fm_path = isset($config['fmPath']) && !empty($config['fmPath'])
-            ? $config['fmPath']
-            : dirname(dirname(dirname(__FILE__)));
+        $this->config = $config;
+        $this->fm_path = $this->config['fmPath'] ? $this->config['fmPath'] : dirname(dirname(dirname(__FILE__)));
 
-        // getting default config file
-        $content = file_get_contents($this->fm_path . "/scripts/filemanager.config.default.json");
-        $config_json_default = json_decode($content, true);
+        // extend server config options with the client ones which are common for both
+        if($this->config['extendConfigClient'] === true) {
+            $client_config = $this->retrieve_json_file("/scripts/filemanager.config.json");
+            if(isset($client_config['options']['culture'])) $this->config['options']['culture'] = $client_config['options']['culture'];
+            if(isset($client_config['options']['charsLatinOnly'])) $this->config['options']['charsLatinOnly'] = $client_config['options']['charsLatinOnly'];
+            if(isset($client_config['options']['capabilities'])) $this->config['options']['capabilities'] = $client_config['options']['capabilities'];
+            if(isset($client_config['options']['logger'])) $this->config['logger']['enabled'] = $client_config['options']['logger'];
+            if(isset($client_config['images']['imagesExt'])) $this->config['images']['imagesExt'] = $client_config['images']['imagesExt'];
 
-        // getting user config file
-        if(isset($_REQUEST['config'])) {
-            $this->getvar('config');
-            if (file_exists($this->fm_path . "/scripts/" . $_REQUEST['config'])) {
-                Log::info('Loading ' . basename($this->get['config']) . ' config file.');
-                $content = file_get_contents($this->fm_path . "/scripts/" . basename($this->get['config']));
-            } else {
-                Log::info($this->get['config'] . ' config file does not exists.');
-                $this->error("Given config file (".basename($this->get['config']).") does not exist !");
+            if(isset($client_config['security'])) {
+                $this->config['security'] = FmHelper::mergeConfigs($this->config['security'], $client_config['security']);
             }
-        } else {
-            $content = file_get_contents($this->fm_path . "/scripts/filemanager.config.json");
+            if(isset($client_config['upload'])) {
+                $this->config['upload'] = FmHelper::mergeConfigs($this->config['upload'], $client_config['upload']);
+            }
+            if(isset($client_config['edit'])) {
+                $this->config['edit'] = FmHelper::mergeConfigs($this->config['edit'], $client_config['edit']);
+            }
         }
-        $config_json = json_decode($content, true);
-
-        if(!$config_json) {
-            $this->error("Error parsing the settings file! Please check your JSON syntax.");
-        }
-        $this->config = FmHelper::mergeConfigs($config_json_default, $config_json, $config);
     }
-
-    /**
-     * Fetch server information - filemanager action
-     * @return array
-     */
-    abstract function getinfo();
 
     /**
      * Return file data - filemanager action
@@ -194,10 +184,6 @@ abstract class BaseFilemanager
                         $this->error($this->lang('MODE_ERROR'));
                         break;
 
-                    case 'getinfo':
-                        $response = $this->getinfo();
-                        break;
-
                     case 'getfile':
                         if($this->getvar('path')) {
                             $response = $this->getfile();
@@ -296,6 +282,31 @@ abstract class BaseFilemanager
 
         echo json_encode($response);
         exit;
+    }
+
+    /**
+     * Retrieve client-side file via CURL or read directly
+     * @param $relativePath
+     * @return array|null
+     */
+    public function retrieve_json_file($relativePath)
+    {
+        // in case remote URL is specified
+        if ($this->config['fmUrl']) {
+            $url = $this->config['fmUrl'] . $relativePath;
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($curl, CURLOPT_HEADER, false);
+            $response = curl_exec($curl);
+            curl_close($curl);
+            return json_decode($response, true);
+        // otherwise try to read file directly rely on base folder structure
+        } elseif (file_exists($this->fm_path . $relativePath)) {
+            $stream = file_get_contents($this->fm_path . $relativePath);
+            return json_decode($stream, true);
+        }
+        return null;
     }
 
     /**
@@ -465,5 +476,34 @@ abstract class BaseFilemanager
         }
 
         return true;
+    }
+
+    /**
+     * Check whether file is image by its mime type
+     * For S3 plugin it may cost extra request for each file
+     * @param $file
+     * @return bool
+     */
+    public function is_image_file($file)
+    {
+        $mime = mime_content_type($file);
+        $imagesMime = array(
+            "image/jpeg",
+            "image/png",
+            "image/gif",
+            "image/bmp",
+            "image/svg+xml",
+        );
+        return in_array($mime, $imagesMime);
+    }
+
+    /**
+     * Check whether file type(extension) looks like image
+     * @param $fileType
+     * @return bool
+     */
+    public function is_image_type($fileType)
+    {
+        return in_array(strtolower($fileType), $this->config['images']['imagesExt']);
     }
 }

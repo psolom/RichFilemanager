@@ -9,7 +9,6 @@
         "showTitleAttr": false,
         "browseOnly": false,
         "showConfirmation": true,
-        "showThumbs": true,
         "searchBox": true,
         "listFiles": true,
         "fileSorting": "NAME_ASC",
@@ -18,14 +17,17 @@
         "charsLatinOnly": false,
         "splitterWidth": 200,
         "splitterMinWidth": 200,
-        "dateFormat": "d M Y H:i",
-        "serverRoot": true,
-        "fileRoot": false,
-        "fileRootSizeLimit": false,
         "baseUrl": false,
-        "capabilities": ["select", "upload", "download", "rename", "move", "replace", "delete"],
         "logger": false,
-        "plugins": []
+        "capabilities": [
+            "select",
+            "upload",
+            "download",
+            "rename",
+            "move",
+            "replace",
+            "delete"
+        ]
     },
     "api": {
         "lang": "php",
@@ -71,19 +73,6 @@
             "rar"
         ]
     },
-    "exclude": {
-        "unallowed_files": [
-            ".htaccess",
-            "web.config"
-        ],
-        "unallowed_dirs": [
-            "_thumbs",
-            ".CDN_ACCESS_LOGS",
-            "cloudservers"
-        ],
-        "unallowed_files_REGEXP": "/^\\./",
-        "unallowed_dirs_REGEXP": "/^\\./"
-    },
     "upload": {
         "multiple": true,
         "paramName": "files",
@@ -98,6 +87,7 @@
         "previewUrl": false
     },
     "images": {
+        "showThumbs": true,
         "imagesExt": [
             "jpg",
             "jpe",
@@ -105,20 +95,7 @@
             "gif",
             "png",
             "svg"
-        ],
-        "main": {
-            "autoOrient": true,
-            "maxWidth": 1280,
-            "maxHeight": 1024
-        },
-        "thumbnail": {
-            "enabled": true,
-            "cache": true,
-            "dir": "_thumbs/",
-            "crop": true,
-            "maxWidth": 64,
-            "maxHeight": 64
-        }
+        ]
     },
     "videos": {
         "showVideoPlayer": true,
