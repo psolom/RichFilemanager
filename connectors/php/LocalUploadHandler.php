@@ -30,7 +30,7 @@ class LocalUploadHandler extends BaseUploadHandler
         $this->options['max_file_size'] = $this->fm->config['upload']['fileSizeLimit'];
         // BaseFilemanager::is_allowed_file_type() is used instead of this regex check
         $this->options['accept_file_types'] = '/.+$/i';
-        // may be overridden with $this->fm->config['images']['imagesExt'], but this list can be better for images handling libs
+        // no need to override, this list fits for images handling libs
         $this->options['image_file_types'] = '/\.(gif|jpe?g|png)$/i';
 
         // Only GD was tested for local and S3 uploaders

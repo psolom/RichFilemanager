@@ -15,9 +15,11 @@ require_once('application/facade/Log.php');
 
 abstract class BaseFilemanager
 {
-    const FILE_TYPE_DIR = 'dir';
+    const TYPE_FILE = 'file';
+    const TYPE_FOLDER = 'folder';
 
     public $config = array();
+    protected $refParams = array();
     protected $language = array();
     protected $get = array();
     protected $post = array();
@@ -27,22 +29,52 @@ abstract class BaseFilemanager
      * Default file information template
      * @var array
      */
-    protected $defaultInfo = array(
-        'Path'          => '',
-        'Filename'      => '',
-        'File Type'     => '',
-        'Protected'     => 0,
-        'PreviewPath'   => '',
-        'Error'         => '',
-        'Code'          => 0,
-        'Properties'    => array(
-            'Date Created'  => '',
-            'Date Modified' => '',
-            'filemtime'     => '',
-            'Height'        => 0,
-            'Width'         => 0,
-            'Size'          => 0
-        ),
+//    protected $defaultInfo = array(
+//        'Path'          => '',
+//        'Filename'      => '',
+//        'File Type'     => '',
+//        'Protected'     => 0,
+//        'PreviewPath'   => '',
+//        'Error'         => '',
+//        'Code'          => 0,
+//        'Properties'    => array(
+//            'Date Created'  => '',
+//            'Date Modified' => '',
+//            'filemtime'     => '',
+//            'Height'        => 0,
+//            'Width'         => 0,
+//            'Size'          => 0
+//        ),
+//    );
+
+    protected $fileModel = array(
+        "id"    => '',
+        "type"  => self::TYPE_FILE,
+        "attributes" => [
+            'name'      => '',
+            'extension' => '',
+            'path'      => '',
+            'protected' => 0,
+            'created'   => '',
+            'modified'  => '',
+            'timestamp' => '',
+            'height'    => 0,
+            'width'     => 0,
+            'size'      => 0,
+        ]
+    );
+
+    protected $folderModel = array(
+        "id"    => '',
+        "type"  => self::TYPE_FOLDER,
+        "attributes" => [
+            'name'      => '',
+            'path'      => '',
+            'protected' => 0,
+            'created'   => '',
+            'modified'  => '',
+            'timestamp' => '',
+        ]
     );
 
     /**
@@ -71,7 +103,6 @@ abstract class BaseFilemanager
             if(isset($client_config['options']['charsLatinOnly'])) $this->config['options']['charsLatinOnly'] = $client_config['options']['charsLatinOnly'];
             if(isset($client_config['options']['capabilities'])) $this->config['options']['capabilities'] = $client_config['options']['capabilities'];
             if(isset($client_config['options']['logger'])) $this->config['logger']['enabled'] = $client_config['options']['logger'];
-            if(isset($client_config['images']['imagesExt'])) $this->config['images']['imagesExt'] = $client_config['images']['imagesExt'];
 
             if(isset($client_config['security'])) {
                 $this->config['security'] = FmHelper::mergeConfigs($this->config['security'], $client_config['security']);
@@ -83,6 +114,8 @@ abstract class BaseFilemanager
                 $this->config['edit'] = FmHelper::mergeConfigs($this->config['edit'], $client_config['edit']);
             }
         }
+
+        $this->setParams();
     }
 
     /**
@@ -141,9 +174,8 @@ abstract class BaseFilemanager
 
     /**
      * Download file - filemanager action
-     * @param bool $force Whether to start download after validation
      */
-    abstract function download($force);
+    abstract function download();
 
     /**
      * Returns image file - filemanager action
@@ -228,8 +260,7 @@ abstract class BaseFilemanager
 
                     case 'download':
                         if($this->getvar('path')) {
-                            $force = isset($_GET['force']);
-                            $response = $this->download($force);
+                            $response = $this->download();
                         }
                         break;
 
@@ -280,8 +311,29 @@ abstract class BaseFilemanager
             }
         }
 
-        echo json_encode($response);
+        echo json_encode([
+            'data' => $response,
+        ]);
         exit;
+    }
+
+    protected function setParams()
+    {
+        $tmp = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
+        $tmp = explode('?',$tmp);
+        $params = array();
+        if(isset($tmp[1]) && $tmp[1]!='') {
+            $params_tmp = explode('&',$tmp[1]);
+            if(is_array($params_tmp)) {
+                foreach($params_tmp as $value) {
+                    $tmp = explode('=',$value);
+                    if(isset($tmp[0]) && $tmp[0]!='' && isset($tmp[1]) && $tmp[1]!='') {
+                        $params[$tmp[0]] = $tmp[1];
+                    }
+                }
+            }
+        }
+        $this->refParams = $params;
     }
 
     /**
@@ -315,15 +367,11 @@ abstract class BaseFilemanager
      */
     public function error($string)
     {
-        $array = array(
-            'Error' => $string,
-            'Code' => '-1',
-            'Properties' => $this->defaultInfo['Properties'],
-        );
-
         Log::info('error message: "' . $string . '"');
 
-        echo json_encode($array);
+        echo json_encode([
+            'errors' => [$string],
+        ]);
         exit;
     }
 
@@ -390,6 +438,17 @@ abstract class BaseFilemanager
     public function get_server_var($var, $default = null)
     {
         return !isset($_SERVER[$var]) ? $default : $_SERVER[$var];
+    }
+
+    /**
+     * Returns whether this is an AJAX (XMLHttpRequest) request.
+     * Note that jQuery doesn't set the header in case of cross domain
+     * requests: https://stackoverflow.com/questions/8163703/cross-domain-ajax-doesnt-send-x-requested-with-header
+     * @return boolean whether this is an AJAX (XMLHttpRequest) request.
+     */
+    public function isAjaxRequest()
+    {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
     }
 
     /**
@@ -479,6 +538,39 @@ abstract class BaseFilemanager
     }
 
     /**
+     * Filter out files if any filter is specified
+     * @param array $item
+     * @return bool
+     */
+    public function filter_output($item)
+    {
+        $filename = $item["attributes"]["name"];
+
+        // check if folder is allowed regarding the security Policy settings
+        if ($item["type"] === self::TYPE_FOLDER && (
+            in_array($filename, $this->config['exclude']['unallowed_dirs']) ||
+            preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $filename))
+        ) {
+            return false;
+        }
+
+        // check if file is allowed regarding the security Policy settings
+        if ($item["type"] === self::TYPE_FILE && (
+            in_array($filename, $this->config['exclude']['unallowed_files']) ||
+            preg_match($this->config['exclude']['unallowed_files_REGEXP'], $filename))
+        ) {
+            return false;
+        }
+
+        $filterName = isset($this->refParams['type']) ? $this->refParams['type'] : null;
+        $allowedTypes = isset($this->config['outputFilter'][$filterName]) ? $this->config['outputFilter'][$filterName] : null;
+        if($filterName && is_array($allowedTypes) && $item["type"] === self::TYPE_FILE) {
+            return (in_array(strtolower($item["attributes"]["extension"]), $allowedTypes));
+        }
+        return true;
+    }
+
+    /**
      * Check whether file is image by its mime type
      * For S3 plugin it may cost extra request for each file
      * @param $file
@@ -495,15 +587,5 @@ abstract class BaseFilemanager
             "image/svg+xml",
         );
         return in_array($mime, $imagesMime);
-    }
-
-    /**
-     * Check whether file type(extension) looks like image
-     * @param $fileType
-     * @return bool
-     */
-    public function is_image_type($fileType)
-    {
-        return in_array(strtolower($fileType), $this->config['images']['imagesExt']);
     }
 }

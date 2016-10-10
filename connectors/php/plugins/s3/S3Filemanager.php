@@ -162,20 +162,14 @@ class S3Filemanager extends LocalFilemanager
 
 			foreach($files_list as $file) {
 				$file_path = $this->get['path'] . $file;
+                if(is_dir($current_path . $file)) {
+                    $file_path .= '/';
+                }
 
-				if(is_dir($current_path . $file)) {
-					if(!in_array($file, $this->config['exclude']['unallowed_dirs']) && !preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $file)) {
-						$array[$file_path . '/'] = $this->get_file_info($file_path . '/');
-					}
-				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match($this->config['exclude']['unallowed_files_REGEXP'], $file)) {
-					$item = $this->get_file_info($file_path);
-
-					if(!isset($this->refParams['type']) || (strtolower($this->refParams['type']) === 'images' && $this->is_image_type($item['File Type']))) {
-						if($this->config['upload']['imagesOnly'] === false || ($this->config['upload']['imagesOnly'] === true && $this->is_image_type($item['File Type']))) {
-							$array[$file_path] = $item;
-						}
-					}
-				}
+                $item = $this->get_file_info($file_path);
+                if($this->filter_output($item)) {
+                    $array[] = $item;
+                }
 			}
 		}
 
@@ -189,7 +183,6 @@ class S3Filemanager extends LocalFilemanager
 	{
 		$path = $this->get['path'];
 		$current_path = $this->getFullPath($path);
-		$filename = basename($current_path);
         Log::info('opening file "' . $current_path . '"');
 
 		// NOTE: S3 doesn't provide a way to check if file doesn't exist or just has a permissions restriction,
@@ -199,12 +192,12 @@ class S3Filemanager extends LocalFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		// check if file is allowed regarding the security Policy settings
-		if(in_array($filename, $this->config['exclude']['unallowed_files']) || preg_match($this->config['exclude']['unallowed_files_REGEXP'], $filename)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
-		}
+        $item = $this->get_file_info($path);
+        if(!$this->filter_output($item)) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
 
-		return $this->get_file_info($path);
+        return $item;
 	}
 
 	/**

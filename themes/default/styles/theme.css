@@ -15,8 +15,9 @@
 }
 
 .fm-container .fm-filetree {
-    border: 1px solid #ccc;
+    color: #333;
     background-color: #fff;
+    border: 1px solid #ccc;
 }
 
 .fm-container .fm-fileinfo {
@@ -91,16 +92,17 @@
     font-style: italic;
 }
 
-.fm-container #contents.grid li {
+.fm-container .drag-helper-grid,
+.fm-container .view-items.grid li {
     width: 142px;
 }
 
-.fm-container #contents.grid li.drop-hover,
-.fm-container #contents.list tr.drop-hover {
+.fm-container .view-items.grid li.drop-hover,
+.fm-container .view-items.list tr.drop-hover {
     background-color: #e0e0e0;
 }
 
-.fm-container #contents.list td {
+.fm-container .view-items.list td {
     border-bottom: 1px dotted #ccc;
 }
 
@@ -119,4 +121,8 @@
 
 .fm-popup.alertify .fm-fileupload-container #total-progress .progress-bar {
     background-color: #294750;
+}
+
+.fm-container .drag-helper-grid {
+    width: 142px;
 }

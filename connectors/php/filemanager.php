@@ -41,5 +41,6 @@ $fm = Fm::app()->getInstance($config);
 
 // use to setup files root folder
 //$fm->setFileRoot('userfiles', true);
+//$fm->setFileRoot('sss', false);
 
 $fm->handleRequest();

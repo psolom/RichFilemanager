@@ -1,6 +1,5 @@
 /**
 * Icons are from http://icomoon.io/app/
-* color code : #666666
 **/
 
 .fm-container * {
@@ -106,7 +105,7 @@
 }
 
 .fm-container .fm-header button.active {
-    background:none repeat scroll 0 0 #F9F8F7;
+    background: none repeat scroll 0 0 #F9F8F7;
     border-style: inset;
 }
 
@@ -146,25 +145,115 @@
 }
 
 .fm-container .fm-filetree {
-    overflow: auto;
-    float: left;
-    width: 200px;
-    box-sizing: border-box;
-    border: 1px solid #dcdcdc;
-    /* no margin allowed */
+    overflow-y: auto;
+    overflow-x: auto;
+    color: #333;
+    margin: 0;
+    padding: 5px 0 0 5px;
 }
 
-.fm-container .fm-filetree > ul,
-.fm-container .fm-filetree .mCSB_container > ul {
-    padding: 4px;
+.fm-container .fm-filetree li {
+    padding: 0;
+    margin: 0;
+    font-size: 0;
+    list-style: none;
+    line-height: 14px;
+    text-align: left;
+    white-space: nowrap;
+    outline: 0
 }
+
+.fm-container .fm-filetree li ul {
+    margin: 0;
+    padding: 0 0 0 18px
+}
+
+.fm-container .fm-filetree li ul.line {
+    background: url(../images/filetree/line_conn.gif) 0 0 repeat-y;
+}
+
+.fm-container .fm-filetree li a {
+    font-size: 12px;
+    padding: 1px 3px 0 0;
+    margin: 0;
+    cursor: pointer;
+    height: 17px;
+    background-color: transparent;
+    text-decoration: none;
+    vertical-align: top;
+    display: inline-block
+}
+
+.fm-container .fm-filetree li a:hover {
+    background-color: #55767F;
+    text-decoration: none
+}
+
+.fm-container .fm-filetree li a.curSelectedNode {
+    padding-top: 0;
+    background-color: #FFE6B0;
+    color: black;
+    height: 16px;
+    border: 1px #FFB951 solid;
+    opacity: 0.8;
+}
+
+.fm-container .fm-filetree li a.drop-hover {
+    padding-top: 0;
+    background-color: #316AC5;
+    color: white;
+    height: 16px;
+    border: 1px #316AC5 solid;
+    opacity: 0.8;
+    filter: alpha(opacity=80)
+}
+
+.fm-container .fm-filetree li span {
+    line-height: 16px;
+}
+
+.fm-container .fm-filetree li span.button {
+    line-height: 0;
+    margin: 0;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    vertical-align: middle;
+    border: 0 none;
+    cursor: pointer;
+    outline: none;
+    background-color: transparent;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+    background-image: url("../images/filetree/preset.png");
+    *background-image: url("../images/filetree/preset.gif")
+}
+
+.fm-container .fm-filetree li span.button.switch {
+    width: 18px;
+    height: 18px;
+}
+.fm-container .fm-filetree li span.button.root_open {background-position: -92px -54px;}
+.fm-container .fm-filetree li span.button.root_close {background-position: -74px -54px;}
+.fm-container .fm-filetree li span.button.roots_open {background-position: -92px 0;}
+.fm-container .fm-filetree li span.button.roots_close {background-position: -74px 0;}
+.fm-container .fm-filetree li span.button.center_open {background-position: -92px -18px;}
+.fm-container .fm-filetree li span.button.center_close {background-position: -74px -18px;}
+.fm-container .fm-filetree li span.button.bottom_open {background-position: -92px -36px;}
+.fm-container .fm-filetree li span.button.bottom_close {background-position: -74px -36px;}
+.fm-container .fm-filetree li span.button.noline_open {background-position: -92px -72px;}
+.fm-container .fm-filetree li span.button.noline_close {background-position: -74px -72px;}
+.fm-container .fm-filetree li span.button.root_docu {background: none;}
+.fm-container .fm-filetree li span.button.roots_docu {background-position: -56px 0;}
+.fm-container .fm-filetree li span.button.center_docu {background-position: -56px -18px;}
+.fm-container .fm-filetree li span.button.bottom_docu {background-position: -56px -36px;}
+.fm-container .fm-filetree li span.button.noline_docu {background: none;}
 
 .fm-container .fm-fileinfo {
     overflow-y: auto;
     overflow-x: hidden;
     box-sizing: border-box;
     border: 1px solid #dcdcdc;
-    /* no margin allowed */
 }
 
 .fm-container .fm-fileinfo {
@@ -206,18 +295,20 @@
 .fm-container .fm-fileinfo #main-title {
     margin: 10px auto;
 }
+
 .fm-container .fm-fileinfo h1 {
     font-size: 20px;
     display: inline-block;
-    color:#8fabc6;
+    color: #8fabc6;
 }
+
 .fm-container .fm-fileinfo > h1 {
-    margin-top:3em
+    margin-top: 3em
 }
 
 .fm-container div#tools {
     display: inline-block;
-    margin-left:1em;
+    margin-left: 1em;
 }
 
 .fm-container #preview dl {
@@ -265,12 +356,12 @@
 }
 
 .fm-container #file-input-container {
-    display:inline;
-    margin:0;
-    position:relative;
-    top:0;
-    width:255px;
-    height:32px;
+    display: inline;
+    margin: 0;
+    position: relative;
+    top: 0;
+    width: 255px;
+    height: 32px;
     overflow: hidden;
 }
 
@@ -315,12 +406,12 @@
 
 .fm-container button#browse {
     margin-left:0;
-    -webkit-border-top-left-radius: 0px;
-    -webkit-border-bottom-left-radius: 0px;
-    -moz-border-radius-topleft: 0px;
-    -moz-border-radius-bottomleft: 0px;
-    border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
+    -webkit-border-top-left-radius: 0;
+    -webkit-border-bottom-left-radius: 0;
+    -moz-border-radius-topleft: 0;
+    -moz-border-radius-bottomleft: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
     min-height: 16px;
     min-width: 40px;
 }
@@ -399,18 +490,12 @@
     z-index: 24;
 }
 
-/** Opera hack */
-x:-o-prefocus,
-.fm-container #search a.q-reset {
-    top:-14px;
-}
-
-.fm-container #contents.grid {
+.fm-container .view-items.grid {
     padding: 15px;
     text-align: left;
 }
 
-.fm-container #contents.grid li {
+.fm-container .view-items.grid li {
     display: inline-block;
     width: 142px;
     min-height: 142px;
@@ -423,50 +508,54 @@ x:-o-prefocus,
     border-radius: 2px;
 }
 
-.fm-container #contents.grid li:hover {
+.fm-container .view-items.grid li:hover {
     border: 1px solid #E5E5E5;
     background-color: #F7F7F7;
     cursor: pointer;
 }
 
-.fm-container #contents.grid li.file div.clip,
-.fm-container #contents.grid li.directory div.clip {
+.fm-container .view-items.grid li.file div.clip,
+.fm-container .view-items.grid li.directory div.clip {
     width: 64px;
     height: 64px;
     margin: 10px auto;
     overflow: hidden;
 }
 
-.fm-container #contents.grid li.directory-parent div.clip {
+.fm-container .view-items.grid li.directory-parent div.clip {
     width: 128px;
     height: 128px;
     margin: 0 auto;
 }
 
-.fm-container #contents.grid li.drop-hover,
-.fm-container #contents.list tr.drop-hover {
+.fm-container .view-items.grid li.drop-hover,
+.fm-container .view-items.list tr.drop-hover {
     background-color: #e0e0e0;
 }
 
-.fm-container #contents.grid p {
+.fm-container .view-items.list tbody tr:hover {
+    background-color: #eee;
+    cursor: pointer;
+}
+
+.fm-container .view-items.grid p {
     display: block;
     text-align: center;
     margin-bottom: 10px;
     white-space: nowrap;
 }
 
-.fm-container #contents.list {
+.fm-container .view-items.list {
     width: 100%;
 }
 
-.fm-container #contents.list th,
-.fm-container #contents.list td {
-    text-align: left;
+.fm-container .view-items.list th {
     padding: 6px;
+    text-align: center;
     white-space: nowrap;
 }
 
-.fm-container #contents.list thead {
+.fm-container .view-items.list thead {
     background: rgb(244,241,237); /* Old browsers */
     background: -moz-linear-gradient(top, rgba(244,241,237,1) 0%, rgba(214,212,209,1) 100%); /* FF3.6+ */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(244,241,237,1)), color-stop(100%,rgba(214,212,209,1))); /* Chrome,Safari4+ */
@@ -477,13 +566,13 @@ x:-o-prefocus,
     border-bottom: 1px solid #ccc;
 }
 
-.fm-container #contents.list th {
+.fm-container .view-items.list th {
     font-weight: bold;
     cursor: pointer;
 }
 
-.fm-container #contents.list th.sorted-asc,
-.fm-container #contents.list th.sorted-desc {
+.fm-container .view-items.list th.sorted-asc,
+.fm-container .view-items.list th.sorted-desc {
     background: rgb(214,212,209); /* Old browsers */
     background: -moz-linear-gradient(top, rgba(214,212,209,1) 0%, rgba(244,241,237,1) 100%); /* FF3.6+ */
     background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,rgba(214,212,209,1)), color-stop(100%,rgba(244,241,237,1))); /* Chrome,Safari4+ */
@@ -493,7 +582,7 @@ x:-o-prefocus,
     background: linear-gradient(to bottom, rgba(214,212,209,1) 0%,rgba(244,241,237,1) 100%); /* W3C */
 }
 
-.fm-container #contents.list th.sorted-asc span {
+.fm-container .view-items.list th.sorted-asc span {
     display: block;
     width: 100%;
     margin-right: 20px;
@@ -502,7 +591,7 @@ x:-o-prefocus,
     background-position: right center;
 }
 
-.fm-container #contents.list th.sorted-desc span {
+.fm-container .view-items.list th.sorted-desc span {
     display: block;
     width: 100%;
     margin-right: 20px;
@@ -511,24 +600,25 @@ x:-o-prefocus,
     background-position: right center;
 }
 
-.fm-container #contents.list td {
+.fm-container .view-items.list td {
+    padding: 4px;
+    text-align: left;
+    white-space: nowrap;
+    vertical-align: middle;
     border-bottom: 1px dotted #ccc;
 }
 
-.fm-container #contents.list td:first-child {
+.fm-container .view-items.list td:first-child {
     width: 100%;
-    padding-left: 22px;
+}
+
+.fm-container .view-items.list .list-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
     background-repeat: no-repeat;
-    background-position: 3px center;
-}
-
-.fm-container #contents.list tbody tr:hover {
-    background-color: #eee;
-    cursor: pointer;
-}
-
-.fm-container .meta {
-    display: none;
+    background-position: center;
 }
 
 .fm-container #activity {
@@ -587,8 +677,6 @@ x:-o-prefocus,
 .fm-container #home span { background-image: url(../images/house.png); background-position: center; }
 .fm-container #level-up span { background-image: url(../images/level-up.png); background-position: center; }
 
-.fm-container a#edit-file span,
-.fm-container a#copy-button span {display:none}
 .fm-container a#edit-file {display:inline-block;background: url(../images/edit.png) no-repeat center center;width:20px;height:18px;margin:0 0.2em;}
 .fm-container a#copy-button {display:inline-block;background: url(../images/copy.png) no-repeat center center;width:20px;height:18px;margin:0 0.2em;}
 .fm-container span#copied {color:#8C8C8C;font-size:11px;font-weight: normal;vertical-align:middle;}
@@ -636,13 +724,537 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     height: 23px;
 }
 
-.fm-container #fm-pdf-viewer {margin-top:3em;}
+.fm-container #fm-pdf-viewer {
+    margin-top: 3em;
+}
 
 .fm-container div.CodeMirror.CodeMirror-fullscreen {
-    width:100%;
-    margin:0;
+    width: 100%;
+    margin: 0;
     z-index: 9;
 }
+
+
+/** Drag & Drop **/
+
+.fm-container .drag-helper-list {
+    white-space: nowrap;
+}
+
+.fm-container .drag-helper-list .list-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.fm-container .drag-helper-grid {
+    display: inline-block;
+    width: 142px;
+    min-height: 142px;
+    text-align: center;
+    overflow: hidden;
+    margin: 10px;
+    border: 1px solid white;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.fm-container .drag-helper-grid .clip {
+    width: 64px;
+    height: 64px;
+    margin: 10px auto;
+    overflow: hidden;
+}
+
+.fm-container .drag-helper-grid .item-content {
+    position: relative;
+    z-index: 1;
+    opacity: 0.5;
+}
+
+.fm-container .drag-helper-grid .item-content {
+    position: relative;
+    z-index: 1;
+    opacity: 0.5;
+}
+
+.fm-container .drag-helper-grid .item-background {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: #B6CDEC;
+    opacity: 0.5;
+    z-index: 1;
+}
+
+.fm-container .drag-helper-grid .dragging-counter {
+    position: absolute;
+    top: 35px;
+    width: 100%;
+    text-align: center;
+    z-index: 2;
+}
+
+.fm-container .drag-helper-grid .dragging-counter span {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 0.2em 0.4em;
+    background-color: #4e68e7;
+    border: 1px solid #FFF;
+    border-radius: 5px;
+    font-size: 15px !important;
+    color: #FFF;
+}
+
+.fm-container .drag-helper-grid .dragging-stop {
+    display: none;
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+    margin: 0;
+    z-index: 2;
+}
+
+.fm-container .drag-helper-grid .dragging-stop img {
+    width: 25px;
+}
+
+.fm-container .drag-helper-grid.drop-restricted .dragging-stop {
+    display: block;
+}
+
+
+/** Selectable items **/
+
+.fm-container .ui-selectable-helper {
+    position: absolute;
+    border: 1px dotted black;
+    z-index: 100;
+}
+
+.fm-container .view-items.grid .ui-selecting {
+    background-color: #CED9E9;
+}
+
+.fm-container .view-items.grid .ui-selected {
+    background-color: #B6CDEC;
+}
+
+
+/** ICONS - Item type related styles **/
+
+.fm-fileinfo .list-icon.ico_folder,
+.fm-filetree li span.button.ico_folder {
+    background: url(../images/filetree/ico_folder.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_folder_lock,
+.fm-filetree li span.button.ico_folder_lock {
+    background: url(../images/filetree/ico_folder_lock.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_folder_open,
+.fm-filetree li span.button.ico_folder_open {
+    background: url(../images/filetree/ico_folder_open.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_file,
+.fm-filetree li span.button.ico_file {
+    background: url(../images/filetree/ico_file.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_file_lock,
+.fm-filetree li span.button.ico_file_lock {
+    background: url(../images/filetree/ico_file_lock.png) left top no-repeat !important;
+}
+
+.fm-fileinfo .list-icon.ico_loading,
+.fm-filetree li span.button.ico_loading {
+    background: url(../images/filetree/loading.gif) left top no-repeat;
+}
+
+
+/** ICONS - File extension related styles **/
+
+.fm-fileinfo .list-icon.ico_ext_3g2,
+.fm-filetree li span.button.ico_ext_3g2 {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_3gp,
+.fm-filetree li span.button.ico_ext_3gp {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_7z,
+.fm-filetree li span.button.ico_ext_7z {
+    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_afp,
+.fm-filetree li span.button.ico_ext_afp {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_afpa,
+.fm-filetree li span.button.ico_ext_afpa {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_asp,
+.fm-filetree li span.button.ico_ext_asp {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_aspx,
+.fm-filetree li span.button.ico_ext_aspx {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_avi,
+.fm-filetree li span.button.ico_ext_avi {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_bat,
+.fm-filetree li span.button.ico_ext_bat {
+    background: url(../images/filetree/ico_application.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_bmp,
+.fm-filetree li span.button.ico_ext_bmp {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_c,
+.fm-filetree li span.button.ico_ext_c {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_cfm,
+.fm-filetree li span.button.ico_ext_cfm {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_cgi,
+.fm-filetree li span.button.ico_ext_cgi {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_com,
+.fm-filetree li span.button.ico_ext_com {
+    background: url(../images/filetree/ico_application.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_cpp,
+.fm-filetree li span.button.ico_ext_cpp {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_css,
+.fm-filetree li span.button.ico_ext_css {
+    background: url(../images/filetree/ico_css.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_csv,
+.fm-filetree li span.button.ico_ext_csv {
+    background: url(../images/filetree/ico_txt.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_doc,
+.fm-filetree li span.button.ico_ext_doc {
+    background: url(../images/filetree/ico_doc.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_docx,
+.fm-filetree li span.button.ico_ext_docx {
+    background: url(../images/filetree/ico_doc.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_exe,
+.fm-filetree li span.button.ico_ext_exe {
+    background: url(../images/filetree/ico_application.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_gif,
+.fm-filetree li span.button.ico_ext_gif {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_f4v,
+.fm-filetree li span.button.ico_ext_f4v {
+    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_fla,
+.fm-filetree li span.button.ico_ext_fla {
+    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_flv,
+.fm-filetree li span.button.ico_ext_flv {
+    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_h,
+.fm-filetree li span.button.ico_ext_h {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_htm,
+.fm-filetree li span.button.ico_ext_htm {
+    background: url(../images/filetree/ico_html.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_html,
+.fm-filetree li span.button.ico_ext_html {
+    background: url(../images/filetree/ico_html.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_jar,
+.fm-filetree li span.button.ico_ext_jar {
+    background: url(../images/filetree/ico_java.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_jpg,
+.fm-filetree li span.button.ico_ext_jpg {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_jpeg,
+.fm-filetree li span.button.ico_ext_jpeg {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_js,
+.fm-filetree li span.button.ico_ext_js {
+    background: url(../images/filetree/ico_script.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_lasso,
+.fm-filetree li span.button.ico_ext_lasso {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_log,
+.fm-filetree li span.button.ico_ext_log {
+    background: url(../images/filetree/ico_txt.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_m4p,
+.fm-filetree li span.button.ico_ext_m4p {
+    background: url(../images/filetree/ico_music.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_m4v,
+.fm-filetree li span.button.ico_ext_m4v {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_mov,
+.fm-filetree li span.button.ico_ext_mov {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_mp3,
+.fm-filetree li span.button.ico_ext_mp3 {
+    background: url(../images/filetree/ico_music.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_mp4,
+.fm-filetree li span.button.ico_ext_mp4 {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_mpg,
+.fm-filetree li span.button.ico_ext_mpg {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_mpeg,
+.fm-filetree li span.button.ico_ext_mpeg {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_odp,
+.fm-filetree li span.button.ico_ext_odp {
+    background: url(../images/filetree/ico_ppt.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_ods,
+.fm-filetree li span.button.ico_ext_ods {
+    background: url(../images/filetree/ico_xls.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_odt,
+.fm-filetree li span.button.ico_ext_odt {
+    background: url(../images/filetree/ico_doc.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_ogv,
+.fm-filetree li span.button.ico_ext_ogv {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_ogg,
+.fm-filetree li span.button.ico_ext_ogg {
+    background: url(../images/filetree/ico_music.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_pcx,
+.fm-filetree li span.button.ico_ext_pcx {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_pdf,
+.fm-filetree li span.button.ico_ext_pdf {
+    background: url(../images/filetree/ico_pdf.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_php,
+.fm-filetree li span.button.ico_ext_php {
+    background: url(../images/filetree/ico_php.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_png,
+.fm-filetree li span.button.ico_ext_png {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_ppt,
+.fm-filetree li span.button.ico_ext_ppt {
+    background: url(../images/filetree/ico_ppt.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_pptx,
+.fm-filetree li span.button.ico_ext_pptx {
+    background: url(../images/filetree/ico_ppt.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_psd,
+.fm-filetree li span.button.ico_ext_psd {
+    background: url(../images/filetree/ico_psd.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_pl,
+.fm-filetree li span.button.ico_ext_pl {
+    background: url(../images/filetree/ico_script.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_py,
+.fm-filetree li span.button.ico_ext_py {
+    background: url(../images/filetree/ico_script.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_rar,
+.fm-filetree li span.button.ico_ext_rar {
+    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_rb,
+.fm-filetree li span.button.ico_ext_rb {
+    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_rbx,
+.fm-filetree li span.button.ico_ext_rbx {
+    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_rhtml,
+.fm-filetree li span.button.ico_ext_rhtml {
+    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_rpm,
+.fm-filetree li span.button.ico_ext_rpm {
+    background: url(../images/filetree/ico_linux.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_ruby,
+.fm-filetree li span.button.ico_ext_ruby {
+    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_sql,
+.fm-filetree li span.button.ico_ext_sql {
+    background: url(../images/filetree/ico_db.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_swf,
+.fm-filetree li span.button.ico_ext_swf {
+    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_tar,
+.fm-filetree li span.button.ico_ext_tar {
+    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_tif,
+.fm-filetree li span.button.ico_ext_tif {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_tiff,
+.fm-filetree li span.button.ico_ext_tiff {
+    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_txt,
+.fm-filetree li span.button.ico_ext_txt {
+    background: url(../images/filetree/ico_txt.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_vb,
+.fm-filetree li span.button.ico_ext_vb {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_wav,
+.fm-filetree li span.button.ico_ext_wav {
+    background: url(../images/filetree/ico_music.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_weba,
+.fm-filetree li span.button.ico_ext_weba {
+    background: url(../images/filetree/ico_music.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_webm,
+.fm-filetree li span.button.ico_ext_webm {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_wmv,
+.fm-filetree li span.button.ico_ext_wmv {
+    background: url(../images/filetree/ico_film.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_xls,
+.fm-filetree li span.button.ico_ext_xls {
+    background: url(../images/filetree/ico_xls.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_xlsx,
+.fm-filetree li span.button.ico_ext_xlsx {
+    background: url(../images/filetree/ico_xls.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_xml,
+.fm-filetree li span.button.ico_ext_xml {
+    background: url(../images/filetree/ico_code.png) left top no-repeat;
+}
+
+.fm-fileinfo .list-icon.ico_ext_zip,
+.fm-filetree li span.button.ico_ext_zip {
+    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+}
+
 
 /** Modal dialog by Alertify plugin */
 

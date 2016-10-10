@@ -16,7 +16,6 @@ require_once('LocalUploadHandler.php');
 
 class LocalFilemanager extends BaseFilemanager
 {
-	protected $refParams = array();
 	protected $allowed_actions = array();
 	protected $doc_root;
 	protected $path_to_files;
@@ -51,7 +50,6 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('$this->doc_root: "' . $this->doc_root . '"');
 		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
 
-		$this->setParams();
 		$this->setPermissions();
 		$this->loadLanguageFile();
 	}
@@ -133,20 +131,14 @@ class LocalFilemanager extends BaseFilemanager
 
 			foreach($files_list as $file) {
 				$file_path = $this->get['path'] . $file;
+                if(is_dir($current_path . $file)) {
+                    $file_path .= '/';
+                }
 
-				if(is_dir($current_path . $file)) {
-					if(!in_array($file, $this->config['exclude']['unallowed_dirs']) && !preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $file)) {
-						$array[$file_path . '/'] = $this->get_file_info($file_path . '/');
-					}
-				} else if (!in_array($file, $this->config['exclude']['unallowed_files']) && !preg_match($this->config['exclude']['unallowed_files_REGEXP'], $file)) {
-					$item = $this->get_file_info($file_path);
-
-					if(!isset($this->refParams['type']) || (strtolower($this->refParams['type']) === 'images' && $this->is_image_type($item['File Type']))) {
-						if($this->config['upload']['imagesOnly'] === false || ($this->config['upload']['imagesOnly'] === true && $this->is_image_type($item['File Type']))) {
-							$array[$file_path] = $item;
-						}
-					}
-				}
+                $item = $this->get_file_info($file_path);
+                if($this->filter_output($item)) {
+                    $array[] = $item;
+                }
 			}
 		}
 
@@ -160,7 +152,6 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$path = $this->get['path'];
 		$current_path = $this->getFullPath($path, true);
-		$filename = basename($current_path);
 		Log::info('opening file "' . $current_path . '"');
 
 		// check if file is readable
@@ -168,12 +159,12 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		// check if file is allowed regarding the security Policy settings
-		if(in_array($filename, $this->config['exclude']['unallowed_files']) || preg_match($this->config['exclude']['unallowed_files_REGEXP'], $filename)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
-		}
+        $item = $this->get_file_info($path);
+        if(!$this->filter_output($item)) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
 
-		return $this->get_file_info($path);
+        return $item;
 	}
 
 	/**
@@ -219,13 +210,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $new_dir));
 		}
 
-		$array = array(
-			'Parent' => $this->get['path'],
-			'Name' => $this->get['name'],
-			'Error' => "",
-			'Code' => 0,
-		);
-		return $array;
+        return $this->get_file_info($this->getRelativePath($new_path));
 	}
 
 	/**
@@ -301,15 +286,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-		$array = array(
-			'Old Path' => $this->get['old'] . $suffix,
-			'Old Name' => $filename,
-			'New Path' => $newPath . '/' . $newName . $suffix,
-			'New Name' => $newName,
-			'Error' => "",
-			'Code' => 0,
-		);
-		return $array;
+        return $this->get_file_info($this->getRelativePath($new_file));
 	}
 
 	/**
@@ -386,15 +363,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-		$array = array(
-			'Old Path' => $this->getRelativePath($oldPath),
-			'Old Name' => $isDirOldPath ? '' : $filename,
-			'New Path' => $this->getRelativePath($newPath),
-			'New Name' => $filename,
-			'Error' => "",
-			'Code' => 0,
-		);
-		return $array;
+        return $this->get_file_info($this->getRelativePath($newFullPath));
 	}
 
 	/**
@@ -470,14 +439,13 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
 		}
 
-		$array = array(
-			'Path' => $this->get['path'],
-			'Content' => $content,
-			'Error' => "",
-			'Code' => 0,
-		);
-
-		return $array;
+        return [
+            'id' => $this->get['path'],
+            'type' => self::TYPE_FILE,
+            'attributes' => [
+                'content' => $content,
+            ],
+        ];
 	}
 
 	/**
@@ -496,22 +464,22 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('ERROR_WRITING_PERM')));
 		}
 
-		$content =  htmlspecialchars_decode($this->post['content']);
-		$r = file_put_contents($current_path, $content, LOCK_EX);
+		$content = htmlspecialchars_decode($this->post['content']);
+		$result = file_put_contents($current_path, $content, LOCK_EX);
 
-		if(!is_numeric($r)) {
+		if(!is_numeric($result)) {
 			$this->error(sprintf($this->lang('ERROR_SAVING_FILE')));
 		}
 
 		Log::info('saved "' . $current_path . '"');
 
-		$array = array(
-			'Error' => "",
-			'Code' => 0,
-			'Path' => $this->post['path'],
-		);
-
-		return $array;
+        return [
+            'id' => $this->post['path'],
+            'type' => self::TYPE_FILE,
+            'attributes' => [
+                'success' => true,
+            ],
+        ];
 	}
 
 	/**
@@ -626,6 +594,11 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
+        $item = $this->get_file_info($this->get['path']);
+        if(!$this->filter_output($item)) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
+
 		if(is_dir($current_path)) {
 			$this->unlinkRecursive($current_path);
 			Log::info('deleted "' . $current_path . '"');
@@ -644,17 +617,13 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-		return array(
-			'Path' => $this->get['path'],
-			'Error' => "",
-			'Code' => 0,
-		);
+		return $item;
 	}
 
 	/**
 	 * @inheritdoc
 	 */
-	public function download($force)
+	public function download()
     {
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$filename = basename($current_path);
@@ -669,14 +638,14 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		// we check if extension is allowed regarding the security Policy settings
-		if(is_file($current_path)) {
-			if(!$this->is_allowed_file_type($filename)) {
-				$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
-			}
-		} else {
+        $item = $this->get_file_info($this->get['path']);
+        if(!$this->filter_output($item)) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
+
+		if($item["type"] === self::TYPE_FOLDER) {
 			// check if permission is granted
-			if(is_dir($current_path) && $this->config['security']['allowFolderDownload'] == false ) {
+			if($this->config['security']['allowFolderDownload'] == false ) {
 				$this->error(sprintf($this->lang('NOT_ALLOWED')));
 			}
 
@@ -695,28 +664,29 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-		if(!$force) {
-			$array = array(
-				'Path' => $this->get['path'],
-				'Error' => "",
-				'Code' => 0,
-			);
-			return $array;
-		}
+		if($this->isAjaxRequest()) {
+            return [
+                'id' => $this->get['path'],
+                'type' => $item["type"],
+                'attributes' => [
+                    'success' => true,
+                ],
+            ];
+        } else {
+            header('Content-Description: File Transfer');
+            header('Content-Type: ' . mime_content_type($current_path));
+            header('Content-Disposition: attachment; filename=' . $filename);
+            header('Content-Transfer-Encoding: binary');
+            header('Content-Length: ' . $this->get_real_filesize($current_path));
+            // handle caching
+            header('Pragma: public');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-		header('Content-Description: File Transfer');
-		header('Content-Type: ' . mime_content_type($current_path));
-		header('Content-Disposition: attachment; filename=' . basename($current_path));
-		header('Content-Transfer-Encoding: binary');
-		header('Content-Length: ' . $this->get_real_filesize($current_path));
-		// handle caching
-		header('Pragma: public');
-		header('Expires: 0');
-		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-
-		readfile($current_path);
-		Log::info('downloaded "' . $current_path . '"');
-		exit();
+            readfile($current_path);
+            Log::info('downloaded "' . $current_path . '"');
+            exit;
+        }
 	}
 
 	/**
@@ -792,25 +762,6 @@ class LocalFilemanager extends BaseFilemanager
 		return $zip->close();
 	}
 
-	protected function setParams()
-    {
-		$tmp = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
-		$tmp = explode('?',$tmp);
-		$params = array();
-		if(isset($tmp[1]) && $tmp[1]!='') {
-			$params_tmp = explode('&',$tmp[1]);
-			if(is_array($params_tmp)) {
-				foreach($params_tmp as $value) {
-					$tmp = explode('=',$value);
-					if(isset($tmp[0]) && $tmp[0]!='' && isset($tmp[1]) && $tmp[1]!='') {
-						$params[$tmp[0]] = $tmp[1];
-					}
-				}
-			}
-		}
-		$this->refParams = $params;
-	}
-
     protected function setPermissions()
     {
 		$this->allowed_actions = $this->config['options']['capabilities'];
@@ -850,8 +801,6 @@ class LocalFilemanager extends BaseFilemanager
 	protected function get_file_info($relative_path)
     {
 		$current_path = $this->getFullPath($relative_path);
-
-		$item = $this->defaultInfo;
 		$pathInfo = pathinfo($current_path);
 		$filemtime = filemtime($current_path);
 
@@ -859,32 +808,43 @@ class LocalFilemanager extends BaseFilemanager
 		$protected = $this->has_system_permission($current_path, array('w', 'r')) ? 0 : 1;
 
 		if(is_dir($current_path)) {
-			$fileType = self::FILE_TYPE_DIR;
+            $model = $this->folderModel;
 		} else {
-			$fileType = $pathInfo['extension'];
-			$item['Properties']['Size'] = $this->get_real_filesize($current_path);
+            $model = $this->fileModel;
+            $model['attributes']['extension'] = $pathInfo['extension'];
+            $model['attributes']['size'] = $this->get_real_filesize($current_path);
 
 			if($this->is_image_file($current_path)) {
-				if($item['Properties']['Size']) {
+				if($model['attributes']['size']) {
 					list($width, $height, $type, $attr) = getimagesize($current_path);
 				} else {
 					list($width, $height) = array(0, 0);
 				}
 
-				$item['Properties']['Height'] = $height;
-				$item['Properties']['Width'] = $width;
+                $model['attributes']['width'] = $width;
+                $model['attributes']['height'] = $height;
 			}
 		}
 
-		$item['Path'] = $relative_path;
-		$item['Filename'] = $pathInfo['basename'];
-		$item['File Type'] = $fileType;
-		$item['Protected'] = $protected;
-		$item['PreviewPath'] = $this->getDynamicPath($current_path);
-		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
-		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
-		$item['Properties']['filemtime'] = $filemtime;
-		return $item;
+        $model['id'] = $relative_path;
+        $model['attributes']['name'] = $pathInfo['basename'];
+        $model['attributes']['path'] = $this->getDynamicPath($current_path);
+        $model['attributes']['protected'] = $protected;
+        $model['attributes']['timestamp'] = $filemtime;
+        $model['attributes']['modified'] = $this->formatDate($filemtime);
+        //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
+        return $model;
+
+
+//		$item['Path'] = $relative_path;
+//		$item['Filename'] = $pathInfo['basename'];
+//		$item['File Type'] = $fileType;
+//		$item['Protected'] = $protected;
+//		$item['PreviewPath'] = $this->getDynamicPath($current_path);
+//		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
+//		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
+//		$item['Properties']['filemtime'] = $filemtime;
+//		return $item;
 	}
 
     /**

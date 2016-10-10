@@ -160,7 +160,7 @@ $config = [
          */
         "unallowed_files" => [
             ".htaccess",
-            "web.config"
+            "web.config",
         ],
         /**
          * Array of folders excluded from listing.
@@ -168,7 +168,7 @@ $config = [
         "unallowed_dirs" => [
             "_thumbs",
             ".CDN_ACCESS_LOGS",
-            "cloudservers"
+            "cloudservers",
         ],
         /**
          * Files excluded from listing, using REGEX.
@@ -213,11 +213,8 @@ $config = [
         "imagesOnly" => false,
     ],
 
-    "images" => [
-        /**
-         * Array of accepted images extensions.
-         */
-        "imagesExt" => [
+    "outputFilter" => [
+        "images" => [
             "jpg",
             "jpe",
             "jpeg",
@@ -226,6 +223,9 @@ $config = [
             "svg",
             "bmp",
         ],
+    ],
+
+    "images" => [
         /**
          * Uploaded image settings.
          * To disable resize set both `maxWidth` and `maxHeight` to "false".

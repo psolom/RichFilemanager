@@ -18,6 +18,7 @@
 
 .fm-container .fm-filetree {
     border: none;
+    color: #e0e0e0;
     background-color: #777777;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
@@ -99,7 +100,7 @@
     color: #777;
 }
 
-.fm-container #contents.grid li {
+.fm-container .view-items.grid li {
     width: 196px;
     -webkit-transition: background 0.3s linear;
     -moz-transition: background 0.3s linear;
@@ -107,12 +108,12 @@
     transition: background 0.3s linear;
 }
 
-.fm-container #contents.grid li.drop-hover,
-.fm-container #contents.list tr.drop-hover {
+.fm-container .view-items.grid li.drop-hover,
+.fm-container .view-items.list tr.drop-hover {
     background-color: #a3a39f;
 }
 
-.fm-container #contents.list td {
+.fm-container .view-items.list td {
     border-bottom: 1px dotted #efefef;
 }
 
@@ -131,4 +132,12 @@
 
 .fm-popup.alertify .fm-fileupload-container #total-progress .progress-bar {
     background-color: #333;
+}
+
+.fm-container .drag-helper-grid {
+    width: 196px;
+    -webkit-transition: background 0.3s linear;
+    -moz-transition: background 0.3s linear;
+    -o-transition: background 0.3s linear;
+    transition: background 0.3s linear;
 }

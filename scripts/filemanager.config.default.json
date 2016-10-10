@@ -38,9 +38,17 @@
         "allowFolderDownload": false,
         "allowChangeExtensions": false,
         "allowNoExtension": false,
-        "normalizeFilename": true,
-        "uploadPolicy": "DISALLOW_ALL",
-        "uploadRestrictions": [
+        "normalizeFilename": true
+    },
+    "upload": {
+        "multiple": true,
+        "paramName": "files",
+        "chunkSize": false,
+        "numberOfFiles": 12,
+        "fileSizeLimit": 16000000,
+        "overwrite": false,
+        "policy": "DISALLOW_ALL",
+        "restrictions": [
             "jpg",
             "jpe",
             "jpeg",
@@ -72,15 +80,6 @@
             "zip",
             "rar"
         ]
-    },
-    "upload": {
-        "multiple": true,
-        "paramName": "files",
-        "chunkSize": false,
-        "numberOfFiles": 5,
-        "fileSizeLimit": 16000000,
-        "overwrite": false,
-        "imagesOnly": false
     },
     "preview": {
         "absolutePath": true,
