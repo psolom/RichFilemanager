@@ -44,7 +44,8 @@
             }
           }
         }
-        if (mode.equals("getinfo")){
+        // renamed getinfo to getfile
+        if (mode.equals("getinfo") || mode.equals("getfile")){
           if(fm.setGetVar("path", (strictServletCompliance)? qpm.get("path"): request.getParameter("path"))) {
             responseData = fm.getInfo();
           }
@@ -98,9 +99,8 @@
           fm.error(fm.lang("MODE_ERROR"));
         }
       }
-    }
-    else if(request.getMethod().equals("POST")){
-      mode = "upload";
+    } else if(request.getMethod().equals("POST")){
+      mode = "upload"; // just informal, real param mode is used in java class
       responseData = fm.add();
       //putTextarea = true;
     }
