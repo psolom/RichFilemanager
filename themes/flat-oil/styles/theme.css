@@ -58,19 +58,12 @@
 .fm-container #filepath {
     background-color: #F7F7F7;
     border: 1px solid #fff;
-    padding: 0.25em 0.3em;
     -webkit-border-top-left-radius: 2px;
     -webkit-border-bottom-left-radius: 2px;
     -moz-border-radius-topleft: 2px;
     -moz-border-radius-bottomleft: 2px;
     border-top-left-radius: 2px;
     border-bottom-left-radius: 2px;
-}
-
-@-moz-document url-prefix() {
-    .fm-container #filepath {
-        padding: 0.27em 0.3em;
-    }
 }
 
 .fm-container #folder-info {

@@ -54,19 +54,12 @@
 }
 
 .fm-container #filepath {
-    padding: 0.1em 0.3em;
     -webkit-border-top-left-radius: 6px;
     -webkit-border-bottom-left-radius: 6px;
     -moz-border-radius-topleft: 6px;
     -moz-border-radius-bottomleft: 6px;
     border-top-left-radius: 6px;
     border-bottom-left-radius: 6px;
-}
-
-@-moz-document url-prefix() {
-    .fm-container #filepath {
-        padding: 0.2em 0.3em;
-    }
 }
 
 .fm-container #folder-info {

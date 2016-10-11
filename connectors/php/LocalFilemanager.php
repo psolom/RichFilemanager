@@ -694,23 +694,25 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function summarize()
 	{
-		$result = array(
-			'Size' => 0,
-			'Files' => 0,
-			'Folders' => 0,
-			'Error' => "",
-			'Code' => 0,
-            'SizeLimit' => $this->config['options']['fileRootSizeLimit'],
-		);
+        $attributes = [
+            'size' => 0,
+            'files' => 0,
+            'folders' => 0,
+            'sizeLimit' => $this->config['options']['fileRootSizeLimit'],
+        ];
 
 		$path = rtrim($this->path_to_files, '/') . '/';
 		try {
-			$this->getDirSummary($path, $result);
+			$this->getDirSummary($path, $attributes);
 		} catch (Exception $e) {
 			$this->error(sprintf($this->lang('ERROR_SERVER')));
 		}
 
-		return $result;
+        return [
+            'id' => '/',
+            'type' => 'summary',
+            'attributes' => $attributes,
+        ];
 	}
 
 	/**
@@ -1106,7 +1108,7 @@ class LocalFilemanager extends BaseFilemanager
 	 * @param array $result
 	 * @return array
 	 */
-	public function getDirSummary($dir, &$result = array('Size' => 0, 'Files' => 0, 'Folders' => 0))
+	public function getDirSummary($dir, &$result = ['size' => 0, 'files' => 0, 'folders' => 0])
 	{
 		// suppress permission denied and other errors
 		$files = @scandir($dir);
@@ -1124,14 +1126,14 @@ class LocalFilemanager extends BaseFilemanager
 			if (is_dir($path)) {
 				if (!in_array($subPath, $this->config['exclude']['unallowed_dirs']) &&
 					!preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $subPath)) {
-					$result['Folders']++;
+					$result['folders']++;
 					$this->getDirSummary($path . '/', $result);
 				}
 			} else if (
 				!in_array($subPath, $this->config['exclude']['unallowed_files']) &&
 				!preg_match($this->config['exclude']['unallowed_files_REGEXP'], $subPath)) {
-				$result['Files']++;
-				$result['Size'] += filesize($path);
+				$result['files']++;
+				$result['size'] += filesize($path);
 			}
 		}
 
@@ -1146,7 +1148,7 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$path = rtrim($this->path_to_files, '/') . '/';
 		$result = $this->getDirSummary($path);
-		return $result['Size'];
+		return $result['size'];
 	}
 
 	/**

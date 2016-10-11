@@ -367,13 +367,14 @@
 
 .fm-container #newfile {
     position: absolute;
-    top:0;
-    right:0;
-    height:32px;
-    width:100%;
-    opacity:0;  filter: alpha(opacity=0);
+    top: 0;
+    right: 0;
+    height: 28px;
+    width: 100%;
+    opacity: 0;
+    filter: alpha(opacity=0);
     cursor: pointer;
-    border:1px solid blue;
+    border: 1px solid blue;
 }
 
 .fm-container .hidden-file-input {
@@ -386,22 +387,14 @@
 
 .fm-container #alt-fileinput {
     display: inline;
-    wrap: no-wrap;
 }
 
 .fm-container #filepath {
+    margin: 0;
+    padding: 0 5px;
+    line-height: 26px;
     background-color: #F4F1ED;
     border: 1px solid #dcdcdc;
-    margin: 0;
-    padding: 0.1em 0.3em;
-    line-height: 1.7em;
-    height:100%;
-}
-
-@-moz-document url-prefix() {
-    .fm-container #filepath {
-        padding:0.2em 0.3em;
-    }
 }
 
 .fm-container button#browse {
@@ -1322,15 +1315,15 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-color: #294750;
 }
 
-.fm-popup.alertify .summary-popup {
+.fm-popup.alertify #summary-popup {
     font-size: 1.2em;
 }
 
-.fm-popup.alertify .summary-popup .title {
+.fm-popup.alertify #summary-popup .title {
     font-weight: bold;
     margin-bottom: 0.8em;
 }
 
-.fm-popup.alertify .summary-popup .line {
+.fm-popup.alertify #summary-popup .line {
     line-height: 1.4em;
 }
