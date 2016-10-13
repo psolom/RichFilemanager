@@ -793,9 +793,12 @@ $.richFmPlugin = function(element, options)
 		var TreeModel = function() {
 			var tree_list = this;
 			this.isScrolling = ko.observable(false);
+			this.selecledNode = ko.observable(null);
 
 			this.options = {
 				showLine: true,
+				dblClickOpen: true,
+				reloadOnClick: false,
 				expandSpeed: 200
 			};
 
@@ -872,7 +875,7 @@ $.richFmPlugin = function(element, options)
 			this.loadNodes = function(targetNode, refresh) {
 				var path = targetNode ? targetNode.id : tree_list.treeData.id;
 				if(targetNode) {
-					targetNode.isLoading(true);
+					targetNode.isLoaded(false);
 				}
 
 				var queryParams = {
@@ -1014,9 +1017,10 @@ $.richFmPlugin = function(element, options)
 				this.children = ko.observableArray([]);
 				this.parentNode = ko.observable(null);
 				this.isSliding = ko.observable(false);
-				this.isExpanded = ko.observable(false);
 				this.isLoading = ko.observable(false);
 				this.isLoaded = ko.observable(false);
+				this.isExpanded = ko.observable(false);
+				this.isSelected = ko.observable(false);
 				this.collapsedOnDrag = ko.observable(false);
 				// arrangable properties
 				this.level = ko.observable(0);
@@ -1031,12 +1035,10 @@ $.richFmPlugin = function(element, options)
 				});
 
 				this.isLoaded.subscribe(function (value) {
-					if(value === true) {
-						self.isLoading(false);
-					}
+					self.isLoading(!value);
 				});
 
-				this.toggleNode = function(node) {
+				this.switchNode = function(node) {
 					if(!node.cdo.isFolder) {
 						return false;
 					}
@@ -1044,18 +1046,38 @@ $.richFmPlugin = function(element, options)
 						fm.error(lg.NOT_ALLOWED_SYSTEM);
 						return false;
 					}
+					self.toggleNode(node, false);
+				};
 
-					if(!node.isExpanded() && !node.isLoaded()) {
-						tree_list.loadNodes(node, true);
+				this.nodeClick = function(node) {
+					if(!tree_list.options.dblClickOpen) {
+						self.toggleNode(node, tree_list.options.reloadOnClick);
+						if(node.rdo.type === 'file') {
+							getDetailView(node.rdo);
+						}
 					} else {
-						node.isSliding(true);
+						if(tree_list.selecledNode() !== null) {
+							tree_list.selecledNode().isSelected(false);
+						}
+						node.isSelected(true);
+						tree_list.selecledNode(node);
 					}
 				};
 
-				this.viewNode = function(node) {
-					self.toggleNode(node);
-					if(node.rdo.type === 'file') {
-						getDetailView(node.rdo);
+				this.nodeDblClick = function(node) {
+					if(tree_list.options.dblClickOpen) {
+						self.toggleNode(node, tree_list.options.reloadOnClick);
+						if(node.rdo.type === 'file') {
+							getDetailView(node.rdo);
+						}
+					}
+				};
+
+				this.toggleNode = function(node, forceReload) {
+					if(!node.isExpanded() && (forceReload || !node.isLoaded())) {
+						tree_list.loadNodes(node, true);
+					} else {
+						node.isSliding(true);
 					}
 				};
 

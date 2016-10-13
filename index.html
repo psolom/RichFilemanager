@@ -304,8 +304,8 @@
 		</script>
 
 		<script type="text/html" id="node-template">
-			<span class="button switch" data-bind="css: switcherClass(), click: toggleNode"></span>
-			<a data-bind="attr: {class: cdo.itemClass}, click: viewNode, draggableTree: $data, droppableTree: $data">
+			<span class="button switch" data-bind="css: switcherClass(), click: switchNode"></span>
+			<a data-bind="attr: {class: cdo.itemClass}, event: {click: nodeClick, dblclick: nodeDblClick}, draggableTree: $data, droppableTree: $data">
 				<span class="button" data-bind="css: iconClass()"></span>
 				<span class="node_name" data-bind="text: nodeTitle(), attr: {title: title()}"></span>
 			</a>
