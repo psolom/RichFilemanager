@@ -54,8 +54,8 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<div class="button-group navigate-controls">
-					<button id="level-up" type="button" data-bind="click: header.goParent"><span>&nbsp;</span></button>
-					<button id="home" type="button" data-bind="click: header.goHome"><span>&nbsp;</span></button>
+					<button id="level-up" type="button" data-bind="click: headerModel.goParent"><span>&nbsp;</span></button>
+					<button id="home" type="button" data-bind="click: headerModel.goHome"><span>&nbsp;</span></button>
 				</div>
 				<!-- ko if: !browseOnly() -->
 				<div class="button-group upload-controls">
@@ -74,16 +74,16 @@
 					</form>
 				</div>
 				<div class="button-group create-controls">
-					<button type="button" class="btn-newfolder" data-bind="click: header.createFolder">
+					<button type="button" class="btn-newfolder" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg().new_folder"></span>
 					</button>
 				</div>
 				<!-- /ko -->
 				<div class="button-group viewmode-controls">
-					<button class="btn-grid" type="button" data-bind="click: header.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
+					<button class="btn-grid" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="btn-list" type="button" data-bind="click: header.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
+					<button class="btn-list" type="button" data-bind="click: headerModel.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -92,14 +92,13 @@
 
 		<div class="fm-splitter">
 			<div class="fm-filetree">
-				<div data-bind="template: {name: 'node-parent-template', foreach: treeList.treeData.children, as: 'koNode', afterRender: treeList.nodeRendered}"></div>
+				<div data-bind="template: {name: 'node-parent-template', foreach: treeModel.treeData.children, as: 'koNode', afterRender: treeModel.nodeRendered}"></div>
 			</div>
 
 			<div class="fm-fileinfo">
 				<div class="loading-view" data-bind="visible: loadingView()"></div>
 
-
-				<ul id="contents" class="view-items grid" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'grid', foreach: {data: itemsList.objects, as: 'koItem'}">
+				<ul class="view-items grid" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
 					<!-- ko if: koItem.rdo.type === "parent" -->
 					<li class="directory-parent" data-bind="click: koItem.open, droppableView: koItem" oncontextmenu="return false;">
 						<div class="clip">
@@ -121,10 +120,9 @@
 					<!-- /ko -->
 				</ul>
 
-
-				<table id="contents" class="view-items list" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'list'">
+				<table class="view-items list" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'list'">
 					<thead>
-						<tr class="rowHeader" data-bind="with: tableView">
+						<tr class="rowHeader" data-bind="with: tableViewModel">
 							<th data-bind="click: thName.sort, css: thName.sortClass()"><span data-bind="text: $root.lg().name"></span></th>
 							<th data-bind="click: thType.sort, css: thType.sortClass()"><span data-bind="text: $root.lg().type"></span></th>
 							<th data-bind="click: thSize.sort, css: thSize.sortClass()"><span data-bind="text: $root.lg().size"></span></th>
@@ -132,7 +130,7 @@
 							<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg().modified"></span></th>
 						</tr>
 					</thead>
-					<tbody data-bind="foreach: {data: itemsList.objects, as: 'koItem'}">
+					<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
 						<!-- ko if: koItem.rdo.type === "parent" -->
 						<tr class="directory-parent" data-bind="click: koItem.open, droppableView: koItem" oncontextmenu="return false;">
 							<td>..</td>
@@ -160,7 +158,7 @@
 
 
 				<!-- ko if: previewFile() -->
-				<div id="preview" class="fm-preview-container" data-bind="with: previewItem, visible: !loadingView()">
+				<div id="preview" class="fm-preview-container" data-bind="with: previewModel, visible: !loadingView()">
 					<div class="fm-preview-toolbar">
 						<form id="toolbar">
 							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.previewFile(false)}}">
@@ -270,21 +268,21 @@
 			</form>
 			<div class="right">
 				<div id="folder-info">
-					<span data-bind="text: itemsList.objectsNumber() + ' ' + lg().items"></span> -
-					<span data-bind="text: lg().size + ': ' + itemsList.objectsSize()"></span>
+					<span data-bind="text: itemsModel.objectsNumber() + ' ' + lg().items"></span> -
+					<span data-bind="text: lg().size + ': ' + itemsModel.objectsSize()"></span>
 				</div>
-				<div id="summary" data-bind="click: summary.doSummarize"></div>
+				<div id="summary" data-bind="click: summaryModel.doSummarize"></div>
 				<a href="" target="_blank" id="link-to-project" data-bind="attr: {href: config().url, title: lg().support_fm + ' [' + lg().version + ' : ' + config().version + ']'}"></a>
 			</div>
 			<div style="clear: both"></div>
 		</div>
 
-		<!-- ko if: summary.enabled() -->
+		<!-- ko if: summaryModel.enabled() -->
 		<div id="summary-popup" data-bind="visible: false">
 			<div class="title" data-bind="text: lg().summary_title"></div>
-			<div class="line" data-bind="text: lg().summary_files + ': ' + summary.files()"></div>
-			<div class="line" data-bind="text: lg().summary_folders + ': ' + summary.folders(), visible: summary.folders()"></div>
-			<div class="line" data-bind="text: lg().summary_size + ': ' + summary.size()"></div>
+			<div class="line" data-bind="text: lg().summary_files + ': ' + summaryModel.files()"></div>
+			<div class="line" data-bind="text: lg().summary_folders + ': ' + summaryModel.folders(), visible: summaryModel.folders()"></div>
+			<div class="line" data-bind="text: lg().summary_size + ': ' + summaryModel.size()"></div>
 		</div>
 		<!-- /ko -->
 
@@ -309,7 +307,7 @@
 				<span class="button" data-bind="css: iconClass()"></span>
 				<span class="node_name" data-bind="text: nodeTitle(), attr: {title: title()}"></span>
 			</a>
-			<ul data-bind="template: {name: 'node-parent-template', if: children().length > 0, foreach: children, as: 'koNode', afterRender: $root.treeList.nodeRendered}, css: clusterClass(), toggleNodeVisibility: $data"></ul>
+			<ul data-bind="template: {name: 'node-parent-template', if: children().length > 0, foreach: children, as: 'koNode', afterRender: $root.treeModel.nodeRendered}, css: clusterClass(), toggleNodeVisibility: $data"></ul>
 		</script>
 	</div>
 </div>

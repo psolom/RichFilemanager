@@ -184,4 +184,8 @@ class LocalUploadHandler extends BaseUploadHandler
         }
         return true;
     }
+
+    protected function set_additional_file_properties($file) {
+        $file->path = $this->get_upload_path($file->name);
+    }
 }

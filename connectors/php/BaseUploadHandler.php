@@ -1285,62 +1285,64 @@ class BaseUploadHandler
 
     public function generate_response($content, $print_response = true) {
         $this->response = $content;
+        $json = json_encode($content);
         if ($print_response) {
-            $json = json_encode($content);
             $redirect = stripslashes($this->get_post_param('redirect'));
             if ($redirect && preg_match($this->options['redirect_allow_target'], $redirect)) {
-                $this->header('Location: '.sprintf($redirect, rawurlencode($json)));
+                $this->header('Location: ' . sprintf($redirect, rawurlencode($json)));
                 return;
             }
-            $this->head();
-            if ($this->get_server_var('HTTP_CONTENT_RANGE')) {
-                $files = isset($content[$this->options['param_name']]) ?
-                    $content[$this->options['param_name']] : null;
-                if ($files && is_array($files) && is_object($files[0]) && $files[0]->size) {
-                    $size = $files[0]->size;
-                    $subBytes = 1;
-                    if(is_string($size) && strlen($size) > 8) {
-                        $size = ltrim($size, '0');
-                        // subtract with GMP extension
-                        if (function_exists("gmp_sub")) {
-                            $sub = gmp_sub($size, $subBytes);
-                            $size = gmp_strval($sub);
-                        }
-                        // subtract with BCMath extension
-                        else if (function_exists("bcsub")) {
-                            $size = bcsub($size, $subBytes, 0);
-                        }
-                        // workaround that covers the case of subtraction 1 byte from a string
-                        // should be modified to subtract values > 1 or other operation
-                        else {
-                            $new = array();
-                            $flag = true;
-                            $parts = str_split($size, 8);
-                            while($parts) {
-                                $part = array_pop($parts);
-                                $length = strlen($part);
-                                $res = (int)$part - $subBytes;
-                                if($res < 0) {
-                                    $np = str_repeat('9', $length);
-                                } else if($flag) {
-                                    $flag = false;
-                                    $np = $res;
-                                    if($parts) {
-                                        $np = str_pad($np, $length, '0', STR_PAD_LEFT);
-                                    }
-                                } else {
-                                    $np = $part;
-                                }
-                                array_unshift($new, $np);
-                            }
-                            $size = implode('', $new);
-                        }
-                    } else {
-                        $size = ($size == 0) ? 0 : $size - $subBytes;
+        }
+        $this->head();
+        if ($this->get_server_var('HTTP_CONTENT_RANGE')) {
+            $files = isset($content[$this->options['param_name']]) ?
+                $content[$this->options['param_name']] : null;
+            if ($files && is_array($files) && is_object($files[0]) && $files[0]->size) {
+                $size = $files[0]->size;
+                $subBytes = 1;
+                if(is_string($size) && strlen($size) > 8) {
+                    $size = ltrim($size, '0');
+                    // subtract with GMP extension
+                    if (function_exists("gmp_sub")) {
+                        $sub = gmp_sub($size, $subBytes);
+                        $size = gmp_strval($sub);
                     }
-                    $this->header('Range: 0-' . $size);
+                    // subtract with BCMath extension
+                    else if (function_exists("bcsub")) {
+                        $size = bcsub($size, $subBytes, 0);
+                    }
+                    // workaround that covers the case of subtraction 1 byte from a string
+                    // should be modified to subtract values > 1 or other operation
+                    else {
+                        $new = array();
+                        $flag = true;
+                        $parts = str_split($size, 8);
+                        while($parts) {
+                            $part = array_pop($parts);
+                            $length = strlen($part);
+                            $res = (int)$part - $subBytes;
+                            if($res < 0) {
+                                $np = str_repeat('9', $length);
+                            } else if($flag) {
+                                $flag = false;
+                                $np = $res;
+                                if($parts) {
+                                    $np = str_pad($np, $length, '0', STR_PAD_LEFT);
+                                }
+                            } else {
+                                $np = $part;
+                            }
+                            array_unshift($new, $np);
+                        }
+                        $size = implode('', $new);
+                    }
+                } else {
+                    $size = ($size == 0) ? 0 : $size - $subBytes;
                 }
+                $this->header('Range: 0-' . $size);
             }
+        }
+        if ($print_response) {
             $this->body($json);
         }
         return $content;

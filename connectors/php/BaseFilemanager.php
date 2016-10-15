@@ -292,13 +292,13 @@ abstract class BaseFilemanager
 
                     case 'upload':
                         if($this->postvar('currentpath')) {
-                            $this->upload();
+                            $response = $this->upload();
                         }
                         break;
 
                     case 'replace':
                         if($this->postvar('newfilepath')) {
-                            $this->replace();
+                            $response = $this->replace();
                         }
                         break;
 
@@ -363,14 +363,20 @@ abstract class BaseFilemanager
 
     /**
      * Echo error message and terminate the application
-     * @param $string
+     * @param string $title
      */
-    public function error($string)
+    public function error($title)
     {
-        Log::info('error message: "' . $string . '"');
+        Log::info('error message: "' . $title . '"');
+
+        $error_object = [
+            'id' => 'server',
+            'code' => '500',
+            'title' => $title
+        ];
 
         echo json_encode([
-            'errors' => [$string],
+            'errors' => [$error_object],
         ]);
         exit;
     }

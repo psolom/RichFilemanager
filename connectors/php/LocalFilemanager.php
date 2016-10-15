@@ -105,8 +105,8 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function getfolder()
     {
-		$array = array();
 		$files_list = array();
+        $response_data = array();
 		$current_path = $this->getFullPath($this->get['path'], true);
 		Log::info('opening folder "' . $current_path . '"');
 
@@ -137,12 +137,12 @@ class LocalFilemanager extends BaseFilemanager
 
                 $item = $this->get_file_info($file_path);
                 if($this->filter_output($item)) {
-                    $array[] = $item;
+                    $response_data[] = $item;
                 }
 			}
 		}
 
-		return $array;
+		return $response_data;
 	}
 
 	/**
@@ -184,12 +184,27 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$this->initUploader(array(
+        $content = $this->initUploader(array(
 			'upload_dir' => $current_path,
-		))->post(true);
+		))->post(false);
 
-		// end application to prevent double response (uploader and filemanager)
-		exit();
+        $response_data = [];
+        $files = isset($content[$this->config['upload']['paramName']]) ?
+            $content[$this->config['upload']['paramName']] : null;
+        // there is only one file in the array as long as "singleFileUploads" is set to "true"
+        if ($files && is_array($files) && is_object($files[0])) {
+            $file = $files[0];
+            if(isset($file->error)) {
+                $this->error($file->error);
+            } else {
+                $item = $this->get_file_info($this->getRelativePath($file->path));
+                $response_data[] = $item;
+            }
+        } else {
+            $this->error(sprintf($this->lang('ERROR_UPLOADING_FILE')));
+        }
+
+        return $response_data;
 	}
 
 	/**
@@ -199,7 +214,7 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$new_dir = $this->normalizeString($this->get['name']);
-		$new_path = $current_path . $new_dir;
+		$new_path = $current_path . rtrim($new_dir, '/') . '/';
 		Log::info('adding folder "' . $new_path . '"');
 
 		if(is_dir($new_path)) {
@@ -393,26 +408,38 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		$result = $this->initUploader(array(
-			'upload_dir' => $upload_dir,
-		))->post(true);
+        $content = $this->initUploader(array(
+            'upload_dir' => $upload_dir,
+        ))->post(false);
 
-		// success upload
-		if(!property_exists($result['files'][0], 'error')) {
-			$new_path = $upload_dir . $result['files'][0]->name;
-			Log::info('replacing "' . $old_path . '" with "' . $new_path . '"');
+        $response_data = [];
+        $files = isset($content[$this->config['upload']['paramName']]) ?
+            $content[$this->config['upload']['paramName']] : null;
+        // there is only one file in the array as long as "singleFileUploads" is set to "true"
+        if ($files && is_array($files) && is_object($files[0])) {
+            $file = $files[0];
+            if(isset($file->error)) {
+                $this->error($file->error);
+            } else {
+                $new_path = $upload_dir . $file->name;
+                Log::info('replacing "' . $old_path . '" with "' . $new_path . '"');
 
-			rename($new_path, $old_path);
+                rename($new_path, $old_path);
 
-			$new_thumbnail = $this->get_thumbnail_path($new_path);
-			$old_thumbnail = $this->get_thumbnail_path($old_path);
-			if(file_exists($new_thumbnail)) {
-				rename($new_thumbnail, $old_thumbnail);
-			}
-		}
+                $new_thumbnail = $this->get_thumbnail_path($new_path);
+                $old_thumbnail = $this->get_thumbnail_path($old_path);
+                if(file_exists($new_thumbnail)) {
+                    rename($new_thumbnail, $old_thumbnail);
+                }
 
-		// end application to prevent double response (uploader and filemanager)
-		exit();
+                $item = $this->get_file_info($this->getRelativePath($old_path));
+                $response_data[] = $item;
+            }
+        } else {
+            $this->error(sprintf($this->lang('ERROR_UPLOADING_FILE')));
+        }
+
+        return $response_data;
 	}
 
 	/**

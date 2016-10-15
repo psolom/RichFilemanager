@@ -473,13 +473,13 @@
 
 .fm-container #search a.q-reset {
     display: inline-table;
-    width: 20px;
-    height: 20px;
+    width: 16px;
+    height: 16px;
     background: url(../images/reset.png) no-repeat center center;
     position: relative;
-    opacity:0.5;
+    opacity: 0.5;
     left: -30px;
-    top: 13px;
+    top: 10px;
     z-index: 24;
 }
 
