@@ -526,9 +526,9 @@ $.richFmPlugin = function(element, options)
 
 		// adding a close button triggering callback function if CKEditorCleanUpFuncNum passed
 		if($.urlParam('CKEditorCleanUpFuncNum')) {
-			$("body").append('<button id="close-btn" type="button">' + lg.close + '</button>');
+			$("body").append('<button id="fm-js-btn-close" type="button">' + lg.close + '</button>');
 
-			$('#close-btn').click(function () {
+			$('#fm-js-btn-close').click(function () {
 				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
 			});
 		}
@@ -724,21 +724,18 @@ $.richFmPlugin = function(element, options)
 					};
 				}
 
-				preview_item.viewer(viewerObject);
-				model.previewFile(true);
-
 				// zeroClipboard code
 				ZeroClipboard.config({swfPath: fm.settings.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
-				var client = new ZeroClipboard(document.getElementById("copy-button"));
+				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
 				client.on("ready", function(readyEvent) {
 					client.on("aftercopy", function(event) {
+						fm.success(lg.copied);
 						// console.log("Copied text to clipboard: " + event.data["text/plain"]);
 					});
 				});
-			};
 
-			this.copyClipboard = function() {
-				fm.success(lg.copied);
+				preview_item.viewer(viewerObject);
+				model.previewFile(true);
 			};
 
 			this.editFile = function() {
@@ -775,7 +772,7 @@ $.richFmPlugin = function(element, options)
 
 			this.options = {
 				showLine: true,
-				dblClickOpen: true,
+				dblClickOpen: false,
 				reloadOnClick: false,
 				expandSpeed: 200
 			};
@@ -1188,7 +1185,6 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.setList = function(dataObjects) {
-				console.trace('setList', dataObjects);
 				var objects = [];
 				// add parent folder object
 				if(!isFile(model.currentPath()) && model.currentPath() !== fileRoot) {
@@ -1926,10 +1922,10 @@ $.richFmPlugin = function(element, options)
 					imagePath = iconsFolderPath + iconFilename;
 				}
 
-				if (isImageFile(resourceObject.id) &&
+				if (isImageFile(resourceObject.id) && (
 					(thumbnail && config.viewer.image.showThumbs) ||
 					(!thumbnail && config.viewer.image.enabled === true)
-				) {
+				)) {
 					if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
 						imagePath = buildAbsolutePath(encodePath(resourceObject.attributes.path));
 					} else {
@@ -2174,8 +2170,8 @@ $.richFmPlugin = function(element, options)
 	// Called by clicking the "Replace" button in detail views
 	// or choosing the "Replace" contextual menu option in list views.
 	var replaceItem = function(resourceObject) {
-		var $toolbar = $('#toolbar');
-		var $button = $toolbar.find('#replacement');
+		var $toolbar = $('#fm-js-preview-toolbar');
+		var $button = $toolbar.find(':file');
 
 		if(typeof $toolbar.data('blueimpFileupload') === 'undefined') {
 			$toolbar
@@ -2425,7 +2421,7 @@ $.richFmPlugin = function(element, options)
 			type: 'POST',
 			url: buildConnectorUrl(),
 			dataType: 'json',
-			data: $('#edit-form').serializeArray(),
+			data: $('#fm-js-editor-form').serializeArray(),
 			success: function (response) {
 				if(response.data) {
 					fmModel.previewModel.editor.enabled(false);
@@ -2510,7 +2506,7 @@ $.richFmPlugin = function(element, options)
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
 		// remove 'select' if there is no window.opener
 		if(!has_capability(resourceObject, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
-		// remove 'replace' since it is implemented on #preview panel only (for FF and Chrome, need to check in Opera)
+		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
 		return contextMenuItems
@@ -3031,7 +3027,7 @@ $.richFmPlugin = function(element, options)
 			}
 		}
 
-		var editor = CodeMirror.fromTextArea(document.getElementById("edit-content"), {
+		var editor = CodeMirror.fromTextArea(document.getElementById("fm-js-editor-content"), {
 			styleActiveLine: true,
 			viewportMargin: Infinity,
 			lineNumbers: config.viewer.editable.lineNumbers,

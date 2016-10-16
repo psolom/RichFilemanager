@@ -25,16 +25,11 @@
     background-color: #fff;
 }
 
-.fm-container .fm-fileinfo .loading-view {
-    background: url(../images/spinner.gif) no-repeat center center;
-}
-
 .fm-container .fm-fileinfo h1 {
     color: #8fabc6;
 }
 
-.fm-container #preview dl dt,
-.fm-container #preview dl dd {
+.fm-container .fm-preview .fm-preview-details td {
     color: #333;
     border-bottom: 1px dotted #ccc;
 }
@@ -97,15 +92,6 @@
 
 .fm-container .view-items.list td {
     border-bottom: 1px dotted #ccc;
-}
-
-.fm-container ul.jqueryFileTree a {
-    color: #000000;
-}
-
-.fm-container ul.jqueryFileTree a:hover,
-.fm-container ul.jqueryFileTree a.drop-hover {
-    background-color: #e0e0e0;
 }
 
 .fm-popup.alertify .fm-fileupload-container #total-progress {

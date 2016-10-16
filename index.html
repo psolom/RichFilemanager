@@ -6,7 +6,6 @@
 	<title>Rich FileManager</title>
 	<link rel="stylesheet" type="text/css" href="styles/reset.css" />
 	<link rel="stylesheet" type="text/css" href="styles/filemanager.css" />
-	<link rel="stylesheet" type="text/css" href="scripts/jquery.filetree/src/jQueryFileTree.css" />
 	<link rel="stylesheet" type="text/css" href="scripts/jquery.contextmenu/dist/jquery.contextMenu.min.css" />
 	<link rel="stylesheet" type="text/css" href="scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css" />
 	<link rel="stylesheet" type="text/css" href="scripts/alertify.js/dist/css/alertify.css">
@@ -54,8 +53,8 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<div class="button-group navigate-controls">
-					<button id="level-up" type="button" data-bind="click: headerModel.goParent"><span>&nbsp;</span></button>
-					<button id="home" type="button" data-bind="click: headerModel.goHome"><span>&nbsp;</span></button>
+					<button class="fm-btn-level-up no-label" type="button" data-bind="click: headerModel.goParent"><span>&nbsp;</span></button>
+					<button class="fm-btn-home no-label" type="button" data-bind="click: headerModel.goHome"><span>&nbsp;</span></button>
 				</div>
 				<!-- ko if: !browseOnly() -->
 				<div class="button-group upload-controls">
@@ -74,16 +73,16 @@
 					</form>
 				</div>
 				<div class="button-group create-controls">
-					<button type="button" class="btn-newfolder" data-bind="click: headerModel.createFolder">
+					<button class="fm-btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg().new_folder"></span>
 					</button>
 				</div>
 				<!-- /ko -->
 				<div class="button-group viewmode-controls">
-					<button class="btn-grid" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
+					<button class="fm-btn-grid no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="btn-list" type="button" data-bind="click: headerModel.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
+					<button class="fm-btn-list no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -96,7 +95,8 @@
 			</div>
 
 			<div class="fm-fileinfo">
-				<div class="loading-view" data-bind="visible: loadingView()"></div>
+				<div class="fm-loading-view" data-bind="visible: loadingView()"></div>
+
 
 				<ul class="view-items grid" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
 					<!-- ko if: koItem.rdo.type === "parent" -->
@@ -119,6 +119,7 @@
 					</li>
 					<!-- /ko -->
 				</ul>
+
 
 				<table class="view-items list" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'list'">
 					<thead>
@@ -158,9 +159,9 @@
 
 
 				<!-- ko if: previewFile() -->
-				<div id="preview" class="fm-preview-container" data-bind="with: previewModel, visible: !loadingView()">
+				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView()">
 					<div class="fm-preview-toolbar">
-						<form id="toolbar">
+						<form id="fm-js-preview-toolbar">
 							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.previewFile(false)}}">
 								<span data-bind="text: $root.lg().parentfolder"></span>
 							</button>
@@ -214,20 +215,22 @@
 						<video src="" controls="controls" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}"></video>
 						<!-- /ko -->
 						<!-- ko if: viewer().type === 'opendoc' -->
-						<iframe src="" id="fm-pdf-viewer" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
+						<iframe src="" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
 						<!-- /ko -->
 						<!-- ko if: viewer().type === 'google' -->
-						<iframe src="" id="fm-google-viewer" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
+						<iframe src="" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
 						<!-- /ko -->
 
 						<!-- ko if: editor.enabled() -->
-						<form id="edit-form">
-							<textarea id="edit-content" name="content" data-bind="textInput: editor.content"></textarea>
-							<input type="hidden" name="mode" value="savefile" />
-							<input type="hidden" name="path" value="" data-bind="textInput: rdo().id" />
-							<button class="edition" type="button" data-bind="text: $root.lg().quit_editor, click: closeEditor"></button>
-							<button class="edition" type="button" data-bind="text: $root.lg().save, click: saveFile"></button>
-						</form>
+						<div class="fm-preview-editor">
+							<form id="fm-js-editor-form">
+								<textarea id="fm-js-editor-content" name="content" data-bind="textInput: editor.content"></textarea>
+								<input type="hidden" name="mode" value="savefile" />
+								<input type="hidden" name="path" value="" data-bind="textInput: rdo().id" />
+								<button class="edition" type="button" data-bind="text: $root.lg().quit_editor, click: closeEditor"></button>
+								<button class="edition" type="button" data-bind="text: $root.lg().save, click: saveFile"></button>
+							</form>
+						</div>
 						<!-- /ko -->
 					</div>
 
@@ -235,23 +238,31 @@
 						<div id="main-title">
 							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
 							<div id="tools">
-								<a id="edit-file" href="#" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
-								<a id="copy-button" href="#" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}, click: copyClipboard"></a>
+								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
+								<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}"></a>
 							</div>
 						</div>
 					</div>
 
 					<div class="fm-preview-details">
-						<dl>
-							<dt data-bind="text: $root.lg().size"></dt>
-							<dd data-bind="text: cdo().sizeFormatted"></dd>
-							<dt data-bind="text: $root.lg().dimensions"></dt>
-							<dd data-bind="text: cdo().dimensions"></dd>
-							<dt data-bind="text: $root.lg().created"></dt>
-							<dd data-bind="text: rdo().attributes.created"></dd>
-							<dt data-bind="text: $root.lg().modified"></dt>
-							<dd data-bind="text: rdo().attributes.modified"></dd>
-						</dl>
+						<table>
+							<tr data-bind="visible: cdo().sizeFormatted">
+								<td data-bind="text: $root.lg().size"></td>
+								<td data-bind="text: cdo().sizeFormatted"></td>
+							</tr>
+							<tr data-bind="visible: cdo().dimensions">
+								<td data-bind="text: $root.lg().dimensions"></td>
+								<td data-bind="text: cdo().dimensions"></td>
+							</tr>
+							<tr data-bind="visible: rdo().attributes.created">
+								<td data-bind="text: $root.lg().created"></td>
+								<td data-bind="text: rdo().attributes.created"></td>
+							</tr>
+							<tr data-bind="visible: rdo().attributes.modified">
+								<td data-bind="text: $root.lg().modified"></td>
+								<td data-bind="text: rdo().attributes.modified"></td>
+							</tr>
+						</table>
 					</div>
 				</div>
 				<!-- /ko -->

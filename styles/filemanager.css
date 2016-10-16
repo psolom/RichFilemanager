@@ -16,11 +16,6 @@
     overflow: hidden; /** prevent overflow if #uploader h1 path value is too long */
 }
 
-.fm-container video,
-.fm-container audio {
-    margin: 3em;
-}
-
 .fm-container .fm-header {
     display: block;
     text-align: right;
@@ -98,9 +93,7 @@
     outline-width: 0;
 }
 
-.fm-container .fm-header button.btn-grid span,
-.fm-container .fm-header button.btn-list span {
-    background-repeat: no-repeat;
+.fm-container .fm-header button.no-label span {
     background-position: center center;
 }
 
@@ -109,24 +102,24 @@
     border-style: inset;
 }
 
-.fm-container button.btn-grid span {
+.fm-container .fm-header .fm-btn-home span {
+    background-image: url(../images/house.png);
+}
+
+.fm-container .fm-header .fm-btn-level-up span {
+    background-image: url(../images/level-up.png);
+}
+
+.fm-container .fm-header .fm-btn-grid span {
     background-image: url(../images/application_view_icons.png);
 }
 
-.fm-container button.btn-list span {
+.fm-container .fm-header .fm-btn-list span {
     background-image: url(../images/application_view_list.png);
 }
 
-.fm-container button.edition {
-    color: black;
-}
-
-.fm-container #close-btn {
-    margin-top:5px;
-    display:block;
-    width:100%;
-    font-variant: small-caps;
-    padding:0.5em;
+.fm-container .fm-header .fm-btn-create-folder span {
+    background-image: url(../images/folder_add.png);
 }
 
 .fm-container .fm-splitter {
@@ -276,20 +269,11 @@
     color: #333;
 }
 
-.fm-container .fm-fileinfo .loading-view {
+.fm-container .fm-fileinfo .fm-loading-view {
     width: 30px;
     height: 30px;
     margin: 100px auto 0;
     background: url(../images/spinner.gif) no-repeat center center;
-}
-
-.fm-container #preview {
-    width: 100%;
-}
-
-.fm-container #preview > img {
-    margin: 25px;
-    max-width: 80%;
 }
 
 .fm-container .fm-fileinfo #main-title {
@@ -311,39 +295,43 @@
     margin-left: 1em;
 }
 
-.fm-container #preview dl {
-    display: block;
-    width: 400px;
-    margin: 10px auto;
-    overflow: auto;
+.fm-container .fm-preview {
+    width: 100%;
 }
 
-.fm-container #preview dl dt,
-.fm-container #preview dl dd {
-    display: block;
-    float: left;
-    width: 190px;
+.fm-container .fm-preview .fm-preview-viewer {
+    margin: 25px;
+}
+
+.fm-container .fm-preview .fm-preview-viewer img {
+    max-width: 80%;
+}
+
+.fm-container .fm-preview .fm-preview-details {
+    width: 400px;
+    margin: 20px auto;
+}
+
+.fm-container .fm-preview .fm-preview-details table {
+    width: 100%
+}
+
+.fm-container .fm-preview .fm-preview-details td {
+    width: 50%;
     padding: 4px;
     text-align: left;
     border-bottom: 1px dotted #ccc;
-    overflow: hidden;
 }
 
-.fm-container #preview dt {
-    clear: left;
-}
-
-.fm-container #preview dd {
+.fm-container .fm-preview .fm-preview-details td:nth-child(2) {
     font-weight: bold;
 }
 
-.fm-container #toolbar {
-    display: block;
-    clear: left;
-    margin: 50px auto;
+.fm-container .fm-preview .fm-preview-toolbar {
+    margin-top: 30px;
 }
 
-.fm-container #toolbar button {
+.fm-container .fm-preview .fm-preview-toolbar button {
     cursor: pointer;
 }
 
@@ -614,10 +602,6 @@
     background-position: center;
 }
 
-.fm-container #activity {
-    margin: 100px auto;
-}
-
 .fm-container .context-menu-list {
     min-width: 150px;
     background-color:#F4F1ED;
@@ -666,34 +650,34 @@
 .fm-container .fm-upload span { background-image: url(../images/upload.png); }
 .fm-container .fm-upload.loading span { background-image: url(../images/ajax-loader.gif);color:#555555;font-size:0.9em; }
 .fm-container #parentfolder span { background-image: url(../images/parentfolder.png); }
-.fm-container .fm-header .btn-newfolder span { background-image: url(../images/folder_add.png); }
-.fm-container #home span { background-image: url(../images/house.png); background-position: center; }
-.fm-container #level-up span { background-image: url(../images/level-up.png); background-position: center; }
 
-.fm-container a#edit-file {display:inline-block;background: url(../images/edit.png) no-repeat center center;width:20px;height:18px;margin:0 0.2em;}
-.fm-container a#copy-button {display:inline-block;background: url(../images/copy.png) no-repeat center center;width:20px;height:18px;margin:0 0.2em;}
-.fm-container span#copied {color:#8C8C8C;font-size:11px;font-weight: normal;vertical-align:middle;}
 
-.fm-container div.CodeMirror {
-    text-align:left;
-    width:70%;
+.fm-container .fm-preview .fm-btn-edit-file {
+    display: inline-block;
+    background: url(../images/edit.png) no-repeat center center;
+    width: 20px;
+    height: 18px;
+    margin: 0 0.2em;
+}
+
+.fm-container .fm-preview .fm-btn-clipboard {
+    display: inline-block;
+    background: url(../images/copy.png) no-repeat center center;
+    width: 20px;
+    height: 18px;
+    margin: 0 0.2em;
+}
+
+.fm-container .fm-preview .fm-preview-editor button {
+    color: black;
+}
+
+.fm-container .fm-preview .fm-preview-editor div.CodeMirror {
+    text-align: left;
+    width: 70%;
     border: 1px solid #eee;
     height: auto;
-    margin:2em auto;
-}
-
-.fm-container ul.jqueryFileTree a {
-    width: 100%;
-    color: #000000;
-}
-
-.fm-container ul.jqueryFileTree a:hover,
-.fm-container ul.jqueryFileTree a.drop-hover {
-    background-color: #e0e0e0;
-}
-
-.fm-container ul.jqueryFileTree li.selected > a {
-    font-weight: normal;
+    margin: 2em auto;
 }
 
 
@@ -715,10 +699,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
 html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
 html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     height: 23px;
-}
-
-.fm-container #fm-pdf-viewer {
-    margin-top: 3em;
 }
 
 .fm-container div.CodeMirror.CodeMirror-fullscreen {
@@ -1326,4 +1306,12 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-popup.alertify #summary-popup .line {
     line-height: 1.4em;
+}
+
+#fm-js-btn-close {
+    margin-top: 5px;
+    display: block;
+    width: 100%;
+    font-variant: small-caps;
+    padding: 0.5em;
 }

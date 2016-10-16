@@ -37,8 +37,7 @@
     color: #444;
 }
 
-.fm-container #preview dl dt,
-.fm-container #preview dl dd {
+.fm-container .fm-preview .fm-preview-details td {
     color: #333;
     border-bottom: 1px dotted #efefef;
 }
@@ -108,15 +107,6 @@
 
 .fm-container .view-items.list td {
     border-bottom: 1px dotted #efefef;
-}
-
-.fm-container ul.jqueryFileTree a {
-    color: #efefef;
-}
-
-.fm-container ul.jqueryFileTree a:hover,
-.fm-container ul.jqueryFileTree a.drop-hover {
-    background-color: #545450;
 }
 
 .fm-popup.alertify .fm-fileupload-container #total-progress {
