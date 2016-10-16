@@ -81,74 +81,75 @@
             "rar"
         ]
     },
-    "preview": {
+    "viewer": {
         "absolutePath": true,
-        "previewUrl": false
-    },
-    "images": {
-        "showThumbs": true,
-        "imagesExt": [
-            "jpg",
-            "jpe",
-            "jpeg",
-            "gif",
-            "png",
-            "svg"
-        ]
-    },
-    "videos": {
-        "showVideoPlayer": true,
-        "videosExt": [
-            "ogv",
-            "mp4",
-            "webm",
-            "m4v"
-        ],
-        "videosPlayerWidth": 400,
-        "videosPlayerHeight": 222
-    },
-    "audios": {
-        "showAudioPlayer": true,
-        "audiosExt": [
-            "ogg",
-            "mp3",
-            "wav"
-        ]
-    },
-    "pdfs": {
-        "showPdfReader": true,
-        "pdfsExt": [
-            "pdf",
-            "odt",
-            "odp",
-            "ods"
-        ],
-        "pdfsReaderWidth": "640",
-        "pdfsReaderHeight": "480"
-    },
-    "docs": {
-        "showGoogleViewer": true,
-        "docsExt": [
-            "doc",
-            "docx",
-            "xls",
-            "xlsx",
-            "ppt",
-            "pptx"
-        ],
-        "docsReaderWidth": "640",
-        "docsReaderHeight": "480"
-    },
-    "edit": {
-        "enabled": true,
-        "lineNumbers": true,
-        "lineWrapping": true,
-        "codeHighlight": false,
-        "theme": "elegant",
-        "editExt": [
-            "txt",
-            "csv"
-        ]
+        "previewUrl": false,
+        "image": {
+            "enabled": true,
+            "showThumbs": true,
+            "extensions": [
+                "jpg",
+                "jpe",
+                "jpeg",
+                "gif",
+                "png",
+                "svg"
+            ]
+        },
+        "video": {
+            "enabled": true,
+            "extensions": [
+                "ogv",
+                "mp4",
+                "webm",
+                "m4v"
+            ],
+            "playerWidth": 400,
+            "playerHeight": 222
+        },
+        "audio": {
+            "enabled": true,
+            "extensions": [
+                "ogg",
+                "mp3",
+                "wav"
+            ]
+        },
+        "opendoc": {
+            "enabled": true,
+            "extensions": [
+                "pdf",
+                "odt",
+                "odp",
+                "ods"
+            ],
+            "readerWidth": "640",
+            "readerHeight": "480"
+        },
+        "google": {
+            "enabled": true,
+            "extensions": [
+                "doc",
+                "docx",
+                "xls",
+                "xlsx",
+                "ppt",
+                "pptx"
+            ],
+            "readerWidth": "640",
+            "readerHeight": "480"
+        },
+        "editable": {
+            "enabled": true,
+            "theme": "elegant",
+            "lineNumbers": true,
+            "lineWrapping": true,
+            "codeHighlight": false,
+            "extensions": [
+                "txt",
+                "csv"
+            ]
+        }
     },
     "customScrollbar": {
     	"enabled": true,

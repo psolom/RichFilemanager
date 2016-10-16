@@ -323,14 +323,13 @@ $.richFmPlugin = function(element, options)
 		loadJS('/scripts/zeroclipboard/dist/ZeroClipboard.js');
 
 		// Loading CodeMirror if enabled for online edition
-		if(config.edit.enabled) {
+		if(config.viewer.editable.enabled) {
 			loadCSS('/scripts/CodeMirror/lib/codemirror.css');
-			loadCSS('/scripts/CodeMirror/theme/' + config.edit.theme + '.css');
+			loadCSS('/scripts/CodeMirror/theme/' + config.viewer.editable.theme + '.css');
 			loadJS('/scripts/CodeMirror/lib/codemirror.js');
 			loadJS('/scripts/CodeMirror/addon/selection/active-line.js');
 			loadCSS('/scripts/CodeMirror/addon/display/fullscreen.css');
 			loadJS('/scripts/CodeMirror/addon/display/fullscreen.js');
-			loadJS('/scripts/CodeMirror/dynamic-mode.js');
 		}
 
 		if(config.customScrollbar.enabled) {
@@ -693,35 +692,35 @@ $.richFmPlugin = function(element, options)
 					options: {}
 				};
 
-				if(isEditableFile(filename) && config.edit.enabled == true) {
-					viewerObject.type = 'edit';
+				if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
+					viewerObject.type = 'editable';
 				}
-				if(isAudioFile(filename) && config.audios.showAudioPlayer === true) {
+				if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
 					viewerObject.type = 'audio';
 					viewerObject.url = createPreviewUrl(resourceObject, true);
 				}
-				if(isVideoFile(filename) && config.videos.showVideoPlayer === true) {
+				if(isVideoFile(filename) && config.viewer.video.enabled === true) {
 					viewerObject.type = 'video';
 					viewerObject.url = createPreviewUrl(resourceObject, true);
 					viewerObject.options = {
-						width: config.videos.videosPlayerWidth,
-						height: config.videos.videosPlayerHeight
+						width: config.viewer.video.playerWidth,
+						height: config.viewer.video.playerHeight
 					};
 				}
-				if(isPdfFile(filename) && config.pdfs.showPdfReader === true) {
-					viewerObject.type = 'pdf';
+				if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
+					viewerObject.type = 'opendoc';
 					viewerObject.url = fm.settings.pluginPath + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
 					viewerObject.options = {
-						width: config.pdfs.pdfsReaderWidth,
-						height: config.pdfs.pdfsReaderHeight
+						width: config.viewer.opendoc.readerWidth,
+						height: config.viewer.opendoc.readerHeight
 					};
 				}
-				if(isDocumentFile(filename) && config.docs.showGoogleViewer === true) {
+				if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
 					viewerObject.type = 'google';
 					viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
 					viewerObject.options = {
-						width: config.docs.docsReaderWidth,
-						height: config.docs.docsReaderHeight
+						width: config.viewer.google.readerWidth,
+						height: config.viewer.google.readerHeight
 					};
 				}
 
@@ -1852,32 +1851,34 @@ $.richFmPlugin = function(element, options)
 
 	// Test if is editable file
 	var isEditableFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.edit.editExt) !== -1);
+		return ($.inArray(getExtension(filename), config.viewer.editable.extensions) !== -1);
 	};
 
 	// Test if is image file
 	var isImageFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.images.imagesExt) !== -1);
+		return ($.inArray(getExtension(filename), config.viewer.image.extensions) !== -1);
 	};
 
 	// Test if file is supported web video file
 	var isVideoFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.videos.videosExt) !== -1);
+		return ($.inArray(getExtension(filename), config.viewer.video.extensions) !== -1);
 	};
 
 	// Test if file is supported web audio file
 	var isAudioFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.audios.audiosExt) !== -1);
+		return ($.inArray(getExtension(filename), config.viewer.audio.extensions) !== -1);
 	};
 
-	// Test if file is pdf file
-	var isPdfFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.pdfs.pdfsExt) !== -1);
+	// Test if file is opendoc file
+	// Supported file types: http://viewerjs.org/examples/
+	var isOpenDocFile = function(filename) {
+		return ($.inArray(getExtension(filename), config.viewer.opendoc.extensions) !== -1);
 	};
 
-	// Test if file is document file
-	var isDocumentFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.docs.docsExt) !== -1);
+	// Test if file is supported by Google Docs viewer
+	// Supported file types: http://stackoverflow.com/q/24325363/1789808
+	var isGoogleDocsFile = function(filename) {
+		return ($.inArray(getExtension(filename), config.viewer.google.extensions) !== -1);
 	};
 
 	var buildConnectorUrl = function(params) {
@@ -1893,7 +1894,7 @@ $.richFmPlugin = function(element, options)
 	var createPreviewUrl = function(resourceObject, encode) {
 		encode = encode || false;
 		var objectPath = resourceObject.attributes.path;
-		if(config.preview.absolutePath && objectPath) {
+		if(config.viewer.absolutePath && objectPath) {
 			if(encode) {
 				objectPath = encodePath(objectPath);
 			}
@@ -1918,15 +1919,18 @@ $.richFmPlugin = function(element, options)
 				imagePath = iconsFolderPath + 'locked_' + config.icons.default;
 			} else {
 				var fileType = getExtension(resourceObject.id);
-				var isAllowedImage = isImageFile(resourceObject.id);
 				var iconFilename = fileType + '.png';
 				imagePath = iconsFolderPath + config.icons.default;
 
-				if(!(isAllowedImage && config.images.showThumbs) && fileIcons.indexOf(iconFilename) !== -1) {
+				if(fileIcons.indexOf(iconFilename) !== -1) {
 					imagePath = iconsFolderPath + iconFilename;
 				}
-				if(isAllowedImage) {
-					if(config.preview.absolutePath && !thumbnail && resourceObject.attributes.path) {
+
+				if (isImageFile(resourceObject.id) &&
+					(thumbnail && config.viewer.image.showThumbs) ||
+					(!thumbnail && config.viewer.image.enabled === true)
+				) {
+					if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
 						imagePath = buildAbsolutePath(encodePath(resourceObject.attributes.path));
 					} else {
 						var queryParams = {path: resourceObject.id};
@@ -1947,7 +1951,7 @@ $.richFmPlugin = function(element, options)
 	};
 
 	var buildAbsolutePath = function(path) {
-		var url = (typeof config.preview.previewUrl === "string") ? config.preview.previewUrl : baseUrl;
+		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : baseUrl;
 		return trimSlashes(url) + path + '?t=' + (new Date().getTime());
 	};
 
@@ -2403,7 +2407,7 @@ $.richFmPlugin = function(element, options)
 					fmModel.previewModel.editor.enabled(true);
 					fmModel.previewModel.editor.content(response.data.attributes.content);
 					// instantiate codeMirror according to config options
-					var codeMirrorInstance = instantiateCodeMirror(getExtension(resourceObject.id), config, loadJS);
+					var codeMirrorInstance = instantiateCodeMirror(resourceObject.attributes.extension);
 					fmModel.previewModel.editor.codeMirror(codeMirrorInstance);
 				}
 				handleAjaxResponseErrors(response);
@@ -2983,6 +2987,69 @@ $.richFmPlugin = function(element, options)
 					fm.error(lg.upload_failed);
 				});
 		}
+	};
+
+	var instantiateCodeMirror = function(extension) {
+		var currentMode;
+
+		// if no code highlight needed, we apply default settings
+		if (!config.viewer.editable.codeHighlight) {
+			currentMode = 'default';
+			// we highlight code according to extension file
+		} else {
+			if (extension === 'txt') {
+				currentMode = 'default';
+			}
+			if (extension === 'js') {
+				loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
+				currentMode = 'javascript';
+			}
+			if (extension === 'css') {
+				loadJS('./scripts/CodeMirror/mode/css/css.js');
+				currentMode = 'css';
+			}
+			if (extension === 'html') {
+				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+				currentMode = 'text/html';
+			}
+			if (extension === 'xml') {
+				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+				currentMode = 'application/xml';
+			}
+			if (extension === 'php') {
+				loadJS('./scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+				loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
+				loadJS('./scripts/CodeMirror/mode/css/css.js');
+				loadJS('./scripts/CodeMirror/mode/clike/clike.js');
+				loadJS('./scripts/CodeMirror/mode/php/php.js');
+				currentMode = 'application/x-httpd-php';
+			}
+			if (extension === 'sql') {
+				loadJS('./scripts/CodeMirror/mode/sql/sql.js');
+				currentMode = 'text/x-mysql';
+			}
+		}
+
+		var editor = CodeMirror.fromTextArea(document.getElementById("edit-content"), {
+			styleActiveLine: true,
+			viewportMargin: Infinity,
+			lineNumbers: config.viewer.editable.lineNumbers,
+			lineWrapping: config.viewer.editable.lineWrapping,
+			theme: config.viewer.editable.theme,
+			extraKeys: {
+				"F11": function (cm) {
+					cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+				},
+				"Esc": function (cm) {
+					if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+				}
+			}
+		});
+
+		// set option finally
+		editor.setOption("mode", currentMode);
+		return editor;
 	};
 
 	// call the "constructor" method

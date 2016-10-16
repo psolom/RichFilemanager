@@ -204,7 +204,7 @@
 						<!-- ko if: viewer().type === 'image' -->
 						<img src="" data-bind="attr: {src: viewer().url}" />
 						<!-- /ko -->
-						<!-- ko if: viewer().type === 'edit' -->
+						<!-- ko if: viewer().type === 'editable' -->
 						<img src="" data-bind="attr: {src: viewer().url}, visible: !editor.enabled()" />
 						<!-- /ko -->
 						<!-- ko if: viewer().type === 'audio' -->
@@ -213,7 +213,7 @@
 						<!-- ko if: viewer().type === 'video' -->
 						<video src="" controls="controls" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}"></video>
 						<!-- /ko -->
-						<!-- ko if: viewer().type === 'pdf' -->
+						<!-- ko if: viewer().type === 'opendoc' -->
 						<iframe src="" id="fm-pdf-viewer" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
 						<!-- /ko -->
 						<!-- ko if: viewer().type === 'google' -->
@@ -235,7 +235,7 @@
 						<div id="main-title">
 							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
 							<div id="tools">
-								<a id="edit-file" href="#" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().type === 'edit' && !editor.enabled()"></a>
+								<a id="edit-file" href="#" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
 								<a id="copy-button" href="#" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}, click: copyClipboard"></a>
 							</div>
 						</div>
