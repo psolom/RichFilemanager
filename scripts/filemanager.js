@@ -246,7 +246,7 @@ $.richFmPlugin = function(element, options)
 			if(getExtension(baseUrl).length > 0) {
 				baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
 			}
-			baseUrl = trimSlashes(baseUrl) + '/';
+			baseUrl = trim(baseUrl, '/') + '/';
 
 			// setup apiConnector
 			var langConnector = 'connectors/' + config.api.lang + '/filemanager.' + config.api.lang;
@@ -432,7 +432,7 @@ $.richFmPlugin = function(element, options)
 							return (type === "file" || type === "folder");
 						},
 						drop: function(event, ui) {
-							moveItem(ko.dataFor(ui.draggable[0]), ko.dataFor(event.target));
+							moveItem(ko.dataFor(ui.draggable[0]), ko.dataFor(event.target).id);
 						}
 					});
 				}
@@ -479,7 +479,7 @@ $.richFmPlugin = function(element, options)
 							return (type === "file" || type === "folder");
 						},
 						drop: function(event, ui) {
-							moveItem(ko.dataFor(ui.draggable[0]), ko.dataFor(event.target));
+							moveItem(ko.dataFor(ui.draggable[0]), ko.dataFor(event.target).id);
 						}
 					});
 				}
@@ -946,6 +946,7 @@ $.richFmPlugin = function(element, options)
 				// attach context menu
 				$(elements[1]).contextMenu({
 					selector: '.file, .directory',
+					zIndex: 100,
 					// wrap options with "build" allows to get item element
 					build: function ($triggerElement, e) {
 						return {
@@ -1242,6 +1243,7 @@ $.richFmPlugin = function(element, options)
 				// context menu
 				$fileinfo.contextMenu({
 					selector: '.file, .directory',
+					zIndex: 100,
 					// wrap options with "build" allows to get item element
 					build: function ($triggerElement, e) {
 						var koItem = ko.dataFor($triggerElement[0]);
@@ -1780,9 +1782,16 @@ $.richFmPlugin = function(element, options)
 		return path.charAt(path.length - 1) !== '/';
 	};
 
-	// Replace all leading or trailing slashes with an empty string
-	var trimSlashes = function(string) {
-		return string.replace(/^\/+|\/+$/g, '');
+	// Replace all leading or trailing chars with an empty string
+	var trim = function(string, char) {
+		var regExp = new RegExp('^' + char + '+|' + char + '+$', 'g');
+		return string.replace(regExp, '');
+	};
+
+	// Replace all trailing chars with an empty string
+	var rtrim = function(string, char) {
+		var regExp = new RegExp(char + '+$', 'g');
+		return string.replace(regExp, '');
 	};
 
 	var encodePath = function(path) {
@@ -1948,7 +1957,7 @@ $.richFmPlugin = function(element, options)
 
 	var buildAbsolutePath = function(path) {
 		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : baseUrl;
-		return trimSlashes(url) + path + '?t=' + (new Date().getTime());
+		return trim(url, '/') + path + '?t=' + (new Date().getTime());
 	};
 
 	// Returns container for filetree or fileinfo section based on scrollbar plugin state
@@ -2126,10 +2135,14 @@ $.richFmPlugin = function(element, options)
 						}
 
 						// handle view objects
-						var sourceObject = fmModel.itemsModel.findByParam('id', oldPath);
-						if(sourceObject) {
-							sourceObject.remove();
-							fmModel.itemsModel.addNew(newItem);
+						var sourceItem = fmModel.itemsModel.findByParam('id', oldPath);
+						if(sourceItem) {
+							if(sourceItem.rdo.type === 'parent') {
+								sourceItem.id = newItem.id;
+							} else {
+								sourceItem.remove();
+								fmModel.itemsModel.addNew(newItem);
+							}
 						}
 						// ON rename currently open folder
 						if(fmModel.currentPath() === oldPath) {
@@ -2144,9 +2157,8 @@ $.richFmPlugin = function(element, options)
 						if(config.options.showConfirmation) {
 							fm.success(lg.successful_rename);
 						}
-					} else {
-						fm.error(result['Error']);
 					}
+					handleAjaxResponseErrors(response);
 				},
 				error: handleAjaxError
 			});
@@ -2246,22 +2258,22 @@ $.richFmPlugin = function(element, options)
 	};
 
 	// Move the current item to specified dir and returns the new name.
-	// Called by clicking the "Move" button in detail views
+	// Called by clicking the "Move" button in de tail views
 	// or choosing the "Move" contextual menu option in list views.
-	var moveItemPrompt = function(data) {
+	var moveItemPrompt = function(resourceObject) {
 		var doMove = function(e, ui) {
-			var newPath = ui.getInputValue();
-			if(!newPath) {
+			var targetPath = ui.getInputValue();
+			if(!targetPath) {
 				fm.error(lg.prompt_foldername);
 				return;
 			}
-
-			moveItem(data['Path'], newPath);
+			targetPath = rtrim(targetPath, '/') + '/';
+			moveItem(resourceObject, targetPath);
 		};
 
 		fm.prompt({
 			message: lg.move,
-			value: config.security.allowChangeExtensions ? data['Filename'] : getFilename(data['Filename']),
+			value: fmModel.currentPath(),
 			okBtn: {
 				label: lg.move,
 				autoClose: false,
@@ -2281,31 +2293,28 @@ $.richFmPlugin = function(element, options)
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in detail views
 	// or choosing the "Move" contextual menu option in list views.
-	var moveItem = function(sourceItem, targetItem) {
-		var oldPath = sourceItem.id,
-			newPath = targetItem.id;
-
+	var moveItem = function(resourceObject, targetPath) {
 		$.ajax({
 			type: 'GET',
 			url: buildConnectorUrl({
 				mode: 'move',
-				old: oldPath,
-				new: newPath
+				old: resourceObject.id,
+				new: targetPath
 			}),
 			dataType: 'json',
 			success: function(response) {
 				if(response.data) {
 					var newItem = response.data;
 
-					fmModel.removeItem(sourceItem);
-					fmModel.addItem(newItem, newPath);
+					fmModel.removeItem(resourceObject);
+					fmModel.addItem(newItem, targetPath);
 
 					// ON move currently open folder to another folder
-					if(fmModel.currentPath() === sourceItem.id) {
+					if(fmModel.currentPath() === resourceObject.id) {
 						fmModel.itemsModel.loadList(newItem.id);
 					}
 					// ON move currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === sourceItem.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
 						fmModel.previewFile(false);
 					}
 

@@ -18,36 +18,18 @@ abstract class BaseFilemanager
     const TYPE_FILE = 'file';
     const TYPE_FOLDER = 'folder';
 
-    public $config = array();
-    protected $refParams = array();
-    protected $language = array();
-    protected $get = array();
-    protected $post = array();
+    public $config = [];
+    protected $refParams = [];
+    protected $language = [];
+    protected $get = [];
+    protected $post = [];
     protected $fm_path = '';
 
     /**
-     * Default file information template
+     * File item model template
      * @var array
      */
-//    protected $defaultInfo = array(
-//        'Path'          => '',
-//        'Filename'      => '',
-//        'File Type'     => '',
-//        'Protected'     => 0,
-//        'PreviewPath'   => '',
-//        'Error'         => '',
-//        'Code'          => 0,
-//        'Properties'    => array(
-//            'Date Created'  => '',
-//            'Date Modified' => '',
-//            'filemtime'     => '',
-//            'Height'        => 0,
-//            'Width'         => 0,
-//            'Size'          => 0
-//        ),
-//    );
-
-    protected $fileModel = array(
+    protected $fileModel = [
         "id"    => '',
         "type"  => self::TYPE_FILE,
         "attributes" => [
@@ -62,9 +44,13 @@ abstract class BaseFilemanager
             'width'     => 0,
             'size'      => 0,
         ]
-    );
+    ];
 
-    protected $folderModel = array(
+    /**
+     * Folder item model template
+     * @var array
+     */
+    protected $folderModel = [
         "id"    => '',
         "type"  => self::TYPE_FOLDER,
         "attributes" => [
@@ -75,13 +61,13 @@ abstract class BaseFilemanager
             'modified'  => '',
             'timestamp' => '',
         ]
-    );
+    ];
 
     /**
      * BaseFilemanager constructor.
      * @param array $config
      */
-    public function __construct($config = array())
+    public function __construct($config = [])
     {
         // fix display non-latin chars correctly
         // https://github.com/servocoder/RichFilemanager/issues/7
@@ -321,7 +307,7 @@ abstract class BaseFilemanager
     {
         $tmp = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
         $tmp = explode('?',$tmp);
-        $params = array();
+        $params = [];
         if(isset($tmp[1]) && $tmp[1]!='') {
             $params_tmp = explode('&',$tmp[1]);
             if(is_array($params_tmp)) {
@@ -585,13 +571,13 @@ abstract class BaseFilemanager
     public function is_image_file($file)
     {
         $mime = mime_content_type($file);
-        $imagesMime = array(
+        $imagesMime = [
             "image/jpeg",
             "image/png",
             "image/gif",
             "image/bmp",
             "image/svg+xml",
-        );
+        ];
         return in_array($mime, $imagesMime);
     }
 }
