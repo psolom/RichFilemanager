@@ -80,7 +80,7 @@ abstract class BaseFilemanager
         }
 
         $this->config = $config;
-        $this->fm_path = $this->config['fmPath'] ? $this->config['fmPath'] : dirname(dirname(dirname(__FILE__)));
+        $this->fm_path = $this->config['fmPath'] ? $this->config['fmPath'] : dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])));
 
         // extend server config options with the client ones which are common for both
         if($this->config['extendConfigClient'] === true) {

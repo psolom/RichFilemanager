@@ -19,7 +19,7 @@ class LocalFilemanager extends BaseFilemanager
 	protected $allowed_actions = [];
 	protected $doc_root;
 	protected $path_to_files;
-	protected $dynamic_fileroot = 'userfiles';
+	protected $dynamic_fileroot;
 
 	public function __construct($config = [])
     {
@@ -30,20 +30,22 @@ class LocalFilemanager extends BaseFilemanager
 			// takes $_SERVER['DOCUMENT_ROOT'] as files root; "fileRoot" is a suffix
 			if($this->config['options']['serverRoot'] === true) {
 				$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
-				$this->dynamic_fileroot = $fileRoot;
 				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
 			}
 			// takes "fileRoot" as files root; "fileRoot" is a full server path
 			else {
 				$this->doc_root = $fileRoot;
-				$this->dynamic_fileroot = '';
 				$this->path_to_files = $fileRoot;
 			}
 		} else {
 			$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
-			$this->path_to_files = $this->fm_path . '/' . $this->dynamic_fileroot;
+			$this->path_to_files = $this->fm_path . '/userfiles';
 		}
+
+		// normalize slashes in paths
+        $this->doc_root = $this->cleanPath($this->doc_root);
 		$this->path_to_files = $this->cleanPath($this->path_to_files);
+        $this->dynamic_fileroot = $this->subtractPath($this->path_to_files, $this->doc_root);
 
 		Log::info('$this->fm_path: "' . $this->fm_path . '"');
 		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
@@ -910,18 +912,18 @@ class LocalFilemanager extends BaseFilemanager
 	}
 
 	/**
-	 * Returns path without document root but including "dynamic_fileroot"
+	 * Returns path without document root
 	 * @param string $fullPath
 	 * @return mixed
 	 */
 	protected function getDynamicPath($fullPath)
 	{
-		if(empty($this->dynamic_fileroot)) {
-			return '';
-		}
-		$pos = strrpos($fullPath, $this->dynamic_fileroot);
-		$dPath = '/' . substr($fullPath, $pos);
-		return $this->cleanPath($dPath);
+	    // empty string makes FM to use connector path for preview instead of absolute path
+        if(empty($this->dynamic_fileroot)) {
+            return '';
+        }
+	    $path = $this->dynamic_fileroot . '/' . $this->getRelativePath($fullPath);
+        return $this->cleanPath($path);
 	}
 
 	/**
@@ -931,10 +933,21 @@ class LocalFilemanager extends BaseFilemanager
 	 */
     protected function getRelativePath($fullPath)
     {
-		$position = strrpos($fullPath, $this->path_to_files);
+		return $this->subtractPath($fullPath, $this->path_to_files);
+	}
+
+	/**
+	 * Subtracts subpath from the fullpath
+	 * @param string $fullPath
+	 * @param string $subPath
+     * @return string
+	 */
+    protected function subtractPath($fullPath, $subPath)
+    {
+		$position = strrpos($fullPath, $subPath);
         if($position === 0) {
-            $relative_path = substr($fullPath, strlen($this->path_to_files));
-            return $this->cleanPath('/' . $relative_path);
+            $path = substr($fullPath, strlen($subPath));
+            return $path ? $this->cleanPath('/' . $path) : '';
         }
         return '';
 	}
