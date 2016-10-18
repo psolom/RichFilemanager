@@ -237,20 +237,22 @@ $.richFmPlugin = function(element, options)
 			config = $.extend({}, config_default, config_user);
 
 			// setup baseUrl
-			if(config.options.baseUrl === false) {
-				baseUrl = location.origin + location.pathname;
-			} else {
-				baseUrl = config.options.baseUrl;
-			}
-			// for url like http://site.com/index.html
-			if(getExtension(baseUrl).length > 0) {
-				baseUrl = baseUrl.substring(0, baseUrl.lastIndexOf('/') + 1);
-			}
-			baseUrl = trim(baseUrl, '/') + '/';
+			baseUrl = (config.options.baseUrl === false) ? location.origin : config.options.baseUrl;
+			baseUrl = rtrim(baseUrl, '/');
 
 			// setup apiConnector
-			var langConnector = 'connectors/' + config.api.lang + '/filemanager.' + config.api.lang;
-			apiConnector = config.api.connectorUrl || baseUrl + langConnector;
+			if(config.api.connectorUrl) {
+				apiConnector = config.api.connectorUrl;
+			} else {
+				var connectorUrl = baseUrl + location.pathname;
+				var langConnector = 'connectors/' + config.api.lang + '/filemanager.' + config.api.lang;
+
+				// for url like http://site.com/index.html
+				if(getExtension(connectorUrl).length > 0) {
+					connectorUrl = connectorUrl.substring(0, connectorUrl.lastIndexOf('/') + 1);
+				}
+				apiConnector = connectorUrl + langConnector;
+			}
 		});
 	};
 
