@@ -495,18 +495,11 @@
     cursor: pointer;
 }
 
-.fm-container .view-items.grid li.file div.clip,
-.fm-container .view-items.grid li.directory div.clip {
+.fm-container .view-items.grid div.clip {
     width: 64px;
     height: 64px;
     margin: 10px auto;
     overflow: hidden;
-}
-
-.fm-container .view-items.grid li.directory-parent div.clip {
-    width: 128px;
-    height: 128px;
-    margin: 0 auto;
 }
 
 .fm-container .view-items.grid li.drop-hover,
@@ -818,7 +811,95 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 
-/** ICONS - Item type related styles **/
+/** Modal dialog by Alertify plugin */
+
+.fm-popup.alertify,
+.fm-log.alertify-logs {
+    font-family: Oxygen, Lucida Sans Unicode, Lucida Grande, sans-serif;
+}
+
+.fm-log.alertify-logs {
+    position: absolute;
+    font-size: 13px;
+    line-height: 13px;
+}
+
+.fm-popup.alertify .alert,
+.fm-popup.alertify .dialog {
+    text-align: center;
+    font-size: 12px;
+}
+
+.fm-popup.alertify .alert>*,
+.fm-popup.alertify .dialog>* {
+    width: auto;
+    display: inline-block;
+}
+
+.fm-popup.alertify .alert [data-alertify-btn-holder] [data-alertify-btn]:not(.btn):not(.pure-button):not(.md-button):not(.mdl-button),
+.fm-popup.alertify .dialog [data-alertify-btn-holder] [data-alertify-btn]:not(.btn):not(.pure-button):not(.md-button):not(.mdl-button) {
+    font-size: 13px;
+    line-height: 32px;
+    min-height: 32px;
+}
+
+.fm-popup.alertify div.prompt-info {
+    line-height: 12px;
+    min-height: 15px;
+    margin-top: 5px;
+    padding-left: 25px;
+    color: #444;
+    background: transparent url(../images/info.png) no-repeat 0 0;
+    background-position: left center;
+}
+
+.fm-popup.alertify .fm-fileupload-container {
+    width: auto;
+    min-width: 200px;
+    max-width: 825px;
+}
+
+.fm-popup.alertify .fm-fileupload-container h2 {
+    font-size: 1.2em;
+    font-weight: bold;
+}
+
+.fm-popup.alertify .fm-fileupload-container #total-progress {
+    width: 100%;
+    height: 5px;
+    margin-bottom: 10px;
+    background-color: #A7A1C6;
+    overflow: hidden;
+}
+
+.fm-popup.alertify .fm-fileupload-container #total-progress .progress-bar {
+    height: 5px;
+    background-color: #294750;
+}
+
+.fm-popup.alertify #summary-popup {
+    font-size: 1.2em;
+}
+
+.fm-popup.alertify #summary-popup .title {
+    font-weight: bold;
+    margin-bottom: 0.8em;
+}
+
+.fm-popup.alertify #summary-popup .line {
+    line-height: 1.4em;
+}
+
+#fm-js-btn-close {
+    margin-top: 5px;
+    display: block;
+    width: 100%;
+    font-variant: small-caps;
+    padding: 0.5em;
+}
+
+
+/** ICONS - List view and File tree related styles **/
 
 .fm-fileinfo .list-icon.ico_folder,
 .fm-filetree li span.button.ico_folder {
@@ -851,7 +932,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 
-/** ICONS - File extension related styles **/
+/** ICONS - List view and File tree related styles based on file extension **/
 
 .fm-fileinfo .list-icon.ico_ext_3g2,
 .fm-filetree li span.button.ico_ext_3g2 {
@@ -1229,98 +1310,285 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 
-/** Modal dialog by Alertify plugin */
+/** ICONS - Grid view related styles **/
 
-.fm-popup.alertify,
-.fm-log.alertify-logs {
-    font-family: Oxygen, Lucida Sans Unicode, Lucida Grande, sans-serif;
-}
-
-.fm-log.alertify-logs {
-    position: absolute;
-    font-size: 13px;
-    line-height: 13px;
-}
-
-.fm-popup.alertify .alert,
-.fm-popup.alertify .dialog {
-    text-align: center;
-    font-size: 12px;
-}
-
-.fm-popup.alertify .alert>*,
-.fm-popup.alertify .dialog>* {
-    width: auto;
-    display: inline-block;
-}
-
-.fm-popup.alertify .alert [data-alertify-btn-holder] [data-alertify-btn]:not(.btn):not(.pure-button):not(.md-button):not(.mdl-button),
-.fm-popup.alertify .dialog [data-alertify-btn-holder] [data-alertify-btn]:not(.btn):not(.pure-button):not(.md-button):not(.mdl-button) {
-    font-size: 13px;
-    line-height: 32px;
-    min-height: 32px;
-}
-
-.fm-popup.alertify div.prompt-info {
-    line-height: 12px;
-    min-height: 15px;
-    margin-top: 5px;
-    padding-left: 25px;
-    color: #444;
-    background: transparent url(../images/info.png) no-repeat 0 0;
-    background-position: left center;
-}
-
-.fm-popup.alertify .fm-fileupload-container {
-    width: auto;
-    min-width: 200px;
-    max-width: 825px;
-}
-
-.fm-popup.alertify .fm-fileupload-container h2 {
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
-.fm-popup.alertify .fm-fileupload-container #total-progress {
-    width: 100%;
-    height: 5px;
-    margin-bottom: 10px;
-    background-color: #A7A1C6;
-    overflow: hidden;
-}
-
-.fm-popup.alertify .fm-fileupload-container #total-progress .progress-bar {
-    height: 5px;
-    background-color: #294750;
-}
-
-.fm-popup.alertify #summary-popup {
-    font-size: 1.2em;
-}
-
-.fm-popup.alertify #summary-popup .title {
-    font-weight: bold;
-    margin-bottom: 0.8em;
-}
-
-.fm-popup.alertify #summary-popup .line {
-    line-height: 1.4em;
-}
-
-#fm-js-btn-close {
-    margin-top: 5px;
+.fm-fileinfo .grid-icon {
     display: block;
-    width: 100%;
-    font-variant: small-caps;
-    padding: 0.5em;
+    margin: 0 auto;
+    overflow: hidden;
+    text-indent: -200%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
 }
 
-/* CSS for the branch idea (attach to img tag to replace it) */
-/*
-background: url(./images/fileicons/txt.png) no-repeat;
-width: 64px;
-height: 64px;
-padding-left: 64px;
-background-size: cover;
-*/
+.fm-fileinfo .grid-icon {
+    width: 64px;
+    height: 64px;
+}
+
+.fm-fileinfo .fm-preview .grid-icon {
+    width: 128px;
+    height: 128px;
+}
+
+.fm-fileinfo .grid-icon.ico_file {
+    background-image: url(../images/fileicons/icon_file.png);
+}
+
+.fm-fileinfo .grid-icon.ico_file_lock {
+    background-image: url(../images/fileicons/icon_file_lock.png);
+}
+
+.fm-fileinfo .grid-icon.ico_folder {
+    background-image: url(../images/fileicons/icon_folder.png);
+}
+
+.fm-fileinfo .grid-icon.ico_folder_lock {
+    background-image: url(../images/fileicons/icon_folder_lock.png);
+}
+
+.fm-fileinfo .grid-icon.ico_folder_parent {
+    background-image: url(../images/fileicons/icon_folder_parent.png);
+}
+
+
+/** ICONS - Grid view related styles based on file extension **/
+
+.fm-fileinfo .grid-icon.ico_ext_3g2 {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_3gp {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_7z {
+    background-image: url(../images/fileicons/icon_zip.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_aac {
+    background-image: url(../images/fileicons/icon_aac.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_avi {
+    background-image: url(../images/fileicons/icon_avi.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_bmp {
+    background-image: url(../images/fileicons/icon_bmp.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_chm {
+    background-image: url(../images/fileicons/icon_chm.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_css {
+    background-image: url(../images/fileicons/icon_css.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_csv {
+    background-image: url(../images/fileicons/icon_txt.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_dll {
+    background-image: url(../images/fileicons/icon_dll.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_doc,
+.fm-fileinfo .grid-icon.ico_ext_docx {
+    background-image: url(../images/fileicons/icon_doc.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_fla {
+    background-image: url(../images/fileicons/icon_fla.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_gif {
+    background-image: url(../images/fileicons/icon_gif.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_htm,
+.fm-fileinfo .grid-icon.ico_ext_html {
+    background-image: url(../images/fileicons/icon_html.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_ini {
+    background-image: url(../images/fileicons/icon_ini.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_jar {
+    background-image: url(../images/fileicons/icon_jar.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_jpg,
+.fm-fileinfo .grid-icon.ico_ext_jpeg {
+    background-image: url(../images/fileicons/icon_jpg.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_js {
+    background-image: url(../images/fileicons/icon_js.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_lasso {
+    background-image: url(../images/fileicons/icon_lasso.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_m4p {
+    background-image: url(../images/fileicons/icon_music.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_m4v {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_mdb {
+    background-image: url(../images/fileicons/icon_mdb.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_mov {
+    background-image: url(../images/fileicons/icon_mov.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_mp3 {
+    background-image: url(../images/fileicons/icon_mp3.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_mp4 {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_mpg {
+    background-image: url(../images/fileicons/icon_mpg.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_mpeg {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_odp {
+    background-image: url(../images/fileicons/icon_odp.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_ods {
+    background-image: url(../images/fileicons/icon_ods.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_odt {
+    background-image: url(../images/fileicons/icon_odt.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_ogg {
+    background-image: url(../images/fileicons/icon_music.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_pcx {
+    background-image: url(../images/fileicons/icon_image.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_ogv {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_pdf {
+    background-image: url(../images/fileicons/icon_pdf.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_php {
+    background-image: url(../images/fileicons/icon_php.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_png {
+    background-image: url(../images/fileicons/icon_png.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_ppt,
+.fm-fileinfo .grid-icon.ico_ext_pptx {
+    background-image: url(../images/fileicons/icon_ppt.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_py {
+    background-image: url(../images/fileicons/icon_py.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_rar {
+    background-image: url(../images/fileicons/icon_zip.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_rb {
+    background-image: url(../images/fileicons/icon_rb.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_real {
+    background-image: url(../images/fileicons/icon_real.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_reg {
+    background-image: url(../images/fileicons/icon_reg.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_rtf {
+    background-image: url(../images/fileicons/icon_rtf.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_sql {
+    background-image: url(../images/fileicons/icon_sql.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_swf {
+    background-image: url(../images/fileicons/icon_swf.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_tar {
+    background-image: url(../images/fileicons/icon_zip.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_tif,
+.fm-fileinfo .grid-icon.ico_ext_tiff {
+    background-image: url(../images/fileicons/icon_image.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_txt {
+    background-image: url(../images/fileicons/icon_txt.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_vbs {
+    background-image: url(../images/fileicons/icon_vbs.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_wav {
+    background-image: url(../images/fileicons/icon_wav.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_weba {
+    background-image: url(../images/fileicons/icon_music.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_webm {
+    background-image: url(../images/fileicons/icon_movie.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_wma {
+    background-image: url(../images/fileicons/icon_wma.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_wmv {
+    background-image: url(../images/fileicons/icon_wmv.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_xls,
+.fm-fileinfo .grid-icon.ico_ext_xlsx {
+    background-image: url(../images/fileicons/icon_xls.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_xml {
+    background-image: url(../images/fileicons/icon_xml.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_xsl {
+    background-image: url(../images/fileicons/icon_xsl.png);
+}
+
+.fm-fileinfo .grid-icon.ico_ext_zip {
+    background-image: url(../images/fileicons/icon_zip.png);
+}

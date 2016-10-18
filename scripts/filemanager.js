@@ -50,7 +50,6 @@ $.richFmPlugin = function(element, options)
 		$uploadButton = $uploader.children('.fm-upload'),
 
 		HEAD_included_files = [],	// <head> included files collector
-		fileIcons = [],				// icons in config.icons.path folder
 		config = null,				// configuration options
 		lg = null,					// localized messages
 		fileRoot = '/',				// relative files root, may be changed with some query params
@@ -210,9 +209,6 @@ $.richFmPlugin = function(element, options)
 				return localize();
 			})
 			.then(function() {
-				return readIcons();
-			})
-			.then(function() {
 				return includeTemplates();
 			})
 			.then(function() {
@@ -287,21 +283,6 @@ $.richFmPlugin = function(element, options)
 					lg = conf_lg;
 				});
 			});
-	};
-
-	// read folder with icons for filetypes
-	var readIcons = function() {
-		return $.ajax({
-			type: 'GET',
-			url: fm.settings.pluginPath + '/' + config.icons.path + '/',
-			success: function(response) {
-				$(response).find("a").attr("href", function (i, filename) {
-					if(filename.match(/\.(png)$/) ) {
-						fileIcons.push(filename);
-					}
-				});
-			}
-		});
 	};
 
 	var includeTemplates = function() {
@@ -662,8 +643,9 @@ $.richFmPlugin = function(element, options)
 
 		var PreviewModel = function() {
 			var preview_item = this;
-			this.rdo = ko.observable({});
-			this.cdo = ko.observable({});
+
+			this.rdo = {};
+			this.cdo = {};
 			this.viewer = ko.observable({});
 			this.editor = {
 				enabled: ko.observable(false),
@@ -673,17 +655,19 @@ $.richFmPlugin = function(element, options)
 
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
-				if (has_capability(preview_item.rdo(), action)) {
-					performAction(action, preview_item.rdo());
+				if (has_capability(preview_item.rdo, action)) {
+					performAction(action, preview_item.rdo);
 				}
 			};
 
 			this.load = function(resourceObject) {
 				model.previewFile(false);
-				preview_item.rdo(resourceObject);
-				// computed data object
-				preview_item.cdo().sizeFormatted = formatBytes(resourceObject.attributes.size);
-				preview_item.cdo().dimensions = resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null;
+				preview_item.rdo = resourceObject; // original resource data object
+				preview_item.cdo = { // computed data object
+					isFolder: (resourceObject.type === 'folder'),
+					sizeFormatted: formatBytes(resourceObject.attributes.size),
+					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
+				};
 
 				var filename = resourceObject.attributes.name;
 				var viewerObject = {
@@ -724,6 +708,30 @@ $.richFmPlugin = function(element, options)
 					};
 				}
 
+				this.previewIconClass = ko.pureComputed(function() {
+					var cssClass = [],
+						extraClass = ['ico'];
+					if((viewerObject.type === 'image' || viewerObject.type === 'editable') && !viewerObject.url) {
+						cssClass.push('grid-icon');
+						if(this.cdo.isFolder === true) {
+							cssClass.push('ico_folder');
+							extraClass.push('folder');
+							if(this.rdo.attributes.protected) {
+								extraClass.push('lock');
+							}
+						} else {
+							cssClass.push('ico_file');
+							if(this.rdo.attributes.protected) {
+								extraClass.push('file', 'lock');
+							} else {
+								extraClass.push('ext', this.rdo.attributes.extension);
+							}
+						}
+						cssClass.push(extraClass.join('_'));
+					}
+					return cssClass.join(' ');
+				}, this);
+
 				// zeroClipboard code
 				ZeroClipboard.config({swfPath: fm.settings.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
 				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
@@ -739,11 +747,11 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.editFile = function() {
-				editItem(preview_item.rdo())
+				editItem(preview_item.rdo)
 			};
 
 			this.saveFile = function() {
-				saveItem(preview_item.rdo())
+				saveItem(preview_item.rdo)
 			};
 
 			this.closeEditor = function() {
@@ -753,14 +761,14 @@ $.richFmPlugin = function(element, options)
 			this.buttonVisibility = function(action) {
 				switch(action) {
 					case 'select':
-						return (has_capability(preview_item.rdo(), action) && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId')));
+						return (has_capability(preview_item.rdo, action) && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId')));
 					case 'move':
 					case 'rename':
 					case 'delete':
 					case 'replace':
-						return (has_capability(preview_item.rdo(), action) && config.options.browseOnly !== true);
+						return (has_capability(preview_item.rdo, action) && config.options.browseOnly !== true);
 					case 'download':
-						return (has_capability(preview_item.rdo(), action));
+						return (has_capability(preview_item.rdo, action));
 				}
 			};
 		};
@@ -1194,9 +1202,6 @@ $.richFmPlugin = function(element, options)
 						id: parentPath,
 						rdo: {
 							type: 'parent'
-						},
-						cdo: {
-							imageUrl: fm.settings.pluginPath + '/' + config.icons.path + '/' + config.icons.parent
 						}
 					};
 
@@ -1297,6 +1302,30 @@ $.richFmPlugin = function(element, options)
 						}
 					}
 					return cssClass + ' ' + extraClass.join('_');
+				}, this);
+
+				this.gridIconClass = ko.pureComputed(function() {
+					var cssClass = [],
+						extraClass = ['ico'];
+					if(!this.cdo.imageUrl) {
+						cssClass.push('grid-icon');
+						if(this.cdo.isFolder === true) {
+							cssClass.push('ico_folder');
+							extraClass.push('folder');
+							if(this.rdo.attributes.protected) {
+								extraClass.push('lock');
+							}
+						} else {
+							cssClass.push('ico_file');
+							if(this.rdo.attributes.protected) {
+								extraClass.push('file', 'lock');
+							} else {
+								extraClass.push('ext', this.rdo.attributes.extension);
+							}
+						}
+						cssClass.push(extraClass.join('_'));
+					}
+					return cssClass.join(' ');
 				}, this);
 
 				this.open = function() {
@@ -1915,41 +1944,24 @@ $.richFmPlugin = function(element, options)
 	// Build url to display image or its thumbnail
 	var createImageUrl = function(resourceObject, thumbnail) {
 		var imagePath;
-		var iconsFolderPath = fm.settings.pluginPath + '/' + config.icons.path;
-
-		if(!isFile(resourceObject.id)) {
-			imagePath = iconsFolderPath + (resourceObject.attributes.protected == 1 ? 'locked_' : '') + config.icons.folder;
-		} else {
-			if(resourceObject.attributes.protected == 1) {
-				imagePath = iconsFolderPath + 'locked_' + config.icons.default;
+		if (isImageFile(resourceObject.id) &&
+			!resourceObject.attributes.protected && (
+			(thumbnail && config.viewer.image.showThumbs) ||
+			(!thumbnail && config.viewer.image.enabled === true)
+		)) {
+			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
+				imagePath = buildAbsolutePath(encodePath(resourceObject.attributes.path));
 			} else {
-				var fileType = getExtension(resourceObject.id);
-				var iconFilename = fileType + '.png';
-				imagePath = iconsFolderPath + config.icons.default;
-
-				if(fileIcons.indexOf(iconFilename) !== -1) {
-					imagePath = iconsFolderPath + iconFilename;
-				}
-
-				if (isImageFile(resourceObject.id) && (
-					(thumbnail && config.viewer.image.showThumbs) ||
-					(!thumbnail && config.viewer.image.enabled === true)
-				)) {
-					if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
-						imagePath = buildAbsolutePath(encodePath(resourceObject.attributes.path));
-					} else {
-						var queryParams = {path: resourceObject.id};
-						if (fileType === 'svg') {
-							queryParams.mode = 'readfile';
-						} else {
-							queryParams.mode = 'getimage';
-							if (thumbnail) {
-								queryParams.thumbnail = 'true';
-							}
-						}
-						imagePath = buildConnectorUrl(queryParams);
+				var queryParams = {path: resourceObject.id};
+				if (resourceObject.attributes.extension === 'svg') {
+					queryParams.mode = 'readfile';
+				} else {
+					queryParams.mode = 'getimage';
+					if (thumbnail) {
+						queryParams.thumbnail = 'true';
 					}
 				}
+				imagePath = buildConnectorUrl(queryParams);
 			}
 		}
 		return imagePath;

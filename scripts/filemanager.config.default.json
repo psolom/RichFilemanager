@@ -160,12 +160,6 @@
         "extra_js": [],
         "extra_js_async": true
     },
-    "icons": {
-        "path": "images/fileicons/",
-        "folder": "_Open.png",
-        "parent": "_Parent.png",
-        "default": "default.png"
-    },
     "url": "https://github.com/servocoder/RichFilemanager",
     "version": "1.0.6"
 }
