@@ -1315,3 +1315,12 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     font-variant: small-caps;
     padding: 0.5em;
 }
+
+/* CSS for the branch idea (attach to img tag to replace it) */
+/*
+background: url(./images/fileicons/txt.png) no-repeat;
+width: 64px;
+height: 64px;
+padding-left: 64px;
+background-size: cover;
+*/
