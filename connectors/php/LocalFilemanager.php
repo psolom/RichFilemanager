@@ -105,7 +105,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getfolder()
+	public function actionGetFolder()
     {
 		$files_list = [];
         $response_data = [];
@@ -151,7 +151,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getfile()
+	public function actionGetFile()
 	{
         $target_path = $this->get['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
@@ -173,7 +173,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function upload()
+	public function actionUpload()
 	{
 	    $target_path = $this->post['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
@@ -215,7 +215,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function addfolder()
+	public function actionAddFolder()
 	{
         $target_path = $this->get['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
@@ -241,7 +241,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function rename()
+	public function actionRename()
 	{
 		$suffix = '';
 
@@ -318,7 +318,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function move()
+	public function actionMove()
 	{
         $source_path = $this->get['old'];
         $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
@@ -395,7 +395,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function replace()
+	public function actionReplace()
 	{
         $source_path = $this->post['path'];
         $source_fullpath = $this->getFullPath($source_path);
@@ -466,7 +466,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function editfile()
+	public function actionEditFile()
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -497,7 +497,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function savefile()
+	public function actionSaveFile()
     {
         $target_path = $this->post['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -527,7 +527,7 @@ class LocalFilemanager extends BaseFilemanager
 	 * Seekable stream: http://stackoverflow.com/a/23046071/1789808
 	 * @inheritdoc
 	 */
-	public function readfile()
+	public function actionReadFile()
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -591,7 +591,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getimage($thumbnail)
+	public function actionGetImage($thumbnail)
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -617,7 +617,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function delete()
+	public function actionDelete()
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -667,7 +667,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function download()
+	public function actionDownload()
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -732,7 +732,7 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function summarize()
+	public function actionSummarize()
 	{
         $attributes = [
             'size' => 0,

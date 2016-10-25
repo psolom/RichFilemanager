@@ -108,79 +108,77 @@ abstract class BaseFilemanager
      * Return file data - filemanager action
      * @return array
      */
-    abstract function getfile();
+    abstract function actionGetFile();
 
     /**
      * Open specified folder - filemanager action
      * @return array
      */
-    abstract function getfolder();
+    abstract function actionGetFolder();
 
     /**
      * Open and edit file - filemanager action
      * @return array
      */
-    abstract function editfile();
+    abstract function actionEditFile();
 
     /**
      * Save data to file after editing - filemanager action
      */
-    abstract function savefile();
+    abstract function actionSaveFile();
 
     /**
      * Rename file or folder - filemanager action
      */
-    abstract function rename();
+    abstract function actionRename();
 
     /**
      * Move file or folder - filemanager action
      */
-    abstract function move();
+    abstract function actionMove();
 
     /**
      * Delete existed file or folder - filemanager action
      */
-    abstract function delete();
+    abstract function actionDelete();
 
     /**
      * Replace existed file - filemanager action
      */
-    abstract function replace();
+    abstract function actionReplace();
 
     /**
      * Upload new file - filemanager action
      */
-    abstract function upload();
+    abstract function actionUpload();
 
     /**
      * Create new folder - filemanager action
      * @return array
      */
-    abstract function addfolder();
+    abstract function actionAddFolder();
 
     /**
      * Download file - filemanager action
      */
-    abstract function download();
+    abstract function actionDownload();
 
     /**
      * Returns image file - filemanager action
      * @param bool $thumbnail Whether to generate image thumbnail
      */
-    abstract function getimage($thumbnail);
+    abstract function actionGetImage($thumbnail);
 
     /**
      * Read and output file contents data - filemanager action
-     * Initially implemented for viewing audio/video/docs/pdf and other files hosted on AWS S3 remote server.
-     * @see S3Filemanager::readfile()
      */
-    abstract function readfile();
+    abstract function actionReadFile();
 
     /**
      * Retrieves storage summarize info - filemanager action
      * @return array
      */
-    abstract function summarize();
+    abstract function actionSummarize();
 
 
     /**
@@ -204,67 +202,67 @@ abstract class BaseFilemanager
 
                     case 'getfile':
                         if($this->getvar('path')) {
-                            $response = $this->getfile();
+                            $response = $this->actionGetFile();
                         }
                         break;
 
                     case 'getfolder':
                         if($this->getvar('path')) {
-                            $response = $this->getfolder();
+                            $response = $this->actionGetFolder();
                         }
                         break;
 
                     case 'rename':
                         if($this->getvar('old') && $this->getvar('new')) {
-                            $response = $this->rename();
+                            $response = $this->actionRename();
                         }
                         break;
 
                     case 'move':
                         if($this->getvar('old') && $this->getvar('new')) {
-                            $response = $this->move();
+                            $response = $this->actionMove();
                         }
                         break;
 
                     case 'editfile':
                         if($this->getvar('path')) {
-                            $response = $this->editfile();
+                            $response = $this->actionEditFile();
                         }
                         break;
 
                     case 'delete':
                         if($this->getvar('path')) {
-                            $response = $this->delete();
+                            $response = $this->actionDelete();
                         }
                         break;
 
                     case 'addfolder':
                         if($this->getvar('path') && $this->getvar('name')) {
-                            $response = $this->addfolder();
+                            $response = $this->actionAddFolder();
                         }
                         break;
 
                     case 'download':
                         if($this->getvar('path')) {
-                            $response = $this->download();
+                            $response = $this->actionDownload();
                         }
                         break;
 
                     case 'getimage':
                         if($this->getvar('path')) {
                             $thumbnail = isset($_GET['thumbnail']);
-                            $this->getimage($thumbnail);
+                            $this->actionGetImage($thumbnail);
                         }
                         break;
 
                     case 'readfile':
                         if($this->getvar('path')) {
-                            $this->readfile();
+                            $this->actionReadFile();
                         }
                         break;
 
                     case 'summarize':
-                        $response = $this->summarize();
+                        $response = $this->actionSummarize();
                         break;
                 }
 
@@ -278,19 +276,19 @@ abstract class BaseFilemanager
 
                     case 'upload':
                         if($this->postvar('path')) {
-                            $response = $this->upload();
+                            $response = $this->actionUpload();
                         }
                         break;
 
                     case 'replace':
                         if($this->postvar('path')) {
-                            $response = $this->replace();
+                            $response = $this->actionReplace();
                         }
                         break;
 
                     case 'savefile':
                         if($this->postvar('path') && $this->postvar('content', false)) {
-                            $response = $this->savefile();
+                            $response = $this->actionSaveFile();
                         }
                         break;
                 }

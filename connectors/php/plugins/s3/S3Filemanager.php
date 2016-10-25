@@ -141,7 +141,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getfolder()
+	public function actionGetFolder()
 	{
 		$array = array();
 		$files_list = array();
@@ -179,7 +179,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getfile()
+	public function actionGetFile()
 	{
 		$path = $this->get['path'];
 		$current_path = $this->getFullPath($path);
@@ -203,7 +203,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function upload()
+	public function actionUpload()
 	{
 		$current_path = $this->getFullPath($this->post['path'], true);
         Log::info('uploading to "' . $current_path . '"');
@@ -227,7 +227,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function addfolder()
+	public function actionAddFolder()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$new_dir = $this->normalizeString($this->get['name']);
@@ -254,7 +254,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function rename()
+	public function actionRename()
 	{
 		$suffix = '';
 
@@ -342,7 +342,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function move()
+	public function actionMove()
 	{
 		$newPath = $this->get['new'] . '/';
 		$newPath = $this->expandPath($newPath, true);
@@ -469,7 +469,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function replace()
+	public function actionReplace()
 	{
 		$old_path = $this->getFullPath($this->post['path']);
 		$upload_dir = dirname($old_path) . '/';
@@ -513,7 +513,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function editfile()
+	public function actionEditFile()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
         Log::info('opening "' . $current_path . '"');
@@ -542,7 +542,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function savefile()
+	public function actionSaveFile()
 	{
 		$current_path = $this->getFullPath($this->post['path'], true);
         Log::info('saving "' . $current_path . '"');
@@ -573,7 +573,7 @@ class S3Filemanager extends LocalFilemanager
 	 * Seekable stream: http://stackoverflow.com/a/23046071/1789808
 	 * @inheritdoc
 	 */
-	public function readfile()
+	public function actionReadFile()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$filesize = filesize($current_path);
@@ -630,7 +630,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function getimage($thumbnail)
+	public function actionGetImage($thumbnail)
 	{
 		$current_path = $this->getFullPath($this->get['path']);
         Log::info('loading image "' . $current_path . '"');
@@ -657,7 +657,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function delete()
+	public function actionDelete()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
         Log::info('deleting "' . $current_path . '"');
@@ -686,7 +686,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function download($force)
+	public function actionDownload()
 	{
 		$current_path = $this->getFullPath($this->get['path'], true);
 		$filename = basename($current_path);
@@ -731,7 +731,7 @@ class S3Filemanager extends LocalFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function summarize()
+	public function actionSummarize()
 	{
 		$result = array(
 			'Size' => 0,
