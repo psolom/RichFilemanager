@@ -671,7 +671,6 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
-		$filename = basename($target_fullpath);
 		Log::info('downloading "' . $target_fullpath . '"');
 
 		if(!$this->has_permission('download')) {
@@ -698,23 +697,25 @@ class LocalFilemanager extends BaseFilemanager
 			if($this->is_root_folder($target_fullpath)) {
 				$this->error(sprintf($this->lang('NOT_ALLOWED')));
 			}
-
-			$destination_path = sys_get_temp_dir().'/fm_'.uniqid().'.zip';
-
-			// if Zip archive is created
-			if($this->zipFile($target_fullpath, $destination_path, true)) {
-				$target_fullpath = $destination_path;
-			} else {
-				$this->error($this->lang('ERROR_CREATING_ZIP'));
-			}
 		}
 
 		if($this->isAjaxRequest()) {
             return $item;
         } else {
+            if($item["type"] === self::TYPE_FOLDER) {
+                $destination_path = sys_get_temp_dir().'/fm_'.uniqid().'.zip';
+
+                // if Zip archive is created
+                if($this->zipFile($target_fullpath, $destination_path, true)) {
+                    $target_fullpath = $destination_path;
+                } else {
+                    $this->error($this->lang('ERROR_CREATING_ZIP'));
+                }
+            }
+
             header('Content-Description: File Transfer');
             header('Content-Type: ' . mime_content_type($target_fullpath));
-            header('Content-Disposition: attachment; filename=' . $filename);
+            header('Content-Disposition: attachment; filename=' . basename($target_fullpath));
             header('Content-Transfer-Encoding: binary');
             header('Content-Length: ' . $this->get_real_filesize($target_fullpath));
             // handle caching
