@@ -794,11 +794,11 @@ class LocalFilemanager extends BaseFilemanager
 					$zip->addEmptyDir($folder . $path);
 				} else if (is_file($file) === true) {
 					$path = str_replace($source . '/', '', $file);
-					$zip->addFromString($folder . $path, file_get_contents($file));
+					$zip->addFile($file, $folder . $path);
 				}
 			}
 		} else if (is_file($source) === true) {
-			$zip->addFromString($folder . basename($source), file_get_contents($source));
+			$zip->addFile($source, $folder . basename($source));
 		}
 
 		return $zip->close();
