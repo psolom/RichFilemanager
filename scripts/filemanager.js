@@ -733,6 +733,9 @@ $.richFmPlugin = function(element, options)
 					return cssClass.join(' ');
 				}, this);
 
+                preview_item.viewer(viewerObject);
+                model.previewFile(true);
+
 				// zeroClipboard code
 				ZeroClipboard.config({swfPath: fm.settings.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
 				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
@@ -742,9 +745,6 @@ $.richFmPlugin = function(element, options)
 						// console.log("Copied text to clipboard: " + event.data["text/plain"]);
 					});
 				});
-
-				preview_item.viewer(viewerObject);
-				model.previewFile(true);
 			};
 
 			this.editFile = function() {
