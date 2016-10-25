@@ -175,7 +175,7 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function upload()
 	{
-	    $target_path = $this->post['currentpath'];
+	    $target_path = $this->post['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
 		Log::info('uploading to "' . $target_fullpath . '"');
 
@@ -397,7 +397,7 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function replace()
 	{
-        $source_path = $this->post['newfilepath'];
+        $source_path = $this->post['path'];
         $source_fullpath = $this->getFullPath($source_path);
         Log::info('replacing file "' . $source_fullpath . '"');
 
@@ -488,13 +488,10 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
 		}
 
-        return [
-            'id' => $target_path,
-            'type' => self::TYPE_FILE,
-            'attributes' => [
-                'content' => $content,
-            ],
-        ];
+        $item = $this->get_file_info($target_path);
+        $item['attributes']['content'] = $content;
+
+        return $item;
 	}
 
 	/**
@@ -523,13 +520,7 @@ class LocalFilemanager extends BaseFilemanager
 
 		Log::info('saved "' . $target_fullpath . '"');
 
-        return [
-            'id' => $target_path,
-            'type' => self::TYPE_FILE,
-            'attributes' => [
-                'success' => true,
-            ],
-        ];
+        return $this->get_file_info($target_path);
 	}
 
 	/**
@@ -719,13 +710,7 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
 		if($this->isAjaxRequest()) {
-            return [
-                'id' => $target_path,
-                'type' => $item["type"],
-                'attributes' => [
-                    'success' => true,
-                ],
-            ];
+            return $item;
         } else {
             header('Content-Description: File Transfer');
             header('Content-Type: ' . mime_content_type($target_fullpath));

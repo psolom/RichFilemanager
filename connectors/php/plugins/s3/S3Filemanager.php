@@ -205,7 +205,7 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function upload()
 	{
-		$current_path = $this->getFullPath($this->post['currentpath'], true);
+		$current_path = $this->getFullPath($this->post['path'], true);
         Log::info('uploading to "' . $current_path . '"');
 
 		if(!$this->has_permission('upload')) {
@@ -471,7 +471,7 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function replace()
 	{
-		$old_path = $this->getFullPath($this->post['newfilepath']);
+		$old_path = $this->getFullPath($this->post['path']);
 		$upload_dir = dirname($old_path) . '/';
         Log::info('replacing "' . $old_path . '"');
 
@@ -484,8 +484,8 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		// we check the given file has the same extension as the old one
-		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($this->post['newfilepath'], PATHINFO_EXTENSION))) {
-			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' ' . pathinfo($this->post['newfilepath'], PATHINFO_EXTENSION)));
+		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($this->post['path'], PATHINFO_EXTENSION))) {
+			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' ' . pathinfo($this->post['path'], PATHINFO_EXTENSION)));
 		}
 
 		$result = $this->initUploader(array(

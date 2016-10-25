@@ -61,7 +61,6 @@ $.richFmPlugin = function(element, options)
 		fmModel = null,				// filemanager knockoutJS model
 
 		/** variables to keep request options data **/
-		userconfig = null,			// config filename
 		fullexpandedFolder = null,	// path to be automatically expanded by filetree plugin
 
 		/** service variables **/
@@ -1621,10 +1620,8 @@ $.richFmPlugin = function(element, options)
 		if(type === 'user') {
 			if($.urlParam('config') != 0) {
 				url = fm.settings.pluginPath + '/scripts/' + $.urlParam('config');
-				userconfig = $.urlParam('config');
 			} else {
 				url = fm.settings.pluginPath + '/scripts/filemanager.config.json';
-				userconfig = 'filemanager.config.json';
 			}
 		} else {
 			url = fm.settings.pluginPath + '/scripts/filemanager.config.default.json';
@@ -1919,7 +1916,6 @@ $.richFmPlugin = function(element, options)
 
 	var buildConnectorUrl = function(params) {
 		var defaults = {
-			config: userconfig,
 			time: new Date().getTime()
 		};
 		var queryParams = $.extend({}, params || {}, defaults);
@@ -1971,7 +1967,7 @@ $.richFmPlugin = function(element, options)
 
 	var buildAbsolutePath = function(path) {
 		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : baseUrl;
-		return trim(url, '/') + path + '?t=' + (new Date().getTime());
+		return trim(url, '/') + path + '?time=' + (new Date().getTime());
 	};
 
 	// Returns container for filetree or fileinfo section based on scrollbar plugin state
@@ -2221,7 +2217,7 @@ $.richFmPlugin = function(element, options)
 				.on('fileuploadsubmit', function(e, data) {
 					data.formData = {
 						mode: 'replace',
-						newfilepath: resourceObject.id
+						path: resourceObject.id
 					};
 					$uploadButton.addClass('loading').prop('disabled', true);
 					$uploadButton.children('span').text(lg.loading_data);
@@ -2403,7 +2399,7 @@ $.richFmPlugin = function(element, options)
 			url: buildConnectorUrl(queryParams),
 			dataType: 'json',
 			success: function (response) {
-				if(response.data.attributes.success) {
+				if(response.data) {
 					window.location = buildConnectorUrl(queryParams);
 				}
 				handleAjaxResponseErrors(response);
@@ -2442,7 +2438,7 @@ $.richFmPlugin = function(element, options)
 
 		$.ajax({
 			type: 'POST',
-			url: buildConnectorUrl(),
+			url: buildConnectorUrl(), // request 'savefile' connector action
 			dataType: 'json',
 			data: $('#fm-js-editor-form').serializeArray(),
 			success: function (response) {
@@ -2770,7 +2766,7 @@ $.richFmPlugin = function(element, options)
 						singleFileUploads: true,
 						formData: {
 							mode: 'upload',
-							currentpath: currentPath
+							path: currentPath
 						},
 						// validation
 						// maxNumberOfFiles works only for single "add" call when "singleFileUploads" is set to "false"
@@ -2965,7 +2961,7 @@ $.richFmPlugin = function(element, options)
 				.on('fileuploadsubmit', function(e, data) {
 					data.formData = {
 						mode: 'upload',
-						currentpath: fmModel.currentPath()
+						path: fmModel.currentPath()
 					};
 					$uploadButton.addClass('loading').prop('disabled', true);
 					$uploadButton.children('span').text(lg.loading_data);

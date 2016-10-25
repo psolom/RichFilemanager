@@ -277,19 +277,19 @@ abstract class BaseFilemanager
                         break;
 
                     case 'upload':
-                        if($this->postvar('currentpath')) {
+                        if($this->postvar('path')) {
                             $response = $this->upload();
                         }
                         break;
 
                     case 'replace':
-                        if($this->postvar('newfilepath')) {
+                        if($this->postvar('path')) {
                             $response = $this->replace();
                         }
                         break;
 
                     case 'savefile':
-                        if($this->postvar('content', false) && $this->postvar('path')) {
+                        if($this->postvar('path') && $this->postvar('content', false)) {
                             $response = $this->savefile();
                         }
                         break;
