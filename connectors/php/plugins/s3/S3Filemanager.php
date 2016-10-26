@@ -100,11 +100,9 @@ class S3Filemanager extends LocalFilemanager
 		return $storage;
 	}
 
-	/**
-	 * Set root folder
-	 * @param $path
-	 * @param bool $mkdir
-	 */
+    /**
+     * @inheritdoc
+     */
 	public function setFileRoot($path, $mkdir = false)
 	{
 		$this->rootDirectory = $this->pathToFolder($path);

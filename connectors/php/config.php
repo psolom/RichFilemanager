@@ -78,11 +78,12 @@ $config = [
          */
         "charsLatinOnly" => false,
         /**
-         * By default all capabilities handled by the application are available:
-         * ["select", "upload", "download", "rename", "move", "replace", "delete"].
-         * You can restrict it by suppressing some of them.
+         * Default value "false".
+         * Means all capabilities handled by the application are available.
+         * You can set only some ot them as array to restrict the allowed actions.
+         * For the full list of capabilities @see BaseFilemanager::actions_list
          */
-        "capabilities" => ["select", "upload", "download", "rename", "move", "replace", "delete"],
+        "capabilities" => false,
     ],
     /**
      * Security section
@@ -104,7 +105,7 @@ $config = [
          */
         "allowNoExtension" => false,
         /**
-         * Default value is "true".
+         * Default value "true".
          * Sanitize file/folder name, replaces gaps and some other special chars.
          */
         "normalizeFilename" => true,
@@ -115,8 +116,7 @@ $config = [
          */
         "uploadPolicy" => "DISALLOW_ALL",
         /**
-         * Array of files extensions.
-         * Fix restrictions on upload checking extension files.
+         * Array of files extensions permitted for uploading
          */
         "uploadRestrictions" => [
             "jpg",
@@ -149,7 +149,14 @@ $config = [
             "wav",
             "zip",
             "rar",
-        ]
+        ],
+        /**
+         * Array of files extensions permitted for editing.
+         */
+        "editRestrictions" => [
+            "txt",
+            "csv",
+        ],
     ],
     /**
      * Files and folders restrictions
@@ -178,6 +185,23 @@ $config = [
          * Folders excluded from listing, using REGEX.
          */
         "unallowed_dirs_REGEXP" => "/^\\./",
+    ],
+    /**
+     * File types that are filtered out from the output list based on the type of filter ('getfolder' request)
+     */
+    "outputFilter" => [
+        /**
+         * File types to be filtered out for "images" filter
+         */
+        "images" => [
+            "jpg",
+            "jpe",
+            "jpeg",
+            "gif",
+            "png",
+            "svg",
+            "bmp",
+        ],
     ],
     /**
      * Upload section
@@ -212,19 +236,9 @@ $config = [
          */
         "imagesOnly" => false,
     ],
-
-    "outputFilter" => [
-        "images" => [
-            "jpg",
-            "jpe",
-            "jpeg",
-            "gif",
-            "png",
-            "svg",
-            "bmp",
-        ],
-    ],
-
+    /**
+     * Images section
+     */
     "images" => [
         /**
          * Uploaded image settings.
@@ -282,16 +296,6 @@ $config = [
              * Maximum crop height in pixels.
              */
             "maxHeight" => 64,
-        ]
-    ],
-    /**
-     * Files editor section
-     */
-    "edit" => [
-        "enabled" => true,
-        "editExt" => [
-            "txt",
-            "csv",
         ]
     ],
 ];

@@ -39,8 +39,10 @@ $config = array();
 
 $fm = Fm::app()->getInstance($config);
 
-// use to setup files root folder
+// example to setup files root folder
 //$fm->setFileRoot('userfiles', true);
-//$fm->setFileRoot('sss', false);
+
+// example to set list of allowed actions
+//$fm->setAllowedActions(["select", "move"]);
 
 $fm->handleRequest();

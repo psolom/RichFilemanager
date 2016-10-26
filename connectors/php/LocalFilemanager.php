@@ -16,7 +16,6 @@ require_once('LocalUploadHandler.php');
 
 class LocalFilemanager extends BaseFilemanager
 {
-	protected $allowed_actions = [];
 	protected $doc_root;
 	protected $path_to_files;
 	protected $dynamic_fileroot;
@@ -52,14 +51,11 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('$this->doc_root: "' . $this->doc_root . '"');
 		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
 
-		$this->setPermissions();
 		$this->loadLanguageFile();
 	}
 
     /**
-     * Allow Filemanager to be used with dynamic folders
-     * @param string $path - i.e '/var/www/'
-     * @param bool $mkdir
+     * @inheritdoc
      */
 	public function setFileRoot($path, $mkdir = false)
     {
@@ -472,12 +468,18 @@ class LocalFilemanager extends BaseFilemanager
 		$target_fullpath = $this->getFullPath($target_path, true);
 		Log::info('opening "' . $target_fullpath . '"');
 
+        $item = $this->get_file_info($target_path);
+
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
 		// check if file is writable
 		if(!$this->has_system_permission($target_fullpath, ['w'])) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		if(!$this->has_permission('edit') || !$this->is_editable($target_fullpath)) {
+		if(!$this->has_permission('edit') || !$this->is_editable($item)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -488,9 +490,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
 		}
 
-        $item = $this->get_file_info($target_path);
         $item['attributes']['content'] = $content;
-
         return $item;
 	}
 
@@ -503,7 +503,13 @@ class LocalFilemanager extends BaseFilemanager
 		$target_fullpath = $this->getFullPath($target_path, true);
 		Log::info('saving "' . $target_fullpath . '"');
 
-		if(!$this->has_permission('edit') || !$this->is_editable($target_fullpath)) {
+        $item = $this->get_file_info($target_path);
+
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+		if(!$this->has_permission('edit') || !$this->is_editable($item)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -520,7 +526,7 @@ class LocalFilemanager extends BaseFilemanager
 
 		Log::info('saved "' . $target_fullpath . '"');
 
-        return $this->get_file_info($target_path);
+        return $item;
 	}
 
 	/**
@@ -804,14 +810,6 @@ class LocalFilemanager extends BaseFilemanager
 		return $zip->close();
 	}
 
-    protected function setPermissions()
-    {
-		$this->allowed_actions = $this->config['options']['capabilities'];
-		if($this->config['edit']['enabled']) {
-			array_push($this->allowed_actions, 'edit');
-		}
-	}
-
     /**
      * Check if system permission is granted
      * @param string $filepath
@@ -850,9 +848,9 @@ class LocalFilemanager extends BaseFilemanager
 		$protected = $this->has_system_permission($fullpath, ['w', 'r']) ? 0 : 1;
 
 		if(is_dir($fullpath)) {
-            $model = $this->folderModel;
+            $model = $this->folder_model;
 		} else {
-            $model = $this->fileModel;
+            $model = $this->file_model;
             $model['attributes']['size'] = $this->get_real_filesize($fullpath);
             $model['attributes']['extension'] = isset($pathInfo['extension']) ? $pathInfo['extension'] : '';
 
@@ -1081,16 +1079,14 @@ class LocalFilemanager extends BaseFilemanager
 	}
 
     /**
-     * Check whether the file could be edited regarding configuration setup
-     * @param string $file
+     * Check whether the file model could be edited regarding configuration setup
+     * @param string $file_model
      * @return bool
      */
-	protected function is_editable($file)
+	protected function is_editable($file_model)
     {
-		$path_parts = pathinfo($file);
-		$types = array_map('strtolower', $this->config['edit']['editExt']);
-
-		return in_array($path_parts['extension'], $types);
+		$allowed_types = array_map('strtolower', $this->config['security']['editRestrictions']);
+		return in_array(strtolower($file_model['attributes']['extension']), $allowed_types);
 	}
 
 	/**

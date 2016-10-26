@@ -24,12 +24,13 @@ abstract class BaseFilemanager
     protected $get = [];
     protected $post = [];
     protected $fm_path = '';
+    protected $allowed_actions = [];
 
     /**
      * File item model template
      * @var array
      */
-    protected $fileModel = [
+    protected $file_model = [
         "id"    => '',
         "type"  => self::TYPE_FILE,
         "attributes" => [
@@ -50,7 +51,7 @@ abstract class BaseFilemanager
      * Folder item model template
      * @var array
      */
-    protected $folderModel = [
+    protected $folder_model = [
         "id"    => '',
         "type"  => self::TYPE_FOLDER,
         "attributes" => [
@@ -62,6 +63,12 @@ abstract class BaseFilemanager
             'timestamp' => '',
         ]
     ];
+
+    /**
+     * List of all possible actions
+     * @var array
+     */
+    protected $actions_list = ["select", "upload", "download", "rename", "move", "replace", "delete", "edit"];
 
     /**
      * BaseFilemanager constructor.
@@ -82,24 +89,29 @@ abstract class BaseFilemanager
         $this->config = $config;
         $this->fm_path = $this->config['fmPath'] ? $this->config['fmPath'] : dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])));
 
-        // extend server config options with the client ones which are common for both
-        if($this->config['extendConfigClient'] === true) {
-            $client_config = $this->retrieve_json_file("/scripts/filemanager.config.json");
-            if(isset($client_config['options']['culture'])) $this->config['options']['culture'] = $client_config['options']['culture'];
-            if(isset($client_config['options']['charsLatinOnly'])) $this->config['options']['charsLatinOnly'] = $client_config['options']['charsLatinOnly'];
-            if(isset($client_config['options']['capabilities'])) $this->config['options']['capabilities'] = $client_config['options']['capabilities'];
-            if(isset($client_config['options']['logger'])) $this->config['logger']['enabled'] = $client_config['options']['logger'];
-
-            if(isset($client_config['security'])) {
-                $this->config['security'] = FmHelper::mergeConfigs($this->config['security'], $client_config['security']);
-            }
-            if(isset($client_config['upload'])) {
-                $this->config['upload'] = FmHelper::mergeConfigs($this->config['upload'], $client_config['upload']);
-            }
-            if(isset($client_config['edit'])) {
-                $this->config['edit'] = FmHelper::mergeConfigs($this->config['edit'], $client_config['edit']);
-            }
+        $this->allowed_actions = $this->actions_list;
+        if($this->config['options']['capabilities']) {
+            $this->setAllowedActions($this->config['options']['capabilities']);
         }
+
+        // extend server config options with the client ones which are common for both
+//        if($this->config['extendConfigClient'] === true) {
+//            $client_config = $this->retrieve_json_file("/scripts/filemanager.config.json");
+//            if(isset($client_config['options']['culture'])) $this->config['options']['culture'] = $client_config['options']['culture'];
+//            if(isset($client_config['options']['charsLatinOnly'])) $this->config['options']['charsLatinOnly'] = $client_config['options']['charsLatinOnly'];
+//            if(isset($client_config['options']['capabilities'])) $this->config['options']['capabilities'] = $client_config['options']['capabilities'];
+//            if(isset($client_config['options']['logger'])) $this->config['logger']['enabled'] = $client_config['options']['logger'];
+//
+//            if(isset($client_config['security'])) {
+//                $this->config['security'] = FmHelper::mergeConfigs($this->config['security'], $client_config['security']);
+//            }
+//            if(isset($client_config['upload'])) {
+//                $this->config['upload'] = FmHelper::mergeConfigs($this->config['upload'], $client_config['upload']);
+//            }
+//            if(isset($client_config['edit'])) {
+//                $this->config['edit'] = FmHelper::mergeConfigs($this->config['edit'], $client_config['edit']);
+//            }
+//        }
 
         $this->setParams();
     }
@@ -180,6 +192,24 @@ abstract class BaseFilemanager
      */
     abstract function actionSummarize();
 
+    /**
+     * Set userfiles root folder
+     * @param string $path
+     * @param bool $mkdir
+     */
+    abstract function setFileRoot($path, $mkdir);
+
+    /**
+     * Overrides list of allowed actions
+     * @param array $actions
+     */
+    public function setAllowedActions($actions) {
+        $diff = array_diff($actions, $this->actions_list);
+        if($diff) {
+            $this->error('The following actions are not exists: "' . implode('", "', $diff) . '"');
+        }
+        $this->allowed_actions = $actions;
+    }
 
     /**
      * Invokes filemanager action based on request params and returns response
