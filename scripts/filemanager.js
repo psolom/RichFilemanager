@@ -2159,7 +2159,7 @@ $.richFmPlugin = function(element, options)
 							fmModel.itemsModel.loadList(newItem.id);
 						}
 						// ON rename currently previewed file
-						if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
+						if(fmModel.previewFile() && fmModel.previewModel.rdo.id === oldPath) {
 							fmModel.previewModel.load(newItem);
 						}
 
@@ -2324,7 +2324,7 @@ $.richFmPlugin = function(element, options)
 						fmModel.itemsModel.loadList(newItem.id);
 					}
 					// ON move currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo.id === resourceObject.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -2355,7 +2355,7 @@ $.richFmPlugin = function(element, options)
 					fmModel.removeItem(targetItem);
 
 					// ON delete currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo.id === targetItem.id) {
 						fmModel.previewFile(false);
 					}
 
