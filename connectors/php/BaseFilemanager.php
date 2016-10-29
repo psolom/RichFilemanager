@@ -383,15 +383,20 @@ abstract class BaseFilemanager
     {
         Log::info('error message: "' . $title . '"');
 
-        $error_object = [
-            'id' => 'server',
-            'code' => '500',
-            'title' => $title
-        ];
+        if($this->isAjaxRequest()) {
+            $error_object = [
+                'id' => 'server',
+                'code' => '500',
+                'title' => $title
+            ];
 
-        echo json_encode([
-            'errors' => [$error_object],
-        ]);
+            echo json_encode([
+                'errors' => [$error_object],
+            ]);
+        } else {
+            echo "<h2>Server error: {$title}</h2>";
+        }
+
         exit;
     }
 
