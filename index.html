@@ -163,7 +163,7 @@
 				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView()">
 					<div class="fm-preview-toolbar">
 						<form id="fm-js-preview-toolbar">
-							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.previewFile(false)}}">
+							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
 								<span data-bind="text: $root.lg().parentfolder"></span>
 							</button>
 							<!-- ko if: buttonVisibility('select') -->

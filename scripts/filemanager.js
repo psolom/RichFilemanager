@@ -1382,16 +1382,17 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.goParent = function() {
-				// already in root folder
-				if(model.currentPath() === fileRoot && !model.previewFile()) {
-					return false;
-				}
+				var parentFolder = model.previewFile()
+                    ? getDirname(fmModel.previewModel.rdo.id)
+                    : getParentDirname(fmModel.currentPath());
 
 				if(model.previewFile()) {
 					model.previewFile(false);
-				} else {
-					model.itemsModel.loadList(getParentDirname(fmModel.currentPath()));
 				}
+
+                if(parentFolder !== fmModel.currentPath()) {
+					model.itemsModel.loadList(parentFolder);
+                }
 			};
 
 			this.displayGrid = function() {
