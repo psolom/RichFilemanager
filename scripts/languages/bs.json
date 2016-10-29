@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "Unable to perform action. Forbidden for directories.",
     "FORBIDDEN_ACTION_FILE": "Unable to perform action. Forbidden for files.",
     "FORBIDDEN_CHAR_SLASH": "Upotreba '/' je zabranjeno u imeniku ili datoteke ime.",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "Nepoznata akcija.",
     "INVALID_DIRECTORY_OR_FILE": "Nepoznata datoteka ili direktorij.",
     "INVALID_FILE_TYPE": "Ovaj tip nije podržan.",

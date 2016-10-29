@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "Unable to perform action. Forbidden for directories.",
     "FORBIDDEN_ACTION_FILE": "Unable to perform action. Forbidden for files.",
     "FORBIDDEN_CHAR_SLASH": "Použití '/' je zakázáno v názvu adresáře nebo souboru.",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "Neplatná akce.",
     "INVALID_DIRECTORY_OR_FILE": "Neplatné jméno adresáře nebo souboru.",
     "INVALID_FILE_TYPE": "Tento typ souboru není povolen.",

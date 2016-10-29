@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "Impossible d'effectuer l'action. Elle est interdite pour les répertoires.",
     "FORBIDDEN_ACTION_FILE": "Impossible d'effectuer l'action. Elle est Interdite pour les fichiers.",
     "FORBIDDEN_CHAR_SLASH": "L'utilisation de '/' est interdite dans le répertoire ou le nom du fichier.",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "Action invalide.",
     "INVALID_DIRECTORY_OR_FILE": "Répertoire ou fichier invalide.",
     "INVALID_FILE_TYPE": "Ce type de fichier n'est pas autorisé.",

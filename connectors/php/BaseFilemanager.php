@@ -527,7 +527,7 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Check if extension is allowed regarding the security Policy / Restrictions settings
+     * Check if file is allowed to upload regarding the configuration settings
      * @param string $file
      * @return bool
      */
@@ -541,52 +541,70 @@ abstract class BaseFilemanager
             return (bool)$this->config['security']['allowNoExtension'];
         }
 
-        $exts = array_map('strtolower', $this->config['security']['uploadRestrictions']);
+        $extensions = array_map('strtolower', $this->config['security']['uploadRestrictions']);
 
         if($this->config['security']['uploadPolicy'] == 'DISALLOW_ALL') {
-
-            if(!in_array(strtolower($path_parts['extension']), $exts))
+            if(!in_array(strtolower($path_parts['extension']), $extensions)) {
                 return false;
+            }
         }
         if($this->config['security']['uploadPolicy'] == 'ALLOW_ALL') {
-
-            if(in_array(strtolower($path_parts['extension']), $exts))
+            if(in_array(strtolower($path_parts['extension']), $extensions)) {
                 return false;
+            }
         }
 
         return true;
     }
 
     /**
-     * Filter out files if any filter is specified
+     * Check if file or folder name is not in "excluded" list
+     * @param string $name
+     * @param bool $is_dir
+     * @return bool
+     */
+    public function is_allowed_name($name, $is_dir = false)
+    {
+        $name = basename($name);
+
+        // check if folder name is allowed regarding the security Policy settings
+        if ($is_dir && (
+            in_array($name, $this->config['exclude']['unallowed_dirs']) ||
+            preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $name))
+        ) {
+            return false;
+        }
+
+        // check if file name is allowed regarding the security Policy settings
+        if (!$is_dir && (
+            in_array($name, $this->config['exclude']['unallowed_files']) ||
+            preg_match($this->config['exclude']['unallowed_files_REGEXP'], $name))
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Remove excluded and filtered items from output
      * @param array $item
      * @return bool
      */
     public function filter_output($item)
     {
-        $filename = $item["attributes"]["name"];
-
-        // check if folder is allowed regarding the security Policy settings
-        if ($item["type"] === self::TYPE_FOLDER && (
-            in_array($filename, $this->config['exclude']['unallowed_dirs']) ||
-            preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $filename))
-        ) {
+        // filter out item if the name is not in "excluded" list
+        if(!$this->is_allowed_name($item["attributes"]["name"], $item["type"] === self::TYPE_FOLDER)) {
             return false;
         }
 
-        // check if file is allowed regarding the security Policy settings
-        if ($item["type"] === self::TYPE_FILE && (
-            in_array($filename, $this->config['exclude']['unallowed_files']) ||
-            preg_match($this->config['exclude']['unallowed_files_REGEXP'], $filename))
-        ) {
-            return false;
-        }
-
+        // filter out item if any filter is specified and item is matched
         $filterName = isset($this->refParams['type']) ? $this->refParams['type'] : null;
         $allowedTypes = isset($this->config['outputFilter'][$filterName]) ? $this->config['outputFilter'][$filterName] : null;
         if($filterName && is_array($allowedTypes) && $item["type"] === self::TYPE_FILE) {
             return (in_array(strtolower($item["attributes"]["extension"]), $allowedTypes));
         }
+
         return true;
     }
 

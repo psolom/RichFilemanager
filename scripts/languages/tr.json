@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "Unable to perform action. Forbidden for directories.",
     "FORBIDDEN_ACTION_FILE": "Unable to perform action. Forbidden for files.",
     "FORBIDDEN_CHAR_SLASH": "'/' Kullanımı dizin veya dosya adı yasaktır.",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "Hatalı işlem.",
     "INVALID_DIRECTORY_OR_FILE": "Hatalı klasör veya dosya.",
     "INVALID_FILE_TYPE": "File type is not allowed.",

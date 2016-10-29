@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "ไม่สามารถดำเนินการได้ การดำเนินการนี้ถูกระงับสำหรับโฟล์เดอร์เหล่านี้",
     "FORBIDDEN_ACTION_FILE": "ไม่สามารถดำเนินการได้ การดำเนินการนี้ถูกระงับสำหรับไฟล์เหล่านี้",
     "FORBIDDEN_CHAR_SLASH": "การใช้ '/' ไม่ได้รับอนุญาสำหรับโฟล์เดอร์นี้",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "การกระทำไม่ถูกต้อง",
     "INVALID_DIRECTORY_OR_FILE": "โฟล์เดอร์หรือไฟล์ไม่ถูกต้อง",
     "INVALID_FILE_TYPE": "ชนิดไฟล์ไม่ได้รับอนุญาต",

@@ -175,7 +175,6 @@ $config = [
         "unallowed_dirs" => [
             "_thumbs",
             ".CDN_ACCESS_LOGS",
-            "cloudservers",
         ],
         /**
          * Files excluded from listing, using REGEX.

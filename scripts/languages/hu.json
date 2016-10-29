@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "Unable to perform action. Forbidden for directories.",
     "FORBIDDEN_ACTION_FILE": "Unable to perform action. Forbidden for files.",
     "FORBIDDEN_CHAR_SLASH": "Használata '/' tilos a könyvtár vagy fájl neve.",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "Érvénytelen művelet.",
     "INVALID_DIRECTORY_OR_FILE": "Érvénytelen könyvtár vagy fájlnév.",
     "INVALID_FILE_TYPE": "File type is not allowed.",

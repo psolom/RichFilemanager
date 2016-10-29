@@ -19,6 +19,8 @@
     "FORBIDDEN_ACTION_DIR": "Unable to perform action. Forbidden for directories.",
     "FORBIDDEN_ACTION_FILE": "Unable to perform action. Forbidden for files.",
     "FORBIDDEN_CHAR_SLASH": "Het gebruik van '/' is verboden in de directory of bestandsnaam.",
+    "FORBIDDEN_CHANGE_EXTENSION": "You are not allowed to change file extension.",
+    "FORBIDDEN_NAME": "Forbidden name '%s'.",
     "INVALID_ACTION": "Ongeldige actie.",
     "INVALID_DIRECTORY_OR_FILE": "Ongeldige map of bestand.",
     "INVALID_FILE_TYPE": "Het uploaden van bestanden is niet togestaan.",
