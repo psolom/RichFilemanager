@@ -587,6 +587,22 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('reading file "' . $target_fullpath . '"');
+
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+        // check if file is readable
+        if(!$this->has_system_permission($target_fullpath, ['r'])) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+        }
+
 		$filesize = filesize($target_fullpath);
 		$length = $filesize;
 		$offset = 0;
@@ -652,6 +668,20 @@ class LocalFilemanager extends BaseFilemanager
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
 		Log::info('loading image "' . $target_fullpath . '"');
+
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+        // check if file is readable
+        if(!$this->has_system_permission($target_fullpath, ['r'])) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+        }
 
 		// if $thumbnail is set to true we return the thumbnail
 		if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
