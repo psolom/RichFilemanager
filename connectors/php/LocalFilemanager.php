@@ -393,13 +393,6 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-		// create dir if not exists
-		if (!file_exists($target_fullpath)) {
-			if(!mkdir($target_fullpath, 0755, true)) {
-				$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $target_fullpath));
-			}
-		}
-
 		// should be retrieved before rename operation
 		$old_thumbnail = $this->get_thumbnail_path($source_fullpath);
 

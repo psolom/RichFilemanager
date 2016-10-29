@@ -381,13 +381,6 @@ class S3Filemanager extends LocalFilemanager
 			}
 		}
 
-		// create dir if not exists
-		if (!file_exists($newPath)) {
-			if(!mkdir($newPath, 0755, true)) {
-				$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $newPath));
-			}
-		}
-
 		$moved = array();
 		if($isDirOldPath) {
 			$files = $this->getFilesList(rtrim($oldPath, '/'));
