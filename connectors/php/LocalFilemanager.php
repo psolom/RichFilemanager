@@ -836,18 +836,30 @@ class LocalFilemanager extends BaseFilemanager
                     $this->error($this->lang('ERROR_CREATING_ZIP'));
                 }
             }
+            $file_size = $this->get_real_filesize($target_fullpath);
 
             header('Content-Description: File Transfer');
             header('Content-Type: ' . mime_content_type($target_fullpath));
             header('Content-Disposition: attachment; filename=' . basename($target_fullpath));
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . $this->get_real_filesize($target_fullpath));
+            header('Content-Length: ' . $file_size);
             // handle caching
             header('Pragma: public');
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-            readfile($target_fullpath);
+            $chunk_size = 16 * 1024 * 1024;
+            // read file by chunks to handle large files
+            if ($chunk_size && $file_size > $chunk_size) {
+                $handle = fopen($target_fullpath, 'rb');
+                while (!feof($handle)) {
+                    echo fread($handle, $chunk_size);
+                    @ob_flush();
+                    @flush();
+                }
+                fclose($handle);
+            }
+
             Log::info('downloaded "' . $target_fullpath . '"');
             exit;
         }
