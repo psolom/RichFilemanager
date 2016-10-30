@@ -205,6 +205,9 @@ $.richFmPlugin = function(element, options)
 	var construct = function() {
 		configure()
 			.then(function(conf_d, conf_u) {
+				return performInitialRequest();
+			})
+			.then(function() {
 				return localize();
 			})
 			.then(function() {
@@ -249,6 +252,32 @@ $.richFmPlugin = function(element, options)
 				apiConnector = connectorUrl + langConnector;
 			}
 		});
+	};
+
+	// performs initial request to server to retrieve initial params
+	var performInitialRequest = function() {
+        return $.ajax({
+            type: 'GET',
+            url: buildConnectorUrl({
+                mode: 'initiate'
+            }),
+            dataType: 'json'
+        }).done(function(response) {
+            if(response.data) {
+                var serverConfig = response.data.attributes.config;
+                // override configuration with options retrieved from the server (which are common)
+                $.each(serverConfig, function(section, options) {
+                    $.each(options, function(param, value) {
+                        if(config[section] && config[section][param]) {
+                            config[section][param] = value;
+                        }
+                    });
+                });
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(function() {
+            fm.error('Unable to perform initial request to server.');
+        });
 	};
 
 	// localize messages based on culture var or from URL

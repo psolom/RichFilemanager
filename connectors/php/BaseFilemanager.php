@@ -117,7 +117,7 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Return server-side data to override it on the client-side - filemanager action
+     * Return server-side data to override on the client-side - filemanager action
      * @return array
      */
     abstract function actionInitiate();
