@@ -343,8 +343,8 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Load using "langCode" var passed into URL if present and if exists
-     * Otherwise use default configuration var.
+     * Load language file and retrieve all messages.
+     * Defines language code based on "langCode" variable if exists otherwise uses configuration option.
      */
     protected function loadLanguageFile()
     {
@@ -357,7 +357,7 @@ abstract class BaseFilemanager
 
         if (file_exists($lang_path)) {
             $stream = file_get_contents($lang_path);
-            return json_decode($stream, true);
+            $this->language = json_decode($stream, true);
         }
     }
 
@@ -393,7 +393,7 @@ abstract class BaseFilemanager
      */
     public function lang($string)
     {
-        if(isset($this->language[$string]) && $this->language[$string] != '') {
+        if(!empty($this->language[$string])) {
             return $this->language[$string];
         } else {
             return 'Language string error on ' . $string;
