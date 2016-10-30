@@ -94,26 +94,8 @@ abstract class BaseFilemanager
             $this->setAllowedActions($this->config['options']['capabilities']);
         }
 
-        // extend server config options with the client ones which are common for both
-//        if($this->config['extendConfigClient'] === true) {
-//            $client_config = $this->retrieve_json_file("/scripts/filemanager.config.json");
-//            if(isset($client_config['options']['culture'])) $this->config['options']['culture'] = $client_config['options']['culture'];
-//            if(isset($client_config['options']['charsLatinOnly'])) $this->config['options']['charsLatinOnly'] = $client_config['options']['charsLatinOnly'];
-//            if(isset($client_config['options']['capabilities'])) $this->config['options']['capabilities'] = $client_config['options']['capabilities'];
-//            if(isset($client_config['options']['logger'])) $this->config['logger']['enabled'] = $client_config['options']['logger'];
-//
-//            if(isset($client_config['security'])) {
-//                $this->config['security'] = FmHelper::mergeConfigs($this->config['security'], $client_config['security']);
-//            }
-//            if(isset($client_config['upload'])) {
-//                $this->config['upload'] = FmHelper::mergeConfigs($this->config['upload'], $client_config['upload']);
-//            }
-//            if(isset($client_config['edit'])) {
-//                $this->config['edit'] = FmHelper::mergeConfigs($this->config['edit'], $client_config['edit']);
-//            }
-//        }
-
         $this->setParams();
+        $this->loadLanguageFile();
     }
 
     /**
@@ -361,28 +343,22 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Retrieve client-side file via CURL or read directly
-     * @param $relativePath
-     * @return array|null
+     * Load using "langCode" var passed into URL if present and if exists
+     * Otherwise use default configuration var.
      */
-    public function retrieve_json_file($relativePath)
+    protected function loadLanguageFile()
     {
-        // in case remote URL is specified
-        if ($this->config['fmUrl']) {
-            $url = $this->config['fmUrl'] . $relativePath;
-            $curl = curl_init();
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_HEADER, false);
-            $response = curl_exec($curl);
-            curl_close($curl);
-            return json_decode($response, true);
-        // otherwise try to read file directly rely on base folder structure
-        } elseif (file_exists($this->fm_path . $relativePath)) {
-            $stream = file_get_contents($this->fm_path . $relativePath);
+        $lang = $this->config['options']['culture'];
+        if(isset($this->refParams['langCode'])) {
+            $lang = $this->refParams['langCode'];
+        }
+
+        $lang_path = dirname(dirname(dirname(__FILE__))) . "/languages/{$lang}.json";
+
+        if (file_exists($lang_path)) {
+            $stream = file_get_contents($lang_path);
             return json_decode($stream, true);
         }
-        return null;
     }
 
     /**

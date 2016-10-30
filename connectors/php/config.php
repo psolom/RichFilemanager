@@ -16,21 +16,6 @@ $config = [
      */
     "fmPath" => null,
     /**
-     * Relative path to the Filemanager which is accessible via URL.
-     * Define if url to Filemanager is different from its path. Some cases:
-     * - use of custom rules for URL routing
-     * - use of "dynamic" folders, like when "publishing" assets from secured location
-     * - client-side is apart from server-side (different servers etc.)
-     * @var string|null
-     */
-    "fmUrl" => null,
-    /**
-     * If set to "true" the server attempts to retrieve client-side configuration options
-     * in order to override ones which are common in the current config file.
-     * SECURITY NOTE: It's more convenient but may be less secure.
-     */
-    "extendConfigClient" => true,
-    /**
      * Filemanager plugin to use.
      * Currently available plugins:
      *
@@ -54,14 +39,18 @@ $config = [
          */
         "culture" => "en",
         /**
-         * Default value "true". The application will search `fileRoot` folder under server root folder.
-         * If `fileRoot` options is set to "false", `serverRoot` value is not interpreted by the FM - always "true".
+         * Default value "true".
+         * By default the application will search `fileRoot` folder under server root folder.
+         * Set value to "false" in case the `fileRoot` folder located outside server root folder.
+         * If `fileRoot` options is set to "false", `serverRoot` value is ignored - always "true".
          */
         "serverRoot" => true,
         /**
-         * Default value "false". The application will determine the path itself based on $_SERVER['DOCUMENT_ROOT'].
-         * Can be overwritten, to display a specific folder under server root or a folder not located under Server root directory.
-         * If used with `serverRoot` set to "true", do not provide initial slash to `fileRoot` value.
+         * Default value "false". Path to the userfiles storage folder.
+         * By default the application will determine the path itself based on $_SERVER['DOCUMENT_ROOT'].
+         * You can set specific path to userfiles storage folder with the following rules:
+         * - absolute path in case `serverRoot` set to "false", e.g. "/var/www/html/filemanager/userfiles/"
+         * - relative path in case `serverRoot` set to "true", e.g. "/filemanager/userfiles/"
          */
         "fileRoot" => false,
         /**

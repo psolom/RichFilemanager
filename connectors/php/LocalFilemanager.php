@@ -50,8 +50,6 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
 		Log::info('$this->doc_root: "' . $this->doc_root . '"');
 		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
-
-		$this->loadLanguageFile();
 	}
 
     /**
@@ -1176,19 +1174,6 @@ class LocalFilemanager extends BaseFilemanager
 	}
 
     /**
-     * Load using "langCode" var passed into URL if present and if exists
-     * Otherwise use default configuration var.
-     */
-	protected function loadLanguageFile()
-    {
-        $lang = $this->config['options']['culture'];
-        if(isset($this->refParams['langCode'])) {
-            $lang = $this->refParams['langCode'];
-        }
-        $this->language = $this->retrieve_json_file("/scripts/languages/{$lang}.json");
-	}
-
-    /**
      * Check whether the folder is root
      * @param string $path
      * @return bool
@@ -1234,20 +1219,6 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 		return implode('/', $fullPath);
-	}
-
-	/**
-	 * Creates URL to asset based on it relative path
-	 * @param $path
-	 * @return string
-	 */
-	protected function getFmUrl($path)
-	{
-		if(isset($this->config['fmUrl']) && !empty($this->config['fmUrl']) && strpos($path, '/') !== 0) {
-			$url = $this->config['fmUrl'] . '/' . $path;
-			return $this->cleanPath($url);
-		}
-		return $path;
 	}
 
 	/**

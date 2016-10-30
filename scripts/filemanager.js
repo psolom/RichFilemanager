@@ -283,7 +283,7 @@ $.richFmPlugin = function(element, options)
 	// localize messages based on culture var or from URL
 	var localize = function() {
 		var langCode = $.urlParam('langCode');
-		var langPath = fm.settings.pluginPath + '/scripts/languages/';
+		var langPath = fm.settings.pluginPath + '/languages/';
 
 		function buildLangPath(code) {
 			return langPath + code + '.json';
