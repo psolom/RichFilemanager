@@ -42,11 +42,10 @@
     },
     "upload": {
         "multiple": true,
+        "maxNumberOfFiles": 12,
         "paramName": "files",
         "chunkSize": false,
-        "numberOfFiles": 12,
         "fileSizeLimit": 16000000,
-        "overwrite": false,
         "policy": "DISALLOW_ALL",
         "restrictions": [
             "jpg",

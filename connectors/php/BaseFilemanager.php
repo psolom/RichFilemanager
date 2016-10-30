@@ -117,6 +117,12 @@ abstract class BaseFilemanager
     }
 
     /**
+     * Return server-side data to override it on the client-side - filemanager action
+     * @return array
+     */
+    abstract function actionInitiate();
+
+    /**
      * Return file data - filemanager action
      * @return array
      */
@@ -228,6 +234,10 @@ abstract class BaseFilemanager
 
                     default:
                         $this->error($this->lang('MODE_ERROR'));
+                        break;
+
+                    case 'initiate':
+                        $response = $this->actionInitiate();
                         break;
 
                     case 'getfile':
@@ -546,14 +556,14 @@ abstract class BaseFilemanager
             return (bool)$this->config['security']['allowNoExtension'];
         }
 
-        $extensions = array_map('strtolower', $this->config['security']['uploadRestrictions']);
+        $extensions = array_map('strtolower', $this->config['upload']['restrictions']);
 
-        if($this->config['security']['uploadPolicy'] == 'DISALLOW_ALL') {
+        if($this->config['upload']['policy'] == 'DISALLOW_ALL') {
             if(!in_array(strtolower($path_parts['extension']), $extensions)) {
                 return false;
             }
         }
-        if($this->config['security']['uploadPolicy'] == 'ALLOW_ALL') {
+        if($this->config['upload']['policy'] == 'ALLOW_ALL') {
             if(in_array(strtolower($path_parts['extension']), $extensions)) {
                 return false;
             }
@@ -574,16 +584,16 @@ abstract class BaseFilemanager
 
         // check if folder name is allowed regarding the security Policy settings
         if ($is_dir && (
-            in_array($name, $this->config['exclude']['unallowed_dirs']) ||
-            preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $name))
+            in_array($name, $this->config['security']['excluded_dirs']) ||
+            preg_match($this->config['security']['excluded_dirs_REGEXP'], $name))
         ) {
             return false;
         }
 
         // check if file name is allowed regarding the security Policy settings
         if (!$is_dir && (
-            in_array($name, $this->config['exclude']['unallowed_files']) ||
-            preg_match($this->config['exclude']['unallowed_files_REGEXP'], $name))
+            in_array($name, $this->config['security']['excluded_files']) ||
+            preg_match($this->config['security']['excluded_files_REGEXP'], $name))
         ) {
             return false;
         }
@@ -604,10 +614,10 @@ abstract class BaseFilemanager
         }
 
         // filter out item if any filter is specified and item is matched
-        $filterName = isset($this->refParams['type']) ? $this->refParams['type'] : null;
-        $allowedTypes = isset($this->config['outputFilter'][$filterName]) ? $this->config['outputFilter'][$filterName] : null;
-        if($filterName && is_array($allowedTypes) && $item["type"] === self::TYPE_FILE) {
-            return (in_array(strtolower($item["attributes"]["extension"]), $allowedTypes));
+        $filter_name = isset($this->refParams['type']) ? $this->refParams['type'] : null;
+        $allowed_types = isset($this->config['outputFilter'][$filter_name]) ? $this->config['outputFilter'][$filter_name] : null;
+        if($filter_name && is_array($allowed_types) && $item["type"] === self::TYPE_FILE) {
+            return (in_array(strtolower($item["attributes"]["extension"]), $allowed_types));
         }
 
         return true;

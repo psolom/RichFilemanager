@@ -2582,7 +2582,7 @@ $.richFmPlugin = function(element, options)
 					currentPath = fmModel.currentPath(),
 					templateContainer = tmpl('tmpl-fileupload-container', {
 						folder: lg.current_folder + currentPath,
-						info: lg.upload_files_number_limit.replace('%s', config.upload.numberOfFiles) + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true),
+						info: lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles) + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true),
 						lang: lg
 					});
 
@@ -2771,11 +2771,11 @@ $.richFmPlugin = function(element, options)
 						},
 						// validation
 						// maxNumberOfFiles works only for single "add" call when "singleFileUploads" is set to "false"
-						maxNumberOfFiles: config.upload.numberOfFiles,
+						maxNumberOfFiles: config.upload.maxNumberOfFiles,
 						acceptFileTypes: allowedFileTypes,
 						maxFileSize: config.upload.fileSizeLimit,
 						messages: {
-							maxNumberOfFiles: lg.upload_files_number_limit.replace("%s", config.upload.numberOfFiles),
+							maxNumberOfFiles: lg.upload_files_number_limit.replace("%s", config.upload.maxNumberOfFiles),
 							acceptFileTypes: lg.upload_file_type_invalid,
 							maxFileSize: lg.upload_file_too_big + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true)
 						},
@@ -2789,8 +2789,8 @@ $.richFmPlugin = function(element, options)
 						var $items = $dropzone.children('.upload-item');
 						$.each(data.files, function (index, file) {
 							// skip selected files if total files number exceed "maxNumberOfFiles"
-							if($items.length >= config.upload.numberOfFiles) {
-								fm.error(lg.upload_files_number_limit.replace("%s", config.upload.numberOfFiles), {
+							if($items.length >= config.upload.maxNumberOfFiles) {
+								fm.error(lg.upload_files_number_limit.replace("%s", config.upload.maxNumberOfFiles), {
 									logClass: 'fileuploadadd',
 									unique: true
 								});
@@ -2895,7 +2895,7 @@ $.richFmPlugin = function(element, options)
 					.on('fileuploadprocessalways', function(e, data) {
 						$.each(data.files, function (index, file) {
 							var $node = file.context;
-							// file wasn't added to queue (due to config.upload.numberOfFiles limit e.g.)
+							// file wasn't added to queue (due to config.upload.maxNumberOfFiles limit e.g.)
 							if(typeof $node === 'undefined') {
 								return;
 							}

@@ -110,46 +110,27 @@ $config = [
          */
         "normalizeFilename" => true,
         /**
-         * Default value "DISALLOW_ALL". Takes value "ALLOW_ALL" / "DISALLOW_ALL".
-         * If is set to "DISALLOW_ALL", only files with extensions contained in `uploadRestrictions` array will be allowed.
-         * If is set to "ALLOW_ALL", all files will be accepted for upload except for files with extensions contained in `uploadRestrictions`.
+         * Array of file names excluded from listing.
          */
-        "uploadPolicy" => "DISALLOW_ALL",
-        /**
-         * Array of files extensions permitted for uploading
-         */
-        "uploadRestrictions" => [
-            "jpg",
-            "jpe",
-            "jpeg",
-            "gif",
-            "png",
-            "svg",
-            "txt",
-            "pdf",
-            "odp",
-            "ods",
-            "odt",
-            "rtf",
-            "doc",
-            "docx",
-            "xls",
-            "xlsx",
-            "ppt",
-            "pptx",
-            "csv",
-            "ogv",
-            "avi",
-            "mkv",
-            "mp4",
-            "webm",
-            "m4v",
-            "ogg",
-            "mp3",
-            "wav",
-            "zip",
-            "rar",
+        "excluded_files" => [
+            ".htaccess",
+            "web.config",
         ],
+        /**
+         * Array of folder names excluded from listing.
+         */
+        "excluded_dirs" => [
+            "_thumbs",
+            ".CDN_ACCESS_LOGS",
+        ],
+        /**
+         * Files excluded from listing, using REGEX.
+         */
+        "excluded_files_REGEXP" => "/^\\./",
+        /**
+         * Folders excluded from listing, using REGEX.
+         */
+        "excluded_dirs_REGEXP" => "/^\\./",
         /**
          * Array of files extensions permitted for editing.
          */
@@ -157,33 +138,6 @@ $config = [
             "txt",
             "csv",
         ],
-    ],
-    /**
-     * Files and folders restrictions
-     */
-    "exclude" => [
-        /**
-         * Array of files excluded from listing.
-         */
-        "unallowed_files" => [
-            ".htaccess",
-            "web.config",
-        ],
-        /**
-         * Array of folders excluded from listing.
-         */
-        "unallowed_dirs" => [
-            "_thumbs",
-            ".CDN_ACCESS_LOGS",
-        ],
-        /**
-         * Files excluded from listing, using REGEX.
-         */
-        "unallowed_files_REGEXP" => "/^\\./",
-        /**
-         * Folders excluded from listing, using REGEX.
-         */
-        "unallowed_dirs_REGEXP" => "/^\\./",
     ],
     /**
      * File types that are filtered out from the output list based on the type of filter ('getfolder' request)
@@ -234,6 +188,47 @@ $config = [
          * If set to "true", only images are accepted for upload.
          */
         "imagesOnly" => false,
+        /**
+         * Default value "DISALLOW_ALL". Takes value "ALLOW_ALL" / "DISALLOW_ALL".
+         * If is set to "DISALLOW_ALL", only files with extensions contained in `restrictions` array will be allowed.
+         * If is set to "ALLOW_ALL", all files will be accepted for upload except for files with extensions contained in `restrictions`.
+         */
+        "policy" => "DISALLOW_ALL",
+        /**
+         * Array of files extensions permitted for uploading/creating
+         */
+        "restrictions" => [
+            "jpg",
+            "jpe",
+            "jpeg",
+            "gif",
+            "png",
+            "svg",
+            "txt",
+            "pdf",
+            "odp",
+            "ods",
+            "odt",
+            "rtf",
+            "doc",
+            "docx",
+            "xls",
+            "xlsx",
+            "ppt",
+            "pptx",
+            "csv",
+            "ogv",
+            "avi",
+            "mkv",
+            "mp4",
+            "webm",
+            "m4v",
+            "ogg",
+            "mp3",
+            "wav",
+            "zip",
+            "rar",
+        ],
     ],
     /**
      * Images section
@@ -277,7 +272,7 @@ $config = [
             /**
              * Default value "_thumbs/".
              * Folder to store thumbnails, invisible via filemanager.
-             * If you want to make it visible, just remove it from `unallowed_files` configuration option.
+             * If you want to make it visible, just remove it from `excluded_dirs` configuration option.
              */
             "dir" => "_thumbs/",
             /**

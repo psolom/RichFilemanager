@@ -29,9 +29,9 @@ $config = array();
 
 // example to override the default config
 //$config = array(
-//    'security' => array(
-//        'uploadPolicy' => 'DISALLOW_ALL',
-//        'uploadRestrictions' => array(
+//    'upload' => array(
+//        'policy' => 'DISALLOW_ALL',
+//        'restrictions' => array(
 //            'pdf',
 //        ),
 //    ),

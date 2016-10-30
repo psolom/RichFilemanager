@@ -101,6 +101,42 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
+	public function actionInitiate()
+    {
+        $attributes = [
+            'config' => [
+                'options' => [
+                    'culture' => $this->config['options']['culture'],
+                    'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
+                    'capabilities' => $this->config['options']['capabilities'],                    
+                ],
+                'security' => [
+                    'allowFolderDownload' => $this->config['security']['allowFolderDownload'],
+                    'allowChangeExtensions' => $this->config['security']['allowChangeExtensions'],
+                    'allowNoExtension' => $this->config['security']['allowNoExtension'],
+                    'normalizeFilename' => $this->config['security']['normalizeFilename'],
+                    'editRestrictions' => $this->config['security']['editRestrictions'],
+                ],
+                'upload' => [
+                    'paramName' => $this->config['upload']['paramName'],
+                    'chunkSize' => $this->config['upload']['chunkSize'],
+                    'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
+                    'policy' => $this->config['upload']['policy'],
+                    'restrictions' => $this->config['upload']['restrictions'],
+                ],
+            ],
+        ];
+
+        return [
+            'id' => '/',
+            'type' => 'initiate',
+            'attributes' => $attributes,
+        ];
+	}
+
+	/**
+	 * @inheritdoc
+	 */
 	public function actionGetFolder()
     {
 		$files_list = [];
@@ -1237,25 +1273,21 @@ class LocalFilemanager extends BaseFilemanager
 			return $result;
 		}
 
-		foreach($files as $value) {
-			if($value == "." || $value == "..") {
+		foreach($files as $file) {
+			if($file == "." || $file == "..") {
 				continue;
 			}
-			$path = $dir . $value;
-			$subPath = substr($path, strlen($dir));
+			$path = $dir . $file;
+            $is_dir = is_dir($path);
 
-			if (is_dir($path)) {
-				if (!in_array($subPath, $this->config['exclude']['unallowed_dirs']) &&
-					!preg_match($this->config['exclude']['unallowed_dirs_REGEXP'], $subPath)) {
-					$result['folders']++;
-					$this->getDirSummary($path . '/', $result);
-				}
-			} else if (
-				!in_array($subPath, $this->config['exclude']['unallowed_files']) &&
-				!preg_match($this->config['exclude']['unallowed_files_REGEXP'], $subPath)) {
-				$result['files']++;
-				$result['size'] += filesize($path);
-			}
+            if ($is_dir && $this->is_allowed_name($file, true)) {
+                $result['folders']++;
+                $this->getDirSummary($path . '/', $result);
+            }
+            if (!$is_dir && $this->is_allowed_name($file, false)) {
+                $result['files']++;
+                $result['size'] += filesize($path);
+            }
 		}
 
 		return $result;
