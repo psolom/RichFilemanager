@@ -18,26 +18,26 @@ class FmApplication {
         $this->logger = new Logger();
     }
 
-    public function getInstance($customConfig = array())
+    public function getInstance($custom_config = array())
     {
-        $config = require_once(FM_ROOT_PATH . '/config.php');
-        $config = FmHelper::mergeConfigs($config, $customConfig);
+        $base_config = require_once(FM_ROOT_PATH . '/config.php');
+        $configuration = FmHelper::mergeConfigs($base_config, $custom_config);
 
-        if (isset($config['logger']) && $config['logger']['enabled'] == true ) {
-            $this->logger->enabled = true;
-        }
-
-        if (isset($config['plugin']) && !empty($config['plugin'])) {
-            $pluginName = $config['plugin'];
-            $pluginPath = FM_ROOT_PATH . "/plugins/{$pluginName}/";
-            $className = ucfirst($pluginName) . 'Filemanager';
-            require_once($pluginPath . $className . '.php');
-            $pluginConfig = require_once($pluginPath . 'config.php');
-            $config = FmHelper::mergeConfigs($config, $pluginConfig);
-            $fm = new $className($config);
+        if (isset($configuration['plugin']) && !empty($configuration['plugin'])) {
+            $plugin_name = $configuration['plugin'];
+            $plugin_path = FM_ROOT_PATH . "/plugins/{$plugin_name}/";
+            $class_name = ucfirst($plugin_name) . 'Filemanager';
+            require_once($plugin_path . $class_name . '.php');
+            $plugin_config = require_once($plugin_path . 'config.php');
+            $configuration = FmHelper::mergeConfigs($base_config, $plugin_config, $custom_config);
+            $fm = new $class_name($configuration);
         } else {
             require_once(FM_ROOT_PATH . '/LocalFilemanager.php');
-            $fm = new LocalFilemanager($config);
+            $fm = new LocalFilemanager($configuration);
+        }
+
+        if (isset($configuration['logger']) && $configuration['logger']['enabled'] == true ) {
+            $this->logger->enabled = true;
         }
 
         if(!auth()) {

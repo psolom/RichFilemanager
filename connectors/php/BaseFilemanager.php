@@ -362,6 +362,16 @@ abstract class BaseFilemanager
     }
 
     /**
+     * Checking if permission is set or not for a given action
+     * @param string $action
+     * @return boolean
+     */
+    protected function hasPermission($action)
+    {
+        return in_array($action, $this->allowed_actions);
+    }
+
+    /**
      * Echo error message and terminate the application
      * @param string $title
      */
@@ -475,6 +485,48 @@ abstract class BaseFilemanager
         $sanitized = str_replace('../', '', $sanitized);
 
         return $sanitized;
+    }
+
+    /**
+     * Clean string to retrieve correct file/folder name.
+     * @param string $string
+     * @param array $allowed
+     * @return array|mixed
+     */
+    public function normalizeString($string, $allowed = [])
+    {
+        $allow = '';
+        if(!empty($allowed)) {
+            foreach ($allowed as $value) {
+                $allow .= "\\$value";
+            }
+        }
+
+        if($this->config['security']['normalizeFilename'] === true) {
+            // Remove path information and dots around the filename, to prevent uploading
+            // into different directories or replacing hidden system files.
+            // Also remove control characters and spaces (\x00..\x20) around the filename:
+            $string = trim(basename(stripslashes($string)), ".\x00..\x20");
+
+            // Replace chars which are not related to any language
+            $replacements = [' '=>'_', '\''=>'_', '/'=>'', '\\'=>''];
+            $string = strtr($string, $replacements);
+        }
+
+        if($this->config['options']['charsLatinOnly'] === true) {
+            // transliterate if extension is loaded
+            if(extension_loaded('intl') === true && function_exists('transliterator_transliterate')) {
+                $options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
+                $string = transliterator_transliterate($options, $string);
+            }
+            // clean up all non-latin chars
+            $string = preg_replace("/[^{$allow}_a-zA-Z0-9]/u", '', $string);
+        }
+
+        // remove double underscore
+        $string = preg_replace('/[_]+/', '_', $string);
+
+        return $string;
     }
 
     /**

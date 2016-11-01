@@ -10,13 +10,13 @@
  *  @copyright	Authors
  */
 
-$config = array();
+$s3_config = array();
 
 /**
  * Whether to store images thumbnails locally (faster; save traffic and requests)
  * @var string|null
  */
-$config['s3']['localThumbsPath'] = 'userfilesS3';
+$s3_config['s3']['localThumbsPath'] = 'userfilesS3';
 
 /**
  * Whether to perform bulk operations on "folders" (rename/move/copy)
@@ -33,7 +33,7 @@ $config['s3']['localThumbsPath'] = 'userfilesS3';
  *
  * @var boolean
  */
-$config['s3']['allowBulk'] = true;
+$s3_config['s3']['allowBulk'] = true;
 
 
 /*******************************************************************************
@@ -41,7 +41,7 @@ $config['s3']['allowBulk'] = true;
  * Check options description: https://github.com/frostealth/yii2-aws-s3
  ******************************************************************************/
 
-$config['s3']['settings'] = array(
+$s3_config['s3']['settings'] = array(
     'region' => 'your region',
     'bucket' => 'your aws s3 bucket',
     'credentials' => array( // Aws\Credentials\CredentialsInterface|array|callable
@@ -53,4 +53,4 @@ $config['s3']['settings'] = array(
     'debug' => false, // bool|array
 );
 
-return $config;
+return $s3_config;

@@ -148,7 +148,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
 		}
 
-		// check if file is readable
+		// check if folder is readable
 		if(!$this->has_system_permission($target_fullpath, ['r'])) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
@@ -224,7 +224,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-		if(!$this->has_permission('upload')) {
+		if(!$this->hasPermission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -304,7 +304,7 @@ class LocalFilemanager extends BaseFilemanager
 		$new_file = $this->getFullPath($new_path, true) . '/' . $new_name . $suffix;
 		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
-		if(!$this->has_permission('rename')) {
+		if(!$this->hasPermission('rename')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -394,7 +394,7 @@ class LocalFilemanager extends BaseFilemanager
 		$new_fullpath = $target_fullpath . $filename . $suffix;
 		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
-        if(!$this->has_permission('move')) {
+        if(!$this->hasPermission('move')) {
             $this->error(sprintf($this->lang('NOT_ALLOWED')));
         }
 
@@ -470,7 +470,7 @@ class LocalFilemanager extends BaseFilemanager
         $target_fullpath = $this->getFullPath($target_path, true);
         Log::info('replacing target path "' . $target_fullpath . '"');
 
-		if(!$this->has_permission('replace') || !$this->has_permission('upload')) {
+		if(!$this->hasPermission('replace') || !$this->hasPermission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -548,7 +548,7 @@ class LocalFilemanager extends BaseFilemanager
             $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
         }
 
-        if(!$this->has_permission('edit') || !$this->is_editable($item)) {
+        if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
             $this->error(sprintf($this->lang('NOT_ALLOWED')));
         }
 
@@ -588,7 +588,7 @@ class LocalFilemanager extends BaseFilemanager
             $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
         }
 
-        if(!$this->has_permission('edit') || !$this->is_editable($item)) {
+        if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
             $this->error(sprintf($this->lang('NOT_ALLOWED')));
         }
 
@@ -745,7 +745,7 @@ class LocalFilemanager extends BaseFilemanager
 		$thumbnail_path = $this->get_thumbnail_path($target_fullpath);
 		Log::info('deleting "' . $target_fullpath . '"');
 
-		if(!$this->has_permission('delete')) {
+		if(!$this->hasPermission('delete')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -797,7 +797,7 @@ class LocalFilemanager extends BaseFilemanager
         $is_dir = is_dir($target_fullpath);
 		Log::info('downloading "' . $target_fullpath . '"');
 
-		if(!$this->has_permission('download')) {
+		if(!$this->hasPermission('download')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -1131,58 +1131,6 @@ class LocalFilemanager extends BaseFilemanager
 		// remove multiple slashes
         $string = preg_replace('#/+#', '/', $string);
         return $string;
-	}
-
-	/**
-	 * Clean string to retrieve correct file/folder name.
-	 * @param string $string
-	 * @param array $allowed
-	 * @return array|mixed
-	 */
-	public function normalizeString($string, $allowed = [])
-	{
-		$allow = '';
-		if(!empty($allowed)) {
-			foreach ($allowed as $value) {
-				$allow .= "\\$value";
-			}
-		}
-
-		if($this->config['security']['normalizeFilename'] === true) {
-			// Remove path information and dots around the filename, to prevent uploading
-			// into different directories or replacing hidden system files.
-			// Also remove control characters and spaces (\x00..\x20) around the filename:
-			$string = trim(basename(stripslashes($string)), ".\x00..\x20");
-
-			// Replace chars which are not related to any language
-			$replacements = [' '=>'_', '\''=>'_', '/'=>'', '\\'=>''];
-			$string = strtr($string, $replacements);
-		}
-
-		if($this->config['options']['charsLatinOnly'] === true) {
-			// transliterate if extension is loaded
-			if(extension_loaded('intl') === true && function_exists('transliterator_transliterate')) {
-				$options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';
-				$string = transliterator_transliterate($options, $string);
-			}
-			// clean up all non-latin chars
-			$string = preg_replace("/[^{$allow}_a-zA-Z0-9]/u", '', $string);
-		}
-
-		// remove double underscore
-		$string = preg_replace('/[_]+/', '_', $string);
-
-		return $string;
-	}
-
-	/**
-	 * Checking if permission is set or not for a given action
-	 * @param string $action
-	 * @return boolean
-	 */
-    protected function has_permission($action)
-    {
-		return in_array($action, $this->allowed_actions);
 	}
 
     /**

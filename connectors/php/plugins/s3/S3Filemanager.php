@@ -141,17 +141,18 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionGetFolder()
 	{
-		$array = array();
-		$files_list = array();
-		$current_path = $this->getFullPath($this->get['path'], true);
-        Log::info('opening folder "' . $current_path . '"');
+        $files_list = array();
+		$response_data = [];
+        $target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('opening folder "' . $target_fullpath . '"');
 
-		if (!is_dir($current_path)) {
-			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $this->get['path']));
+		if (!is_dir($target_fullpath)) {
+			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
 		}
 
-		if(!$handle = @opendir($current_path)) {
-			$this->error(sprintf($this->lang('UNABLE_TO_OPEN_DIRECTORY'), $this->get['path']));
+		if(!$handle = @opendir($target_fullpath)) {
+			$this->error(sprintf($this->lang('UNABLE_TO_OPEN_DIRECTORY'), $target_path));
 		} else {
 			while (false !== ($file = readdir($handle))) {
 				array_push($files_list, $file);
@@ -159,19 +160,19 @@ class S3Filemanager extends LocalFilemanager
 			closedir($handle);
 
 			foreach($files_list as $file) {
-				$file_path = $this->get['path'] . $file;
-                if(is_dir($current_path . $file)) {
+				$file_path = $target_path . $file;
+                if(is_dir($target_fullpath . $file)) {
                     $file_path .= '/';
                 }
 
                 $item = $this->get_file_info($file_path);
                 if($this->filter_output($item)) {
-                    $array[] = $item;
+                    $response_data[] = $item;
                 }
 			}
 		}
 
-		return $array;
+		return $response_data;
 	}
 
 	/**
@@ -179,18 +180,23 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionGetFile()
 	{
-		$path = $this->get['path'];
-		$current_path = $this->getFullPath($path);
-        Log::info('opening file "' . $current_path . '"');
+		$target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path);
+        Log::info('opening file "' . $target_fullpath . '"');
 
 		// NOTE: S3 doesn't provide a way to check if file doesn't exist or just has a permissions restriction,
 		// therefore it is supposed the file is prohibited by default and the appropriate message is returned.
 		// https://github.com/aws/aws-sdk-php/issues/969
-		if(!file_exists($current_path)) {
+		if(!file_exists($target_fullpath)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-        $item = $this->get_file_info($path);
+		// check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+        $item = $this->get_file_info($target_path);
         if(!$this->filter_output($item)) {
             $this->error(sprintf($this->lang('NOT_ALLOWED')));
         }
@@ -206,7 +212,7 @@ class S3Filemanager extends LocalFilemanager
 		$current_path = $this->getFullPath($this->post['path'], true);
         Log::info('uploading to "' . $current_path . '"');
 
-		if(!$this->has_permission('upload')) {
+		if(!$this->hasPermission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -271,7 +277,7 @@ class S3Filemanager extends LocalFilemanager
 		$new_file = rtrim($new_dir, '/') . '/' . $newName . $suffix;
         Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
-		if(!$this->has_permission('rename')) {
+		if(!$this->hasPermission('rename')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -363,7 +369,7 @@ class S3Filemanager extends LocalFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		if(!$this->has_permission('move')) {
+		if(!$this->hasPermission('move')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -466,7 +472,7 @@ class S3Filemanager extends LocalFilemanager
 		$upload_dir = dirname($old_path) . '/';
         Log::info('replacing "' . $old_path . '"');
 
-		if(!$this->has_permission('replace') || !$this->has_permission('upload')) {
+		if(!$this->hasPermission('replace') || !$this->hasPermission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -509,7 +515,7 @@ class S3Filemanager extends LocalFilemanager
 		$current_path = $this->getFullPath($this->get['path'], true);
         Log::info('opening "' . $current_path . '"');
 
-		if(!$this->has_permission('edit')) {
+		if(!$this->hasPermission('edit')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -538,7 +544,7 @@ class S3Filemanager extends LocalFilemanager
 		$current_path = $this->getFullPath($this->post['path'], true);
         Log::info('saving "' . $current_path . '"');
 
-		if(!$this->has_permission('edit')) {
+		if(!$this->hasPermission('edit')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -653,7 +659,7 @@ class S3Filemanager extends LocalFilemanager
 		$current_path = $this->getFullPath($this->get['path'], true);
         Log::info('deleting "' . $current_path . '"');
 
-		if(!$this->has_permission('delete')) {
+		if(!$this->hasPermission('delete')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -683,7 +689,7 @@ class S3Filemanager extends LocalFilemanager
 		$filename = basename($current_path);
         Log::info('downloading "' . $current_path . '"');
 
-		if(!$this->has_permission('download')) {
+		if(!$this->hasPermission('download')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
@@ -823,30 +829,29 @@ class S3Filemanager extends LocalFilemanager
 	 * @param string $relative_path
 	 * @return array
 	 */
-	protected function get_file_info($relative_path)
-	{
-		$current_path = $this->getFullPath($relative_path);
+    protected function get_file_info($relative_path)
+    {
+        $fullpath = $this->getFullPath($relative_path);
+        $pathInfo = pathinfo($fullpath);
+        $filemtime = @filemtime($fullpath);
 
-		$item = $this->defaultInfo;
-		$pathInfo = pathinfo($current_path);
-		$filemtime = @filemtime($current_path);
+        if(is_dir($fullpath)) {
+            $model = $this->folder_model;
+        } else {
+            $model = $this->file_model;
+            $model['attributes']['size'] = filesize($fullpath);
+            $model['attributes']['extension'] = isset($pathInfo['extension']) ? $pathInfo['extension'] : '';
+        }
 
-		if(is_dir($current_path)) {
-			$fileType = self::FILE_TYPE_DIR;
-		} else {
-			$fileType = $pathInfo['extension'];
-			$item['Properties']['Size'] = filesize($current_path);
-		}
-
-		$item['Path'] = $this->getDynamicPath($current_path);
-		$item['Filename'] = $pathInfo['basename'];
-		$item['File Type'] = $fileType;
-		$item['Protected'] = 0; // check comment in "getfile()" method
-		$item['Properties']['Date Modified'] = $this->formatDate($filemtime);
-		//$item['Properties']['Date Created'] = $this->formatDate(filectime($current_path)); // PHP cannot get create timestamp
-		$item['Properties']['filemtime'] = $filemtime;
-		return $item;
-	}
+        $model['id'] = $relative_path;
+        $model['attributes']['name'] = $pathInfo['basename'];
+        $model['attributes']['path'] = $this->getDynamicPath($fullpath);
+        $model['attributes']['protected'] = 0;
+        $model['attributes']['timestamp'] = $filemtime;
+        $model['attributes']['modified'] = $this->formatDate($filemtime);
+        //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
+        return $model;
+    }
 
 	/**
 	 * Checks path for "dots" to avoid directory climbing and backtracking (traversal attack)
