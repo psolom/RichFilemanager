@@ -136,6 +136,14 @@ class S3Filemanager extends LocalFilemanager
 		));
 	}
 
+    /**
+     * @inheritdoc
+     */
+    public function actionInitiate()
+    {
+        return parent::actionInitiate();
+    }
+
 	/**
 	 * @inheritdoc
 	 */
@@ -209,23 +217,36 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionUpload()
 	{
-		$current_path = $this->getFullPath($this->post['path'], true);
-        Log::info('uploading to "' . $current_path . '"');
+        $target_path = $this->post['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('uploading to "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$result = $this->initUploader(array(
-			'upload_dir' => $current_path,
-		))->post(true);
+        $content = $this->initUploader([
+			'upload_dir' => $target_fullpath,
+		])->post(false);
 
-		if (!$result) {
-			$this->error(sprintf($this->lang('INVALID_FILE_UPLOAD')));
-		}
+        $response_data = [];
+        $files = isset($content[$this->config['upload']['paramName']]) ?
+            $content[$this->config['upload']['paramName']] : null;
+        // there is only one file in the array as long as "singleFileUploads" is set to "true"
+        if ($files && is_array($files) && is_object($files[0])) {
+            $file = $files[0];
+            if(isset($file->error)) {
+                $this->error($file->error);
+            } else {
+                $relative_path = $this->cleanPath('/' . $target_path . '/' . $file->name);
+                $item = $this->get_file_info($relative_path);
+                $response_data[] = $item;
+            }
+        } else {
+            $this->error(sprintf($this->lang('ERROR_UPLOADING_FILE')));
+        }
 
-		// end application to prevent double response (uploader and filemanager)
-		exit;
+        return $response_data;
 	}
 
 	/**
@@ -233,26 +254,29 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionAddFolder()
 	{
-		$current_path = $this->getFullPath($this->get['path'], true);
-		$new_dir = $this->normalizeString($this->get['name']);
-		$new_path = $current_path . $this->pathToFolder($new_dir);
-        Log::info('adding folder "' . $new_path . '"');
+		$target_path = $this->get['path'];
+        $target_fullpath = $this->getFullPath($target_path, true);
 
-		if(is_dir($new_path)) {
-			$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $this->get['name']));
+        $target_name = $this->get['name'];
+        $folder_name = $this->normalizeString($target_name);
+        $new_fullpath = $target_fullpath . $this->pathToFolder($folder_name);
+        Log::info('adding folder "' . $new_fullpath . '"');
+
+        if(is_dir($new_fullpath)) {
+            $this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $target_name));
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($folder_name, true)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_NAME'), $target_name));
+        }
+
+		if(!mkdir($new_fullpath, 0755)) {
+			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $target_name));
 		}
 
-		if(!mkdir($new_path, 0755)) {
-			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $new_dir));
-		}
-
-		$array = array(
-			'Parent' => $this->get['path'],
-			'Name' => $this->get['name'],
-			'Error' => "",
-			'Code' => 0,
-		);
-		return $array;
+        $relative_path = $this->cleanPath('/' . $target_path . '/' . $folder_name . '/');
+        return $this->get_file_info($relative_path);
 	}
 
 	/**
@@ -269,13 +293,13 @@ class S3Filemanager extends LocalFilemanager
 		$tmp = explode('/', $this->get['old']);
 		$filename = $tmp[(sizeof($tmp)-1)];
 
-		$newPath = substr($this->get['old'], 0, strripos($this->get['old'], '/' . $filename));
-		$newName = $this->normalizeString($this->get['new'], array('.', '-'));
+		$new_path = substr($this->get['old'], 0, strripos($this->get['old'], '/' . $filename));
+		$new_name = $this->normalizeString($this->get['new'], ['.', '-']);
+        $new_relative_path = $this->cleanPath('/' . $new_path . '/' . $new_name . $suffix);
 
 		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
-		$new_dir = $this->getFullPath($newPath, true);
-		$new_file = rtrim($new_dir, '/') . '/' . $newName . $suffix;
-        Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
+		$new_file = $this->getFullPath($new_path, true) . '/' . $new_name . $suffix;
+		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
 		if(!$this->hasPermission('rename')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -296,17 +320,34 @@ class S3Filemanager extends LocalFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		// for file only - we check if the new given extension is allowed regarding the security Policy settings
-		if(is_file($old_file) && $this->config['security']['allowChangeExtensions'] && !$this->is_allowed_file_type($new_file)) {
-			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
-		}
+        // check if file extension is consistent to the security Policy settings
+        if(is_file($old_file)) {
+            if (!$this->config['security']['allowChangeExtensions']) {
+                $ext_old = strtolower(pathinfo($old_file, PATHINFO_EXTENSION));
+                $ext_new = strtolower(pathinfo($new_file, PATHINFO_EXTENSION));
+                if($ext_old !== $ext_new) {
+                    $this->error(sprintf($this->lang('FORBIDDEN_CHANGE_EXTENSION')));
+                }
+            }
+            if (!$this->is_allowed_file_type($new_file)) {
+                $this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
+            }
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($old_file, $suffix === '/')) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+        if(!$this->is_allowed_name($new_name, $suffix === '/')) {
+            $this->error(sprintf($this->lang('FORBIDDEN_NAME'), $new_name));
+        }
 
 		if(file_exists($new_file)) {
-			if($suffix == '/' && is_dir($new_file)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $newName));
+			if($suffix === '/' && is_dir($new_file)) {
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $new_name));
 			}
-			if($suffix == '' && is_file($new_file)) {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), $newName));
+			if($suffix === '' && is_file($new_file)) {
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), $new_name));
 			}
 		}
 
@@ -326,61 +367,61 @@ class S3Filemanager extends LocalFilemanager
 			$this->deleteThumbnail($thumbnail_path);
 		} else {
 			if(is_dir($old_file)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $newName));
+				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $new_name));
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $newName));
+				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $new_name));
 			}
 		}
 
-		$array = array(
-			'Old Path' => $this->getDynamicPath($old_file),
-			'Old Name' => $filename,
-			'New Path' => $this->getDynamicPath($new_file),
-			'New Name' => $newName,
-			'Error' => "",
-			'Code' => 0,
-		);
-		return $array;
-	}
+        return $this->get_file_info($new_relative_path);	}
 
 	/**
 	 * @inheritdoc
 	 */
 	public function actionMove()
 	{
-		$newPath = $this->get['new'] . '/';
-		$newPath = $this->expandPath($newPath, true);
-		$suffix = (substr($this->get['old'], -1, 1) == '/') ? '/' : '';
-
-		// old path
-		$tmp = explode('/', trim($this->get['old'], '/'));
+        $source_path = $this->get['old'];
+        $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
+		$tmp = explode('/', trim($source_path, '/'));
 		$filename = array_pop($tmp); // file name or new dir name
-		$path = '/' . implode('/', $tmp) . '/';
-		$path = $this->cleanPath($path);
 
-		$oldPath = $this->getFullPath($this->get['old'], true);
-		$newPath = $this->getFullPath($newPath, true);
-		$newFullPath = $newPath . $filename . $suffix;
-		$isDirOldPath = is_dir($oldPath);
-        Log::info('moving "' . $oldPath . '" to "' . $newFullPath . '"');
+        $target_path = $this->get['new'] . '/';
+        $target_path = $this->expandPath($target_path, true);
+
+		$source_fullpath = $this->getFullPath($source_path, true);
+        $target_fullpath = $this->getFullPath($target_path, true);
+		$new_fullpath = $target_fullpath . $filename . $suffix;
+        $is_dir_source = is_dir($source_fullpath);
+		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
+
+        if(!$this->hasPermission('move')) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
+
+        if(!is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
+        }
 
 		// check if not requesting main FM userfiles folder
-		if($this->is_root_folder($oldPath)) {
+		if($this->is_root_folder($source_fullpath)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		if(!$this->hasPermission('move')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
-		}
+        // check if the name is not in "excluded" list
+        if (!$this->is_allowed_name($target_fullpath, true) ||
+            !$this->is_allowed_name($source_fullpath, is_dir($source_fullpath))
+        ) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
 
 		// forbid bulk rename of objects
-		if($isDirOldPath && !$this->config['s3']['allowBulk']) {
+		if($is_dir_source && !$this->config['s3']['allowBulk']) {
 			$this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
 		}
 
 		// check if file already exists
-		if (file_exists($newFullPath)) {
-			if(is_dir($newFullPath)) {
+		if (file_exists($new_fullpath)) {
+			if(is_dir($new_fullpath)) {
 				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
 			} else {
 				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
@@ -388,14 +429,14 @@ class S3Filemanager extends LocalFilemanager
 		}
 
 		$moved = array();
-		if($isDirOldPath) {
-			$files = $this->getFilesList(rtrim($oldPath, '/'));
+		if($is_dir_source) {
+			$files = $this->getFilesList(rtrim($source_fullpath, '/'));
 			$files = array_reverse($files);
 			foreach($files as $k => $path) {
 				if(is_dir($path)) {
 					$path .= '/';
 				};
-				$new_path = str_replace($oldPath, $newFullPath, $path);
+				$new_path = str_replace($source_fullpath, $new_fullpath, $path);
 				if(@rename($path, $new_path)) {
 					$moved[] = array(
 						'old' => $path,
@@ -405,19 +446,19 @@ class S3Filemanager extends LocalFilemanager
 			}
 		}
 
-		if(@rename($oldPath, $newFullPath)) {
+		if(@rename($source_fullpath, $new_fullpath)) {
 			$moved[] = array(
-				'old' => $oldPath,
-				'new' => $newFullPath,
+				'old' => $source_fullpath,
+				'new' => $new_fullpath,
 			);
 		}
 
 		if(sizeof($moved) > 0) {
-            Log::info('moved "' . $oldPath . '" to "' . $newFullPath . '"');
+            Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
 			// try to move thumbs instead of get original images from S3 to create new thumbs
-			$new_thumbnail = $this->get_thumbnail_path($newFullPath);
-			$old_thumbnail = $this->get_thumbnail_path($oldPath);
+			$new_thumbnail = $this->get_thumbnail_path($new_fullpath);
+			$old_thumbnail = $this->get_thumbnail_path($source_fullpath);
 
 			if($this->config['s3']['localThumbsPath']) {
 				if(file_exists($old_thumbnail)) {
@@ -445,22 +486,15 @@ class S3Filemanager extends LocalFilemanager
 //				}
 			}
 		} else {
-			if($isDirOldPath) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $path, $this->get['new']));
-			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $path . $filename, $this->get['new']));
-			}
+            if($is_dir_source) {
+                $this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $this->get['new']));
+            } else {
+                $this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $this->get['new']));
+            }
 		}
 
-		$array = array(
-			'Old Path' => $path,
-			'Old Name' => $filename,
-			'New Path' => $this->getDynamicPath($newPath),
-			'New Name' => $filename,
-			'Error' => "",
-			'Code' => 0,
-		);
-		return $array;
+        $relative_path = $this->cleanPath('/' . $target_path . '/' . $filename . $suffix);
+        return $this->get_file_info($relative_path);
 	}
 
 	/**

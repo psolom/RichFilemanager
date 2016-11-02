@@ -278,7 +278,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $target_name));
 		}
 
-        $relative_path = $this->cleanPath('/' . $target_path . $folder_name);
+        $relative_path = $this->cleanPath('/' . $target_path . '/' . $folder_name . '/');
         return $this->get_file_info($relative_path);
 	}
 
@@ -453,7 +453,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-        $relative_path = $this->cleanPath('/' . $target_path . $filename . $suffix);
+        $relative_path = $this->cleanPath('/' . $target_path . '/' . $filename . $suffix);
         return $this->get_file_info($relative_path);
 	}
 
