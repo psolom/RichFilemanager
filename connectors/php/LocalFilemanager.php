@@ -742,7 +742,6 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
-		$thumbnail_path = $this->get_thumbnail_path($target_fullpath);
 		Log::info('deleting "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('delete')) {
@@ -765,6 +764,7 @@ class LocalFilemanager extends BaseFilemanager
         }
 
         $item = $this->get_file_info($target_path);
+        $thumbnail_path = $this->get_thumbnail_path($target_fullpath);
 
 		if(is_dir($target_fullpath)) {
 			$this->unlinkRecursive($target_fullpath);
@@ -794,7 +794,7 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
-        $is_dir = is_dir($target_fullpath);
+        $is_dir_target = is_dir($target_fullpath);
 		Log::info('downloading "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('download')) {
@@ -807,11 +807,11 @@ class LocalFilemanager extends BaseFilemanager
 		}
 
         // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, $is_dir)) {
+        if(!$this->is_allowed_name($target_fullpath, $is_dir_target)) {
             $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
         }
 
-		if($is_dir) {
+		if($is_dir_target) {
 			// check if permission is granted
 			if($this->config['security']['allowFolderDownload'] == false ) {
 				$this->error(sprintf($this->lang('NOT_ALLOWED')));
@@ -826,7 +826,7 @@ class LocalFilemanager extends BaseFilemanager
 		if($this->isAjaxRequest()) {
             return $this->get_file_info($target_path);
         } else {
-            if($is_dir) {
+            if($is_dir_target) {
                 $destination_path = sys_get_temp_dir().'/fm_'.uniqid().'.zip';
 
                 // if Zip archive is created
@@ -1193,7 +1193,7 @@ class LocalFilemanager extends BaseFilemanager
 
 	/**
 	 * Returns summary info for specified folder
-	 * @param $dir $path
+	 * @param string $dir
 	 * @param array $result
 	 * @return array
 	 */

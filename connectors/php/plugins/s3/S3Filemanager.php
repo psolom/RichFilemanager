@@ -51,7 +51,7 @@ class S3Filemanager extends LocalFilemanager
 	 * @param array $config
 	 * @throws Exception
 	 */
-	public function __construct($config = array())
+	public function __construct($config = [])
 	{
 		parent::__construct($config);
 
@@ -118,22 +118,22 @@ class S3Filemanager extends LocalFilemanager
 	 * @param array $settings
 	 * @return S3UploadHandler
 	 */
-	public function initUploader($settings = array())
+	public function initUploader($settings = [])
 	{
-		$data = array(
+		$data = [
 			'images_only' => $this->config['upload']['imagesOnly'] || (isset($this->refParams['type']) && strtolower($this->refParams['type'])=='images'),
-		) + $settings;
+		] + $settings;
 
 		if(isset($data['upload_dir'])) {
 			$data['thumbnails_dir'] = rtrim($this->get_thumbnail_path($data['upload_dir']), '/');
 		}
 
-		return new S3UploadHandler(array(
-			'fm' => array(
+		return new S3UploadHandler([
+			'fm' => [
 				'instance' => $this,
 				'data' => $data,
-			),
-		));
+			],
+		]);
 	}
 
     /**
@@ -141,7 +141,11 @@ class S3Filemanager extends LocalFilemanager
      */
     public function actionInitiate()
     {
-        return parent::actionInitiate();
+        $response = parent::actionInitiate();
+        // disable files preview via absolute path
+        $response['attributes']['config']['viewer']['absolutePath'] = false;
+
+        return $response;
     }
 
 	/**
@@ -149,7 +153,7 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionGetFolder()
 	{
-        $files_list = array();
+        $files_list = [];
 		$response_data = [];
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
@@ -428,7 +432,7 @@ class S3Filemanager extends LocalFilemanager
 			}
 		}
 
-		$moved = array();
+		$moved = [];
 		if($is_dir_source) {
 			$files = $this->getFilesList(rtrim($source_fullpath, '/'));
 			$files = array_reverse($files);
@@ -438,19 +442,19 @@ class S3Filemanager extends LocalFilemanager
 				};
 				$new_path = str_replace($source_fullpath, $new_fullpath, $path);
 				if(@rename($path, $new_path)) {
-					$moved[] = array(
+					$moved[] = [
 						'old' => $path,
 						'new' => $new_path,
-					);
+					];
 				}
 			}
 		}
 
 		if(@rename($source_fullpath, $new_fullpath)) {
-			$moved[] = array(
+			$moved[] = [
 				'old' => $source_fullpath,
 				'new' => $new_fullpath,
-			);
+			];
 		}
 
 		if(sizeof($moved) > 0) {
@@ -502,43 +506,67 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionReplace()
 	{
-		$old_path = $this->getFullPath($this->post['path']);
-		$upload_dir = dirname($old_path) . '/';
-        Log::info('replacing "' . $old_path . '"');
+        $source_path = $this->post['path'];
+        $source_fullpath = $this->getFullPath($source_path);
+        Log::info('replacing file "' . $source_fullpath . '"');
+
+        $target_path = dirname($source_path) . '/';
+        $target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('replacing target path "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('replace') || !$this->hasPermission('upload')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		if(is_dir($old_path)) {
+		if(is_dir($source_fullpath)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		// we check the given file has the same extension as the old one
-		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($this->post['path'], PATHINFO_EXTENSION))) {
-			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' ' . pathinfo($this->post['path'], PATHINFO_EXTENSION)));
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($source_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+		// check if the given file has the same extension as the old one
+		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($source_path, PATHINFO_EXTENSION))) {
+			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' ' . pathinfo($source_path, PATHINFO_EXTENSION)));
 		}
 
-		$result = $this->initUploader(array(
-			'upload_dir' => $upload_dir,
-		))->post(true);
+        $content = $this->initUploader([
+            'upload_dir' => $target_fullpath,
+        ])->post(false);
 
-		// success upload
-		if(!property_exists($result['files'][0], 'error')) {
-			$new_path = $upload_dir . $result['files'][0]->name;
-			if(@rename($new_path, $old_path)) {
-				// try to move thumbs instead of get original images from S3 to create new thumbs
-				$new_thumbnail = $this->get_thumbnail_path($new_path);
-				$old_thumbnail = $this->get_thumbnail_path($old_path);
+        $response_data = [];
+        $files = isset($content[$this->config['upload']['paramName']]) ?
+            $content[$this->config['upload']['paramName']] : null;
+        // there is only one file in the array as long as "singleFileUploads" is set to "true"
+        if ($files && is_array($files) && is_object($files[0])) {
+            $file = $files[0];
+            if(isset($file->error)) {
+                $this->error($file->error);
+            } else {
+                $replacement_fullpath = $target_fullpath . $file->name;
+                Log::info('replacing "' . $source_fullpath . '" with "' . $replacement_fullpath . '"');
 
-				if(file_exists($new_thumbnail)) {
-					@rename($new_thumbnail, $old_thumbnail);
-				}
-			}
-		}
+                if(@rename($replacement_fullpath, $source_fullpath)) {
+                    // try to move thumbs instead of get original images from S3 to create new thumbs
+                    $new_thumbnail = $this->get_thumbnail_path($replacement_fullpath);
+                    $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
 
-		// end application to prevent double response (uploader and filemanager)
-		exit();
+                    if(file_exists($new_thumbnail)) {
+                        @rename($new_thumbnail, $old_thumbnail);
+                    }
+                }
+
+                $relative_path = $this->cleanPath('/' . $source_path);
+                $item = $this->get_file_info($relative_path);
+                $response_data[] = $item;
+            }
+        } else {
+            $this->error(sprintf($this->lang('ERROR_UPLOADING_FILE')));
+        }
+
+        return $response_data;
 	}
 
 	/**
@@ -546,28 +574,34 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionEditFile()
 	{
-		$current_path = $this->getFullPath($this->get['path'], true);
-        Log::info('opening "' . $current_path . '"');
+        $target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+		Log::info('opening "' . $target_fullpath . '"');
 
-		if(!$this->hasPermission('edit')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
-		}
+        $item = $this->get_file_info($target_path);
 
-		$content = file_get_contents($current_path);
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+        if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+		$content = file_get_contents($target_fullpath);
 		$content = htmlspecialchars($content);
 
 		if($content === false) {
 			$this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
 		}
 
-		$array = array(
-			'Path' => $this->get['path'],
-			'Content' => $content,
-			'Error' => "",
-			'Code' => 0,
-		);
-
-		return $array;
+        $item['attributes']['content'] = $content;
+        return $item;
 	}
 
 	/**
@@ -575,29 +609,35 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionSaveFile()
 	{
-		$current_path = $this->getFullPath($this->post['path'], true);
-        Log::info('saving "' . $current_path . '"');
+        $target_path = $this->post['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+		Log::info('saving "' . $target_fullpath . '"');
 
-		if(!$this->hasPermission('edit')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
-		}
+        $item = $this->get_file_info($target_path);
 
-		$content =  htmlspecialchars_decode($this->post['content']);
-		$r = file_put_contents($current_path, $content);
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
 
-		if(!is_numeric($r)) {
+        if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+		$content = htmlspecialchars_decode($this->post['content']);
+		$result = file_put_contents($target_fullpath, $content);
+
+		if(!is_numeric($result)) {
 			$this->error(sprintf($this->lang('ERROR_SAVING_FILE')));
 		}
 
-        Log::info('saved "' . $current_path . '"');
+		Log::info('saved "' . $target_fullpath . '"');
 
-		$array = array(
-			'Path' => $this->post['path'],
-			'Error' => "",
-			'Code' => 0,
-		);
-
-		return $array;
+        return $item;
 	}
 
 	/**
@@ -606,8 +646,20 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionReadFile()
 	{
-		$current_path = $this->getFullPath($this->get['path'], true);
-		$filesize = filesize($current_path);
+        $target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('reading file "' . $target_fullpath . '"');
+
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+		$filesize = filesize($target_fullpath);
 		$length = $filesize;
 		$context = null;
 
@@ -634,12 +686,12 @@ class S3Filemanager extends LocalFilemanager
 
 			$bytes_start = $offset;
 			$bytes_end = $offset + $length - 1;
-			$context = stream_context_create(array(
-				's3' => array(
+			$context = stream_context_create([
+				's3' => [
 					'seekable' => true,
 					'Range' => "bytes={$bytes_start}-{$bytes_end}",
-				)
-			));
+				]
+			]);
 
 			header('HTTP/1.1 206 Partial Content');
 			// A full-length file will indeed be "bytes 0-x/x+1", think of 0-indexed array counts
@@ -649,12 +701,12 @@ class S3Filemanager extends LocalFilemanager
 			header('Accept-Ranges: bytes');
 		}
 
-		header('Content-Type: ' . $this->getMimeType($current_path));
+		header('Content-Type: ' . $this->getMimeType($target_fullpath));
 		header("Content-Transfer-Encoding: binary");
 		header("Content-Length: " . $length);
-		header('Content-Disposition: inline; filename="' . basename($current_path) . '"');
+		header('Content-Disposition: inline; filename="' . basename($target_fullpath) . '"');
 
-		readfile($current_path, null, $context);
+		readfile($target_fullpath, null, $context);
 		exit;
 	}
 
@@ -663,16 +715,26 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionGetImage($thumbnail)
 	{
-		$current_path = $this->getFullPath($this->get['path']);
-        Log::info('loading image "' . $current_path . '"');
+        $target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+		Log::info('loading image "' . $target_fullpath . '"');
 
-        // if $thumbnail is set to true we return the thumbnail
-        if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
-            // get thumbnail (and create it if needed)
-            $returned_path = $this->get_thumbnail($current_path);
-        } else {
-            $returned_path = $current_path;
+        if(is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
         }
+
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, false)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+		// if $thumbnail is set to true we return the thumbnail
+		if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
+			// get thumbnail (and create it if needed)
+			$returned_path = $this->get_thumbnail($target_fullpath);
+		} else {
+			$returned_path = $target_fullpath;
+		}
 
 		header("Content-type: image/octet-stream");
 		header("Content-Transfer-Encoding: binary");
@@ -690,28 +752,32 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionDelete()
 	{
-		$current_path = $this->getFullPath($this->get['path'], true);
-        Log::info('deleting "' . $current_path . '"');
+        $target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+		Log::info('deleting "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('delete')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
 		// check if not requesting main FM userfiles folder
-		if($this->is_root_folder($current_path)) {
+		if($this->is_root_folder($target_fullpath)) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		$isDeleted = $this->deleteObject($current_path);
-        if($isDeleted) {
-            Log::info('deleted "' . $current_path . '"');
+		// check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_path, is_dir($target_fullpath))) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
         }
 
-		return array(
-			'Path' => $this->getDynamicPath($current_path),
-			'Error' => $isDeleted ? "" : $this->lang('INVALID_DIRECTORY_OR_FILE'),
-			'Code' => $isDeleted ? 0 : -1,
-		);
+        $item = $this->get_file_info($target_path);
+
+		$isDeleted = $this->deleteObject($target_fullpath);
+        if($isDeleted) {
+            Log::info('deleted "' . $target_fullpath . '"');
+        }
+
+		return $item;
 	}
 
 	/**
@@ -719,44 +785,41 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionDownload()
 	{
-		$current_path = $this->getFullPath($this->get['path'], true);
-		$filename = basename($current_path);
-        Log::info('downloading "' . $current_path . '"');
+        $target_path = $this->get['path'];
+		$target_fullpath = $this->getFullPath($target_path, true);
+        $is_dir_target = is_dir($target_fullpath);
+		Log::info('downloading "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('download')) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		if(is_dir($current_path)) {
+		if($is_dir_target) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED')));
 		}
 
-		if(!$this->is_allowed_file_type($filename)) {
-			$this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
-		}
+        // check if the name is not in "excluded" list
+        if(!$this->is_allowed_name($target_fullpath, $is_dir_target)) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
 
-		if(!$force) {
-			$array = array(
-				'Path' => $this->get['path'],
-				'Error' => "",
-				'Code' => 0,
-			);
-			return $array;
-		}
+        if($this->isAjaxRequest()) {
+            return $this->get_file_info($target_path);
+        } else {
+            header('Content-Description: File Transfer');
+            header('Content-Type: ' . $this->getMimeType($target_fullpath));
+            header('Content-Disposition: attachment; filename=' . basename($target_fullpath));
+            header('Content-Transfer-Encoding: binary');
+            header('Content-Length: ' . filesize($target_fullpath));
+            // handle caching
+            header('Pragma: public');
+            header('Expires: 0');
+            header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-		header('Content-Description: File Transfer');
-		header('Content-Type: ' . $this->getMimeType($current_path));
-		header('Content-Disposition: attachment; filename=' . $filename);
-		header('Content-Transfer-Encoding: binary');
-		header('Content-Length: ' . filesize($current_path));
-		// handle caching
-		header('Pragma: public');
-		header('Expires: 0');
-		header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
-
-		readfile($current_path);
-        Log::info('downloaded "' . $current_path . '"');
-		exit();
+            readfile($target_fullpath);
+            Log::info('downloaded "' . $target_fullpath . '"');
+            exit;
+        }
 	}
 
 	/**
@@ -764,22 +827,24 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function actionSummarize()
 	{
-		$result = array(
-			'Size' => 0,
-			'Files' => 0,
-			'Error' => "",
-			'Code' => 0,
-            'SizeLimit' => $this->config['options']['fileRootSizeLimit'],
-		);
+        $attributes = [
+            'size' => 0,
+            'files' => 0,
+            'sizeLimit' => $this->config['options']['fileRootSizeLimit'],
+        ];
 
 		$path = rtrim($this->rootWrapperPath, '/') . '/';
 		try {
-			$this->getDirSummary($path, $result);
+			$this->getDirSummary($path, $attributes);
 		} catch (Exception $e) {
 			$this->error(sprintf($this->lang('ERROR_SERVER')));
 		}
 
-		return $result;
+        return [
+            'id' => '/',
+            'type' => 'summary',
+            'attributes' => $attributes,
+        ];
 	}
 
 
@@ -899,7 +964,7 @@ class S3Filemanager extends LocalFilemanager
 			return false;
 		}
 
-		$needleList = array('..', './');
+		$needleList = ['..', './'];
 		foreach($needleList as $needle) {
 			if (strpos($path, $needle) !== false) {
 				return false;
@@ -945,7 +1010,7 @@ class S3Filemanager extends LocalFilemanager
 	 */
 	public function getFilesList($dir)
 	{
-		$list = array();
+		$list = [];
 		$iterator = Aws\recursive_dir_iterator($dir);
 		foreach ($iterator as $filename) {
 			$list[] = $filename;
@@ -1030,27 +1095,27 @@ class S3Filemanager extends LocalFilemanager
 	 * @param array $result
 	 * @return array
 	 */
-	public function getDirSummary($dir, &$result = array('Size' => 0, 'Files' => 0))
+	public function getDirSummary($dir, &$result = ['size' => 0, 'files' => 0])
 	{
 		/**
 		 * set empty delimiter to get recursive objects list
 		 * @see \Aws\S3\StreamWrapper::dir_opendir()
 		 */
-		$context = stream_context_create(array(
-			's3' => array(
+		$context = stream_context_create([
+			's3' => [
 				'delimiter' => ''
-			)
-		));
+			]
+		]);
 
 		$dir = rtrim($dir, '/') . '/';
 		$handle = @opendir($dir, $context);
 
-		while (false !== ($filename = readdir($handle))) {
-			$path = $dir . $filename;
+		while (false !== ($file = readdir($handle))) {
+			$path = $dir . $file;
 
-			if(is_file($path)) {
-				$result['Files']++;
-				$result['Size'] += filesize($path);
+			if(is_file($path) && $this->is_allowed_name($file, false)) {
+                $result['files']++;
+                $result['size'] += filesize($path);
 			} else {
 				// stream wrapper opendir() lists only files
 			}
@@ -1068,7 +1133,7 @@ class S3Filemanager extends LocalFilemanager
 	{
 		$path = rtrim($this->rootWrapperPath, '/') . '/';
 		$result = $this->getDirSummary($path);
-		return $result['Size'];
+		return $result['size'];
 	}
 
 	/**
@@ -1110,9 +1175,9 @@ class S3Filemanager extends LocalFilemanager
 		if($this->config['images']['thumbnail']['enabled'] === true) {
             Log::info('generating thumbnail "' . $thumbnailPath . '"');
 
-			$this->initUploader(array(
-				'upload_dir' => dirname($imagePath) . '/',
-			))->create_thumbnail_image($imagePath);
+			$this->initUploader([
+                'upload_dir' => dirname($imagePath) . '/',
+            ])->create_thumbnail_image($imagePath);
 		}
 	}
 }
