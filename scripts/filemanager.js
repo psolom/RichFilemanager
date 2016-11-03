@@ -544,13 +544,6 @@ $.richFmPlugin = function(element, options)
 			$("#filepath").val($(this).val().replace(/.+[\\\/]/, ""));
 		});
 
-		// load searchbox
-		if(config.options.searchBox === true)  {
-			loadJS('/scripts/filemanager.liveSearch.min.js');
-		} else {
-			$('#search').remove();
-		}
-
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
 			$filetree.mCustomScrollbar({
@@ -664,6 +657,38 @@ $.richFmPlugin = function(element, options)
 			if(viewItem) {
 				viewItem.remove();
 			}
+		};
+
+		var SearchModel = function() {
+			var search_model = this;
+			this.value = ko.observable('');
+
+			this.findAll = function(data, event) {
+				var delay = 200,
+					insensitive = true;
+
+				search_model.value(event.target.value);
+
+				delayCallback(function(){
+					var searchString = insensitive ? search_model.value().toLowerCase() : search_model.value();
+
+					$.each(model.itemsModel.objects(), function(i, itemObject) {
+						var itemName = itemObject.rdo.attributes.name;
+						if(insensitive) {
+							itemName = itemName.toLowerCase();
+						}
+						var visibility = (itemName.indexOf(searchString) === 0);
+						itemObject.visible(visibility)
+					});
+				}, delay);
+			};
+
+			this.reset = function(data, event) {
+				search_model.value('');
+				$.each(model.itemsModel.objects(), function(i, itemObject) {
+					itemObject.visible(true);
+				});
+			};
 		};
 
 		var PreviewModel = function() {
@@ -1244,7 +1269,7 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.findByParam = function(key, value) {
-				return ko.utils.arrayFirst(fmModel.itemsModel.objects(), function(object) {
+				return ko.utils.arrayFirst(model.itemsModel.objects(), function(object) {
 					return object[key] === value;
 				});
 			};
@@ -1304,6 +1329,10 @@ $.richFmPlugin = function(element, options)
 					imageUrl: createImageUrl(resourceObject, true),
 					previewWidth: previewWidth
 				};
+
+				var visibility = resourceObject.id === '/next/' ? false : true;
+				this.visible = ko.observable(visibility);
+				//this.visible = ko.observable(true);
 
 				this.title = ko.pureComputed(function() {
 					return (config.options.showTitleAttr) ? this.rdo.id : null;
@@ -1407,14 +1436,14 @@ $.richFmPlugin = function(element, options)
 
 			this.goParent = function() {
 				var parentFolder = model.previewFile()
-                    ? getDirname(fmModel.previewModel.rdo.id)
-                    : getParentDirname(fmModel.currentPath());
+                    ? getDirname(model.previewModel.rdo.id)
+                    : getParentDirname(model.currentPath());
 
 				if(model.previewFile()) {
 					model.previewFile(false);
 				}
 
-                if(parentFolder !== fmModel.currentPath()) {
+                if(parentFolder !== model.currentPath()) {
 					model.itemsModel.loadList(parentFolder);
                 }
 			};
@@ -1493,6 +1522,7 @@ $.richFmPlugin = function(element, options)
 		this.previewModel = new PreviewModel();
 		this.headerModel = new HeaderModel();
 		this.summaryModel = new SummaryModel();
+		this.searchModel = new SearchModel();
 	};
 
 	var sortItems = function(items) {
@@ -1855,16 +1885,6 @@ $.richFmPlugin = function(element, options)
 		return parts.join('/');
 	};
 
-	// from http://phpjs.org/functions/basename:360
-	var basename = function(path, suffix) {
-		var b = path.replace(/^.*[\/\\]/g, '');
-
-		if (typeof(suffix) === 'string' && b.substr(b.length-suffix.length) === suffix) {
-			b = b.substr(0, b.length-suffix.length);
-		}
-		return b;
-	};
-
 	// return filename extension
 	var getExtension = function(filename) {
 		if(filename.split('.').length === 1) {
@@ -2004,6 +2024,14 @@ $.richFmPlugin = function(element, options)
 			return $section;
 		}
 	};
+
+	var delayCallback = (function(){
+		var timer = 0;
+		return function(callback, ms){
+			clearTimeout (timer);
+			timer = setTimeout(callback, ms);
+		};
+	})();
 
 	// Create FileTree and bind events
 	var createFileTree = function() {

@@ -24,6 +24,6 @@
     min-height: 32px;
 }
 
-.fm-container #q {
+.fm-container .search-box input {
     width: 190px;
 }

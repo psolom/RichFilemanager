@@ -77,19 +77,15 @@
     background: transparent url(../images/fmlogo.png) no-repeat 0 0;
 }
 
-.fm-container #q {
+.fm-container .search-box input {
     background-color: #294750;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
     border-radius: 2px;
 }
 
-.fm-container #q:focus {
+.fm-container .search-box input:focus {
     background-color: #C6C6C6;
-}
-
-.fm-container #search span.q-inactive {
-    color: #777;
 }
 
 .fm-container .drag-helper-grid,

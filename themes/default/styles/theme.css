@@ -67,17 +67,12 @@
 .fm-container #link-to-project {
 }
 
-.fm-container #q {
+.fm-container .search-box input {
     background-color: #ffffff;
 }
 
-.fm-container #q:focus {
+.fm-container .search-box input:focus {
     background-color: #f5f5f5;
-}
-
-.fm-container #search span.q-inactive {
-    color: #a1a1a1;
-    font-style: italic;
 }
 
 .fm-container .drag-helper-grid,

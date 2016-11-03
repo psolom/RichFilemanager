@@ -10,9 +10,6 @@
 	<link rel="stylesheet" type="text/css" href="scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css" />
 	<link rel="stylesheet" type="text/css" href="scripts/alertify.js/dist/css/alertify.css">
 
-	<!--[if lte IE 8]>
-	<link rel="stylesheet" type="text/css" href="styles/ie8.css" />
-	<![endif]-->
 	<!--[if IE 9]>
 	<link rel="stylesheet" type="text/css" href="styles/ie9.css" />
 	<![endif]-->
@@ -109,7 +106,7 @@
 					<!-- /ko -->
 
 					<!-- ko if: koItem.rdo.type !== "parent" -->
-					<li data-bind="click: koItem.open, draggableView: koItem, droppableView: koItem, attr: {class: koItem.cdo.itemClass, title: koItem.title()}">
+					<li data-bind="click: koItem.open, draggableView: koItem, droppableView: koItem, visible: koItem.visible, attr: {class: koItem.cdo.itemClass, title: koItem.title()}">
 						<div class="item-background"></div>
 						<div class="item-content">
 							<div class="clip">
@@ -271,13 +268,13 @@
 		</div>
 
 		<div class="fm-footer">
-			<form name="search" id="search" method="get">
-				<div>
-					<input type="text" value="" name="q" id="q"/>
-					<a id="reset" href="#" class="q-reset"></a>
-					<span class="q-inactive"></span>
+			<div class="left">
+				<div class="search-box" data-bind="visible: config().options.searchBox">
+					<input type="text" data-bind="value: searchModel.value(), event: {keyup: searchModel.findAll}" />
+					<div class="search-box-reset" data-bind="event: {click: searchModel.reset}"></div>
 				</div>
-			</form>
+			</div>
+
 			<div class="right">
 				<div id="folder-info">
 					<span data-bind="text: itemsModel.objectsNumber() + ' ' + lg().items"></span> -
