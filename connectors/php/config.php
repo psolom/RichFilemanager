@@ -46,9 +46,9 @@ $config = [
          */
         "serverRoot" => true,
         /**
-         * Default value "false". Path to the userfiles storage folder.
+         * Default value "false". Path to the user storage folder.
          * By default the application will determine the path itself based on $_SERVER['DOCUMENT_ROOT'].
-         * You can set specific path to userfiles storage folder with the following rules:
+         * You can set specific path to user storage folder with the following rules:
          * - absolute path in case `serverRoot` set to "false", e.g. "/var/www/html/filemanager/userfiles/"
          * - relative path in case `serverRoot` set to "true", e.g. "/filemanager/userfiles/"
          */

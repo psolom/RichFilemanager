@@ -17,7 +17,6 @@
         "charsLatinOnly": false,
         "splitterWidth": 200,
         "splitterMinWidth": 200,
-        "baseUrl": false,
         "logger": false,
         "capabilities": [
             "select",
@@ -42,7 +41,7 @@
     },
     "upload": {
         "multiple": true,
-        "maxNumberOfFiles": 12,
+        "maxNumberOfFiles": 5,
         "paramName": "files",
         "chunkSize": false,
         "fileSizeLimit": 16000000,

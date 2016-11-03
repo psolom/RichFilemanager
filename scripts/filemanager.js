@@ -53,8 +53,7 @@ $.richFmPlugin = function(element, options)
 		config = null,				// configuration options
 		lg = null,					// localized messages
 		fileRoot = '/',				// relative files root, may be changed with some query params
-		baseUrl = null,				// base URL to access the FM
-		apiConnector = null,		// API connector URL, based on `baseUrl` if not specified explicitly
+		apiConnector = null,		// API connector URL to perform requests to server
 		capabilities = [],			// allowed actions to perform in FM
 		configSortField = null,		// items sort field name
 		configSortOrder = null,		// items sort order 'asc'/'desc'
@@ -234,15 +233,11 @@ $.richFmPlugin = function(element, options)
 			// merge default config and user config file
 			config = $.extend({}, config_default, config_user);
 
-			// setup baseUrl
-			baseUrl = (config.options.baseUrl === false) ? location.origin : config.options.baseUrl;
-			baseUrl = rtrim(baseUrl, '/');
-
 			// setup apiConnector
 			if(config.api.connectorUrl) {
 				apiConnector = config.api.connectorUrl;
 			} else {
-				var connectorUrl = baseUrl + location.pathname;
+				var connectorUrl = location.origin + location.pathname;
 				var langConnector = 'connectors/' + config.api.lang + '/filemanager.' + config.api.lang;
 
 				// for url like http://site.com/index.html
@@ -1996,7 +1991,7 @@ $.richFmPlugin = function(element, options)
 	};
 
 	var buildAbsolutePath = function(path) {
-		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : baseUrl;
+		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : location.origin;
 		return trim(url, '/') + path + '?time=' + (new Date().getTime());
 	};
 
