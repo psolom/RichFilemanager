@@ -202,7 +202,12 @@ $.richFmPlugin = function(element, options)
 	 * The "constructor" method that gets called when the object is created
 	 */
 	var construct = function() {
-		configure()
+		var deferred = $.Deferred();
+
+		deferred
+			.then(function() {
+				return configure();
+			})
 			.then(function(conf_d, conf_u) {
 				return performInitialRequest();
 			})
@@ -216,6 +221,8 @@ $.richFmPlugin = function(element, options)
 				includeAssets();
 				initialize();
 			});
+
+		deferred.resolve();
 	};
 
 	var configure = function() {
@@ -272,7 +279,11 @@ $.richFmPlugin = function(element, options)
             handleAjaxResponseErrors(response);
         }).fail(function() {
             fm.error('Unable to perform initial request to server.');
-        });
+        }).then(function (response) {
+			if(response.errors) {
+				return $.Deferred().reject();
+			}
+		});
 	};
 
 	// localize messages based on culture var or from URL
