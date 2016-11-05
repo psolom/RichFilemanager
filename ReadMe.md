@@ -8,7 +8,7 @@ Based on the [simogeo Filemanager](https://github.com/simogeo/Filemanager), with
 Demo
 ----
 
-Filemanager live example: http://fm.16mb.com/
+Filemanager live example: http://fm.devale.pro
 
 
 Compatibility
@@ -17,6 +17,13 @@ Compatibility
 Filemanager was initially designed to interact with a number of programming languages via [connectors](https://github.com/servocoder/RichFilemanager/tree/master/connectors).
 But since many changes have been done recently, **only PHP connector** is the only actual connector currently. Compatibility with other connectors is most likely completely broken.
 You are still able you to download unsupported v0.8 from [archive](https://github.com/simogeo/Filemanager/archive/v0.8.zip) (PHP, ASHX, ASP, CFM, lasso, PL and JSP)
+
+Browser compatibility:
+
+* IE9+
+* Chrome
+* FireFox
+* Opera
 
 
 Contribution
