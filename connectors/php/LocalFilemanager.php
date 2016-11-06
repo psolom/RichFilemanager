@@ -202,12 +202,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
-        $item = $this->get_file_info($target_path);
-        if(!$this->filter_output($item)) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED')));
-        }
-
-        return $item;
+        return $this->get_file_info($target_path);
 	}
 
 	/**

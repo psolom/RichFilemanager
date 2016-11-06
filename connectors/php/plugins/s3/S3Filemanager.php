@@ -193,7 +193,7 @@ class S3Filemanager extends LocalFilemanager
 	public function actionGetFile()
 	{
 		$target_path = $this->get['path'];
-		$target_fullpath = $this->getFullPath($target_path);
+		$target_fullpath = $this->getFullPath($target_path, true);
         Log::info('opening file "' . $target_fullpath . '"');
 
 		// NOTE: S3 doesn't provide a way to check if file doesn't exist or just has a permissions restriction,
@@ -208,12 +208,7 @@ class S3Filemanager extends LocalFilemanager
             $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
         }
 
-        $item = $this->get_file_info($target_path);
-        if(!$this->filter_output($item)) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED')));
-        }
-
-        return $item;
+        return $this->get_file_info($target_path);
 	}
 
 	/**
