@@ -858,6 +858,10 @@ $.richFmPlugin = function(element, options)
 
 			var expandFolderDefault = function (parentNode) {
 				if (fullexpandedFolder !== null) {
+					if(!parentNode) {
+						parentNode = tree_model.treeData
+					}
+
 					// looking for node that starts with specified path
 					var node = tree_model.findByFilter(function (node) {
 						return (fullexpandedFolder.indexOf(node.id) === 0);
