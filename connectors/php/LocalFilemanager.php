@@ -853,6 +853,8 @@ class LocalFilemanager extends BaseFilemanager
                     @flush();
                 }
                 fclose($handle);
+            } else {
+                readfile($target_fullpath);
             }
 
             Log::info('downloaded "' . $target_fullpath . '"');
