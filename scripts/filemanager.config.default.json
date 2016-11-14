@@ -28,6 +28,13 @@
             "delete"
         ]
     },
+    "manager": {
+        "dblClickOpen": true,
+        "selection": {
+            "enabled": true,
+            "useCtrlKey": true
+        }
+    },
     "api": {
         "lang": "php",
         "connectorUrl": false,

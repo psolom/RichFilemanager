@@ -375,6 +375,23 @@ $.richFmPlugin = function(element, options)
 		}
 	};
 
+	// programmatically selects selectable items of "selectable" jquery UI plugin
+	// fixes (Ctrl + click) on selectable items - doesn't work when "selectable" combined with "draggable"
+	var selectSelectable = function($container, $item, deselectSelected) {
+		if(deselectSelected) {
+			$(".ui-selected", $container).not($item).removeClass("ui-selected").addClass("ui-unselecting");
+		}
+		if($item !== null) {
+			if($item.hasClass('ui-selected')) {
+				$item.removeClass("ui-selected").addClass("ui-unselecting");
+			} else{
+				$item.addClass("ui-selecting");
+			}
+		}
+		// trigger the mouse stop event
+		$container.data("ui-selectable")._mouseStop(null);
+	};
+
 	var initialize = function () {
 		// reads capabilities from config files if exists else apply default settings
 		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
@@ -426,8 +443,19 @@ $.richFmPlugin = function(element, options)
 						cursor: "pointer",
 						refreshPositions: false,
 						helper: function() {
-							var helperClass = 'drag-helper-' + fmModel.viewMode();
-							return $('<div>', {class: helperClass}).append($(this).clone().html());
+							var $this = $(this),
+								helperClass = 'drag-helper-' + fmModel.viewMode(),
+								$clone = $('<div>', {class: helperClass}).append($this.clone().html()),
+								$selected = $fileinfo.find('li.ui-selected');
+
+							// adjust selection upon creating new handler - drop old and select new
+							if(config.manager.selection.enabled && $selected.index($this) === -1) {
+								$selected = $this;
+								console.log('IN');
+								//selectSelectable($contents, $selected, true);
+							}
+
+							return $clone;
 						},
 						appendTo: config.customScrollbar.enabled ? $fileinfo.find('.mCustomScrollBox') : $fileinfo,
 						drag: function(event, ui) {
@@ -455,6 +483,13 @@ $.richFmPlugin = function(element, options)
 				}
 			}
 		};
+
+        $fileinfo.selectable({
+            filter: "li:not(.directory-parent)",
+            cancel: "li.directory-parent",
+            disabled: !config.manager.selection.enabled,
+            appendTo: '.fm-container'
+        });
 
 		ko.bindingHandlers.draggableTree = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
@@ -841,7 +876,7 @@ $.richFmPlugin = function(element, options)
 
 			this.options = {
 				showLine: true,
-				dblClickOpen: false,
+				dblClickOpen: config.manager.dblClickOpen,
 				reloadOnClick: false,
 				expandSpeed: 200
 			};
@@ -1270,8 +1305,10 @@ $.richFmPlugin = function(element, options)
 						}
 					};
 
-					parent.open = function() {
-						items_model.loadList(parent.id);
+					parent.open = function(item, e) {
+                        if(!config.manager.dblClickOpen || e.type === 'dblclick') {
+                            items_model.loadList(parent.id);
+                        }
 					};
 					objects.push(parent);
 				}
@@ -1397,12 +1434,14 @@ $.richFmPlugin = function(element, options)
 					return cssClass.join(' ');
 				}, this);
 
-				this.open = function() {
-					var koItem = this;
-					if(config.options.quickSelect && koItem.rdo.type === 'file' && has_capability(koItem.rdo, 'select')) {
-						selectItem(koItem.rdo);
-					} else {
-						getDetailView(koItem.rdo);
+				this.open = function(item, e) {
+					if(!config.manager.dblClickOpen || e.type === 'dblclick') {
+						var koItem = this;
+						if(config.options.quickSelect && koItem.rdo.type === 'file' && has_capability(koItem.rdo, 'select')) {
+							selectItem(koItem.rdo);
+						} else {
+							getDetailView(koItem.rdo);
+						}
 					}
 				};
 
