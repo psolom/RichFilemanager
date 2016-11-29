@@ -83,6 +83,7 @@
     "successful_delete": "Položka byla odstraněna.",
     "successful_edit": "Content update successful.",
     "successful_moved": "Položka byla přesunuta.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "Položka byla úspěšně přejmenována.",
     "successful_replace": "Soubor je v pořádku nahrazen.",
     "summary_files": "Files",

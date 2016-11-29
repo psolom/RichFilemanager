@@ -83,6 +83,7 @@
     "successful_delete": "تم الحذف.",
     "successful_edit": "تم التحديث بنجاح.",
     "successful_moved": "تم النقل بنجاح ",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "تمت اعادة التسمية بنجاح .",
     "successful_replace": "تم استبدال الملف بنجاح.",
     "summary_files": "Files",

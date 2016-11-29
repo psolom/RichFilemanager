@@ -88,7 +88,7 @@
     background-color: #C6C6C6;
 }
 
-.fm-container .view-items.grid li {
+.fm-container .view-items .grid li {
     width: 196px;
     -webkit-transition: background 0.3s linear;
     -moz-transition: background 0.3s linear;
@@ -96,12 +96,12 @@
     transition: background 0.3s linear;
 }
 
-.fm-container .view-items.grid li.drop-hover,
-.fm-container .view-items.list tr.drop-hover {
+.fm-container .view-items .grid li.drop-hover,
+.fm-container .view-items .list tr.drop-hover {
     background-color: #a3a39f;
 }
 
-.fm-container .view-items.list td {
+.fm-container .view-items .list td {
     border-bottom: 1px dotted #efefef;
 }
 

@@ -83,6 +83,7 @@
     "successful_delete": "Usunięto plik.",
     "successful_edit": "Zaktualizowano zawartość pliku.",
     "successful_moved": "Przesunięto plik.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "Nazwa pliku została zmieniona.",
     "successful_replace": "Pliki zostały zamienione.",
     "summary_files": "Files",

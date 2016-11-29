@@ -83,6 +83,7 @@
     "successful_delete": "Erfolgreich gelöscht.",
     "successful_edit": "Aktualisierung des Inhalts erfolgreich abgeschlossen.",
     "successful_moved": "Verschieben erfolgreich abgeschlossen.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "Erfolgreich umbenannt.",
     "successful_replace": "Datei erfolgreich ersetzt.",
     "summary_files": "Files",

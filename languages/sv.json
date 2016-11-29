@@ -84,6 +84,7 @@
     "successful_delete": "Radering utförd.",
     "successful_edit": "Content update successful.",
     "successful_moved": "Move successful.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "Namnbyte utfört.",
     "successful_replace": "File replacement successful.",
     "summary_files": "Files",

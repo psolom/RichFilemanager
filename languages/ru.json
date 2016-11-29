@@ -84,6 +84,7 @@
     "successful_delete": "Удаление прошло успешно.",
     "successful_edit": "Успешно изменено.",
     "successful_moved": "Успешно перенесенно.",
+	"successful_processed": "%s из %s элементов успешно обработано.",
     "successful_rename": "Успешно переименованно.",
     "successful_replace": "Файл успешно заменен.",
     "summary_files": "Файлов",

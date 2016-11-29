@@ -83,6 +83,7 @@
     "successful_delete": "削除しました。",
     "successful_edit": "内容を更新しました。",
     "successful_moved": "移動しました。",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "ファイル名を変更しました。",
     "successful_replace": "ファイルを上書きしました。",
     "summary_files": "Files",

@@ -83,6 +83,7 @@
     "successful_delete": "Brisanje je uspješno provedeno.",
     "successful_edit": "Uspješno editovano.",
     "successful_moved": "Uspješno pomjereno.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "Uspješno preimenovano.",
     "successful_replace": "Uspješno zamjenjeno.",
     "summary_files": "Files",

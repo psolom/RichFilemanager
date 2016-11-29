@@ -83,6 +83,7 @@
     "successful_delete": "Arxiu eliminat.",
     "successful_edit": "Arxiu actualitzat.",
     "successful_moved": "Arxiu mogut.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "Nom modificat.",
     "successful_replace": "Arxiu substituit.",
     "summary_files": "Files",

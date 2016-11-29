@@ -47,6 +47,7 @@ $.richFmPlugin = function(element, options)
 		$footer = $wrapper.children('.fm-footer'),
 		$fileinfo = $splitter.children('.fm-fileinfo'),
 		$filetree = $splitter.children('.fm-filetree'),
+		$viewItems = $fileinfo.find('.view-items'),
 		$uploadButton = $uploader.children('.fm-upload'),
 
 		HEAD_included_files = [],	// <head> included files collector
@@ -375,23 +376,6 @@ $.richFmPlugin = function(element, options)
 		}
 	};
 
-	// programmatically selects selectable items of "selectable" jquery UI plugin
-	// fixes (Ctrl + click) on selectable items - doesn't work when "selectable" combined with "draggable"
-	var selectSelectable = function($container, $item, deselectSelected) {
-		if(deselectSelected) {
-			$(".ui-selected", $container).not($item).removeClass("ui-selected").addClass("ui-unselecting");
-		}
-		if($item !== null) {
-			if($item.hasClass('ui-selected')) {
-				$item.removeClass("ui-selected").addClass("ui-unselecting");
-			} else{
-				$item.addClass("ui-selecting");
-			}
-		}
-		// trigger the mouse stop event
-		$container.data("ui-selectable")._mouseStop(null);
-	};
-
 	var initialize = function () {
 		// reads capabilities from config files if exists else apply default settings
 		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
@@ -444,20 +428,28 @@ $.richFmPlugin = function(element, options)
 						refreshPositions: false,
 						helper: function() {
 							var $this = $(this),
+								selectedItems = fmModel.itemsModel.getSelected(),
 								helperClass = 'drag-helper-' + fmModel.viewMode(),
-								$clone = $('<div>', {class: helperClass}).append($this.clone().html()),
-								$selected = $fileinfo.find('li.ui-selected');
+								$clone = $('<div>', {class: helperClass}).append($this.clone().html());
 
-							// adjust selection upon creating new handler - drop old and select new
-							if(config.manager.selection.enabled && $selected.index($this) === -1) {
-								$selected = $this;
-								console.log('IN');
-								//selectSelectable($contents, $selected, true);
-							}
+							// TODO: create helper for multiple elements, based on css classes
+							// if(selectedItems.length > 1) {
+							// 	var $clip = $clone.find('.clip');
+							// 	$clip.find('img').attr('src', config.icons.path + '/_Multiple.png');
+							// 	$clip.siblings().remove();
+							// 	$clone.append('<p class="dragging-counter"><span>' + selectedItems.length + '</span></p>');
+							// }
+							// $clone.append('<p class="dragging-stop"><img src="' + config.icons.path + '/cancel-5.png' + '"></p>');
 
 							return $clone;
 						},
 						appendTo: config.customScrollbar.enabled ? $fileinfo.find('.mCustomScrollBox') : $fileinfo,
+						start: function(event, ui) {
+							if(!koItem.selected()) {
+								fmModel.itemsModel.unselectItems(false);
+								koItem.selected(true);
+							}
+						},
 						drag: function(event, ui) {
 							$(this).draggable('option', 'refreshPositions', fmModel.itemsModel.isScrolling());
 						}
@@ -470,6 +462,7 @@ $.richFmPlugin = function(element, options)
 			init: function(element, valueAccessor, allBindingsAccessor) {
 				if(valueAccessor().rdo.type === "folder" || valueAccessor().rdo.type === "parent") {
 					$(element).droppable({
+						enableExtendedEvents: true,
 						hoverClass: "drop-hover",
 						accept: function($draggable) {
 							var koItem = ko.dataFor($draggable[0]);
@@ -477,18 +470,31 @@ $.richFmPlugin = function(element, options)
 							return (type === "file" || type === "folder");
 						},
 						drop: function(event, ui) {
-							moveItem(ko.dataFor(ui.draggable[0]), ko.dataFor(event.target).id);
+							processMultipleActions(fmModel.itemsModel.getSelected(), function(i, itemObject) {
+								return moveItem(itemObject.rdo, ko.dataFor(event.target).id);
+							});
 						}
 					});
 				}
 			}
 		};
 
-        $fileinfo.selectable({
-            filter: "li:not(.directory-parent)",
-            cancel: "li.directory-parent",
+		$viewItems.selectable({
+            filter: "li:not(.directory-parent), tr:not(.directory-parent)",
+            cancel: ".directory-parent",
             disabled: !config.manager.selection.enabled,
-            appendTo: '.fm-container'
+            appendTo: '.fm-container',
+			start: function(event, ui) {
+				clearSelection();
+			},
+			selected: function(event, ui) {
+				var koItem = ko.dataFor(ui.selected);
+				koItem.selected(true);
+			},
+			unselected: function(event, ui) {
+				var koItem = ko.dataFor(ui.unselected);
+				koItem.selected(false);
+			}
         });
 
 		ko.bindingHandlers.draggableTree = {
@@ -1090,7 +1096,7 @@ $.richFmPlugin = function(element, options)
 				this.cdo = { // computed data object
 					isFolder: (resourceObject.type === 'folder'),
 					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
-					itemClass: (resourceObject.type === 'folder') ? 'directory' : 'file'
+					cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file'
 				};
 
 				this.nodeTitle = ko.observable(resourceObject.attributes.name);
@@ -1244,7 +1250,6 @@ $.richFmPlugin = function(element, options)
 
 		var ItemsModel = function() {
 			var items_model = this;
-			this.imageMaxWidth = 64;
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
 			this.isScrolling = ko.observable(false);
@@ -1326,9 +1331,45 @@ $.richFmPlugin = function(element, options)
 				});
 			};
 
+			this.findByFilter = function(filter, allMatches) {
+				var firstMatch = !(allMatches || false);
+
+				var resultItems = [],
+					items = items_model.objects();
+
+				if(!items || items.length === 0) {
+					return null;
+				}
+				for (var i = 0, l = items.length; i < l; i++) {
+					if(filter(items[i])) {
+						if(firstMatch) {
+							return items[i];
+						}
+						resultItems.push(items[i]);
+					}
+				}
+				return firstMatch ? null : resultItems;
+			};
+
 			this.sortObjects = function() {
 				var sortedList = sortItems(items_model.objects());
 				items_model.objects(sortedList);
+			};
+
+			this.getSelected = function() {
+				return items_model.findByFilter(function (item) {
+					return item.rdo.type !== "parent" && item.selected();
+				}, true);
+			};
+
+			this.unselectItems = function(ctrlKey) {
+				var appendSelection = (config.manager.selection.enabled && config.manager.selection.useCtrlKey && ctrlKey === true);
+				if(!appendSelection) {
+					// drop selection from selected items
+					$.each(items_model.getSelected(), function(i, itemObject) {
+						itemObject.selected(false);
+					});
+				}
 			};
 
 			this.objects.subscribe(function(items) {
@@ -1348,17 +1389,26 @@ $.richFmPlugin = function(element, options)
 				items_model.objectsSize(formatBytes(totalSize));
 
 				// context menu
-				$fileinfo.contextMenu({
+				$viewItems.contextMenu({
 					selector: '.file, .directory',
 					zIndex: 100,
 					// wrap options with "build" allows to get item element
 					build: function ($triggerElement, e) {
 						var koItem = ko.dataFor($triggerElement[0]);
+						if(!koItem.selected()) {
+							fmModel.itemsModel.unselectItems(false);
+							koItem.selected(true);
+						}
+
 						return {
 							appendTo: '.fm-container',
 							items: getContextMenuItems(koItem.rdo),
 							callback: function(itemKey, opt) {
-								performAction(itemKey, koItem.rdo);
+								var selectedItems = [];
+								$.each(fmModel.itemsModel.getSelected(), function(i, itemObject) {
+									selectedItems.push(itemObject.rdo);
+								});
+								performAction(itemKey, selectedItems);
 							}
 						}
 					}
@@ -1366,8 +1416,8 @@ $.richFmPlugin = function(element, options)
 			});
 
 			var ItemObject = function(resourceObject) {
-				var previewWidth = items_model.imageMaxWidth;
-				if(resourceObject.attributes.width && resourceObject.attributes.width < items_model.imageMaxWidth) {
+				var previewWidth = config.viewer.image.thumbMaxWidth;
+				if(resourceObject.attributes.width && resourceObject.attributes.width < previewWidth) {
 					previewWidth = resourceObject.attributes.width;
 				}
 
@@ -1377,17 +1427,24 @@ $.richFmPlugin = function(element, options)
 					isFolder: (resourceObject.type === 'folder'),
 					sizeFormatted: formatBytes(resourceObject.attributes.size),
 					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
-					itemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
+					cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
 					imageUrl: createImageUrl(resourceObject, true),
 					previewWidth: previewWidth
 				};
 
-				var visibility = resourceObject.id === '/next/' ? false : true;
-				this.visible = ko.observable(visibility);
-				//this.visible = ko.observable(true);
+				this.visible = ko.observable(true);
+				this.selected = ko.observable(false);
 
 				this.title = ko.pureComputed(function() {
 					return (config.options.showTitleAttr) ? this.rdo.id : null;
+				}, this);
+
+				this.itemClass = ko.pureComputed(function() {
+					var cssClass = [];
+					if(this.selected() && config.manager.selection.enabled) {
+						cssClass.push('ui-selected');
+					}
+					return this.cdo.cssItemClass + ' ' + cssClass.join(' ');
 				}, this);
 
 				this.listIconClass = ko.pureComputed(function() {
@@ -1435,8 +1492,11 @@ $.richFmPlugin = function(element, options)
 				}, this);
 
 				this.open = function(item, e) {
+					var koItem = this;
+					items_model.unselectItems(e.ctrlKey);
+					koItem.selected(!koItem.selected());
+
 					if(!config.manager.dblClickOpen || e.type === 'dblclick') {
-						var koItem = this;
 						if(config.options.quickSelect && koItem.rdo.type === 'file' && has_capability(koItem.rdo, 'select')) {
 							selectItem(koItem.rdo);
 						} else {
@@ -2079,13 +2139,47 @@ $.richFmPlugin = function(element, options)
 		}
 	};
 
-	var delayCallback = (function(){
+	// Delays execution of function that is passed as argument
+	var delayCallback = (function () {
 		var timer = 0;
-		return function(callback, ms){
-			clearTimeout (timer);
+		return function(callback, ms) {
+			clearTimeout(timer);
 			timer = setTimeout(callback, ms);
 		};
 	})();
+
+	// Handle multiple actions in loop with deferred object
+	var processMultipleActions = function(items, callbackFunction) {
+		var successCounter = 0,
+			totalCounter = items.length,
+			deferred = $.Deferred().resolve();
+
+		$.each(items, function(i, item) {
+			deferred = deferred.then(function() {
+				return callbackFunction(i, item);
+			}).then(function(result) {
+				if(result && result.data) {
+					successCounter++;
+				}
+			});
+		});
+
+		if(totalCounter > 1) {
+			deferred.then(function() {
+				fm.log(lg.successful_processed.replace('%s', successCounter).replace('%s', totalCounter));
+			});
+		}
+	};
+
+	// Clears browser window selection
+	var clearSelection = function() {
+		if(document.selection && document.selection.empty) {
+			document.selection.empty();
+		} else if(window.getSelection) {
+			var sel = window.getSelection();
+			sel.removeAllRanges();
+		}
+	};
 
 	// Create FileTree and bind events
 	var createFileTree = function() {
@@ -2377,7 +2471,7 @@ $.richFmPlugin = function(element, options)
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in de tail views
 	// or choosing the "Move" contextual menu option in list views.
-	var moveItemPrompt = function(resourceObject) {
+	var moveItemPrompt = function(successCallback) {
 		var doMove = function(e, ui) {
 			var targetPath = ui.getInputValue();
 			if(!targetPath) {
@@ -2385,7 +2479,7 @@ $.richFmPlugin = function(element, options)
 				return;
 			}
 			targetPath = rtrim(targetPath, '/') + '/';
-			moveItem(resourceObject, targetPath);
+			successCallback(targetPath);
 		};
 
 		fm.prompt({
@@ -2411,7 +2505,7 @@ $.richFmPlugin = function(element, options)
 	// Called by clicking the "Move" button in detail views
 	// or choosing the "Move" contextual menu option in list views.
 	var moveItem = function(resourceObject, targetPath) {
-		$.ajax({
+		return $.ajax({
 			type: 'GET',
 			url: buildConnectorUrl({
 				mode: 'move',
@@ -2446,9 +2540,25 @@ $.richFmPlugin = function(element, options)
 		});
 	};
 
+	// Prompts for confirmation, then deletes the current item.
+	var deleteItemPrompt = function(successCallback) {
+		fm.confirm({
+			message: lg.confirmation_delete,
+			okBtn: {
+				label: lg.yes,
+				click: function(e, ui) {
+					successCallback();
+				}
+			},
+			cancelBtn: {
+				label: lg.no
+			}
+		});
+	};
+
 	// Delete item by path
-	var doDelete = function(path) {
-		$.ajax({
+	var deleteItem = function(path) {
+		return $.ajax({
 			type: 'GET',
 			url: buildConnectorUrl({
 				mode: 'delete',
@@ -2476,22 +2586,6 @@ $.richFmPlugin = function(element, options)
 		});
 	};
 
-	// Prompts for confirmation, then deletes the current item.
-	var deleteItem = function(resourceObject) {
-		fm.confirm({
-			message: lg.confirmation_delete,
-			okBtn: {
-				label: lg.yes,
-				click: function(e, ui) {
-					doDelete(resourceObject.id);
-				}
-			},
-			cancelBtn: {
-				label: lg.no
-			}
-		});
-	};
-
 	// Starts file download process.
 	// Called by clicking the "Download" button in detail views
 	// or choosing the "Download" contextual menu item in list views.
@@ -2501,13 +2595,14 @@ $.richFmPlugin = function(element, options)
 			path: resourceObject.id
 		};
 
-		$.ajax({
+		return $.ajax({
 			type: 'GET',
 			url: buildConnectorUrl(queryParams),
 			dataType: 'json',
 			success: function (response) {
 				if(response.data) {
-					window.location = buildConnectorUrl(queryParams);
+					//window.location = buildConnectorUrl(queryParams);
+					$.fileDownload(buildConnectorUrl(queryParams));
 				}
 				handleAjaxResponseErrors(response);
 			},
@@ -2625,11 +2720,12 @@ $.richFmPlugin = function(element, options)
 			separator1: "-----",
 			delete: {name: lg.del, className: 'delete'}
 		};
+		var batchAction = fmModel.itemsModel.getSelected().length > 1;
 
-		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
-		if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
-		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
-		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
+		if(!batchAction && !has_capability(resourceObject, 'download')) delete contextMenuItems.download;
+		if((!batchAction && !has_capability(resourceObject, 'delete')) || config.options.browseOnly === true) delete contextMenuItems.delete;
+		if((!batchAction && !has_capability(resourceObject, 'move')) || config.options.browseOnly === true) delete contextMenuItems.move;
+		if(!has_capability(resourceObject, 'rename') || batchAction || config.options.browseOnly === true) delete contextMenuItems.rename;
 		// remove 'select' if there is no window.opener
 		if(!has_capability(resourceObject, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
@@ -2640,29 +2736,41 @@ $.richFmPlugin = function(element, options)
 
 	// Binds contextual menu to items in list and grid views.
 	var performAction = function(action, resourceObject) {
+		var objects = (resourceObject instanceof Array) ? resourceObject : [resourceObject];
+
 		switch(action) {
 			case 'select':
-				selectItem(resourceObject);
+				selectItem(objects[0]);
 				break;
 
 			case 'download':
-				downloadItem(resourceObject);
+				$.each(objects, function(i, itemObject) {
+					downloadItem(itemObject);
+				});
 				break;
 
 			case 'rename':
-				renameItem(resourceObject);
+				renameItem(objects[0]);
 				break;
 
 			case 'replace':
-				replaceItem(resourceObject);
+				replaceItem(objects[0]);
 				break;
 
 			case 'move':
-				moveItemPrompt(resourceObject);
+				moveItemPrompt(function(targetPath) {
+					processMultipleActions(objects, function(i, itemObject) {
+						return moveItem(itemObject, targetPath);
+					});
+				});
 				break;
 
 			case 'delete':
-				deleteItem(resourceObject);
+				deleteItemPrompt(function() {
+					$.each(objects, function(i, itemObject) {
+						deleteItem(itemObject.id);
+					});
+				});
 				break;
 		}
 	};
@@ -2836,7 +2944,7 @@ $.richFmPlugin = function(element, options)
 						file = data.files[0];
 
 					if(file.chunkUploaded) {
-						doDelete(currentPath + file.serverName);
+						deleteItem(currentPath + file.serverName);
 					}
 
 					$target.closest('.upload-item').remove();

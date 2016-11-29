@@ -84,6 +84,7 @@
     "successful_delete": "删除成功。",
     "successful_edit": "Content update successful.",
     "successful_moved": "Move successful.",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_rename": "重命名成功。",
     "successful_replace": "File replacement successful.",
     "summary_files": "Files",

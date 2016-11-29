@@ -76,16 +76,16 @@
 }
 
 .fm-container .drag-helper-grid,
-.fm-container .view-items.grid li {
+.fm-container .view-items .grid li {
     width: 142px;
 }
 
-.fm-container .view-items.grid li.drop-hover,
-.fm-container .view-items.list tr.drop-hover {
+.fm-container .view-items .grid li.drop-hover,
+.fm-container .view-items .list tr.drop-hover {
     background-color: #e0e0e0;
 }
 
-.fm-container .view-items.list td {
+.fm-container .view-items .list td {
     border-bottom: 1px dotted #ccc;
 }
 

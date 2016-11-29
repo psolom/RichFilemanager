@@ -10,7 +10,8 @@ module.exports = function(grunt) {
             main: {
                 files: {
                     'scripts/filemanager.min.js': ['scripts/filemanager.js'],
-                    'scripts/jquery-ui/jquery-ui.min.js': ['scripts/jquery-ui/jquery-ui.js']
+                    'scripts/jquery-ui/jquery-ui.min.js': ['scripts/jquery-ui/jquery-ui.js'],
+                    'scripts/jquery.fileDownload/jquery.fileDownload.min.js': ['scripts/jquery.fileDownload/jquery.fileDownload.js']
                 }
             }
         }

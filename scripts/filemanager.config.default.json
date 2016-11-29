@@ -92,6 +92,7 @@
         "image": {
             "enabled": true,
             "showThumbs": true,
+            "thumbMaxWidth": 64,
             "extensions": [
                 "jpg",
                 "jpe",

@@ -82,6 +82,7 @@
    "successful_added_folder":"Επιτυχής δημιουργία νέου φακέλου.",
    "successful_delete":"Επιτυχής διαγραφή.",
    "successful_moved":" Μετακίνηση επιτυχής.",
+	"successful_processed": "%s of %s items successfully processed.",
    "successful_replace":" Αντικατάσταση αρχείου επιτυχής.",
    "summary_files":"Files",
    "summary_folders":"Folders",

@@ -94,33 +94,33 @@
 			<div class="fm-fileinfo">
 				<div class="fm-loading-view" data-bind="visible: loadingView()"></div>
 
-
-				<ul class="view-items grid" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
-					<!-- ko if: koItem.rdo.type === "parent" -->
-					<li class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
-						<div class="clip">
-							<img src="" class="grid-icon ico_folder_parent" />
-						</div>
-						<p>..</p>
-					</li>
-					<!-- /ko -->
-
-					<!-- ko if: koItem.rdo.type !== "parent" -->
-					<li data-bind="event: {click: koItem.open, dblclick: koItem.open}, draggableView: koItem, droppableView: koItem, visible: koItem.visible, attr: {class: koItem.cdo.itemClass, title: koItem.title()}">
-						<div class="item-background"></div>
-						<div class="item-content">
+				<div class="view-items" data-bind="visible: !loadingView() && !previewFile()">
+					<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
+						<!-- ko if: koItem.rdo.type === "parent" -->
+						<li class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
 							<div class="clip">
-								<img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+								<img src="" class="grid-icon ico_folder_parent" data-bind="attr: {src: null, width: $root.config().viewer.image.thumbMaxWidth}" />
 							</div>
-							<p data-bind="text: koItem.rdo.attributes.name"></p>
-						</div>
-					</li>
-					<!-- /ko -->
-				</ul>
+							<p>..</p>
+						</li>
+						<!-- /ko -->
+
+						<!-- ko if: koItem.rdo.type !== "parent" -->
+						<li data-bind="event: {click: koItem.open, dblclick: koItem.open}, draggableView: koItem, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
+							<div class="item-background"></div>
+							<div class="item-content">
+								<div class="clip">
+									<img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+								</div>
+								<p data-bind="text: koItem.rdo.attributes.name"></p>
+							</div>
+						</li>
+						<!-- /ko -->
+					</ul>
 
 
-				<table class="view-items list" data-bind="visible: !loadingView() && !previewFile() && viewMode() === 'list'">
-					<thead>
+					<table class="list" data-bind="visible: viewMode() === 'list'">
+						<thead>
 						<tr class="rowHeader" data-bind="with: tableViewModel">
 							<th data-bind="click: thName.sort, css: thName.sortClass()"><span data-bind="text: $root.lg().name"></span></th>
 							<th data-bind="click: thType.sort, css: thType.sortClass()"><span data-bind="text: $root.lg().type"></span></th>
@@ -128,8 +128,8 @@
 							<th data-bind="click: thDimensions.sort, css: thDimensions.sortClass()"><span data-bind="text: $root.lg().dimensions"></span></th>
 							<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg().modified"></span></th>
 						</tr>
-					</thead>
-					<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
+						</thead>
+						<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
 						<!-- ko if: koItem.rdo.type === "parent" -->
 						<tr class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
 							<td>..</td>
@@ -141,7 +141,7 @@
 						<!-- /ko -->
 
 						<!-- ko if: koItem.rdo.type !== "parent" -->
-						<tr data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, attr: {class: koItem.cdo.itemClass, title: koItem.title()}" oncontextmenu="return false;">
+						<tr data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
 							<td data-bind="draggableView: koItem">
 								<span class="list-icon" data-bind="css: koItem.listIconClass()"></span>
 								<span data-bind="text: koItem.rdo.attributes.name"></span>
@@ -152,8 +152,9 @@
 							<td data-bind="text: koItem.rdo.attributes.modified"></td>
 						</tr>
 						<!-- /ko -->
-					</tbody>
-				</table>
+						</tbody>
+					</table>
+				</div>
 
 
 				<!-- ko if: previewFile() -->
@@ -300,12 +301,13 @@
 		<script type="text/javascript" src="scripts/jquery-ui/jquery-ui.min.js"></script>
 		<script type="text/javascript" src="scripts/jquery-browser.js"></script>
 		<script type="text/javascript" src="scripts/knockout-3.4.0.js"></script>
+		<script type="text/javascript" src="scripts/alertify.js/dist/js/alertify.js"></script>
 		<script type="text/javascript" src="scripts/jquery.splitter/dist/jquery-splitter.js"></script>
 		<script type="text/javascript" src="scripts/jquery.contextmenu/dist/jquery.contextMenu.min.js"></script>
-		<script type="text/javascript" src="scripts/alertify.js/dist/js/alertify.js"></script>
+		<script type="text/javascript" src="scripts/jquery.fileDownload/jquery.fileDownload.min.js"></script>
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
 
 		<script type="text/html" id="node-parent-template">
 			<li data-bind="template: {name: 'node-template', data: koNode}"></li>
@@ -313,7 +315,7 @@
 
 		<script type="text/html" id="node-template">
 			<span class="button switch" data-bind="css: switcherClass(), click: switchNode"></span>
-			<a data-bind="attr: {class: cdo.itemClass}, event: {click: nodeClick, dblclick: nodeDblClick}, draggableTree: $data, droppableTree: $data">
+			<a data-bind="attr: {class: cdo.cssItemClass}, event: {click: nodeClick, dblclick: nodeDblClick}, draggableTree: $data, droppableTree: $data">
 				<span class="button" data-bind="css: iconClass()"></span>
 				<span class="node_name" data-bind="text: nodeTitle(), attr: {title: title()}"></span>
 			</a>

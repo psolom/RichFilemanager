@@ -82,6 +82,7 @@
     "successful_added_folder": "โฟล์เดอร์ใหม่ถูกเพิ่มเรียบร้อยแล้ว",
     "successful_delete": "ลบเรียบร้อยแล้ว",
     "successful_moved": "ย้ายเรียบร้อยแล้ว",
+	"successful_processed": "%s of %s items successfully processed.",
     "successful_replace": "แทนที่เรียบร้อยแล้ว",
     "summary_files": "ไฟล์",
     "summary_folders": "โฟลเดอร์",
