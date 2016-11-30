@@ -460,18 +460,51 @@ $.richFmPlugin = function(element, options)
 
 		ko.bindingHandlers.droppableView = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
+
+				// check whether draggable items can be accepted by target item
+				function isDropAllowed(targetItem, draggableItems) {
+					var matches = $.grep(draggableItems, function(itemObject, i) {
+						return (itemObject.id === targetItem.id);
+					});
+					// prevent on moving (to) protect folder or to the one of selected items
+					return !(targetItem.rdo.attributes.protected || matches.length > 0);
+				}
+
 				if(valueAccessor().rdo.type === "folder" || valueAccessor().rdo.type === "parent") {
 					$(element).droppable({
 						enableExtendedEvents: true,
-						hoverClass: "drop-hover",
+						//hoverClass: "drop-hover",
 						accept: function($draggable) {
-							var koItem = ko.dataFor($draggable[0]);
-							var type = koItem ? koItem.rdo.type : null;
+							var koItem = ko.dataFor($draggable[0]),
+								type = koItem ? koItem.rdo.type : null;
 							return (type === "file" || type === "folder");
 						},
+						over: function(event, ui) {
+							var targetItem = ko.dataFor(event.target),
+								draggableItems = fmModel.itemsModel.getSelected();
+
+							if(isDropAllowed(targetItem, draggableItems)) {
+								$(this).addClass('drop-hover');
+							} else {
+								ui.helper.addClass('drop-restricted');
+							}
+						},
+						out: function(event, ui) {
+							$(this).removeClass('drop-hover');
+							ui.helper.removeClass('drop-restricted');
+						},
 						drop: function(event, ui) {
-							processMultipleActions(fmModel.itemsModel.getSelected(), function(i, itemObject) {
-								return moveItem(itemObject.rdo, ko.dataFor(event.target).id);
+							var targetItem = ko.dataFor(event.target),
+								draggableItems = fmModel.itemsModel.getSelected();
+
+							$(event.target).removeClass('drop-hover');
+
+							if(!isDropAllowed(targetItem, draggableItems)) {
+								return false;
+							}
+
+							processMultipleActions(draggableItems, function(i, itemObject) {
+								return moveItem(itemObject.rdo, targetItem.id);
 							});
 						}
 					});
@@ -1306,7 +1339,11 @@ $.richFmPlugin = function(element, options)
 					var parent = {
 						id: parentPath,
 						rdo: {
-							type: 'parent'
+							id: parentPath,
+							type: 'parent',
+							attributes: {
+								protected: false
+							}
 						}
 					};
 
