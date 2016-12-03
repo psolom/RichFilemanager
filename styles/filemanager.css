@@ -475,7 +475,7 @@
 .fm-container .view-items .grid li {
     display: inline-block;
     width: 142px;
-    min-height: 142px;
+    height: 142px;
     text-align: center;
     overflow: hidden;
     margin: 10px;
@@ -494,7 +494,12 @@
     background-color: #F7F7F7;
 }
 
-.fm-container .view-items .grid div.clip {
+.fm-container .view-items .grid .item-content {
+    height: 100%;
+    overflow: hidden;
+}
+
+.fm-container .view-items .grid .item-content .clip {
     width: 64px;
     height: 64px;
     margin: 10px auto;
@@ -721,7 +726,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .drag-helper-grid {
     display: inline-block;
     width: 142px;
-    min-height: 142px;
+    height: 142px;
     text-align: center;
     overflow: hidden;
     margin: 10px;
@@ -739,15 +744,10 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 .fm-container .drag-helper-grid .item-content {
-    position: relative;
+    height: 100%;
+    overflow: hidden;
     z-index: 1;
-    opacity: 0.5;
-}
-
-.fm-container .drag-helper-grid .item-content {
-    position: relative;
-    z-index: 1;
-    opacity: 0.5;
+    opacity: 0.7;
 }
 
 .fm-container .drag-helper-grid .item-background {
@@ -787,8 +787,12 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     z-index: 2;
 }
 
-.fm-container .drag-helper-grid .dragging-stop img {
+.fm-container .drag-helper-grid .dragging-stop .cancel-image {
     width: 25px;
+    height: 25px;
+    margin: 0 auto;
+    background: url(../images/fileicons/drag-n-drop/cancel-5.png) center center no-repeat;
+    background-size: cover;
 }
 
 .fm-container .drag-helper-grid.drop-restricted .dragging-stop {
@@ -1352,6 +1356,10 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-fileinfo .grid-icon.ico_folder_parent {
     background-image: url(../images/fileicons/icon_folder_parent.png);
+}
+
+.fm-fileinfo .grid-icon.ico_multiple {
+    background-image: url(../images/fileicons/icon_multiple.png);
 }
 
 

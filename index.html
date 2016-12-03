@@ -321,6 +321,21 @@
 			</a>
 			<ul data-bind="template: {name: 'node-parent-template', if: children().length > 0, foreach: children, as: 'koNode', afterRender: $root.treeModel.nodeRendered}, css: clusterClass(), toggleNodeVisibility: $data"></ul>
 		</script>
+
+		<div id="drag-helper-grid-template">
+			<div class="item-background"></div>
+			<div class="item-content">
+				<div class="clip">
+					<img src="" class="grid-icon ico_multiple" />
+				</div>
+			</div>
+			<div class="dragging-stop">
+				<div class="cancel-image"></div>
+			</div>
+			<div class="dragging-counter">
+				<span data-bind="text: $root.itemsModel.selectedNumber()"></span>
+			</div>
+		</div>
 	</div>
 </div>
 </body>

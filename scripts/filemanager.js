@@ -427,21 +427,18 @@ $.richFmPlugin = function(element, options)
 						cursor: "pointer",
 						refreshPositions: false,
 						helper: function() {
-							var $this = $(this),
+							var $cloned,
 								selectedItems = fmModel.itemsModel.getSelected(),
 								helperClass = 'drag-helper-' + fmModel.viewMode(),
-								$clone = $('<div>', {class: helperClass}).append($this.clone().html());
+								$wrapper = $('<div>', {class: helperClass});
 
-							// TODO: create helper for multiple elements, based on css classes
-							// if(selectedItems.length > 1) {
-							// 	var $clip = $clone.find('.clip');
-							// 	$clip.find('img').attr('src', config.icons.path + '/_Multiple.png');
-							// 	$clip.siblings().remove();
-							// 	$clone.append('<p class="dragging-counter"><span>' + selectedItems.length + '</span></p>');
-							// }
-							// $clone.append('<p class="dragging-stop"><img src="' + config.icons.path + '/cancel-5.png' + '"></p>');
+							if(selectedItems.length > 1) {
+								$cloned = $('#drag-helper-grid-template').clone();
+							} else {
+								$cloned = $(this).clone();
+							}
 
-							return $clone;
+							return $wrapper.append($cloned.html());
 						},
 						appendTo: config.customScrollbar.enabled ? $fileinfo.find('.mCustomScrollBox') : $fileinfo,
 						start: function(event, ui) {
@@ -1283,12 +1280,13 @@ $.richFmPlugin = function(element, options)
 
 		var ItemsModel = function() {
 			var items_model = this;
+			this.objects = ko.observableArray([]);
+			this.objectsSize = ko.observable(0);
+			this.objectsNumber = ko.observable(0);
+			this.selectedNumber = ko.observable(0);
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
 			this.isScrolling = ko.observable(false);
-			this.objectsSize = ko.observableArray(0);
-			this.objectsNumber = ko.observableArray(0);
-			this.objects = ko.observableArray([]);
 
 			this.createObject = function(resourceObject) {
 				return new ItemObject(resourceObject);
@@ -1394,9 +1392,11 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.getSelected = function() {
-				return items_model.findByFilter(function (item) {
+				var selectedItems = items_model.findByFilter(function (item) {
 					return item.rdo.type !== "parent" && item.selected();
 				}, true);
+				items_model.selectedNumber(selectedItems.length);
+				return selectedItems;
 			};
 
 			this.unselectItems = function(ctrlKey) {
@@ -1468,7 +1468,6 @@ $.richFmPlugin = function(element, options)
 					imageUrl: createImageUrl(resourceObject, true),
 					previewWidth: previewWidth
 				};
-
 				this.visible = ko.observable(true);
 				this.selected = ko.observable(false);
 
