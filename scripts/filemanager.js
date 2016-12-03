@@ -1339,6 +1339,7 @@ $.richFmPlugin = function(element, options)
 				this.cdo = { // computed data object
 					isFolder: (resourceObject.type === 'folder'),
 					sizeFormatted: formatBytes(resourceObject.attributes.size),
+					extension: resourceObject.attributes.extension,
 					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
 					itemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
 					imageUrl: createImageUrl(resourceObject, true),
