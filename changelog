@@ -1,3 +1,72 @@
+Version 2.0.2
+---------------------------
+- ASHX connector is up-to-date (thanks @richeflits)
+- bugfix: displaying file type in list view
+
+
+Version 2.0.1
+---------------------------
+- new demo site: http://fm.devale.pro
+- bugfix: broken "expandedFolder" query param (#59)
+- bugfix: download action for files less than 16mb (#60)
+- removed "filter_output" method from "getfile" action (PHP)
+
+
+Version 2.0.0
+---------------------------
+- js file reworked to become a plugin
+- some ajax async calls replaced with deferred chains (based on #21)
+- new nice notifications, based on alertify plugin on my fork (#25)
+- theme concept was reworked, base assets created, no need to duplicate all assets for new theme
+- started with demo page with examples for different usage cases
+- many changes in html templates to make thing more organaized
+- upload popup dialog now scrollable
+- migrated frontend to knockout.js
+- removed a number of the application plugins (tinysort, filetree, impromptu, liveSearch); their functionality has been replaced with own implementation
+- grid view icons implemented via css styles (#47)
+- capability to preview images and media files with absolute path along with connector path (#27, #31)
+- completely rewritten and standardized Rich Filemanager API that follows JSON API best practices (#37)
+- configuration splitted into two files: server and client config files (#31, #32)
+- implemented "initiate" request to provide ability to override client-side configuration options (#29, #32)
+- refactored client-side configuration files: deleted obsolete options, some options or sections were moved/renamed (actual configuration description is in WIKI)
+- implemented actions-based access management (#24)
+- greatly improved security for PHP connector, a number of vulnerabilities were fixed
+- handle large files download in PHP connector (#56)
+- "languages" folder moved to the root FM folder
+
+
+Version 1.0.6
+---------------------------
+- removed `fileConnector` option from server-side;
+- removed 'Preview' and 'Thumbnail' params from `getinfo` response;
+- all preview paths (images, media, office files) are now associated to connector. Absolute paths for icons exclusively;
+- all preview paths are now built at the client-side (connector independent) for better API support;
+- added support of seeking for media files in PHP connector (including S3 storage plugin);
+- added capability to pass custom configuration options in filemanager.php to override the default config;
+- PHP connector refactored, following OOP practices;
+- added icons for OpenOffice files;
+
+
+Version 1.0.5
+---------------------------
+- Added a capability to preview images and media files when the userfiles folder is located beyond server root directory
+- Improved path processing at the client-side. Absolute path used whenever it is possible. Normalization of the preview path
+- Improved a way of automatically determination of `baseUrl` based on page URL
+- Fixed bug: Copy URL to clipboard does not work - #5
+- Fixed bug: Path issue upon file selection in WYSIWYG editor
+- Fixed bug: It is possible to select folders in WYSIWYG editor
+- Fixed bug: Preview of media and pdf files is broken when the path contains special chars (fixed by path encoding)
+
+
+Version 1.0.4
+---------------------------
+- Improved and extended logging process
+- Added new associations of some icons with file types for filetree and listview (docx, xlsx, odt, ods, odp, etc...)
+- Fixed bug: multiple issues when filemanager is located and accessible not from root (nested) folder
+- Fixed bug: error in PHP connector while file downloading
+- Fixed bug: error in PHP connector while transliteration process
+
+
 Version 1.0.0
 ---------------------------
 - Drag & Drop feature
@@ -35,35 +104,3 @@ to significantly reduce number of server requests (which is critical for S3 serv
 - Fixed bug: sorting respects type of item (file/folder) and doesn't mixes them together
 - Fixed bug: handle download errors correctly, if any
 - Fixed bug: better error handling for client-size and in PHP connector
-
-
-Version 1.0.4
----------------------------
-- Improved and extended logging process
-- Added new associations of some icons with file types for filetree and listview (docx, xlsx, odt, ods, odp, etc...)
-- Fixed bug: multiple issues when filemanager is located and accessible not from root (nested) folder
-- Fixed bug: error in PHP connector while file downloading
-- Fixed bug: error in PHP connector while transliteration process
-
-
-Version 1.0.5
----------------------------
-- Added a capability to preview images and media files when the userfiles folder is located beyond server root directory
-- Improved path processing at the client-side. Absolute path used whenever it is possible. Normalization of the preview path
-- Improved a way of automatically determination of `baseUrl` based on page URL
-- Fixed bug: Copy URL to clipboard does not work - #5
-- Fixed bug: Path issue upon file selection in WYSIWYG editor
-- Fixed bug: It is possible to select folders in WYSIWYG editor
-- Fixed bug: Preview of media and pdf files is broken when the path contains special chars (fixed by path encoding)
-
-
-Version 1.0.6
----------------------------
-- removed `fileConnector` option from server-side;
-- removed 'Preview' and 'Thumbnail' params from `getinfo` response;
-- all preview paths (images, media, office files) are now associated to connector. Absolute paths for icons exclusively;
-- all preview paths are now built at the client-side (connector independent) for better API support;
-- added support of seeking for media files in PHP connector (including S3 storage plugin);
-- added capability to pass custom configuration options in filemanager.php to override the default config;
-- PHP connector refactored, following OOP practices;
-- added icons for OpenOffice files;
