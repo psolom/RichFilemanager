@@ -15,7 +15,7 @@ Compatibility
 -------------
 
 Filemanager was initially designed to interact with a number of programming languages via [connectors](https://github.com/servocoder/RichFilemanager/tree/master/connectors).
-But since many changes have been done recently, **only PHP connector** is the only actual connector currently. Compatibility with other connectors is most likely completely broken.
+But since many changes have been done recently, **PHP & ASHX connectors** are the only actual connectors currently. Compatibility with other connectors is most likely completely broken.
 You are still able you to download unsupported v0.8 from [archive](https://github.com/simogeo/Filemanager/archive/v0.8.zip) (PHP, ASHX, ASP, CFM, lasso, PL and JSP)
 
 Browser compatibility:
@@ -44,7 +44,7 @@ Main features
 * Easy integration with RTE like CKEditor, TinyMCE, Imperavi Redactor and so on.
 * Easy integration with [AWS S3 storage](https://github.com/servocoder/RichFilemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
 * Easy integration with [colorbox jquery plugin](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
-* Several computer language connectors available. **PHP is up-to-date**
+* Several computer language connectors available. **PHP & ASHX are up-to-date**
 * Drag-and-drop support
 * Ability to upload, delete, modify, download and move files
 * Ability to create folders
