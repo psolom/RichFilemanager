@@ -2518,8 +2518,11 @@ $.richFmPlugin = function(element, options)
 			successCallback(targetPath);
 		};
 
+		var objectsTotal = objects.length,
+			message = (objectsTotal > 1) ? lg.prompt_move_multiple.replace('%s', objectsTotal) : lg.prompt_move;
+
 		fm.prompt({
-			message: lg.move,
+			message: message,
 			value: fmModel.currentPath(),
 			okBtn: {
 				label: lg.move,
@@ -2578,8 +2581,11 @@ $.richFmPlugin = function(element, options)
 
 	// Prompts for confirmation, then deletes the current item.
 	var deleteItemPrompt = function(objects, successCallback) {
+		var objectsTotal = objects.length,
+			message = (objectsTotal > 1) ? lg.confirm_delete_multiple.replace('%s', objectsTotal) : lg.confirm_delete;
+
 		fm.confirm({
-			message: lg.confirmation_delete,
+			message: message,
 			okBtn: {
 				label: lg.yes,
 				click: function(e, ui) {
