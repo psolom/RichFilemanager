@@ -1441,11 +1441,11 @@ $.richFmPlugin = function(element, options)
 							appendTo: '.fm-container',
 							items: getContextMenuItems(koItem.rdo),
 							callback: function(itemKey, opt) {
-								var selectedItems = [];
+								var selectedObjects = [];
 								$.each(fmModel.itemsModel.getSelected(), function(i, itemObject) {
-									selectedItems.push(itemObject.rdo);
+									selectedObjects.push(itemObject.rdo);
 								});
-								performAction(itemKey, selectedItems);
+								performAction(itemKey, koItem.rdo, selectedObjects);
 							}
 						}
 					}
@@ -2507,7 +2507,7 @@ $.richFmPlugin = function(element, options)
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in de tail views
 	// or choosing the "Move" contextual menu option in list views.
-	var moveItemPrompt = function(successCallback) {
+	var moveItemPrompt = function(objects, successCallback) {
 		var doMove = function(e, ui) {
 			var targetPath = ui.getInputValue();
 			if(!targetPath) {
@@ -2577,7 +2577,7 @@ $.richFmPlugin = function(element, options)
 	};
 
 	// Prompts for confirmation, then deletes the current item.
-	var deleteItemPrompt = function(successCallback) {
+	var deleteItemPrompt = function(objects, successCallback) {
 		fm.confirm({
 			message: lg.confirmation_delete,
 			okBtn: {
@@ -2756,12 +2756,11 @@ $.richFmPlugin = function(element, options)
 			separator1: "-----",
 			delete: {name: lg.del, className: 'delete'}
 		};
-		var batchAction = fmModel.itemsModel.getSelected().length > 1;
 
-		if(!batchAction && !has_capability(resourceObject, 'download')) delete contextMenuItems.download;
-		if((!batchAction && !has_capability(resourceObject, 'delete')) || config.options.browseOnly === true) delete contextMenuItems.delete;
-		if((!batchAction && !has_capability(resourceObject, 'move')) || config.options.browseOnly === true) delete contextMenuItems.move;
-		if(!has_capability(resourceObject, 'rename') || batchAction || config.options.browseOnly === true) delete contextMenuItems.rename;
+		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
+		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
+		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
+		if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		// remove 'select' if there is no window.opener
 		if(!has_capability(resourceObject, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
@@ -2771,12 +2770,13 @@ $.richFmPlugin = function(element, options)
 	}
 
 	// Binds contextual menu to items in list and grid views.
-	var performAction = function(action, resourceObject) {
-		var objects = (resourceObject instanceof Array) ? resourceObject : [resourceObject];
+	var performAction = function(action, targetObject, selectedObjects) {
+		// suppose that target object is part of selected objects while multiple selection
+		var objects = selectedObjects ? selectedObjects : [targetObject];
 
 		switch(action) {
 			case 'select':
-				selectItem(objects[0]);
+				selectItem(targetObject);
 				break;
 
 			case 'download':
@@ -2786,15 +2786,15 @@ $.richFmPlugin = function(element, options)
 				break;
 
 			case 'rename':
-				renameItem(objects[0]);
+				renameItem(targetObject);
 				break;
 
 			case 'replace':
-				replaceItem(objects[0]);
+				replaceItem(targetObject);
 				break;
 
 			case 'move':
-				moveItemPrompt(function(targetPath) {
+				moveItemPrompt(objects, function(targetPath) {
 					processMultipleActions(objects, function(i, itemObject) {
 						return moveItem(itemObject, targetPath);
 					});
@@ -2802,9 +2802,9 @@ $.richFmPlugin = function(element, options)
 				break;
 
 			case 'delete':
-				deleteItemPrompt(function() {
-					$.each(objects, function(i, itemObject) {
-						deleteItem(itemObject.id);
+				deleteItemPrompt(objects, function() {
+					processMultipleActions(objects, function(i, itemObject) {
+						return deleteItem(itemObject.id);
 					});
 				});
 				break;
