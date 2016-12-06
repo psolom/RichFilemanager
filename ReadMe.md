@@ -37,11 +37,10 @@ Check the details in [API](https://github.com/servocoder/RichFilemanager/wiki/AP
 Main features
 -------------
 
-* A Filemanager relying on jquery.
 * Available in more than 20 languages.
 * [Highly customizable](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options)
 * Can work as standalone application
-* Easy integration with RTE like CKEditor, TinyMCE, Imperavi Redactor and so on.
+* Easy integration with WYSIWYG editors like CKEditor, TinyMCE, Imperavi Redactor and so on.
 * Easy integration with [AWS S3 storage](https://github.com/servocoder/RichFilemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
 * Easy integration with [colorbox jquery plugin](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
 * Several computer language connectors available. **PHP & ASHX are up-to-date**
@@ -96,8 +95,9 @@ or download the archive from Github : https://github.com/servocoder/RichFilemana
 You can place the FileManager anywhere within your web serving root directory.
 
 
-**(2)** Make a copy of the default configuration file ("filemanager.config.default.json" located in the scripts directory), removing the '.default' from the end of the filename, and edit the options according to the following wiki page : https://github.com/servocoder/RichFilemanager/wiki/Configuration-options
-   Having a look on configuration cases study may also be helpful to you : https://github.com/servocoder/RichFilemanager/wiki/Specify-user-folder%2C-configuration-cases
+**(2)** Make a copy of the [default configuration file](https://github.com/servocoder/RichFilemanager/blob/master/scripts/filemanager.config.default.json), removing the ".default" from the end of the filename.
+Explore and customize [configuration options](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options) in the created configuration file.
+Having a look on [configuration cases](https://github.com/servocoder/RichFilemanager/wiki/Specify-user-folder%2C-configuration-cases) may also be helpful to you. 
 
 
 **(3a)** If you are integrating the FileManager with FCKEditor, open your fckconfig.js file and find the lines which specify what file browser to use for images, links, etc. Look toward the bottom of the file. You will need to change lines such as this:
