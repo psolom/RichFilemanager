@@ -388,6 +388,21 @@ $.richFmPlugin = function(element, options)
 		configSortField = chunks[0] || 'name';
 		configSortOrder = chunks[1] || 'asc';
 
+        // changes files root to restrict the view to a given folder
+        if($.urlParam('exclusiveFolder') != 0) {
+            fileRoot += $.urlParam('exclusiveFolder');
+            if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
+            fileRoot = fileRoot.replace(/\/\//g, '\/');
+        }
+
+        // get folder that should be expanded after filemanager is loaded
+        var expandedFolder = '';
+        if($.urlParam('expandedFolder') != 0) {
+            expandedFolder = $.urlParam('expandedFolder');
+            fullexpandedFolder = fileRoot + expandedFolder;
+            fullexpandedFolder = fullexpandedFolder.replace(/\/\//g, '\/');
+        }
+
 		// Activates knockout.js
 		fmModel = new FmModel();
 		ko.applyBindings(fmModel);
@@ -512,21 +527,6 @@ $.richFmPlugin = function(element, options)
 					async: config.extras.extra_js_async
 				});
 			}
-		}
-
-		// changes files root to restrict the view to a given folder
-		if($.urlParam('exclusiveFolder') != 0) {
-			fileRoot += $.urlParam('exclusiveFolder');
-			if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
-			fileRoot = fileRoot.replace(/\/\//g, '\/');
-		}
-
-		// get folder that should be expanded after filemanager is loaded
-		var expandedFolder = '';
-		if($.urlParam('expandedFolder') != 0) {
-			expandedFolder = $.urlParam('expandedFolder');
-			fullexpandedFolder = fileRoot + expandedFolder;
-			fullexpandedFolder = fullexpandedFolder.replace(/\/\//g, '\/');
 		}
 
 		// finalize the FileManager UI initialization with localized text
@@ -847,7 +847,7 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.treeData = {
-				id: '/',
+				id: fileRoot,
 				level: ko.observable(-1),
 				children: ko.observableArray([])
 			};
