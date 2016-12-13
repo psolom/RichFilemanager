@@ -1,3 +1,12 @@
+Version 2.0.3
+---------------------------
+- added "overrideClientConfig" option in PHP connector config file, "false" by default
+- added callback functions for some urls modification, described in Wiki article "Configuration"
+- moved application plugin initialization to the index file
+- adjusted Wiki articles and ReadMe.md file
+- bugfix: broken "exclusiveFolder" query param
+
+
 Version 2.0.2
 ---------------------------
 - ASHX connector is up-to-date (thanks @richeflits)
