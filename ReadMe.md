@@ -29,8 +29,9 @@ Browser compatibility:
 Installation and Setup
 ----------------------
 
-[Deploy and setup RichFilemanager on your website](https://github.com/servocoder/RichFilemanager/wiki/Deploy-and-setup)
-[Worry about security of your application](https://github.com/servocoder/RichFilemanager/wiki/Security-concern)
+* [Deploy and setup RichFilemanager on your website](https://github.com/servocoder/RichFilemanager/wiki/Deploy-and-setup)
+* [Discover complete configuration guidelines](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options)
+* [Worry about security of your application](https://github.com/servocoder/RichFilemanager/wiki/Security-concern)
 
 
 Documentation
