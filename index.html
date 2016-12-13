@@ -298,17 +298,6 @@
 		</div>
 		<!-- /ko -->
 
-		<script type="text/javascript" src="scripts/jquery-1.11.3.min.js"></script>
-		<script type="text/javascript" src="scripts/jquery-ui.min.js"></script> <!-- build for drag&drop only -->
-		<script type="text/javascript" src="scripts/jquery-browser.js"></script>
-		<script type="text/javascript" src="scripts/knockout-3.4.0.js"></script>
-		<script type="text/javascript" src="scripts/jquery.splitter/dist/jquery-splitter.js"></script>
-		<script type="text/javascript" src="scripts/jquery.contextmenu/dist/jquery.contextMenu.min.js"></script>
-		<script type="text/javascript" src="scripts/alertify.js/dist/js/alertify.js"></script>
-		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
-		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
-
 		<script type="text/html" id="node-parent-template">
 			<li data-bind="template: {name: 'node-template', data: koNode}"></li>
 		</script>
@@ -320,6 +309,24 @@
 				<span class="node_name" data-bind="text: nodeTitle(), attr: {title: title()}"></span>
 			</a>
 			<ul data-bind="template: {name: 'node-parent-template', if: children().length > 0, foreach: children, as: 'koNode', afterRender: $root.treeModel.nodeRendered}, css: clusterClass(), toggleNodeVisibility: $data"></ul>
+		</script>
+
+		<script type="text/javascript" src="scripts/jquery-1.11.3.min.js"></script>
+		<script type="text/javascript" src="scripts/jquery-ui.min.js"></script> <!-- build for drag&drop only -->
+		<script type="text/javascript" src="scripts/jquery-browser.js"></script>
+		<script type="text/javascript" src="scripts/knockout-3.4.0.js"></script>
+		<script type="text/javascript" src="scripts/jquery.splitter/dist/jquery-splitter.js"></script>
+		<script type="text/javascript" src="scripts/jquery.contextmenu/dist/jquery.contextMenu.min.js"></script>
+		<script type="text/javascript" src="scripts/alertify.js/dist/js/alertify.js"></script>
+		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
+		<!-- Load filemanager script -->
+		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+
+		<!-- Start RichFilemanager plugin -->
+		<script type="application/javascript">
+            $(function() {
+                $('.fm-container').richFilemanager();
+            });
 		</script>
 	</div>
 </div>

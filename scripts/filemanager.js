@@ -22,13 +22,25 @@ $.urlParam = function(name) {
 	}
 };
 
-$.richFmPlugin = function(element, options)
+$.richFilemanagerPlugin = function(element, pluginOptions)
 {
 	/**
 	 * Plugin's default options
 	 */
 	var defaults = {
-		pluginPath: '.'	// relative path to the FM plugin folder
+		baseUrl: '.',	// relative path to the FM plugin folder
+		config: {},		// configuration options
+        callbacks: {
+            beforeCreateImageUrl: function (resourceObject, url) {
+                return url;
+            },
+            beforeCreatePreviewUrl: function (resourceObject, url) {
+                return url;
+            },
+			beforeSelectItem: function (resourceObject, url) {
+				return url;
+			}
+		}
 	};
 
 	/**
@@ -68,18 +80,20 @@ $.richFmPlugin = function(element, options)
 	/**
 	 * This holds the merged default and user-provided options.
 	 * Plugin's properties will be available through this object like:
-	 * - fm.settings.propertyName from inside the plugin
-	 * - element.data('richFm').settings.propertyName from outside the plugin, where "element" is the element the plugin is attached to;
+	 * - fm.propertyName from inside the plugin
+	 * - element.data('richFilemanager').propertyName from outside the plugin, where "element" is the element the plugin is attached to;
 	 * @type {{}}
 	 */
-	fm.settings = {};
+
+	// The plugin's final settings, contains the merged default and user-provided options (if any)
+    fm.settings = $.extend(true, defaults, pluginOptions);
 
 
 	/*--------------------------------------------------------------------------------------------------------------
 	 Public methods
 	 Can be called like:
 	 - fm.methodName(arg1, arg2, ... argn) from inside the plugin
-	 - element.data('richFm').publicMethod(arg1, arg2, ... argn) from outside the plugin,
+	 - element.data('richFilemanager').publicMethod(arg1, arg2, ... argn) from outside the plugin,
 	   where "element" is the element the plugin is attached to
 	--------------------------------------------------------------------------------------------------------------*/
 
@@ -126,7 +140,7 @@ $.richFmPlugin = function(element, options)
 		}, options));
 	};
 
-	fm.success = function(message) {
+	fm.success = function(message, options) {
 		return fm.log(message, $.extend({}, {
 			type: 'success',
 			delay: 6000
@@ -226,9 +240,6 @@ $.richFmPlugin = function(element, options)
 	};
 
 	var configure = function() {
-		// The plugin's final properties are the merged default and user-provided options (if any)
-		fm.settings = $.extend(true, defaults, options);
-
 		return $.when(loadConfigFile('default'), loadConfigFile('user')).done(function(confd, confu) {
 			var config_default = confd[0];
 			var config_user = confu[0];
@@ -289,7 +300,7 @@ $.richFmPlugin = function(element, options)
 	// localize messages based on culture var or from URL
 	var localize = function() {
 		var langCode = $.urlParam('langCode');
-		var langPath = fm.settings.pluginPath + '/languages/';
+		var langPath = fm.settings.baseUrl + '/languages/';
 
 		function buildLangPath(code) {
 			return langPath + code + '.json';
@@ -754,7 +765,7 @@ $.richFmPlugin = function(element, options)
 				}
 				if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
 					viewerObject.type = 'opendoc';
-					viewerObject.url = fm.settings.pluginPath + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
+					viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
 					viewerObject.options = {
 						width: config.viewer.opendoc.readerWidth,
 						height: config.viewer.opendoc.readerHeight
@@ -797,7 +808,7 @@ $.richFmPlugin = function(element, options)
                 model.previewFile(true);
 
 				// zeroClipboard code
-				ZeroClipboard.config({swfPath: fm.settings.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
+				ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
 				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
 				client.on("ready", function(readyEvent) {
 					client.on("aftercopy", function(event) {
@@ -1689,12 +1700,12 @@ $.richFmPlugin = function(element, options)
 
 		if(type === 'user') {
 			if($.urlParam('config') != 0) {
-				url = fm.settings.pluginPath + '/scripts/' + $.urlParam('config');
+				url = fm.settings.baseUrl + '/scripts/' + $.urlParam('config');
 			} else {
-				url = fm.settings.pluginPath + '/scripts/filemanager.config.json';
+				url = fm.settings.baseUrl + '/scripts/filemanager.config.json';
 			}
 		} else {
-			url = fm.settings.pluginPath + '/scripts/filemanager.config.default.json';
+			url = fm.settings.baseUrl + '/scripts/filemanager.config.default.json';
 		}
 
 		return $.ajax({
@@ -1710,7 +1721,7 @@ $.richFmPlugin = function(element, options)
 
 	// Loads a given css file into header if not already included
 	var loadCSS = function(href) {
-		href = fm.settings.pluginPath + href;
+		href = fm.settings.baseUrl + href;
 		// check if already included
 		if($.inArray(href, HEAD_included_files) === -1) {
 			$("<link>").attr({
@@ -1725,7 +1736,7 @@ $.richFmPlugin = function(element, options)
 
 	// Loads a given js file into header if not already included
 	var loadJS = function(src) {
-		src = fm.settings.pluginPath + src;
+		src = fm.settings.baseUrl + src;
 		// check if already included
 		if($.inArray(src, HEAD_included_files) === -1) {
 			$("<script>").attr({
@@ -1740,30 +1751,9 @@ $.richFmPlugin = function(element, options)
 	var loadTemplate = function(id, data) {
 		return $.ajax({
 			type: 'GET',
-			url: fm.settings.pluginPath + '/scripts/templates/' + id + '.html',
+			url: fm.settings.baseUrl + '/scripts/templates/' + id + '.html',
 			error: handleAjaxError
 		});
-	};
-
-	// Display Min Path
-	var displayPath = function (path, reduce) {
-		reduce = (typeof reduce === "undefined");
-
-		if (config.options.showFullPath === false) {
-			path = path.replace(fileRoot, "/");
-			// if a "displayPathDecorator" function is defined, use it to decorate path
-			if ('function' === typeof displayPathDecorator) {
-				return displayPathDecorator(path);
-			} else {
-				if (path.length > 50 && reduce === true) {
-					var n = path.split("/");
-					path = '/' + n[1] + '/' + n[2] + '/(...)/' + n[n.length - 2] + '/';
-				}
-				return path;
-			}
-		} else {
-			return path;
-		}
 	};
 
 	// Sanitize and transliterate file/folder name as server side (connector) way
@@ -1985,30 +1975,35 @@ $.richFmPlugin = function(element, options)
 	// Build url to preview files
 	var createPreviewUrl = function(resourceObject, encode) {
 		encode = encode || false;
-		var objectPath = resourceObject.attributes.path;
+		var previewUrl,
+			objectPath = resourceObject.attributes.path;
+
 		if(config.viewer.absolutePath && objectPath) {
 			if(encode) {
 				objectPath = encodePath(objectPath);
 			}
-			return buildAbsolutePath(objectPath);
+            previewUrl = buildAbsolutePath(objectPath);
 		} else {
-			return buildConnectorUrl({
+            previewUrl = buildConnectorUrl({
 				mode: 'readfile',
 				path: resourceObject.id
 			});
 		}
+
+        previewUrl = fm.settings.callbacks.beforeCreatePreviewUrl(resourceObject, previewUrl);
+		return previewUrl;
 	};
 
 	// Build url to display image or its thumbnail
 	var createImageUrl = function(resourceObject, thumbnail) {
-		var imagePath;
+		var imageUrl;
 		if (isImageFile(resourceObject.id) &&
 			!resourceObject.attributes.protected && (
 			(thumbnail && config.viewer.image.showThumbs) ||
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
 			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
-				imagePath = buildAbsolutePath(encodePath(resourceObject.attributes.path));
+                imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path));
 			} else {
 				var queryParams = {path: resourceObject.id};
 				if (resourceObject.attributes.extension === 'svg') {
@@ -2019,10 +2014,11 @@ $.richFmPlugin = function(element, options)
 						queryParams.thumbnail = 'true';
 					}
 				}
-				imagePath = buildConnectorUrl(queryParams);
+                imageUrl = buildConnectorUrl(queryParams);
 			}
+            imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
 		}
-		return imagePath;
+		return imageUrl;
 	};
 
 	var buildAbsolutePath = function(path) {
@@ -2065,12 +2061,14 @@ $.richFmPlugin = function(element, options)
 	// contextual menu option in list views.
 	// NOTE: closes the window when finished.
 	var selectItem = function(resourceObject) {
-		var url = createPreviewUrl(resourceObject, true);
+		var previewUrl = createPreviewUrl(resourceObject, true);
+        previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
+
 		if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
 			if(window.tinyMCEPopup) {
 				// use TinyMCE > 3.0 integration method
 				var win = tinyMCEPopup.getWindowArg("window");
-				win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = url;
+				win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = previewUrl;
 				if (typeof(win.ImageDialog) != "undefined") {
 					// Update image dimensions
 					if (win.ImageDialog.getImageData)
@@ -2078,14 +2076,14 @@ $.richFmPlugin = function(element, options)
 
 					// Preview if necessary
 					if (win.ImageDialog.showPreviewImage)
-						win.ImageDialog.showPreviewImage(url);
+						win.ImageDialog.showPreviewImage(previewUrl);
 				}
 				tinyMCEPopup.close();
 				return;
 			}
 			// tinymce 4 and colorbox
 			if($.urlParam('field_name')) {
-				parent.document.getElementById($.urlParam('field_name')).value = url;
+				parent.document.getElementById($.urlParam('field_name')).value = previewUrl;
 
 				if(typeof parent.tinyMCE !== "undefined") {
 					parent.tinyMCE.activeEditor.windowManager.close();
@@ -2109,9 +2107,9 @@ $.richFmPlugin = function(element, options)
 						instance.buffer.set(); // for undo action
 
 						if(isImageFile(resourceObject.attributes.name)) {
-							instance.insert.html('<img src="' + url + '">');
+							instance.insert.html('<img src="' + previewUrl + '">');
 						} else {
-							instance.insert.html('<a href="' + url + '">' + resourceObject.attributes.name + '</a>');
+							instance.insert.html('<a href="' + previewUrl + '">' + resourceObject.attributes.name + '</a>');
 						}
 					}
 				}
@@ -2120,21 +2118,21 @@ $.richFmPlugin = function(element, options)
 				// use CKEditor 3.0 + integration method
 				if (window.opener) {
 					// Popup
-					window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), url);
+					window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
 				} else {
 					// Modal (in iframe)
-					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), url);
+					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
 					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
 				}
 			} else {
 				// use FCKEditor 2.0 integration method
 				if(resourceObject.attributes.width) {
-					var p = url;
+					var p = previewUrl;
 					var w = resourceObject.attributes.width;
 					var h = resourceObject.attributes.height;
 					window.opener.SetUrl(p,w,h);
 				} else {
-					window.opener.SetUrl(url);
+					window.opener.SetUrl(previewUrl);
 				}
 			}
 
@@ -2868,7 +2866,7 @@ $.richFmPlugin = function(element, options)
 							var $template = $(tmpl('tmpl-upload-item', {
 								file: file,
 								lang: lg,
-								imagesPath: fm.settings.pluginPath + '/scripts/jQuery-File-Upload/img'
+								imagesPath: fm.settings.baseUrl + '/scripts/jQuery-File-Upload/img'
 							}));
 							file.context = $template;
 							$template.find('.buttons').data(data);
@@ -3143,27 +3141,27 @@ $.richFmPlugin = function(element, options)
 })(jQuery);
 
 // add the plugin to the jQuery.fn object
-$.fn.richFm = function(options) {
+$.fn.richFilemanager = function(options) {
 
 	// iterate through the DOM elements we are attaching the plugin to
 	return this.each(function() {
 
 		// if plugin has not already been attached to the element
-		if (undefined == $(this).data('richFm')) {
+		if (undefined == $(this).data('richFilemanager')) {
 
 			/**
 			 * Creates a new instance of the plugin
 			 * Pass the DOM element and the user-provided options as arguments
 			 */
-			var plugin = new $.richFmPlugin(this, options);
+			var plugin = new $.richFilemanagerPlugin(this, options);
 
 			/**
 			 * Store a reference to the plugin object
 			 * The plugin are available like:
-			 * - element.data('richFm').publicMethod(arg1, arg2, ... argn);  for methods
-			 * - element.data('richFm').settings.propertyName;  for properties
+			 * - element.data('richFilemanager').publicMethod(arg1, arg2, ... argn);  for methods
+			 * - element.data('richFilemanager').settings.propertyName;  for properties
 			 */
-			$(this).data('richFm', plugin);
+			$(this).data('richFilemanager', plugin);
 		}
 	});
 };
@@ -3174,7 +3172,3 @@ if (!window.location.origin) {
 		+ window.location.hostname
 		+ (window.location.port ? ':' + window.location.port : '');
 }
-
-$(window).load(function() {
-	$('.fm-container').richFm();
-});
