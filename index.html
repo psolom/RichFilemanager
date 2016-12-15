@@ -320,12 +320,25 @@
 		<script type="text/javascript" src="scripts/alertify.js/dist/js/alertify.js"></script>
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 
 		<!-- Start RichFilemanager plugin -->
 		<script type="application/javascript">
             $(function() {
-                $('.fm-container').richFilemanager();
+                $('.fm-container').richFilemanager({
+                    callbacks: {
+                        beforeSelectItem: function (resourceObject, url) {
+                            return url += '&modified=selectItem';
+                        },
+                        afterSelectItem: function (resourceObject, url) {
+                            // example on how to set url into target input and close bootstrap modal window
+							// assumes that filemanager is opened via iframe, which is at the same domain as parent
+                            // https://developer.mozilla.org/en-US/docs/Web/Security/Same-origin_policy
+                            $('#fm-bs-modal-input', parent.document).val(url);
+                            $('#fm-bs-modal', parent.document).find('.close').click();
+                        }
+                    }
+				});
             });
 		</script>
 	</div>

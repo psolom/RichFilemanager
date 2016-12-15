@@ -51,7 +51,6 @@
     "dimensions": "Dimensioner",
     "download": "Hent",
     "edit": "Edit file",
-    "fck_select_integration": "Funktionen 'Vælg' er kun brugt ved brug af FCKEditor eller CKEditor.",
     "gb": "gb",
     "grid_view": "Skift til gitter visning.",
     "help_move": "The use of '../' is forbidden. You can access root folder by using '/'.",

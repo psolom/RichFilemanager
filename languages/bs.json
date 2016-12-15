@@ -51,7 +51,6 @@
     "dimensions": "Dimenzije",
     "download": "Preuzmi",
     "edit": "Izmjeni datoteku",
-    "fck_select_integration": "The 'Select' function is only used for integration with FCKEditor.",
     "gb": "gb",
     "grid_view": "Prebaci na tabularni prikaz.",
     "help_move": "The use of '../' is forbidden. You can access root folder by using '/'.",

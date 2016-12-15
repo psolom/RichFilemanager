@@ -51,7 +51,6 @@
     "dimensions": "Dimensions",
     "download": "Download",
     "edit": "Edit file",
-    "fck_select_integration": "The 'Select' function is only used for integration with FCKEditor.",
     "gb": "gb",
     "grid_view": "Switch to grid view.",
     "help_move": "The use of '../' is forbidden. You can access root folder by using '/'.",
