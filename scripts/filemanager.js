@@ -39,7 +39,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             },
 			beforeSelectItem: function (resourceObject, url) {
 				return url;
-			}
+			},
+			afterSelectItem: function (resourceObject, url) {}
 		}
 	};
 
@@ -2064,84 +2065,80 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var previewUrl = createPreviewUrl(resourceObject, true);
         previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
 
-		if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
-			if(window.tinyMCEPopup) {
-				// use TinyMCE > 3.0 integration method
-				var win = tinyMCEPopup.getWindowArg("window");
-				win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = previewUrl;
-				if (typeof(win.ImageDialog) != "undefined") {
-					// Update image dimensions
-					if (win.ImageDialog.getImageData)
-						win.ImageDialog.getImageData();
+		if(window.tinyMCEPopup) {
+			// use TinyMCE > 3.0 integration method
+			var win = tinyMCEPopup.getWindowArg("window");
+			win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = previewUrl;
+			if (typeof(win.ImageDialog) != "undefined") {
+				// Update image dimensions
+				if (win.ImageDialog.getImageData)
+					win.ImageDialog.getImageData();
 
-					// Preview if necessary
-					if (win.ImageDialog.showPreviewImage)
-						win.ImageDialog.showPreviewImage(previewUrl);
-				}
-				tinyMCEPopup.close();
-				return;
+				// Preview if necessary
+				if (win.ImageDialog.showPreviewImage)
+					win.ImageDialog.showPreviewImage(previewUrl);
 			}
-			// tinymce 4 and colorbox
-			if($.urlParam('field_name')) {
-				parent.document.getElementById($.urlParam('field_name')).value = previewUrl;
+			tinyMCEPopup.close();
+			return;
+		}
 
-				if(typeof parent.tinyMCE !== "undefined") {
-					parent.tinyMCE.activeEditor.windowManager.close();
-				}
-				if(typeof parent.$.fn.colorbox !== "undefined") {
-					parent.$.fn.colorbox.close();
-				}
+		// tinymce 4 and colorbox
+		if($.urlParam('field_name')) {
+			parent.document.getElementById($.urlParam('field_name')).value = previewUrl;
+
+			if(typeof parent.tinyMCE !== "undefined") {
+				parent.tinyMCE.activeEditor.windowManager.close();
 			}
+			if(typeof parent.$.fn.colorbox !== "undefined") {
+				parent.$.fn.colorbox.close();
+			}
+		}
 
-			else if($.urlParam('ImperaviElementId')) {
-				// use Imperavi Redactor I, tested on v.10.x.x
-				if (window.opener) {
-					// Popup
-				} else {
-					// Modal (in iframe)
-					var elementId = $.urlParam('ImperaviElementId'),
-						instance = parent.$('#'+elementId).redactor('core.getObject');
+		if($.urlParam('ImperaviElementId')) {
+			// use Imperavi Redactor I, tested on v.10.x.x
+			if (window.opener) {
+				// Popup
+			} else {
+				// Modal (in iframe)
+				var elementId = $.urlParam('ImperaviElementId'),
+					instance = parent.$('#'+elementId).redactor('core.getObject');
 
-					if(instance) {
-						instance.modal.close();
-						instance.buffer.set(); // for undo action
+				if(instance) {
+					instance.modal.close();
+					instance.buffer.set(); // for undo action
 
-						if(isImageFile(resourceObject.attributes.name)) {
-							instance.insert.html('<img src="' + previewUrl + '">');
-						} else {
-							instance.insert.html('<a href="' + previewUrl + '">' + resourceObject.attributes.name + '</a>');
-						}
+					if(isImageFile(resourceObject.attributes.name)) {
+						instance.insert.html('<img src="' + previewUrl + '">');
+					} else {
+						instance.insert.html('<a href="' + previewUrl + '">' + resourceObject.attributes.name + '</a>');
 					}
 				}
 			}
-			else if($.urlParam('CKEditor')) {
-				// use CKEditor 3.0 + integration method
-				if (window.opener) {
-					// Popup
-					window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
-				} else {
-					// Modal (in iframe)
-					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
-					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
-				}
-			} else {
-				// use FCKEditor 2.0 integration method
-				if(resourceObject.attributes.width) {
-					var p = previewUrl;
-					var w = resourceObject.attributes.width;
-					var h = resourceObject.attributes.height;
-					window.opener.SetUrl(p,w,h);
-				} else {
-					window.opener.SetUrl(previewUrl);
-				}
-			}
-
-			if (window.opener) {
-				window.close();
-			}
-		} else {
-			fm.error(lg.fck_select_integration);
 		}
+
+		if($.urlParam('CKEditor')) {
+			// use CKEditor 3.0 + integration method
+			if (window.opener) {
+				// Popup
+				window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
+			} else {
+				// Modal (in iframe)
+				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
+				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
+			}
+		} else if(window.opener) {
+			// use FCKEditor 2.0 integration method
+			if(resourceObject.attributes.width) {
+				var p = previewUrl;
+				var w = resourceObject.attributes.width;
+				var h = resourceObject.attributes.height;
+				window.opener.SetUrl(p,w,h);
+			} else {
+				window.opener.SetUrl(previewUrl);
+			}
+		}
+
+		fm.settings.callbacks.afterSelectItem(resourceObject, previewUrl);
 	};
 
 	// Renames the current item and returns the new name.
@@ -2589,8 +2586,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
-		// remove 'select' if there is no window.opener
-		if(!has_capability(resourceObject, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
+		if(!has_capability(resourceObject, 'select')) delete contextMenuItems.select;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
