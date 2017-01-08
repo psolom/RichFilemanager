@@ -1,4 +1,5 @@
 .DS_Store
 .idea
 node_modules
-scripts/filemanager.config.json
+config/filemanager.config.json
+config/filemanager.init.js

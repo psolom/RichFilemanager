@@ -62,7 +62,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		$filetree = $splitter.children('.fm-filetree'),
 		$uploadButton = $uploader.children('.fm-upload'),
 
-		HEAD_included_files = [],	// <head> included files collector
 		config = null,				// configuration options
 		lg = null,					// localized messages
 		fileRoot = '/',				// relative files root, may be changed with some query params
@@ -233,8 +232,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return includeTemplates();
 			})
 			.then(function() {
-				includeAssets();
-				initialize();
+				includeAssets(function() {
+                    initialize();
+				});
 			});
 
 		deferred.resolve();
@@ -344,46 +344,54 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	var includeAssets = function() {
-		// Loading theme
-		loadCSS('/themes/' + config.options.theme + '/styles/theme.css');
+	var includeAssets = function(callback) {
+		var primary = [],
+        	secondary = [];
 
-		// Loading zeroClipboard
-		loadJS('/scripts/zeroclipboard/dist/ZeroClipboard.js');
+        // theme defined in configuration file
+        primary.push('/themes/' + config.options.theme + '/styles/theme.css');
+
+        if(config.customScrollbar.enabled) {
+            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
+            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+        }
+
+        // add callback on loaded assets and inject primary ones
+        primary.push(callback);
+        loadAssets(primary);
 
 		// Loading CodeMirror if enabled for online edition
 		if(config.viewer.editable.enabled) {
-			loadCSS('/scripts/CodeMirror/lib/codemirror.css');
-			loadCSS('/scripts/CodeMirror/theme/' + config.viewer.editable.theme + '.css');
-			loadJS('/scripts/CodeMirror/lib/codemirror.js');
-			loadJS('/scripts/CodeMirror/addon/selection/active-line.js');
-			loadCSS('/scripts/CodeMirror/addon/display/fullscreen.css');
-			loadJS('/scripts/CodeMirror/addon/display/fullscreen.js');
-		}
-
-		if(config.customScrollbar.enabled) {
-			loadCSS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
-			loadJS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+            secondary.push('/scripts/CodeMirror/lib/codemirror.css');
+            secondary.push('/scripts/CodeMirror/theme/' + config.viewer.editable.theme + '.css');
+            secondary.push('/scripts/CodeMirror/lib/codemirror.js');
+            secondary.push('/scripts/CodeMirror/addon/selection/active-line.js');
+            secondary.push('/scripts/CodeMirror/addon/display/fullscreen.css');
+            secondary.push('/scripts/CodeMirror/addon/display/fullscreen.js');
 		}
 
 		if(!config.options.browseOnly) {
 			// Loading jquery file upload library
-			loadJS('/scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
-			loadJS('/scripts/jQuery-File-Upload/js/canvas-to-blob.min.js');
-			loadJS('/scripts/jQuery-File-Upload/js/load-image.all.min.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.iframe-transport.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload-process.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload-image.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload-validate.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/canvas-to-blob.min.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/load-image.all.min.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.iframe-transport.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-process.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-image.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-validate.js');
 
 			if(config.upload.multiple) {
-				loadCSS('/scripts/jQuery-File-Upload/css/dropzone.css');
+                secondary.push('/scripts/jQuery-File-Upload/css/dropzone.css');
 			}
 		}
 
 		if(config.options.charsLatinOnly) {
-			loadJS('/scripts/speakingurl/speakingurl.min.js');
+            secondary.push('/scripts/speakingurl/speakingurl.min.js');
+		}
+
+		if(secondary.length) {
+            loadAssets(secondary);
 		}
 	};
 
@@ -621,20 +629,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			console.log('Total execution time : ' + time + ' ms');
 		}
 
-		// TODO: use something better to be sure assets are loaded
-		// delay until theme CSS file is loaded
-		setTimeout(function() {
-			// Provides support for adjustible columns.
-			$splitter.splitter({
-				sizeLeft: config.options.splitterWidth,
-				minLeft: config.options.splitterMinWidth,
-				minRight: 200
-			});
+		// Provides support for adjustible columns.
+		$splitter.splitter({
+			sizeLeft: config.options.splitterWidth,
+			minLeft: config.options.splitterMinWidth,
+			minRight: 200
+		});
 
-			var $loading = $container.find('.fm-loading-wrap');
-			$loading.fadeOut(800); // remove loading screen div
-			$(window).trigger('resize');
-		}, 200);
+		var $loading = $container.find('.fm-loading-wrap');
+		$loading.fadeOut(800); // remove loading screen div
+		$(window).trigger('resize');
 
 		createFileTree();
 		setupUploader();
@@ -1701,12 +1705,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		if(type === 'user') {
 			if($.urlParam('config') != 0) {
-				url = fm.settings.baseUrl + '/scripts/' + $.urlParam('config');
+				url = fm.settings.baseUrl + '/config/' + $.urlParam('config');
 			} else {
-				url = fm.settings.baseUrl + '/scripts/filemanager.config.json';
+				url = fm.settings.baseUrl + '/config/filemanager.config.json';
 			}
 		} else {
-			url = fm.settings.baseUrl + '/scripts/filemanager.config.default.json';
+			url = fm.settings.baseUrl + '/config/filemanager.config.default.json';
 		}
 
 		return $.ajax({
@@ -1720,32 +1724,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// Loads a given css file into header if not already included
-	var loadCSS = function(href) {
-		href = fm.settings.baseUrl + href;
-		// check if already included
-		if($.inArray(href, HEAD_included_files) === -1) {
-			$("<link>").attr({
-				rel:  "stylesheet",
-				type: "text/css",
-				href: href
-			}).appendTo("head");
-			HEAD_included_files.push(href);
-		}
-		return null;
-	};
+	// Loads a given js/css files dynamically into header
+	var loadAssets = function(assets) {
+        for (var i = 0, l = assets.length; i < l; i++) {
+			if(typeof assets[i] === 'string') {
+                assets[i] = fm.settings.baseUrl + assets[i];
+			}
+        }
 
-	// Loads a given js file into header if not already included
-	var loadJS = function(src) {
-		src = fm.settings.baseUrl + src;
-		// check if already included
-		if($.inArray(src, HEAD_included_files) === -1) {
-			$("<script>").attr({
-				type: "text/javascript",
-				src: src
-			}).appendTo("head");
-			HEAD_included_files.push(src);
-		}
+        toast.apply(this, assets);
 	};
 
 	// Loads a given js template file into header if not already included
@@ -3067,7 +3054,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	var instantiateCodeMirror = function(extension) {
-		var currentMode;
+		var currentMode,
+			assets = [];
 
 		// if no code highlight needed, we apply default settings
 		if (!config.viewer.editable.codeHighlight) {
@@ -3078,33 +3066,37 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				currentMode = 'default';
 			}
 			if (extension === 'js') {
-				loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
 				currentMode = 'javascript';
 			}
 			if (extension === 'css') {
-				loadJS('./scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
 				currentMode = 'css';
 			}
 			if (extension === 'html') {
-				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
 				currentMode = 'text/html';
 			}
 			if (extension === 'xml') {
-				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
 				currentMode = 'application/xml';
 			}
 			if (extension === 'php') {
-				loadJS('./scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
-				loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
-				loadJS('./scripts/CodeMirror/mode/css/css.js');
-				loadJS('./scripts/CodeMirror/mode/clike/clike.js');
-				loadJS('./scripts/CodeMirror/mode/php/php.js');
+                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/php/php.js');
 				currentMode = 'application/x-httpd-php';
 			}
 			if (extension === 'sql') {
-				loadJS('./scripts/CodeMirror/mode/sql/sql.js');
+                assets.push('/scripts/CodeMirror/mode/sql/sql.js');
 				currentMode = 'text/x-mysql';
+			}
+
+			if(assets.length) {
+				loadAssets(assets);
 			}
 		}
 
