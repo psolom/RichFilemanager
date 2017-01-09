@@ -52,7 +52,6 @@
     "dimensions": "Abmessungen",
     "download": "Herunterladen",
     "edit": "Datei bearbeiten",
-    "fck_select_integration": "Die 'Select' Funktion ist nur für die Integration in den FCKEditor gedacht.",
     "gb": "GB",
     "grid_view": "Schaltet zur Gitteransicht um.",
     "help_move": "Die Verwendung von '../' ist nicht erlaubt. Sie können das Root-Verzeichnis mit '/' erreichen.",

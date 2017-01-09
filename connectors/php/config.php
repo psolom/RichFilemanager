@@ -23,6 +23,11 @@ $config = [
      */
     "plugin" => null,
     /**
+     * Overrides client-side configuration options (in json file) with the counterparts in the current file.
+     * @see LocalFilemanager::actionInitiate() for the options map
+     */
+    "overrideClientConfig" => false,
+    /**
      * Configure Logger class
      */
     "logger" => [

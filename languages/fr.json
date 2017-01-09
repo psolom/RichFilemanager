@@ -52,7 +52,6 @@
     "dimensions": "Dimensions",
     "download": "Télécharger",
     "edit": "Editer le fichier",
-    "fck_select_integration": "La fonction 'Sélection' est exclusivement utilisée pour l'intégration avec l'éditeur.",
     "gb": "go",
     "grid_view": "Affichage en mode 'miniatures'",
     "help_move": "L'utilisation de '../' est proscrite. La racine du dossier est accessible en utilisant '/'.",

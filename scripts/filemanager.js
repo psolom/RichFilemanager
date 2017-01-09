@@ -22,13 +22,26 @@ $.urlParam = function(name) {
 	}
 };
 
-$.richFmPlugin = function(element, options)
+$.richFilemanagerPlugin = function(element, pluginOptions)
 {
 	/**
 	 * Plugin's default options
 	 */
 	var defaults = {
-		pluginPath: '.'	// relative path to the FM plugin folder
+		baseUrl: '.',	// relative path to the FM plugin folder
+		config: {},		// configuration options
+        callbacks: {
+            beforeCreateImageUrl: function (resourceObject, url) {
+                return url;
+            },
+            beforeCreatePreviewUrl: function (resourceObject, url) {
+                return url;
+            },
+			beforeSelectItem: function (resourceObject, url) {
+				return url;
+			},
+			afterSelectItem: function (resourceObject, url) {}
+		}
 	};
 
 	/**
@@ -50,7 +63,6 @@ $.richFmPlugin = function(element, options)
 		$viewItems = $fileinfo.find('.view-items'),
 		$uploadButton = $uploader.children('.fm-upload'),
 
-		HEAD_included_files = [],	// <head> included files collector
 		config = null,				// configuration options
 		lg = null,					// localized messages
 		fileRoot = '/',				// relative files root, may be changed with some query params
@@ -69,18 +81,20 @@ $.richFmPlugin = function(element, options)
 	/**
 	 * This holds the merged default and user-provided options.
 	 * Plugin's properties will be available through this object like:
-	 * - fm.settings.propertyName from inside the plugin
-	 * - element.data('richFm').settings.propertyName from outside the plugin, where "element" is the element the plugin is attached to;
+	 * - fm.propertyName from inside the plugin
+	 * - element.data('richFilemanager').propertyName from outside the plugin, where "element" is the element the plugin is attached to;
 	 * @type {{}}
 	 */
-	fm.settings = {};
+
+	// The plugin's final settings, contains the merged default and user-provided options (if any)
+    fm.settings = $.extend(true, defaults, pluginOptions);
 
 
 	/*--------------------------------------------------------------------------------------------------------------
 	 Public methods
 	 Can be called like:
 	 - fm.methodName(arg1, arg2, ... argn) from inside the plugin
-	 - element.data('richFm').publicMethod(arg1, arg2, ... argn) from outside the plugin,
+	 - element.data('richFilemanager').publicMethod(arg1, arg2, ... argn) from outside the plugin,
 	   where "element" is the element the plugin is attached to
 	--------------------------------------------------------------------------------------------------------------*/
 
@@ -127,7 +141,7 @@ $.richFmPlugin = function(element, options)
 		}, options));
 	};
 
-	fm.success = function(message) {
+	fm.success = function(message, options) {
 		return fm.log(message, $.extend({}, {
 			type: 'success',
 			delay: 6000
@@ -219,17 +233,15 @@ $.richFmPlugin = function(element, options)
 				return includeTemplates();
 			})
 			.then(function() {
-				includeAssets();
-				initialize();
+				includeAssets(function() {
+                    initialize();
+				});
 			});
 
 		deferred.resolve();
 	};
 
 	var configure = function() {
-		// The plugin's final properties are the merged default and user-provided options (if any)
-		fm.settings = $.extend(true, defaults, options);
-
 		return $.when(loadConfigFile('default'), loadConfigFile('user')).done(function(confd, confu) {
 			var config_default = confd[0];
 			var config_user = confu[0];
@@ -290,7 +302,7 @@ $.richFmPlugin = function(element, options)
 	// localize messages based on culture var or from URL
 	var localize = function() {
 		var langCode = $.urlParam('langCode');
-		var langPath = fm.settings.pluginPath + '/languages/';
+		var langPath = fm.settings.baseUrl + '/languages/';
 
 		function buildLangPath(code) {
 			return langPath + code + '.json';
@@ -333,46 +345,54 @@ $.richFmPlugin = function(element, options)
 		});
 	};
 
-	var includeAssets = function() {
-		// Loading theme
-		loadCSS('/themes/' + config.options.theme + '/styles/theme.css');
+	var includeAssets = function(callback) {
+		var primary = [],
+        	secondary = [];
 
-		// Loading zeroClipboard
-		loadJS('/scripts/zeroclipboard/dist/ZeroClipboard.js');
+        // theme defined in configuration file
+        primary.push('/themes/' + config.options.theme + '/styles/theme.css');
+
+        if(config.customScrollbar.enabled) {
+            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
+            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+        }
+
+        // add callback on loaded assets and inject primary ones
+        primary.push(callback);
+        loadAssets(primary);
 
 		// Loading CodeMirror if enabled for online edition
 		if(config.viewer.editable.enabled) {
-			loadCSS('/scripts/CodeMirror/lib/codemirror.css');
-			loadCSS('/scripts/CodeMirror/theme/' + config.viewer.editable.theme + '.css');
-			loadJS('/scripts/CodeMirror/lib/codemirror.js');
-			loadJS('/scripts/CodeMirror/addon/selection/active-line.js');
-			loadCSS('/scripts/CodeMirror/addon/display/fullscreen.css');
-			loadJS('/scripts/CodeMirror/addon/display/fullscreen.js');
-		}
-
-		if(config.customScrollbar.enabled) {
-			loadCSS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
-			loadJS('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+            secondary.push('/scripts/CodeMirror/lib/codemirror.css');
+            secondary.push('/scripts/CodeMirror/theme/' + config.viewer.editable.theme + '.css');
+            secondary.push('/scripts/CodeMirror/lib/codemirror.js');
+            secondary.push('/scripts/CodeMirror/addon/selection/active-line.js');
+            secondary.push('/scripts/CodeMirror/addon/display/fullscreen.css');
+            secondary.push('/scripts/CodeMirror/addon/display/fullscreen.js');
 		}
 
 		if(!config.options.browseOnly) {
 			// Loading jquery file upload library
-			loadJS('/scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
-			loadJS('/scripts/jQuery-File-Upload/js/canvas-to-blob.min.js');
-			loadJS('/scripts/jQuery-File-Upload/js/load-image.all.min.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.iframe-transport.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload-process.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload-image.js');
-			loadJS('/scripts/jQuery-File-Upload/js/jquery.fileupload-validate.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/canvas-to-blob.min.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/load-image.all.min.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.iframe-transport.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-process.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-image.js');
+            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-validate.js');
 
 			if(config.upload.multiple) {
-				loadCSS('/scripts/jQuery-File-Upload/css/dropzone.css');
+                secondary.push('/scripts/jQuery-File-Upload/css/dropzone.css');
 			}
 		}
 
 		if(config.options.charsLatinOnly) {
-			loadJS('/scripts/speakingurl/speakingurl.min.js');
+            secondary.push('/scripts/speakingurl/speakingurl.min.js');
+		}
+
+		if(secondary.length) {
+            loadAssets(secondary);
 		}
 	};
 
@@ -388,6 +408,21 @@ $.richFmPlugin = function(element, options)
 
 		configSortField = chunks[0] || 'name';
 		configSortOrder = chunks[1] || 'asc';
+
+        // changes files root to restrict the view to a given folder
+        if($.urlParam('exclusiveFolder') != 0) {
+            fileRoot += $.urlParam('exclusiveFolder');
+            if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
+            fileRoot = fileRoot.replace(/\/\//g, '\/');
+        }
+
+        // get folder that should be expanded after filemanager is loaded
+        var expandedFolder = '';
+        if($.urlParam('expandedFolder') != 0) {
+            expandedFolder = $.urlParam('expandedFolder');
+            fullexpandedFolder = fileRoot + expandedFolder;
+            fullexpandedFolder = fullexpandedFolder.replace(/\/\//g, '\/');
+        }
 
 		// Activates knockout.js
 		fmModel = new FmModel();
@@ -585,21 +620,6 @@ $.richFmPlugin = function(element, options)
 			}
 		}
 
-		// changes files root to restrict the view to a given folder
-		if($.urlParam('exclusiveFolder') != 0) {
-			fileRoot += $.urlParam('exclusiveFolder');
-			if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
-			fileRoot = fileRoot.replace(/\/\//g, '\/');
-		}
-
-		// get folder that should be expanded after filemanager is loaded
-		var expandedFolder = '';
-		if($.urlParam('expandedFolder') != 0) {
-			expandedFolder = $.urlParam('expandedFolder');
-			fullexpandedFolder = fileRoot + expandedFolder;
-			fullexpandedFolder = fullexpandedFolder.replace(/\/\//g, '\/');
-		}
-
 		// finalize the FileManager UI initialization with localized text
 		if(config.options.localizeGUI === true) {
 			//$header.find('#newfolder').append(lg.button_new_folder);
@@ -680,20 +700,16 @@ $.richFmPlugin = function(element, options)
 			console.log('Total execution time : ' + time + ' ms');
 		}
 
-		// TODO: use something better to be sure assets are loaded
-		// delay until theme CSS file is loaded
-		setTimeout(function() {
-			// Provides support for adjustible columns.
-			$splitter.splitter({
-				sizeLeft: config.options.splitterWidth,
-				minLeft: config.options.splitterMinWidth,
-				minRight: 200
-			});
+		// Provides support for adjustible columns.
+		$splitter.splitter({
+			sizeLeft: config.options.splitterWidth,
+			minLeft: config.options.splitterMinWidth,
+			minRight: 200
+		});
 
-			var $loading = $container.find('.fm-loading-wrap');
-			$loading.fadeOut(800); // remove loading screen div
-			$(window).trigger('resize');
-		}, 200);
+		var $loading = $container.find('.fm-loading-wrap');
+		$loading.fadeOut(800); // remove loading screen div
+		$(window).trigger('resize');
 
 		createFileTree();
 		setupUploader();
@@ -825,7 +841,7 @@ $.richFmPlugin = function(element, options)
 				}
 				if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
 					viewerObject.type = 'opendoc';
-					viewerObject.url = fm.settings.pluginPath + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
+					viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
 					viewerObject.options = {
 						width: config.viewer.opendoc.readerWidth,
 						height: config.viewer.opendoc.readerHeight
@@ -868,7 +884,7 @@ $.richFmPlugin = function(element, options)
                 model.previewFile(true);
 
 				// zeroClipboard code
-				ZeroClipboard.config({swfPath: fm.settings.pluginPath + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
+				ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
 				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
 				client.on("ready", function(readyEvent) {
 					client.on("aftercopy", function(event) {
@@ -918,7 +934,7 @@ $.richFmPlugin = function(element, options)
 			};
 
 			this.treeData = {
-				id: '/',
+				id: fileRoot,
 				level: ko.observable(-1),
 				children: ko.observableArray([])
 			};
@@ -1824,12 +1840,12 @@ $.richFmPlugin = function(element, options)
 
 		if(type === 'user') {
 			if($.urlParam('config') != 0) {
-				url = fm.settings.pluginPath + '/scripts/' + $.urlParam('config');
+				url = fm.settings.baseUrl + '/config/' + $.urlParam('config');
 			} else {
-				url = fm.settings.pluginPath + '/scripts/filemanager.config.json';
+				url = fm.settings.baseUrl + '/config/filemanager.config.json';
 			}
 		} else {
-			url = fm.settings.pluginPath + '/scripts/filemanager.config.default.json';
+			url = fm.settings.baseUrl + '/config/filemanager.config.default.json';
 		}
 
 		return $.ajax({
@@ -1843,62 +1859,24 @@ $.richFmPlugin = function(element, options)
 		});
 	};
 
-	// Loads a given css file into header if not already included
-	var loadCSS = function(href) {
-		href = fm.settings.pluginPath + href;
-		// check if already included
-		if($.inArray(href, HEAD_included_files) === -1) {
-			$("<link>").attr({
-				rel:  "stylesheet",
-				type: "text/css",
-				href: href
-			}).appendTo("head");
-			HEAD_included_files.push(href);
-		}
-		return null;
-	};
+	// Loads a given js/css files dynamically into header
+	var loadAssets = function(assets) {
+        for (var i = 0, l = assets.length; i < l; i++) {
+			if(typeof assets[i] === 'string') {
+                assets[i] = fm.settings.baseUrl + assets[i];
+			}
+        }
 
-	// Loads a given js file into header if not already included
-	var loadJS = function(src) {
-		src = fm.settings.pluginPath + src;
-		// check if already included
-		if($.inArray(src, HEAD_included_files) === -1) {
-			$("<script>").attr({
-				type: "text/javascript",
-				src: src
-			}).appendTo("head");
-			HEAD_included_files.push(src);
-		}
+        toast.apply(this, assets);
 	};
 
 	// Loads a given js template file into header if not already included
 	var loadTemplate = function(id, data) {
 		return $.ajax({
 			type: 'GET',
-			url: fm.settings.pluginPath + '/scripts/templates/' + id + '.html',
+			url: fm.settings.baseUrl + '/scripts/templates/' + id + '.html',
 			error: handleAjaxError
 		});
-	};
-
-	// Display Min Path
-	var displayPath = function (path, reduce) {
-		reduce = (typeof reduce === "undefined");
-
-		if (config.options.showFullPath === false) {
-			path = path.replace(fileRoot, "/");
-			// if a "displayPathDecorator" function is defined, use it to decorate path
-			if ('function' === typeof displayPathDecorator) {
-				return displayPathDecorator(path);
-			} else {
-				if (path.length > 50 && reduce === true) {
-					var n = path.split("/");
-					path = '/' + n[1] + '/' + n[2] + '/(...)/' + n[n.length - 2] + '/';
-				}
-				return path;
-			}
-		} else {
-			return path;
-		}
 	};
 
 	// Sanitize and transliterate file/folder name as server side (connector) way
@@ -2120,30 +2098,35 @@ $.richFmPlugin = function(element, options)
 	// Build url to preview files
 	var createPreviewUrl = function(resourceObject, encode) {
 		encode = encode || false;
-		var objectPath = resourceObject.attributes.path;
+		var previewUrl,
+			objectPath = resourceObject.attributes.path;
+
 		if(config.viewer.absolutePath && objectPath) {
 			if(encode) {
 				objectPath = encodePath(objectPath);
 			}
-			return buildAbsolutePath(objectPath);
+            previewUrl = buildAbsolutePath(objectPath);
 		} else {
-			return buildConnectorUrl({
+            previewUrl = buildConnectorUrl({
 				mode: 'readfile',
 				path: resourceObject.id
 			});
 		}
+
+        previewUrl = fm.settings.callbacks.beforeCreatePreviewUrl(resourceObject, previewUrl);
+		return previewUrl;
 	};
 
 	// Build url to display image or its thumbnail
 	var createImageUrl = function(resourceObject, thumbnail) {
-		var imagePath;
+		var imageUrl;
 		if (isImageFile(resourceObject.id) &&
 			!resourceObject.attributes.protected && (
 			(thumbnail && config.viewer.image.showThumbs) ||
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
 			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
-				imagePath = buildAbsolutePath(encodePath(resourceObject.attributes.path));
+                imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path));
 			} else {
 				var queryParams = {path: resourceObject.id};
 				if (resourceObject.attributes.extension === 'svg') {
@@ -2154,10 +2137,11 @@ $.richFmPlugin = function(element, options)
 						queryParams.thumbnail = 'true';
 					}
 				}
-				imagePath = buildConnectorUrl(queryParams);
+                imageUrl = buildConnectorUrl(queryParams);
 			}
+            imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
 		}
-		return imagePath;
+		return imageUrl;
 	};
 
 	var buildAbsolutePath = function(path) {
@@ -2234,85 +2218,83 @@ $.richFmPlugin = function(element, options)
 	// contextual menu option in list views.
 	// NOTE: closes the window when finished.
 	var selectItem = function(resourceObject) {
-		var url = createPreviewUrl(resourceObject, true);
-		if(window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('CKEditorCleanUpFuncNum') || $.urlParam('CKEditor') || $.urlParam('ImperaviElementId')) {
-			if(window.tinyMCEPopup) {
-				// use TinyMCE > 3.0 integration method
-				var win = tinyMCEPopup.getWindowArg("window");
-				win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = url;
-				if (typeof(win.ImageDialog) != "undefined") {
-					// Update image dimensions
-					if (win.ImageDialog.getImageData)
-						win.ImageDialog.getImageData();
+		var previewUrl = createPreviewUrl(resourceObject, true);
+        previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
 
-					// Preview if necessary
-					if (win.ImageDialog.showPreviewImage)
-						win.ImageDialog.showPreviewImage(url);
-				}
-				tinyMCEPopup.close();
-				return;
+		if(window.tinyMCEPopup) {
+			// use TinyMCE > 3.0 integration method
+			var win = tinyMCEPopup.getWindowArg("window");
+			win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = previewUrl;
+			if (typeof(win.ImageDialog) != "undefined") {
+				// Update image dimensions
+				if (win.ImageDialog.getImageData)
+					win.ImageDialog.getImageData();
+
+				// Preview if necessary
+				if (win.ImageDialog.showPreviewImage)
+					win.ImageDialog.showPreviewImage(previewUrl);
 			}
-			// tinymce 4 and colorbox
-			if($.urlParam('field_name')) {
-				parent.document.getElementById($.urlParam('field_name')).value = url;
+			tinyMCEPopup.close();
+			return;
+		}
 
-				if(typeof parent.tinyMCE !== "undefined") {
-					parent.tinyMCE.activeEditor.windowManager.close();
-				}
-				if(typeof parent.$.fn.colorbox !== "undefined") {
-					parent.$.fn.colorbox.close();
-				}
+		// tinymce 4 and colorbox
+		if($.urlParam('field_name')) {
+			parent.document.getElementById($.urlParam('field_name')).value = previewUrl;
+
+			if(typeof parent.tinyMCE !== "undefined") {
+				parent.tinyMCE.activeEditor.windowManager.close();
 			}
+			if(typeof parent.$.fn.colorbox !== "undefined") {
+				parent.$.fn.colorbox.close();
+			}
+		}
 
-			else if($.urlParam('ImperaviElementId')) {
-				// use Imperavi Redactor I, tested on v.10.x.x
-				if (window.opener) {
-					// Popup
-				} else {
-					// Modal (in iframe)
-					var elementId = $.urlParam('ImperaviElementId'),
-						instance = parent.$('#'+elementId).redactor('core.getObject');
+		if($.urlParam('ImperaviElementId')) {
+			// use Imperavi Redactor I, tested on v.10.x.x
+			if (window.opener) {
+				// Popup
+			} else {
+				// Modal (in iframe)
+				var elementId = $.urlParam('ImperaviElementId'),
+					instance = parent.$('#'+elementId).redactor('core.getObject');
 
-					if(instance) {
-						instance.modal.close();
-						instance.buffer.set(); // for undo action
+				if(instance) {
+					instance.modal.close();
+					instance.buffer.set(); // for undo action
 
-						if(isImageFile(resourceObject.attributes.name)) {
-							instance.insert.html('<img src="' + url + '">');
-						} else {
-							instance.insert.html('<a href="' + url + '">' + resourceObject.attributes.name + '</a>');
-						}
+					if(isImageFile(resourceObject.attributes.name)) {
+						instance.insert.html('<img src="' + previewUrl + '">');
+					} else {
+						instance.insert.html('<a href="' + previewUrl + '">' + resourceObject.attributes.name + '</a>');
 					}
 				}
 			}
-			else if($.urlParam('CKEditor')) {
-				// use CKEditor 3.0 + integration method
-				if (window.opener) {
-					// Popup
-					window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), url);
-				} else {
-					// Modal (in iframe)
-					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), url);
-					parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
-				}
-			} else {
-				// use FCKEditor 2.0 integration method
-				if(resourceObject.attributes.width) {
-					var p = url;
-					var w = resourceObject.attributes.width;
-					var h = resourceObject.attributes.height;
-					window.opener.SetUrl(p,w,h);
-				} else {
-					window.opener.SetUrl(url);
-				}
-			}
-
-			if (window.opener) {
-				window.close();
-			}
-		} else {
-			fm.error(lg.fck_select_integration);
 		}
+
+		if($.urlParam('CKEditor')) {
+			// use CKEditor 3.0 + integration method
+			if (window.opener) {
+				// Popup
+				window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
+			} else {
+				// Modal (in iframe)
+				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
+				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
+			}
+		} else if(window.opener) {
+			// use FCKEditor 2.0 integration method
+			if(resourceObject.attributes.width) {
+				var p = previewUrl;
+				var w = resourceObject.attributes.width;
+				var h = resourceObject.attributes.height;
+				window.opener.SetUrl(p,w,h);
+			} else {
+				window.opener.SetUrl(previewUrl);
+			}
+		}
+
+		fm.settings.callbacks.afterSelectItem(resourceObject, previewUrl);
 	};
 
 	// Renames the current item and returns the new name.
@@ -2764,11 +2746,10 @@ $.richFmPlugin = function(element, options)
 		};
 
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
+        if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
-		if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
-		// remove 'select' if there is no window.opener
-		if(!has_capability(resourceObject, 'select') || !(window.opener || window.tinyMCEPopup || $.urlParam('field_name'))) delete contextMenuItems.select;
+        if(!has_capability(resourceObject, 'select')) delete contextMenuItems.select;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
@@ -3057,7 +3038,7 @@ $.richFmPlugin = function(element, options)
 							var $template = $(tmpl('tmpl-upload-item', {
 								file: file,
 								lang: lg,
-								imagesPath: fm.settings.pluginPath + '/scripts/jQuery-File-Upload/img'
+								imagesPath: fm.settings.baseUrl + '/scripts/jQuery-File-Upload/img'
 							}));
 							file.context = $template;
 							$template.find('.buttons').data(data);
@@ -3262,7 +3243,8 @@ $.richFmPlugin = function(element, options)
 	};
 
 	var instantiateCodeMirror = function(extension) {
-		var currentMode;
+		var currentMode,
+			assets = [];
 
 		// if no code highlight needed, we apply default settings
 		if (!config.viewer.editable.codeHighlight) {
@@ -3273,33 +3255,37 @@ $.richFmPlugin = function(element, options)
 				currentMode = 'default';
 			}
 			if (extension === 'js') {
-				loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
 				currentMode = 'javascript';
 			}
 			if (extension === 'css') {
-				loadJS('./scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
 				currentMode = 'css';
 			}
 			if (extension === 'html') {
-				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
 				currentMode = 'text/html';
 			}
 			if (extension === 'xml') {
-				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
 				currentMode = 'application/xml';
 			}
 			if (extension === 'php') {
-				loadJS('./scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-				loadJS('./scripts/CodeMirror/mode/xml/xml.js');
-				loadJS('./scripts/CodeMirror/mode/javascript/javascript.js');
-				loadJS('./scripts/CodeMirror/mode/css/css.js');
-				loadJS('./scripts/CodeMirror/mode/clike/clike.js');
-				loadJS('./scripts/CodeMirror/mode/php/php.js');
+                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/php/php.js');
 				currentMode = 'application/x-httpd-php';
 			}
 			if (extension === 'sql') {
-				loadJS('./scripts/CodeMirror/mode/sql/sql.js');
+                assets.push('/scripts/CodeMirror/mode/sql/sql.js');
 				currentMode = 'text/x-mysql';
+			}
+
+			if(assets.length) {
+				loadAssets(assets);
 			}
 		}
 
@@ -3332,27 +3318,27 @@ $.richFmPlugin = function(element, options)
 })(jQuery);
 
 // add the plugin to the jQuery.fn object
-$.fn.richFm = function(options) {
+$.fn.richFilemanager = function(options) {
 
 	// iterate through the DOM elements we are attaching the plugin to
 	return this.each(function() {
 
 		// if plugin has not already been attached to the element
-		if (undefined == $(this).data('richFm')) {
+		if (undefined == $(this).data('richFilemanager')) {
 
 			/**
 			 * Creates a new instance of the plugin
 			 * Pass the DOM element and the user-provided options as arguments
 			 */
-			var plugin = new $.richFmPlugin(this, options);
+			var plugin = new $.richFilemanagerPlugin(this, options);
 
 			/**
 			 * Store a reference to the plugin object
 			 * The plugin are available like:
-			 * - element.data('richFm').publicMethod(arg1, arg2, ... argn);  for methods
-			 * - element.data('richFm').settings.propertyName;  for properties
+			 * - element.data('richFilemanager').publicMethod(arg1, arg2, ... argn);  for methods
+			 * - element.data('richFilemanager').settings.propertyName;  for properties
 			 */
-			$(this).data('richFm', plugin);
+			$(this).data('richFilemanager', plugin);
 		}
 	});
 };
@@ -3363,7 +3349,3 @@ if (!window.location.origin) {
 		+ window.location.hostname
 		+ (window.location.port ? ':' + window.location.port : '');
 }
-
-$(window).load(function() {
-	$('.fm-container').richFm();
-});

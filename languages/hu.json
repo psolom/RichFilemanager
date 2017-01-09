@@ -52,7 +52,6 @@
     "dimensions": "Méretek",
     "download": "Letöltés",
     "edit": "Edit file",
-    "fck_select_integration": "A 'Kiválasztás' funkció kizárólag FCKEditor használata mellett elérhető.",
     "gb": "gb",
     "grid_view": "Váltás dia nézetre.",
     "help_move": "The use of '../' is forbidden. You can access root folder by using '/'.",

@@ -1,5 +1,5 @@
 {
-    "_comment": "IMPORTANT : go to the wiki page to know about options configuration https://github.com/simogeo/Filemanager/wiki/Filemanager-configuration-file",
+    "_comment": "IMPORTANT : go to the wiki page to know about options configuration https://github.com/servocoder/RichFilemanager/wiki/Configuration-options",
     "options": {
         "culture": "en",
         "theme": "flat-dark",
@@ -167,5 +167,5 @@
         "extra_js_async": true
     },
     "url": "https://github.com/servocoder/RichFilemanager",
-    "version": "2.0.1"
+    "version": "2.0.3"
 }

@@ -52,7 +52,6 @@
     "dimensions": "Dimensions",
     "download": "Descarregar",
     "edit": "Edit file",
-    "fck_select_integration": "La funció 'Seleccionar' només es far servir des de FCKEditor.",
     "gb": "gb",
     "grid_view": "Canviar a vista de quadricular.",
     "help_move": "The use of '../' is forbidden. You can access root folder by using '/'.",
