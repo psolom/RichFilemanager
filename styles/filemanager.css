@@ -799,6 +799,12 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     display: block;
 }
 
+.fm-container .drag-helper-list .list-line {
+    display: inline-block;
+    text-align: left;
+    white-space: nowrap;
+}
+
 
 /** Selectable items **/
 

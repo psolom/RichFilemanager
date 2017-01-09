@@ -320,8 +320,16 @@
                 <div class="cancel-image"></div>
             </div>
             <div class="dragging-counter">
-                <span data-bind="text: $root.itemsModel.selectedNumber()"></span>
+                <span data-bind="text: itemsModel.selectedNumber()"></span>
             </div>
+        </div>
+
+        <div id="drag-helper-list-template" style="display: none">
+			<div class="list-line">
+				<span class="list-icon ico_file"></span>
+				<span data-bind="text: itemsModel.selectedNumber()"></span>
+				<span data-bind="text: lg().items"></span>
+			</div>
         </div>
 
 		<script type="text/javascript" src="scripts/jquery-1.11.3.min.js"></script>

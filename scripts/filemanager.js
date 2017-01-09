@@ -468,7 +468,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 								$wrapper = $('<div>', {class: helperClass});
 
 							if(selectedItems.length > 1) {
-								$cloned = $('#drag-helper-grid-template').clone();
+								$cloned = $('#drag-helper-' + fmModel.viewMode() + '-template').clone();
 							} else {
 								$cloned = $(this).clone();
 							}
