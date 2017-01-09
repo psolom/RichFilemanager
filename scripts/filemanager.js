@@ -668,7 +668,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				axis: "yx"
 			});
 
-			$fileinfo.mCustomScrollbar({
+            $viewItems.mCustomScrollbar({
 				theme: config.customScrollbar.theme,
 				scrollButtons: {
 					enable: config.customScrollbar.button

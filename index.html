@@ -309,7 +309,7 @@
 			<ul data-bind="template: {name: 'node-parent-template', if: children().length > 0, foreach: children, as: 'koNode', afterRender: $root.treeModel.nodeRendered}, css: clusterClass(), toggleNodeVisibility: $data"></ul>
 		</script>
 
-        <div id="drag-helper-grid-template">
+        <div id="drag-helper-grid-template" style="display: none">
             <div class="item-background"></div>
             <div class="item-content">
                 <div class="clip">
