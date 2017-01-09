@@ -1362,7 +1362,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					};
 
 					parent.open = function(item, e) {
-                        if(!config.manager.dblClickOpen || e.type === 'dblclick') {
+                        if(isItemOpenable(e)) {
                             items_model.loadList(parent.id);
                         }
 					};
@@ -1548,7 +1548,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					items_model.unselectItems(e.ctrlKey);
 					koItem.selected(!koItem.selected());
 
-					if(!config.manager.dblClickOpen || e.type === 'dblclick') {
+					if(isItemOpenable(e)) {
 						if(config.options.quickSelect && koItem.rdo.type === 'file' && has_capability(koItem.rdo, 'select')) {
 							selectItem(koItem.rdo);
 						} else {
@@ -1560,6 +1560,20 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				this.remove = function() {
 					items_model.objects.remove(this);
 				};
+			};
+
+			function isItemOpenable(event) {
+				// selecting with Ctrl key
+				if(config.manager.selection.enabled && config.manager.selection.useCtrlKey && event.ctrlKey === true) {
+                    return false;
+				}
+
+				// single clicked while expected dblclick
+				if(config.manager.dblClickOpen && event.type === 'click') {
+					return false;
+				}
+
+				return true;
 			}
 		};
 
