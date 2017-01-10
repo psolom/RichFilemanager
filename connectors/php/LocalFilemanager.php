@@ -838,7 +838,7 @@ class LocalFilemanager extends BaseFilemanager
 
             header('Content-Description: File Transfer');
             header('Content-Type: ' . mime_content_type($target_fullpath));
-            header('Content-Disposition: attachment; filename=' . basename($target_fullpath));
+            header('Content-Disposition: attachment; filename="' . basename($target_fullpath) . '"');
             header('Content-Transfer-Encoding: binary');
             header('Content-Length: ' . $file_size);
             // handle caching
@@ -846,7 +846,7 @@ class LocalFilemanager extends BaseFilemanager
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-            $chunk_size = 16 * 1024 * 1024;
+            $chunk_size = 5 * 1024 * 1024;
             // read file by chunks to handle large files
             if ($chunk_size && $file_size > $chunk_size) {
                 $handle = fopen($target_fullpath, 'rb');

@@ -803,7 +803,7 @@ class S3Filemanager extends LocalFilemanager
         } else {
             header('Content-Description: File Transfer');
             header('Content-Type: ' . $this->getMimeType($target_fullpath));
-            header('Content-Disposition: attachment; filename=' . basename($target_fullpath));
+            header('Content-Disposition: attachment; filename="' . basename($target_fullpath) . '"');
             header('Content-Transfer-Encoding: binary');
             header('Content-Length: ' . filesize($target_fullpath));
             // handle caching
