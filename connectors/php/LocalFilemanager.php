@@ -846,8 +846,11 @@ class LocalFilemanager extends BaseFilemanager
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-            $chunk_size = 5 * 1024 * 1024;
             // read file by chunks to handle large files
+            // if you face an issue while downloading large files yet, try the following solution:
+            // https://github.com/servocoder/RichFilemanager/issues/78
+
+            $chunk_size = 5 * 1024 * 1024;
             if ($chunk_size && $file_size > $chunk_size) {
                 $handle = fopen($target_fullpath, 'rb');
                 while (!feof($handle)) {
