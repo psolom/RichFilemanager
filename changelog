@@ -1,3 +1,24 @@
+Version 2.1.0
+---------------------------
+- implemented selectable view items (mouse dragging & Ctrl key), see `manager`.`selection` config options #15, #38;
+- implemented multiple actions for selected items (move, delete, download) #11, #15, #38;
+- special drag helper while dragging multiple items:
+	* shows number items items;
+	* prevents on moving (to) protect folder or to the one of selected items;
+- provided an ability to open files/folders with mouse dblClick, see `manager`.`dblClickOpen` config option;
+- improved injection of dynamic assets (js & css) with toast plugin;
+- added "afterSelectItem" callback function #73;
+- created file to initiate RFM plugin and configure with callbacks and baseUrl #73;
+- "select" action now available without window.opener to use RFM inside custom modal windows (bootstrap, jquery dialog, etc.);
+- bugfix: scrollbar not showing on initial load #77;
+- PHP connector: bugfix comma in filename problem #78;
+- composer is added to the project #71;
+
+Backward incompatible changes:
+- JSON configuration file "filemanager.config.default.json" has been moved from "/scripts" to "/config" folder;
+- have to copy and rename "/config/filemanager.init.js.example" file, along with JSON configuration file;
+
+
 Version 2.0.3
 ---------------------------
 - added "overrideClientConfig" option in PHP connector config file, "false" by default
