@@ -18,7 +18,8 @@ Based on the @simogeo [Filemanager](https://github.com/simogeo/Filemanager), wit
 * Extended list of previewed file types via ViewerJS
 * Standardized API that follows JSON API best practices to create connectors for any server-side language
 * Independent client and server sides. Can be located on different servers.
-* Independent config files for client and server sides. Client-side config options may be overwritten with server-side ones using.
+* Independent configuration files for client and server sides.
+* Client-side configuration options may be overwritten with server-side ones using PHP connector.
 * Implemented plugins system for PHP connector (server-based)
 * Added new "Type" column in the list view
 * Added ability to limit max size of the storage (root folder)
