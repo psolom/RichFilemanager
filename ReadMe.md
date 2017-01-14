@@ -2,7 +2,29 @@ Rich Filemanager
 ========================
 
 Rich Filemanager is an open-source file manager released under MIT license.
-Based on the [simogeo Filemanager](https://github.com/simogeo/Filemanager), with a lot of improvements and new features.
+Based on the @simogeo [Filemanager](https://github.com/simogeo/Filemanager), with a lot of improvements and new features:
+
+* Drag-and-drop support
+* Selectable files & folders support (mouse dragging & Ctrl key)
+* Multiple actions support for selected files & folders: move, delete, download
+* Before and After callback functions for some actions
+* Double or single click setup to open files & folders
+* Integration with AWS S3 storage
+* Integration with Imperavi Redactor WYSIWYG editor
+* Multiple & chunked uploads support - based on jQuery-File-Upload
+* New design of multiple upload window; New upload controls for each previewed file (start, abort, resume, delete, etc.)
+* Filetree: allow to open and display multiple subfolders at a time
+* Online MS Office documents viewer - based on Google Docs Viewer
+* Extended list of previewed file types via ViewerJS
+* Standardized API that follows JSON API best practices to create connectors for any server-side language
+* Independent client and server sides. Can be located on different servers.
+* Independent config files for client and server sides. Client-side config options may be overwritten with server-side ones using.
+* Implemented plugins system for PHP connector (server-based)
+* Added new "Type" column in the list view
+* Added ability to limit max size of the storage (root folder)
+* Implemented natural sorting on the client-side
+
+To see the full list check out [changelog file](https://github.com/servocoder/RichFilemanager/blob/master/changelog).
 
 
 Demo
@@ -49,10 +71,12 @@ Main features
 * Easy integration with WYSIWYG editors like CKEditor, TinyMCE, Imperavi Redactor and so on.
 * Easy integration with [AWS S3 storage](https://github.com/servocoder/RichFilemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
 * Easy integration with [colorbox jquery plugin](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
-* Several computer language connectors available. **PHP & ASHX are up-to-date**
+* 2 view modes: grid and list
 * Drag-and-drop support
-* Ability to upload, delete, modify, download and move files
-* Ability to create folders
+* Single file actions: upload, modify, move, delete, download
+* Single folder actions: create, modify, move, delete, download (zip archive)
+* Selectable support for files & folders (mouse dragging & Ctrl key)
+* Multiple actions support for selected files & folders: move, delete, download
 * Support user permissions - based on session
 * Handle system permissions
 * Ability to pass config user file in URL
@@ -60,6 +84,9 @@ Main features
 * Online text / code edition - based on [codeMirror](http://codemirror.net/)
 * Online PDF & OpenOffice documents viewer - based on [viewerJS](http://viewerjs.org/)
 * Online MS Office documents viewer - based on [Google Docs Viewer](http://docs.google.com/viewer/)
+* Several server-side language connectors available. **PHP & ASHX are up-to-date**
+* Standardized API that follows JSON API best practices to create connectors for any server-side language
+* Independent client and server sides. Can be located on different servers.
 * [Opening a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
 * [Opening exclusively a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-%28exclusively%29-a-given-subfolder)
 * [Passing parameters to the FM](https://github.com/servocoder/RichFilemanager/wiki/Passing-parameters-to-the-FM)
@@ -72,7 +99,7 @@ Main features
 * File exclusion based on name and patterns
 * Images files only
 * Prevent files overwriting (or not)
-* Switch from list to grid view and vice-versa
+* Copy direct file URL
 * [CSS Themes](https://github.com/servocoder/RichFilemanager/wiki/Create-your-own-theme) - **Please, share your themes with others !**
 * and more ...
 
