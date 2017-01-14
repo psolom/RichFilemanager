@@ -39,14 +39,14 @@
 				<h1 data-bind="text: lg().current_folder + currentPath()"></h1>
 			</div>
 			<div class="buttons-panel">
-				<div class="button-group clipboards-controls" style="display: none">
-					<button id="clipboard-copy" type="button"><span>&nbsp;</span></button>
-					<button id="clipboard-cut" type="button"><span>&nbsp;</span></button>
-					<button id="clipboard-paste" type="button"><span>&nbsp;</span></button>
-					<button id="clipboard-clear" type="button"><span>&nbsp;</span></button>
+				<div class="button-group clipboards-controls">
+					<button id="clipboard-copy" type="button" data-bind="click: clipboardModel.copy"><span>&nbsp;</span></button>
+					<button id="clipboard-cut" type="button" data-bind="click: clipboardModel.cut"><span>&nbsp;</span></button>
+					<button id="clipboard-paste" type="button" data-bind="click: clipboardModel.paste"><span>&nbsp;</span></button>
+					<button id="clipboard-clear" type="button" data-bind="click: clipboardModel.clear"><span>&nbsp;</span></button>
 					<input id="clipboard-path" name="clipboard-path" type="hidden"/>
 				</div>
-				<div class="button-group" style="display: none">
+				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<div class="button-group navigate-controls">
@@ -345,7 +345,7 @@
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->

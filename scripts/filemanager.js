@@ -1696,6 +1696,49 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 		};
 
+		var ClipboardModel = function() {
+			var cbItems = [],
+				cbMode = null;
+
+			this.copy = function() {
+                cbMode = 'copy';
+                cbItems = model.itemsModel.getSelected();
+			};
+
+			this.cut = function() {
+                cbMode = 'cut';
+                cbItems = model.itemsModel.getSelected();
+			};
+
+			this.paste = function() {
+				var	targetPath = model.currentPath();
+
+                if (cbMode === null || cbItems.length === 0) {
+                    fm.warning(lg.clipboard_empty);
+                    return;
+                }
+
+                processMultipleActions(cbItems, function (i, itemObject) {
+                    if (cbMode === 'cut') {
+                        return moveItem(itemObject, targetPath);
+                    }
+                    if (cbMode === 'copy') {
+                        return copyItem(itemObject, targetPath);
+                    }
+                }, clearClipboard);
+			};
+
+			this.clear = function() {
+                clearClipboard();
+                fm.success(lg.clipboard_cleared);
+			};
+
+			function clearClipboard() {
+                cbItems = [];
+                cbMode = null;
+			}
+		};
+
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
@@ -1703,6 +1746,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.headerModel = new HeaderModel();
 		this.summaryModel = new SummaryModel();
 		this.searchModel = new SearchModel();
+		this.clipboardModel = new ClipboardModel();
 	};
 
 	var sortItems = function(items) {
@@ -2183,7 +2227,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	})();
 
 	// Handle multiple actions in loop with deferred object
-	var processMultipleActions = function(items, callbackFunction) {
+	var processMultipleActions = function(items, callbackFunction, finishCallback) {
 		var successCounter = 0,
 			totalCounter = items.length,
 			deferred = $.Deferred().resolve();
@@ -2203,6 +2247,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				fm.log(lg.successful_processed.replace('%s', successCounter).replace('%s', totalCounter));
 			});
 		}
+
+        deferred.then(function() {
+            if (typeof finishCallback === 'function') {
+                finishCallback();
+			}
+        });
 	};
 
 	// Clears browser window selection
