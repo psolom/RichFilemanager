@@ -2826,6 +2826,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			move: {name: lg.move, className: 'move'},
 			replace: {name: lg.replace, className: 'replace'},
 			separator1: "-----",
+            copy: {name: lg.clipboard_copy, className: 'copy'},
+            cut: {name: lg.clipboard_cut, className: 'cut'},
 			delete: {name: lg.del, className: 'delete'}
 		};
 
@@ -2834,6 +2836,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
         if(!has_capability(resourceObject, 'select')) delete contextMenuItems.select;
+        if(!fmModel.clipboardModel.hasCapability('copy')) delete contextMenuItems.copy;
+        if(!fmModel.clipboardModel.hasCapability('cut')) delete contextMenuItems.cut;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
@@ -2878,6 +2882,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return deleteItem(itemObject.id);
 					});
 				});
+				break;
+
+			case 'copy':
+                fmModel.clipboardModel.copy();
+				break;
+
+			case 'cut':
+                fmModel.clipboardModel.cut();
 				break;
 		}
 	};
