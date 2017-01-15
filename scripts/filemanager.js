@@ -1703,6 +1703,69 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 		};
 
+		var ClipboardModel = function() {
+			var cbItems = [],
+				cbMode = null,
+            	clipboard_model = this;
+
+			this.enabled = model.config().clipboard.enabled;
+
+			this.copy = function() {
+				if (!clipboard_model.hasCapability('copy')) {
+					return;
+				}
+                cbMode = 'copy';
+                cbItems = model.itemsModel.getSelected();
+			};
+
+			this.cut = function() {
+                if (!clipboard_model.hasCapability('cut')) {
+                    return;
+                }
+                cbMode = 'cut';
+                cbItems = model.itemsModel.getSelected();
+			};
+
+			this.paste = function() {
+                if (!clipboard_model.hasCapability('paste')) {
+                    return;
+                }
+                if (cbMode === null || cbItems.length === 0) {
+                    fm.warning(lg.clipboard_empty);
+                    return;
+                }
+
+                var	targetPath = model.currentPath();
+
+                processMultipleActions(cbItems, function (i, itemObject) {
+                    if (cbMode === 'cut') {
+                        return moveItem(itemObject, targetPath);
+                    }
+                    if (cbMode === 'copy') {
+                        return copyItem(itemObject, targetPath);
+                    }
+                }, clearClipboard);
+			};
+
+			this.clear = function() {
+                if (!clipboard_model.hasCapability('clear')) {
+                    return;
+                }
+                clearClipboard();
+                fm.success(lg.clipboard_cleared);
+			};
+
+            this.hasCapability = function(capability) {
+            	return clipboard_model.enabled
+                    && $.inArray(capability, config.clipboard.capabilities) !== -1;
+			};
+
+			function clearClipboard() {
+                cbItems = [];
+                cbMode = null;
+			}
+		};
+
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
@@ -1710,6 +1773,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.headerModel = new HeaderModel();
 		this.summaryModel = new SummaryModel();
 		this.searchModel = new SearchModel();
+		this.clipboardModel = new ClipboardModel();
 	};
 
 
@@ -2195,7 +2259,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	})();
 
 	// Handle multiple actions in loop with deferred object
-	var processMultipleActions = function(items, callbackFunction) {
+	var processMultipleActions = function(items, callbackFunction, finishCallback) {
 		var successCounter = 0,
 			totalCounter = items.length,
 			deferred = $.Deferred().resolve();
@@ -2215,6 +2279,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				fm.log(lg.successful_processed.replace('%s', successCounter).replace('%s', totalCounter));
 			});
 		}
+
+        deferred.then(function() {
+            if (typeof finishCallback === 'function') {
+                finishCallback();
+			}
+        });
 	};
 
 	// Clears browser window selection
@@ -2778,6 +2848,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			move: {name: lg.move, className: 'move'},
 			replace: {name: lg.replace, className: 'replace'},
 			separator1: "-----",
+            copy: {name: lg.clipboard_copy, className: 'copy'},
+            cut: {name: lg.clipboard_cut, className: 'cut'},
 			delete: {name: lg.del, className: 'delete'}
 		};
 
@@ -2786,6 +2858,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
         if(!has_capability(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
+        if(!fmModel.clipboardModel.hasCapability('copy')) delete contextMenuItems.copy;
+        if(!fmModel.clipboardModel.hasCapability('cut')) delete contextMenuItems.cut;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
@@ -2830,6 +2904,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return deleteItem(itemObject.id);
 					});
 				});
+				break;
+
+			case 'copy':
+                fmModel.clipboardModel.copy();
+				break;
+
+			case 'cut':
+                fmModel.clipboardModel.cut();
 				break;
 		}
 	};

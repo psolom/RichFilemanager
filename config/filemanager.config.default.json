@@ -29,11 +29,20 @@
         ]
     },
     "manager": {
-        "dblClickOpen": true,
+        "dblClickOpen": false,
         "selection": {
             "enabled": true,
             "useCtrlKey": true
         }
+    },
+    "clipboard": {
+        "enabled": true,
+        "capabilities": [
+            "copy",
+            "cut",
+            "paste",
+            "clear"
+        ]
     },
     "api": {
         "lang": "php",
@@ -167,5 +176,5 @@
         "extra_js_async": true
     },
     "url": "https://github.com/servocoder/RichFilemanager",
-    "version": "2.0.3"
+    "version": "2.1.0"
 }
