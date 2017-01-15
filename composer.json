@@ -1,22 +1,27 @@
 {
-   "name":"simogeo/filemanager",
-   "description":"An open-source file manager",
-   "type":"project",
-   "keywords":[
-      "filemanager",
-      "files",
-      "images"
-   ],
-   "license": "MIT",
-   "authors":[
-      {
-         "name":"Simon Georget",
-         "email":"simon@linea21.com",
-         "homepage":"http://www.empreinte-urbaine.eu",
-         "role": "Developer"
-      }
-   ],
-   "require":{
-      "php":">= 5.2.0"
-   }
+  "name": "servocoder/rich-filemanager",
+  "description": "Highly customizable open-source file manager",
+  "type": "project",
+  "keywords": [
+    "filemanager",
+    "fileupload",
+    "manager",
+    "upload",
+    "file",
+    "rich",
+    "js",
+    "php"
+  ],
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Pavel Solomienko",
+      "email": "servocoder@gmail.com",
+      "homepage": "http://fm.devale.pro",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">= 5.4.0"
+  }
 }
