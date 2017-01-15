@@ -12,7 +12,7 @@
 		<a data-toggle="modal" data-target="#fm-bs-modal" class="btn" type="button">Select</a>
 	</div>
 
-	<div class="modal fade" id="fm-bs-modal" >
+	<div id="fm-bs-modal" class="modal fade">
 		<div class="modal-dialog" style="width: 1000px">
 			<div class="modal-content">
 				<div class="modal-header">
@@ -32,7 +32,7 @@
 		$(function() {
 			//$('#fm-bs-modal').on('shown.bs.modal',function() {
 			$('#fm-bs-modal').on('show.bs.modal',function() {
-				$(this).find('iframe').attr('src', './../index.html');
+				$(this).find('iframe').attr('src', './../index.html?context=bootstrap');
 			})
 		});
 	</script>

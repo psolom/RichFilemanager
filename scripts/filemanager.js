@@ -909,7 +909,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.buttonVisibility = function(action) {
 				switch(action) {
 					case 'select':
-						return (has_capability(preview_item.rdo, action) && ($.urlParam('CKEditor') || window.opener || window.tinyMCEPopup || $.urlParam('field_name') || $.urlParam('ImperaviElementId')));
+						return (has_capability(preview_item.rdo, action) && hasContext());
 					case 'move':
 					case 'rename':
 					case 'delete':
@@ -1705,6 +1705,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.searchModel = new SearchModel();
 	};
 
+
+	/*---------------------------------------------------------
+	 Helper functions
+	 ---------------------------------------------------------*/
+
 	var sortItems = function(items) {
 		var sortOrder = (fmModel.viewMode() === 'list') ? fmModel.itemsModel.listSortOrder() : configSortOrder;
 		var sortParams = {
@@ -2220,6 +2225,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		fmModel.treeModel.loadNodes(null, false);
 	};
 
+	// check if plugin instance created inside some context
+	function hasContext() {
+		return window.opener // window.open()
+			|| window.tinyMCEPopup // tinyMCE >= 3.0
+			|| window.self !== window.top // any <iframe>
+			|| $.urlParam('field_name') // tinymce 4 or colorbox
+			|| $.urlParam('CKEditor') // CKEditor 3.0 + integration method
+			|| $.urlParam('ImperaviElementId'); // Imperavi Redactor I >= 10.x.x
+	}
+
 
 	/*---------------------------------------------------------
 	 Item Actions
@@ -2236,7 +2251,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
 
 		if(window.tinyMCEPopup) {
-			// use TinyMCE > 3.0 integration method
+			// use tinyMCE > 3.0 integration method
 			var win = tinyMCEPopup.getWindowArg("window");
 			win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = previewUrl;
 			if (typeof(win.ImageDialog) != "undefined") {
@@ -2763,7 +2778,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
-        if(!has_capability(resourceObject, 'select')) delete contextMenuItems.select;
+        if(!has_capability(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
