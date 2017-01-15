@@ -729,6 +729,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
 
+        this.previewFile.subscribe(function (value) {
+            if (!value) {
+            	// close editor upon disabling preview
+                model.previewModel.closeEditor();
+			}
+        });
+
 		this.addItem = function(resourceObject, targetPath) {
 			// handle tree nodes
 			var targetNode = fmModel.treeModel.findByParam('id', targetPath);
