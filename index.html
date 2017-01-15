@@ -39,16 +39,18 @@
 				<h1 data-bind="text: lg().current_folder + currentPath()"></h1>
 			</div>
 			<div class="buttons-panel">
-				<div class="button-group clipboards-controls">
-					<button id="clipboard-copy" type="button" data-bind="click: clipboardModel.copy"><span>&nbsp;</span></button>
-					<button id="clipboard-cut" type="button" data-bind="click: clipboardModel.cut"><span>&nbsp;</span></button>
-					<button id="clipboard-paste" type="button" data-bind="click: clipboardModel.paste"><span>&nbsp;</span></button>
-					<button id="clipboard-clear" type="button" data-bind="click: clipboardModel.clear"><span>&nbsp;</span></button>
+				<!-- ko if: clipboardModel.enabled -->
+				<div class="button-group clipboards-controls" data-bind="with: clipboardModel">
+					<button id="clipboard-copy" type="button" data-bind="click: copy, visible: hasCapability('copy')"><span>&nbsp;</span></button>
+					<button id="clipboard-cut" type="button" data-bind="click: cut, visible: hasCapability('cut')"><span>&nbsp;</span></button>
+					<button id="clipboard-paste" type="button" data-bind="click: paste, visible: hasCapability('paste')"><span>&nbsp;</span></button>
+					<button id="clipboard-clear" type="button" data-bind="click: clear, visible: hasCapability('clear')"><span>&nbsp;</span></button>
 					<input id="clipboard-path" name="clipboard-path" type="hidden"/>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
+				<!-- /ko -->
 				<div class="button-group navigate-controls">
 					<button class="fm-btn-level-up no-label" type="button" data-bind="click: headerModel.goParent"><span>&nbsp;</span></button>
 					<button class="fm-btn-home no-label" type="button" data-bind="click: headerModel.goHome"><span>&nbsp;</span></button>

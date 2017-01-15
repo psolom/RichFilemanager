@@ -1698,25 +1698,37 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		var ClipboardModel = function() {
 			var cbItems = [],
-				cbMode = null;
+				cbMode = null,
+            	clipboard_model = this;
+
+			this.enabled = model.config().clipboard.enabled;
 
 			this.copy = function() {
+				if (!clipboard_model.hasCapability('copy')) {
+					return;
+				}
                 cbMode = 'copy';
                 cbItems = model.itemsModel.getSelected();
 			};
 
 			this.cut = function() {
+                if (!clipboard_model.hasCapability('cut')) {
+                    return;
+                }
                 cbMode = 'cut';
                 cbItems = model.itemsModel.getSelected();
 			};
 
 			this.paste = function() {
-				var	targetPath = model.currentPath();
-
+                if (!clipboard_model.hasCapability('paste')) {
+                    return;
+                }
                 if (cbMode === null || cbItems.length === 0) {
                     fm.warning(lg.clipboard_empty);
                     return;
                 }
+
+                var	targetPath = model.currentPath();
 
                 processMultipleActions(cbItems, function (i, itemObject) {
                     if (cbMode === 'cut') {
@@ -1729,8 +1741,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.clear = function() {
+                if (!clipboard_model.hasCapability('clear')) {
+                    return;
+                }
                 clearClipboard();
                 fm.success(lg.clipboard_cleared);
+			};
+
+            this.hasCapability = function(capability) {
+            	return clipboard_model.enabled
+                    && $.inArray(capability, config.clipboard.capabilities) !== -1;
 			};
 
 			function clearClipboard() {
