@@ -4,6 +4,23 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<link rel="stylesheet" type="text/css" href="assets/bootstrap-3.3.7/css/bootstrap.min.css">
+
+	<style type="text/css">
+		.fm-modal {
+			z-index: 10011; /** Because CKEditor image dialog was at 10010 */
+			width:80%;
+			height:80%;
+			top: 10%;
+			left:10%;
+			border:0;
+			position:fixed;
+			-moz-box-shadow: 0px 1px 5px 0px #656565;
+			-webkit-box-shadow: 0px 1px 5px 0px #656565;
+			-o-box-shadow: 0px 1px 5px 0px #656565;
+			box-shadow: 0px 1px 5px 0px #656565;
+			filter:progid:DXImageTransform.Microsoft.Shadow(color=#656565, Direction=180, Strength=5);
+		}
+	</style>
 </head>
 
 <body>
@@ -26,14 +43,61 @@
 		</div>
 	</div>
 
+	<form>
+		<textarea name="editor1" id="editor1" rows="10" cols="80">
+			This is my textarea to be replaced with CKEditor.
+		</textarea>
+	</form>
+
 	<script type="text/javascript" src="assets/jquery-1.11.3.min.js"></script>
+	<script type="text/javascript" src="assets/ckeditor/ckeditor.js"></script>
 	<script type="text/javascript" src="assets/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+
 	<script type="text/javascript">
 		$(function() {
 			//$('#fm-bs-modal').on('shown.bs.modal',function() {
 			$('#fm-bs-modal').on('show.bs.modal',function() {
 				$(this).find('iframe').attr('src', './../index.html?context=bootstrap');
-			})
+			});
+
+            CKEDITOR.replace('editor1');
+
+            CKEDITOR.on('dialogDefinition', function (event)
+            {
+                var editor = event.editor;
+                var dialogDefinition = event.data.definition;
+                var dialogName = event.data.name;
+
+                var cleanUpFuncRef = CKEDITOR.tools.addFunction(function ()
+                {
+                    // Do the clean-up of filemanager here (called when an image was selected or cancel was clicked)
+                    $('#fm-iframe').remove();
+                    $("body").css("overflow-y", "scroll");
+                });
+
+                var tabCount = dialogDefinition.contents.length;
+                for (var i = 0; i < tabCount; i++) {
+                    var browseButton = dialogDefinition.contents[i].get('browse');
+
+                    if (browseButton !== null) {
+                        browseButton.hidden = false;
+                        browseButton.onClick = function (dialog, i)
+                        {
+                            editor._.filebrowserSe = this;
+                            var iframe = $("<iframe id='fm-iframe' class='fm-modal'/>").attr({
+                                src: './../index.html' + // Change it to wherever  Filemanager is stored.
+                                '?CKEditorFuncNum=' + CKEDITOR.instances[event.editor.name]._.filebrowserFn +
+                                '&CKEditorCleanUpFuncNum=' + cleanUpFuncRef +
+                                '&langCode=en' +
+                                '&CKEditor=' + event.editor.name
+                            });
+
+                            $("body").append(iframe);
+                            $("body").css("overflow-y", "hidden");  // Get rid of possible scrollbars in containing document
+                        }
+                    }
+                }
+            });
 		});
 	</script>
 </body>
