@@ -15,6 +15,7 @@ class FmHelper
      * Recursive merging will be conducted if both arrays have an element of array type and are having the same key.
      * For array elements which are entirely integer-keyed, latter will straight overwrite the former.
      * For integer-keyed elements, the elements from the latter array will be appended to the former array.
+     *
      * @param array $a array to be merged to
      * @param array $b array to be merged from. You can specify additional
      * arrays via third argument, fourth argument etc.
@@ -47,6 +48,52 @@ class FmHelper
             }
         }
         return $res;
+    }
+
+    /**
+     * Copies a single file, symlink or a whole directory.
+     * In case of directory it will be copied recursively.
+     *
+     * @param $source
+     * @param $target
+     * @return bool
+     */
+    public static function copyRecursive($source, $target)
+    {
+        // handle symlinks
+        if (is_link($source)) {
+            return symlink(readlink($source), $target);
+        }
+
+        // copy a single file
+        if (is_file($source)) {
+            return copy($source, $target);
+        }
+
+        // make target directory
+        if (!is_dir($target)) {
+            mkdir($target, 0755);
+        }
+
+        $handle = opendir($source);
+        // loop through the directory
+        while (($file = readdir($handle)) !== false) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            $from = $source . DIRECTORY_SEPARATOR . $file;
+            $to = $target . DIRECTORY_SEPARATOR . $file;
+
+            if (is_file($from)) {
+                copy($from, $to);
+            } else {
+                // recursive copy
+                static::copyRecursive($from, $to);
+            }
+        }
+        closedir($handle);
+
+        return true;
     }
 }
 

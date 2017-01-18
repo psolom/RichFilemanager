@@ -398,7 +398,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	var initialize = function () {
 		// reads capabilities from config files if exists else apply default settings
-		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'replace'];
 
 		// defines sort params
 		var chunks = [];
@@ -1699,9 +1699,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var ClipboardModel = function() {
 			var cbItems = [],
 				cbMode = null,
-            	clipboard_model = this;
+            	clipboard_model = this,
+				active = capabilities.indexOf('copy') > -1 || capabilities.indexOf('move') > -1;
 
-			this.enabled = model.config().clipboard.enabled;
+            this.enabled = model.config().options.clipboard && active;
 
 			this.copy = function() {
 				if (!clipboard_model.hasCapability('copy')) {
@@ -1749,8 +1750,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
             this.hasCapability = function(capability) {
-            	return clipboard_model.enabled
-                    && $.inArray(capability, config.clipboard.capabilities) !== -1;
+            	if (!clipboard_model.enabled) {
+            		return false;
+				}
+
+            	switch(capability) {
+					case 'copy':
+						return capabilities.indexOf('copy') > -1;
+                    case 'cut':
+                        return capabilities.indexOf('move') > -1;
+					default:
+                        return true;
+				}
 			};
 
 			function clearClipboard() {
@@ -2037,7 +2048,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	// Test if item has the 'cap' capability
-	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'move'
+	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'copy', 'move'
 	function has_capability(resourceObject, cap) {
 		if(capabilities.indexOf(cap) === -1) return false;
 		if (resourceObject.type === 'folder' && cap === 'replace') return false;
@@ -2606,6 +2617,35 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
+	// Copy the current item to specified dir and returns the new name.
+	// Called upon paste copied items via clipboard.
+	var copyItem = function(resourceObject, targetPath) {
+		return $.ajax({
+			type: 'GET',
+			url: buildConnectorUrl({
+				mode: 'copy',
+                source: resourceObject.id,
+                target: targetPath
+			}),
+			dataType: 'json',
+			success: function(response) {
+                console.log(response);
+				if(response.data) {
+					var newItem = response.data;
+
+					fmModel.addItem(newItem, targetPath);
+
+					alertify.clearDialogs();
+					if(config.options.showConfirmation) {
+						fm.success(lg.successful_copied);
+					}
+				}
+				handleAjaxResponseErrors(response);
+			},
+			error: handleAjaxError
+		});
+	};
+
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in detail views
 	// or choosing the "Move" contextual menu option in list views.
@@ -2834,10 +2874,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
         if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
-		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
+		if(!has_capability(resourceObject, 'copy') || config.options.browseOnly === true) delete contextMenuItems.copy;
+		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) {
+            delete contextMenuItems.cut;
+            delete contextMenuItems.move;
+		}
         if(!has_capability(resourceObject, 'select')) delete contextMenuItems.select;
-        if(!fmModel.clipboardModel.hasCapability('copy')) delete contextMenuItems.copy;
-        if(!fmModel.clipboardModel.hasCapability('cut')) delete contextMenuItems.cut;
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 

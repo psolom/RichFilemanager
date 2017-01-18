@@ -92,6 +92,7 @@
     "size": "Size",
     "successful_added_file": "New file(s) added successfully.",
     "successful_added_folder": "New folder added successfully.",
+    "successful_copied": "Copy successful.",
     "successful_delete": "Delete successful.",
     "successful_edit": "Content update successful.",
     "successful_moved": "Move successful.",

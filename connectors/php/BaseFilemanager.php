@@ -68,7 +68,7 @@ abstract class BaseFilemanager
      * List of all possible actions
      * @var array
      */
-    protected $actions_list = ["select", "upload", "download", "rename", "move", "replace", "delete", "edit"];
+    protected $actions_list = ["select", "upload", "download", "rename", "copy", "move", "replace", "delete", "edit"];
 
     /**
      * BaseFilemanager constructor.
@@ -131,6 +131,11 @@ abstract class BaseFilemanager
      * Rename file or folder - filemanager action
      */
     abstract function actionRename();
+
+    /**
+     * Copy file or folder - filemanager action
+     */
+    abstract function actionCopy();
 
     /**
      * Move file or folder - filemanager action
@@ -237,6 +242,12 @@ abstract class BaseFilemanager
                     case 'rename':
                         if($this->getvar('old') && $this->getvar('new')) {
                             $response = $this->actionRename();
+                        }
+                        break;
+
+                    case 'copy':
+                        if($this->getvar('source') && $this->getvar('target')) {
+                            $response = $this->actionCopy();
                         }
                         break;
 
