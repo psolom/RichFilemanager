@@ -2754,8 +2754,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.previewModel.editor.enabled(true);
 					fmModel.previewModel.editor.content(response.data.attributes.content);
 					// instantiate codeMirror according to config options
-					var codeMirrorInstance = instantiateCodeMirror(resourceObject.attributes.extension);
-					fmModel.previewModel.editor.codeMirror(codeMirrorInstance);
+					// var codeMirrorInstance = instantiateCodeMirror(resourceObject.attributes.extension);
+					// fmModel.previewModel.editor.codeMirror(codeMirrorInstance);
+                    instantiateCodeMirror(resourceObject.attributes.extension);
 				}
 				handleAjaxResponseErrors(response);
 			},
@@ -3364,6 +3365,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var currentMode,
 			assets = [];
 
+		console.log('extension', extension);
+
 		// if no code highlight needed, we apply default settings
 		if (!config.viewer.editable.codeHighlight) {
 			currentMode = 'default';
@@ -3401,31 +3404,48 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 assets.push('/scripts/CodeMirror/mode/sql/sql.js');
 				currentMode = 'text/x-mysql';
 			}
-
-			if(assets.length) {
-				loadAssets(assets);
+			if (extension === 'md') {
+                assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
+                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
+                assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/meta.js');
+				currentMode = 'gfm';
 			}
 		}
 
-		var editor = CodeMirror.fromTextArea(document.getElementById("fm-js-editor-content"), {
-			styleActiveLine: true,
-			viewportMargin: Infinity,
-			lineNumbers: config.viewer.editable.lineNumbers,
-			lineWrapping: config.viewer.editable.lineWrapping,
-			theme: config.viewer.editable.theme,
-			extraKeys: {
-				"F11": function (cm) {
-					cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-				},
-				"Esc": function (cm) {
-					if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-				}
-			}
-		});
+        if(assets.length) {
+            assets.push(runCodeMirror);
+            loadAssets(assets);
+        } else {
+            runCodeMirror();
+		}
 
-		// set option finally
-		editor.setOption("mode", currentMode);
-		return editor;
+		function runCodeMirror() {
+            var editor = CodeMirror.fromTextArea(document.getElementById("fm-js-editor-content"), {
+                styleActiveLine: true,
+                viewportMargin: Infinity,
+                lineNumbers: config.viewer.editable.lineNumbers,
+                lineWrapping: config.viewer.editable.lineWrapping,
+                theme: config.viewer.editable.theme,
+                extraKeys: {
+                    "F11": function (cm) {
+                        cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                    },
+                    "Esc": function (cm) {
+                        if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                    }
+                }
+            });
+
+            // set option finally
+            editor.setOption("mode", currentMode);
+            fmModel.previewModel.editor.codeMirror(editor);
+		}
 	};
 
 	// call the "constructor" method

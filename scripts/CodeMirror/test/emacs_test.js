@@ -19,7 +19,7 @@
     var code;
     for (var c in CodeMirror.keyNames)
       if (CodeMirror.keyNames[c] == key) { code = c; break; }
-    if (c == null) throw new Error("Unknown key: " + key);
+    if (code == null) throw new Error("Unknown key: " + key);
 
     return eventCache[keyName] = {
       type: "keydown", keyCode: code, ctrlKey: ctrl, shiftKey: shift, altKey: alt,
@@ -108,10 +108,10 @@
 
   sim("openLine", "foo bar", "Alt-F", "Ctrl-O", txt("foo\n bar"))
 
-  sim("transposeChar", "abcd\n\ne",
-      "Ctrl-F", "Ctrl-T", "Ctrl-T", txt("bcad\n\ne"), at(0, 3),
-      "Ctrl-F", "Ctrl-T", "Ctrl-T", "Ctrl-T", txt("bcda\n\ne"), at(0, 4),
-      "Ctrl-F", "Ctrl-T", txt("bcd\na\ne"), at(1, 1));
+  sim("transposeChar", "abcd\ne",
+      "Ctrl-F", "Ctrl-T", "Ctrl-T", txt("bcad\ne"), at(0, 3),
+      "Ctrl-F", "Ctrl-T", "Ctrl-T", "Ctrl-T", txt("bcda\ne"), at(0, 4),
+      "Ctrl-F", "Ctrl-T", txt("bcde\na"), at(1, 1));
 
   sim("manipWordCase", "foo BAR bAZ",
       "Alt-C", "Alt-L", "Alt-U", txt("Foo bar BAZ"),
@@ -128,6 +128,9 @@
   sim("clearMark", "abcde", Pos(0, 2), "Ctrl-Space", "Ctrl-F", "Ctrl-F",
       "Ctrl-G", "Ctrl-W", txt("abcde"));
 
+  sim("delRegion", "abcde", "Ctrl-Space", "Ctrl-F", "Ctrl-F", "Delete", txt("cde"));
+  sim("backspaceRegion", "abcde", "Ctrl-Space", "Ctrl-F", "Ctrl-F", "Backspace", txt("cde"));
+
   testCM("save", function(cm) {
     var saved = false;
     CodeMirror.commands.save = function(cm) { saved = cm.getValue(); };
@@ -135,4 +138,10 @@
     cm.triggerOnKeyDown(fakeEvent("Ctrl-S"));
     is(saved, "hi");
   }, {value: "hi", keyMap: "emacs"});
+
+  testCM("gotoInvalidLineFloat", function(cm) {
+    cm.openDialog = function(_, cb) { cb("2.2"); };
+    cm.triggerOnKeyDown(fakeEvent("Alt-G"));
+    cm.triggerOnKeyDown(fakeEvent("G"));
+  }, {value: "1\n2\n3\n4", keyMap: "emacs"});
 })();

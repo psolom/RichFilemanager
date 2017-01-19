@@ -248,16 +248,13 @@
     box-sizing: border-box;
     border: 1px solid #dcdcdc;
     text-align: center;
+    color: #333;
     padding: 0;
     margin: 0;
 }
 
 .fm-container .fm-fileinfo * {
     font-size: 12px;
-}
-
-.fm-container .fm-fileinfo *:not(.CodeMirror) {
-    color: #333;
 }
 
 .fm-container .fm-fileinfo .fm-loading-view {

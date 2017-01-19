@@ -1,3 +1,6 @@
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
@@ -8,47 +11,41 @@
 })(function(CodeMirror) {
   "use strict";
 
-  CodeMirror.defineOption("rulers", false, function(cm, val, old) {
-    if (old && old != CodeMirror.Init) {
-      clearRulers(cm);
-      cm.off("refresh", refreshRulers);
+  CodeMirror.defineOption("rulers", false, function(cm, val) {
+    if (cm.state.rulerDiv) {
+      cm.state.rulerDiv.parentElement.removeChild(cm.state.rulerDiv)
+      cm.state.rulerDiv = null
+      cm.off("refresh", drawRulers)
     }
     if (val && val.length) {
-      setRulers(cm);
-      cm.on("refresh", refreshRulers);
+      cm.state.rulerDiv = cm.display.lineSpace.parentElement.insertBefore(document.createElement("div"), cm.display.lineSpace)
+      cm.state.rulerDiv.className = "CodeMirror-rulers"
+      drawRulers(cm)
+      cm.on("refresh", drawRulers)
     }
   });
 
-  function clearRulers(cm) {
-    for (var i = cm.display.lineSpace.childNodes.length - 1; i >= 0; i--) {
-      var node = cm.display.lineSpace.childNodes[i];
-      if (/(^|\s)CodeMirror-ruler($|\s)/.test(node.className))
-        node.parentNode.removeChild(node);
-    }
-  }
-
-  function setRulers(cm) {
+  function drawRulers(cm) {
+    cm.state.rulerDiv.textContent = ""
     var val = cm.getOption("rulers");
     var cw = cm.defaultCharWidth();
     var left = cm.charCoords(CodeMirror.Pos(cm.firstLine(), 0), "div").left;
-    var bot = -cm.display.scroller.offsetHeight;
+    cm.state.rulerDiv.style.minHeight = (cm.display.scroller.offsetHeight + 30) + "px";
     for (var i = 0; i < val.length; i++) {
       var elt = document.createElement("div");
-      var col, cls = null;
-      if (typeof val[i] == "number") {
-        col = val[i];
+      elt.className = "CodeMirror-ruler";
+      var col, conf = val[i];
+      if (typeof conf == "number") {
+        col = conf;
       } else {
-        col = val[i].column;
-        cls = val[i].className;
+        col = conf.column;
+        if (conf.className) elt.className += " " + conf.className;
+        if (conf.color) elt.style.borderColor = conf.color;
+        if (conf.lineStyle) elt.style.borderLeftStyle = conf.lineStyle;
+        if (conf.width) elt.style.borderLeftWidth = conf.width;
       }
-      elt.className = "CodeMirror-ruler" + (cls ? " " + cls : "");
-      elt.style.cssText = "left: " + (left + col * cw) + "px; top: -50px; bottom: " + bot + "px";
-      cm.display.lineSpace.insertBefore(elt, cm.display.cursorDiv);
+      elt.style.left = (left + col * cw) + "px";
+      cm.state.rulerDiv.appendChild(elt)
     }
-  }
-
-  function refreshRulers(cm) {
-    clearRulers(cm);
-    setRulers(cm);
   }
 });

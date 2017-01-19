@@ -1,3 +1,6 @@
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
@@ -25,7 +28,9 @@ CodeMirror.registerGlobalHelper("fold", "comment", function(mode) {
       continue;
     }
     if (pass == 1 && found < start.ch) return;
-    if (/comment/.test(cm.getTokenTypeAt(CodeMirror.Pos(line, found + 1)))) {
+    if (/comment/.test(cm.getTokenTypeAt(CodeMirror.Pos(line, found + 1))) &&
+        (found == 0 || lineText.slice(found - endToken.length, found) == endToken ||
+         !/comment/.test(cm.getTokenTypeAt(CodeMirror.Pos(line, found))))) {
       startCh = found + startToken.length;
       break;
     }

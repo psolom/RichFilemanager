@@ -1,13 +1,6 @@
 #!/usr/bin/env node
 
-var lint = require("./lint/lint");
-
-lint.checkDir("mode");
-lint.checkDir("lib");
-lint.checkDir("addon");
-lint.checkDir("keymap");
-
-var ok = lint.success();
+var ok = require("./lint").ok;
 
 var files = new (require('node-static').Server)();
 
@@ -24,7 +17,7 @@ var server = require('http').createServer(function (req, res) {
   throw err;
 }).listen(3000, function () {
   var childProcess = require('child_process');
-  var phantomjs = require("phantomjs");
+  var phantomjs = require("phantomjs-prebuilt");
   var childArgs = [
     require("path").join(__dirname, 'phantom_driver.js')
   ];

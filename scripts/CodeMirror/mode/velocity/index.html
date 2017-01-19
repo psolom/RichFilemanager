@@ -10,12 +10,12 @@
 <script src="velocity.js"></script>
 <style>.CodeMirror {border: 1px solid black;}</style>
 <div id=nav>
-  <a href="http://codemirror.net"><img id=logo src="../../doc/logo.png"></a>
+  <a href="http://codemirror.net"><h1>CodeMirror</h1><img id=logo src="../../doc/logo.png"></a>
 
   <ul>
     <li><a href="../../index.html">Home</a>
     <li><a href="../../doc/manual.html">Manual</a>
-    <li><a href="https://github.com/marijnh/codemirror">Code</a>
+    <li><a href="https://github.com/codemirror/codemirror">Code</a>
   </ul>
   <ul>
     <li><a href="../index.html">Language modes</a>
@@ -76,6 +76,8 @@ $someObject.getValues("this is a string split
         across lines")
 
 $someObject("This plus $something in the middle").method(7567).property
+
+#set($something = "Parseable string with '$quotes'!")
 
 #macro( tablerows $color $somelist )
     #foreach( $something in $somelist )

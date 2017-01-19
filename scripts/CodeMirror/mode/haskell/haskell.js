@@ -1,3 +1,6 @@
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
@@ -21,7 +24,7 @@ CodeMirror.defineMode("haskell", function(_config, modeConfig) {
   var digitRE = /\d/;
   var hexitRE = /[0-9A-Fa-f]/;
   var octitRE = /[0-7]/;
-  var idRE = /[a-z_A-Z0-9']/;
+  var idRE = /[a-z_A-Z0-9'\xa1-\uffff]/;
   var symbolRE = /[-!#$%&*+.\/<=>?@\\^|~:]/;
   var specialRE = /[(),;[\]`{}]/;
   var whiteCharRE = /[ \t\v\f]/; // newlines are handled in tokenizer
@@ -53,7 +56,7 @@ CodeMirror.defineMode("haskell", function(_config, modeConfig) {
       if (source.eat('\'')) {
         return "string";
       }
-      return "error";
+      return "string error";
     }
 
     if (ch == '"') {
@@ -163,7 +166,7 @@ CodeMirror.defineMode("haskell", function(_config, modeConfig) {
       }
     }
     setState(normal);
-    return "error";
+    return "string error";
   }
 
   function stringGap(source, setState) {
@@ -191,7 +194,7 @@ CodeMirror.defineMode("haskell", function(_config, modeConfig) {
       "module", "newtype", "of", "then", "type", "where", "_");
 
     setType("keyword")(
-      "\.\.", ":", "::", "=", "\\", "\"", "<-", "->", "@", "~", "=>");
+      "\.\.", ":", "::", "=", "\\", "<-", "->", "@", "~", "=>");
 
     setType("builtin")(
       "!!", "$!", "$", "&&", "+", "++", "-", ".", "/", "/=", "<", "<=", "=<<",

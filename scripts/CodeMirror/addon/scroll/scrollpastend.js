@@ -1,3 +1,6 @@
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
@@ -37,7 +40,9 @@
     if (cm.state.scrollPastEndPadding != padding) {
       cm.state.scrollPastEndPadding = padding;
       cm.display.lineSpace.parentNode.style.paddingBottom = padding;
+      cm.off("refresh", updateBottomMargin);
       cm.setSize();
+      cm.on("refresh", updateBottomMargin);
     }
   }
 });

@@ -1,3 +1,6 @@
+// CodeMirror, copyright (c) by Marijn Haverbeke and others
+// Distributed under an MIT license: http://codemirror.net/LICENSE
+
 (function(mod) {
   if (typeof exports == "object" && typeof module == "object") // CommonJS
     mod(require("../../lib/codemirror"));
@@ -81,7 +84,6 @@ CodeMirror.defineMode("eiffel", function() {
     'or'
   ]);
   var operators = wordObj([":=", "and then","and", "or","<<",">>"]);
-  var curPunc;
 
   function chain(newtok, stream, state) {
     state.tokenize.push(newtok);
@@ -89,7 +91,6 @@ CodeMirror.defineMode("eiffel", function() {
   }
 
   function tokenBase(stream, state) {
-    curPunc = null;
     if (stream.eatSpace()) return null;
     var ch = stream.next();
     if (ch == '"'||ch == "'") {
