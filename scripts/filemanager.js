@@ -363,8 +363,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		// Loading CodeMirror if enabled for online edition
 		if(config.viewer.editable.enabled) {
+			var editorTheme = config.viewer.editable.theme;
+            if (editorTheme && editorTheme !== 'default') {
+                secondary.push('/scripts/CodeMirror/theme/' + editorTheme + '.css');
+            }
             secondary.push('/scripts/CodeMirror/lib/codemirror.css');
-            secondary.push('/scripts/CodeMirror/theme/' + config.viewer.editable.theme + '.css');
             secondary.push('/scripts/CodeMirror/lib/codemirror.js');
             secondary.push('/scripts/CodeMirror/addon/selection/active-line.js');
             secondary.push('/scripts/CodeMirror/addon/display/fullscreen.css');
@@ -3445,8 +3448,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
             });
 
-            // set option finally
+            // setup "mode"
             editor.setOption("mode", currentMode);
+
             fmModel.previewModel.editor.codeMirror(editor);
 		}
 	};
