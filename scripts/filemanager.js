@@ -778,6 +778,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					var searchString = insensitive ? search_model.value().toLowerCase() : search_model.value();
 
 					$.each(model.itemsModel.objects(), function(i, itemObject) {
+                        if(itemObject.rdo.type === 'parent') {
+                            return;
+                        }
 						var itemName = itemObject.rdo.attributes.name;
 						if(insensitive) {
 							itemName = itemName.toLowerCase();
