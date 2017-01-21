@@ -39,7 +39,7 @@
 				<h1 data-bind="text: lg().current_folder + currentPath()"></h1>
 			</div>
 			<div class="buttons-panel">
-				<!-- ko if: clipboardModel.enabled -->
+				<!-- ko if: clipboardModel.enabled() -->
 				<div class="button-group clipboards-controls" data-bind="with: clipboardModel">
 					<button id="clipboard-copy" type="button" data-bind="click: copy, visible: hasCapability('copy')"><span>&nbsp;</span></button>
 					<button id="clipboard-cut" type="button" data-bind="click: cut, visible: hasCapability('cut')"><span>&nbsp;</span></button>

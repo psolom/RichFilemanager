@@ -377,22 +377,23 @@ class LocalFilemanager extends BaseFilemanager
 	/**
 	 * @inheritdoc
 	 */
-	public function actionMove()
+	public function actionCopy()
 	{
-        $source_path = $this->get['old'];
+        $source_path = $this->get['source'];
         $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
 		$tmp = explode('/', trim($source_path, '/'));
 		$filename = array_pop($tmp); // file name or new dir name
 
-        $target_path = $this->get['new'] . '/';
+        $target_input = $this->get['target'];
+        $target_path = $target_input . '/';
         $target_path = $this->expandPath($target_path, true);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
 		$new_fullpath = $target_fullpath . $filename . $suffix;
-		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
+		Log::info('copying "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
-        if(!$this->hasPermission('move')) {
+        if(!$this->hasPermission('copy')) {
             $this->error(sprintf($this->lang('NOT_ALLOWED')));
         }
 
@@ -400,8 +401,8 @@ class LocalFilemanager extends BaseFilemanager
             $this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
         }
 
-		// check if file is writable
-		if(!$this->has_system_permission($source_fullpath, ['w']) || !$this->has_system_permission($target_fullpath, ['w'])) {
+		// check system permissions
+		if(!$this->has_system_permission($source_fullpath, ['r']) || !$this->has_system_permission($target_fullpath, ['w'])) {
 			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
 		}
 
@@ -420,9 +421,88 @@ class LocalFilemanager extends BaseFilemanager
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
 			if(is_dir($new_fullpath)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
 			} else {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
+			}
+		}
+
+		// move file or folder
+		if(!FmHelper::copyRecursive($source_fullpath, $new_fullpath)) {
+			if(is_dir($source_fullpath)) {
+				$this->error(sprintf($this->lang('ERROR_COPYING_DIRECTORY'), $filename, $target_input));
+			} else {
+				$this->error(sprintf($this->lang('ERROR_COPYING_FILE'), $filename, $target_input));
+			}
+		} else {
+			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
+            $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
+
+			// move thumbnail file or thumbnails folder if exists
+			if(file_exists($old_thumbnail)) {
+				$new_thumbnail = $this->get_thumbnail_path($new_fullpath);
+				// delete old thumbnail(s) if destination folder does not exist
+				if(file_exists(dirname($new_thumbnail))) {
+                    FmHelper::copyRecursive($old_thumbnail, $new_thumbnail);
+				}
+			}
+		}
+
+        $relative_path = $this->cleanPath('/' . $target_path . '/' . $filename . $suffix);
+        return $this->get_file_info($relative_path);
+	}
+
+
+	/**
+	 * @inheritdoc
+	 */
+	public function actionMove()
+	{
+        $source_path = $this->get['old'];
+        $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
+		$tmp = explode('/', trim($source_path, '/'));
+		$filename = array_pop($tmp); // file name or new dir name
+
+        $target_input = $this->get['new'];
+        $target_path = $target_input . '/';
+        $target_path = $this->expandPath($target_path, true);
+
+		$source_fullpath = $this->getFullPath($source_path, true);
+        $target_fullpath = $this->getFullPath($target_path, true);
+		$new_fullpath = $target_fullpath . $filename . $suffix;
+		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
+
+        if(!$this->hasPermission('move')) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+        }
+
+        if(!is_dir($target_fullpath)) {
+            $this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
+        }
+
+        // check system permissions
+		if(!$this->has_system_permission($source_fullpath, ['r']) || !$this->has_system_permission($target_fullpath, ['w'])) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+		}
+
+		// check if not requesting main FM userfiles folder
+		if($this->is_root_folder($source_fullpath)) {
+			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+		}
+
+        // check if the name is not in "excluded" list
+        if (!$this->is_allowed_name($target_fullpath, true) ||
+            !$this->is_allowed_name($source_fullpath, is_dir($source_fullpath))
+        ) {
+            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+        }
+
+		// check if file already exists
+		if (file_exists($new_fullpath)) {
+			if(is_dir($new_fullpath)) {
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
+			} else {
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
 			}
 		}
 
@@ -432,9 +512,9 @@ class LocalFilemanager extends BaseFilemanager
 		// move file or folder
 		if(!rename($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_MOVING_DIRECTORY'), $filename, $target_input));
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_MOVING_FILE'), $filename, $target_input));
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');

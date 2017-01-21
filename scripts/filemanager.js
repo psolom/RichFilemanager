@@ -401,7 +401,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	var initialize = function () {
 		// reads capabilities from config files if exists else apply default settings
-		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'move', 'delete', 'replace'];
+		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'replace'];
 
 		// defines sort params
 		var chunks = [];
@@ -611,6 +611,48 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			}
 		};
+
+        $fileinfo.contextMenu({
+            selector: '.view-items',
+            zIndex: 10,
+            // wrap options with "build" allows to get item element
+            build: function ($triggerElement, e) {
+                var contextMenuItems = {
+                    createFolder: {
+                    	name: lg.create_folder,
+						className: 'create-folder'
+                    },
+                    paste: {
+                    	name: lg.clipboard_paste,
+						className: 'paste',
+                        disabled: function (key, options) {
+							return fmModel.clipboardModel.isEmpty();
+                        }
+                    }
+                };
+
+                if (!fmModel.clipboardModel.enabled() || config.options.browseOnly === true ) {
+                    delete contextMenuItems.paste;
+                }
+
+                return {
+                    appendTo: '.fm-container',
+                    items: contextMenuItems,
+					reposition: false,
+                    callback: function(itemKey, options) {
+                        switch(itemKey) {
+                            case 'createFolder':
+                                fmModel.headerModel.createFolder();
+                                break;
+
+                            case 'paste':
+                                fmModel.clipboardModel.paste();
+                                break;
+                        }
+                    }
+                }
+            }
+        });
 
 		if(config.extras.extra_js) {
 			for(var i=0; i<config.extras.extra_js.length; i++) {
@@ -1125,7 +1167,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return {
 							appendTo: '.fm-container',
 							items: getContextMenuItems(node.rdo),
-							callback: function(itemKey, opt) {
+							callback: function(itemKey, options) {
 								performAction(itemKey, node.rdo);
 							}
 						}
@@ -1469,7 +1511,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return {
 							appendTo: '.fm-container',
 							items: getContextMenuItems(koItem.rdo),
-							callback: function(itemKey, opt) {
+							callback: function(itemKey, options) {
 								var selectedObjects = [];
 								$.each(fmModel.itemsModel.getSelected(), function(i, itemObject) {
 									selectedObjects.push(itemObject.rdo);
@@ -1712,9 +1754,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var ClipboardModel = function() {
 			var cbItems = [],
 				cbMode = null,
-            	clipboard_model = this;
+            	clipboard_model = this,
+				active = capabilities.indexOf('copy') > -1 || capabilities.indexOf('move') > -1;
 
-			this.enabled = model.config().clipboard.enabled;
+            this.enabled = ko.observable(model.config().options.clipboard && active);
 
 			this.copy = function() {
 				if (!clipboard_model.hasCapability('copy')) {
@@ -1761,9 +1804,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 fm.success(lg.clipboard_cleared);
 			};
 
+            this.isEmpty = function() {
+            	return cbItems.length === 0;
+			};
+
             this.hasCapability = function(capability) {
-            	return clipboard_model.enabled
-                    && $.inArray(capability, config.clipboard.capabilities) !== -1;
+            	if (!clipboard_model.enabled) {
+            		return false;
+				}
+
+            	switch(capability) {
+					case 'copy':
+						return capabilities.indexOf('copy') > -1;
+                    case 'cut':
+                        return capabilities.indexOf('move') > -1;
+					default:
+                        return true;
+				}
 			};
 
 			function clearClipboard() {
@@ -2055,7 +2112,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	// Test if item has the 'cap' capability
-	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'move'
+	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'copy', 'move'
 	function has_capability(resourceObject, cap) {
 		if(capabilities.indexOf(cap) === -1) return false;
 		if (resourceObject.type === 'folder' && cap === 'replace') return false;
@@ -2634,6 +2691,35 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
+	// Copy the current item to specified dir and returns the new name.
+	// Called upon paste copied items via clipboard.
+	var copyItem = function(resourceObject, targetPath) {
+		return $.ajax({
+			type: 'GET',
+			url: buildConnectorUrl({
+				mode: 'copy',
+                source: resourceObject.id,
+                target: targetPath
+			}),
+			dataType: 'json',
+			success: function(response) {
+                console.log(response);
+				if(response.data) {
+					var newItem = response.data;
+
+					fmModel.addItem(newItem, targetPath);
+
+					alertify.clearDialogs();
+					if(config.options.showConfirmation) {
+						fm.success(lg.successful_copied);
+					}
+				}
+				handleAjaxResponseErrors(response);
+			},
+			error: handleAjaxError
+		});
+	};
+
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in detail views
 	// or choosing the "Move" contextual menu option in list views.
@@ -2760,8 +2846,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.previewModel.editor.enabled(true);
 					fmModel.previewModel.editor.content(response.data.attributes.content);
 					// instantiate codeMirror according to config options
-					// var codeMirrorInstance = instantiateCodeMirror(resourceObject.attributes.extension);
-					// fmModel.previewModel.editor.codeMirror(codeMirrorInstance);
                     instantiateCodeMirror(resourceObject.attributes.extension);
 				}
 				handleAjaxResponseErrors(response);
@@ -2848,25 +2932,28 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Options for context menu plugin
 	function getContextMenuItems(resourceObject) {
-		var contextMenuItems = {
-			select: {name: lg.select, className: 'select'},
-			download: {name: lg.download, className: 'download'},
-			rename: {name: lg.rename, className: 'rename'},
-			move: {name: lg.move, className: 'move'},
-			replace: {name: lg.replace, className: 'replace'},
-			separator1: "-----",
-            copy: {name: lg.clipboard_copy, className: 'copy'},
-            cut: {name: lg.clipboard_cut, className: 'cut'},
-			delete: {name: lg.del, className: 'delete'}
-		};
+        var clipboardDisabled = !fmModel.clipboardModel.enabled(),
+            contextMenuItems = {
+                select: {name: lg.select, className: 'select'},
+                download: {name: lg.download, className: 'download'},
+                rename: {name: lg.rename, className: 'rename'},
+                move: {name: lg.move, className: 'move'},
+                replace: {name: lg.replace, className: 'replace'},
+                separator1: "-----",
+                copy: {name: lg.clipboard_copy, className: 'copy'},
+                cut: {name: lg.clipboard_cut, className: 'cut'},
+                delete: {name: lg.del, className: 'delete'}
+            };
 
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
+        if(!has_capability(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
         if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
-		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true) delete contextMenuItems.move;
-        if(!has_capability(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
-        if(!fmModel.clipboardModel.hasCapability('copy')) delete contextMenuItems.copy;
-        if(!fmModel.clipboardModel.hasCapability('cut')) delete contextMenuItems.cut;
+		if(!has_capability(resourceObject, 'copy') || config.options.browseOnly === true || clipboardDisabled) delete contextMenuItems.copy;
+		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true || clipboardDisabled) {
+            delete contextMenuItems.cut;
+            delete contextMenuItems.move;
+		}
 		// remove 'replace' since it is implemented on toolbar panel in preview mode only
 		delete contextMenuItems.replace;
 
@@ -3370,8 +3457,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var instantiateCodeMirror = function(extension) {
 		var currentMode,
 			assets = [];
-
-		console.log('extension', extension);
 
 		// if no code highlight needed, we apply default settings
 		if (!config.viewer.editable.codeHighlight) {

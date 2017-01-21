@@ -7,8 +7,9 @@
         "localizeGUI": true,
         "showFullPath": false,
         "showTitleAttr": false,
-        "browseOnly": false,
         "showConfirmation": true,
+        "browseOnly": false,
+        "clipboard": true,
         "searchBox": true,
         "listFiles": true,
         "fileSorting": "NAME_ASC",
@@ -23,6 +24,7 @@
             "upload",
             "download",
             "rename",
+            "copy",
             "move",
             "replace",
             "delete"
