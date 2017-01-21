@@ -92,7 +92,8 @@
             "mp3",
             "wav",
             "zip",
-            "rar"
+            "rar",
+            "md"
         ]
     },
     "viewer": {
@@ -159,10 +160,11 @@
             "theme": "default",
             "lineNumbers": true,
             "lineWrapping": true,
-            "codeHighlight": false,
+            "codeHighlight": true,
             "extensions": [
                 "txt",
-                "csv"
+                "csv",
+                "md"
             ]
         }
     },

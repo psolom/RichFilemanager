@@ -131,6 +131,7 @@ $config = [
         "editRestrictions" => [
             "txt",
             "csv",
+            "md",
         ],
     ],
     /**
@@ -222,6 +223,7 @@ $config = [
             "wav",
             "zip",
             "rar",
+            "md",
         ],
     ],
     /**
