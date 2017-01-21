@@ -475,9 +475,11 @@ class S3Filemanager extends LocalFilemanager
             } else {
                 // to cache result of S3 objects
                 $this->getFilesList(rtrim($old_thumbnail, '/'));
-                foreach($copied as $thumb) {
-                    if(file_exists($thumb['old'])) {
-                        @copy($this->get_thumbnail_path($thumb['old']), $this->get_thumbnail_path($thumb['new']));
+                foreach($copied as $item) {
+                    $thumb_old = $this->get_thumbnail_path($item['old']);
+                    if(file_exists($thumb_old)) {
+                        $thumb_new = $this->get_thumbnail_path($item['new']);
+                        @copy($thumb_old, $thumb_new);
                     }
                 }
             }
@@ -593,16 +595,13 @@ class S3Filemanager extends LocalFilemanager
 			} else {
 				// to cache result of S3 objects
 				$this->getFilesList(rtrim($old_thumbnail, '/'));
-				foreach($moved as $thumb) {
-					if(file_exists($thumb['old'])) {
-						@rename($this->get_thumbnail_path($thumb['old']), $this->get_thumbnail_path($thumb['new']));
+				foreach($moved as $item) {
+                    $thumb_old = $this->get_thumbnail_path($item['old']);
+					if(file_exists($thumb_old)) {
+                        $thumb_new = $this->get_thumbnail_path($item['new']);
+						@rename($thumb_old, $thumb_new);
 					}
 				}
-//				$files = $this->getFilesList(rtrim($old_thumbnail, '/'));
-//				foreach($files as $path) {
-//					$new_path = str_replace($old_thumbnail, $new_thumbnail, $path);
-//					$valid = rename($path, $new_path);
-//				}
 			}
 		} else {
             if($is_dir_source) {
