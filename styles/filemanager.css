@@ -613,10 +613,6 @@
     background-color: #F4F1ED;
 }
 
-.fm-container .context-menu-item.context-menu-hover {
-    background-color: #BDF;
-}
-
 .fm-container .context-menu-item:before {
     content: " ";
     position: absolute;
@@ -624,6 +620,16 @@
     height: 16px;
     left: 6px;
     top: 0;
+}
+
+.fm-container .context-menu-item.context-menu-hover {
+    background-color: #BDF;
+}
+
+.fm-container .context-menu-item.context-menu-disabled {
+    opacity: 0.6;
+    color: inherit;
+    background-color: inherit;
 }
 
 /* these apply to the context menus as well as the buttons */
@@ -639,12 +645,14 @@
 .fm-container .context-menu-item.replace:before { background-image: url(../images/replace.png); }
 .fm-container #delete span,
 .fm-container .context-menu-item.delete:before { background-image: url(../images/bin_closed.png); }
+.fm-container .context-menu-item.create-folder:before { background-image: url(../images/folder_add.png); }
 
 .fm-container #clipboard-cut span,
 .fm-container .context-menu-item.cut:before { background-image: url(../images/clipboard/clipboard_cut.png); background-position: center; }
 .fm-container #clipboard-copy span,
 .fm-container .context-menu-item.copy:before { background-image: url(../images/clipboard/clipboard_copy.png); background-position: center; }
-.fm-container #clipboard-paste span { background-image: url(../images/clipboard/clipboard_paste.png); background-position: center; }
+.fm-container #clipboard-paste span,
+.fm-container .context-menu-item.paste:before { background-image: url(../images/clipboard/clipboard_paste.png); background-position: center; }
 .fm-container #clipboard-clear span { background-image: url(../images/clipboard/clipboard_clear.png); background-position: center; }
 
 .fm-container .fm-upload span { background-image: url(../images/upload.png); }
