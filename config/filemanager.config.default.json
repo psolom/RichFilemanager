@@ -37,22 +37,13 @@
             "useCtrlKey": true
         }
     },
-    "clipboard": {
-        "enabled": true,
-        "capabilities": [
-            "copy",
-            "cut",
-            "paste",
-            "clear"
-        ]
-    },
     "api": {
         "lang": "php",
         "connectorUrl": false,
         "requestParams": []
     },
     "security": {
-        "allowFolderDownload": false,
+        "allowFolderDownload": true,
         "allowChangeExtensions": false,
         "allowNoExtension": false,
         "normalizeFilename": true
