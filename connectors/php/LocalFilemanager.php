@@ -1057,32 +1057,39 @@ class LocalFilemanager extends BaseFilemanager
 		$pathInfo = pathinfo($fullpath);
 		$filemtime = filemtime($fullpath);
 
-		// check if file is writable and readable
-		$protected = $this->has_system_permission($fullpath, ['w', 'r']) ? 0 : 1;
+		// check if file is readable
+		$read_protected = $this->has_system_permission($fullpath, ['r']) ? 0 : 1;
+
+		// check if file is writable
+		$write_protected = $this->has_system_permission($fullpath, ['w']) ? 0 : 1;
 
 		if(is_dir($fullpath)) {
             $model = $this->folder_model;
 		} else {
             $model = $this->file_model;
-            $model['attributes']['size'] = $this->get_real_filesize($fullpath);
             $model['attributes']['extension'] = isset($pathInfo['extension']) ? $pathInfo['extension'] : '';
+            
+            if ($read_protected == false) {
+                $model['attributes']['size'] = $this->get_real_filesize($fullpath);
 
-			if($this->is_image_file($fullpath)) {
-				if($model['attributes']['size']) {
-					list($width, $height, $type, $attr) = getimagesize($fullpath);
-				} else {
-					list($width, $height) = [0, 0];
-				}
+			    if($this->is_image_file($fullpath)) {
+				    if($model['attributes']['size']) {
+					    list($width, $height, $type, $attr) = getimagesize($fullpath);
+				    } else {
+					    list($width, $height) = [0, 0];
+				    }
 
-                $model['attributes']['width'] = $width;
-                $model['attributes']['height'] = $height;
+                    $model['attributes']['width'] = $width;
+                    $model['attributes']['height'] = $height;
+			    }
 			}
 		}
 
         $model['id'] = $relative_path;
         $model['attributes']['name'] = $pathInfo['basename'];
         $model['attributes']['path'] = $this->getDynamicPath($fullpath);
-        $model['attributes']['protected'] = $protected;
+        $model['attributes']['read_protected'] = $read_protected;
+        $model['attributes']['write_protected'] = $write_protected;
         $model['attributes']['timestamp'] = $filemtime;
         $model['attributes']['modified'] = $this->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
