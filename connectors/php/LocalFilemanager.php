@@ -384,7 +384,8 @@ class LocalFilemanager extends BaseFilemanager
 		$tmp = explode('/', trim($source_path, '/'));
 		$filename = array_pop($tmp); // file name or new dir name
 
-        $target_path = $this->get['target'] . '/';
+        $target_input = $this->get['target'];
+        $target_path = $target_input . '/';
         $target_path = $this->expandPath($target_path, true);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
@@ -420,18 +421,18 @@ class LocalFilemanager extends BaseFilemanager
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
 			if(is_dir($new_fullpath)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
 			} else {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
 			}
 		}
 
 		// move file or folder
 		if(!FmHelper::copyRecursive($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_COPYING_DIRECTORY'), $filename, $target_input));
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_COPYING_FILE'), $filename, $target_input));
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
@@ -462,7 +463,8 @@ class LocalFilemanager extends BaseFilemanager
 		$tmp = explode('/', trim($source_path, '/'));
 		$filename = array_pop($tmp); // file name or new dir name
 
-        $target_path = $this->get['new'] . '/';
+        $target_input = $this->get['new'];
+        $target_path = $target_input . '/';
         $target_path = $this->expandPath($target_path, true);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
@@ -498,9 +500,9 @@ class LocalFilemanager extends BaseFilemanager
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
 			if(is_dir($new_fullpath)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
+				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
 			} else {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($this->get['new'], '/') . '/' . $filename));
+				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
 			}
 		}
 
@@ -510,9 +512,9 @@ class LocalFilemanager extends BaseFilemanager
 		// move file or folder
 		if(!rename($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_MOVING_DIRECTORY'), $filename, $target_input));
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $this->get['new']));
+				$this->error(sprintf($this->lang('ERROR_MOVING_FILE'), $filename, $target_input));
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
