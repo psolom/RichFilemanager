@@ -1058,10 +1058,9 @@ class LocalFilemanager extends BaseFilemanager
 		$filemtime = filemtime($fullpath);
 
 		// check if file is readable
-		$read_protected = $this->has_system_permission($fullpath, ['r']) ? 0 : 1;
-
+		$is_readable = $this->has_system_permission($fullpath, ['r']);
 		// check if file is writable
-		$write_protected = $this->has_system_permission($fullpath, ['w']) ? 0 : 1;
+        $is_writable = $this->has_system_permission($fullpath, ['w']);
 
 		if(is_dir($fullpath)) {
             $model = $this->folder_model;
@@ -1069,7 +1068,7 @@ class LocalFilemanager extends BaseFilemanager
             $model = $this->file_model;
             $model['attributes']['extension'] = isset($pathInfo['extension']) ? $pathInfo['extension'] : '';
             
-            if ($read_protected == false) {
+            if ($is_readable) {
                 $model['attributes']['size'] = $this->get_real_filesize($fullpath);
 
 			    if($this->is_image_file($fullpath)) {
@@ -1088,8 +1087,8 @@ class LocalFilemanager extends BaseFilemanager
         $model['id'] = $relative_path;
         $model['attributes']['name'] = $pathInfo['basename'];
         $model['attributes']['path'] = $this->getDynamicPath($fullpath);
-        $model['attributes']['read_protected'] = $read_protected;
-        $model['attributes']['write_protected'] = $write_protected;
+        $model['attributes']['readable'] = (int) $is_readable;
+        $model['attributes']['writable'] = (int) $is_writable;
         $model['attributes']['timestamp'] = $filemtime;
         $model['attributes']['modified'] = $this->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp

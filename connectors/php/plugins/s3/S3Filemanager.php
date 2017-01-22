@@ -1059,7 +1059,8 @@ class S3Filemanager extends LocalFilemanager
         $model['id'] = $relative_path;
         $model['attributes']['name'] = $pathInfo['basename'];
         $model['attributes']['path'] = $this->getDynamicPath($fullpath);
-        $model['attributes']['protected'] = 0;
+        $model['attributes']['readable'] = 1;
+        $model['attributes']['writable'] = 1;
         $model['attributes']['timestamp'] = $filemtime;
         $model['attributes']['modified'] = $this->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp

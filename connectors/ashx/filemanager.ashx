@@ -124,8 +124,8 @@ public class filemanager : IHttpHandler
 		sb.AppendLine("\"attributes\": {");
 			sb.AppendLine("\"name\": \"" + dirInfo.Name + "\",");
 			sb.AppendLine("\"path\": \"" + path + "/\",");
-			sb.AppendLine("\"read_protected\": 0,");
-			sb.AppendLine("\"write_protected\": 0,");
+			sb.AppendLine("\"readable\": 1,");
+			sb.AppendLine("\"writable\": 1,");
 			sb.AppendLine("\"created\": \"" + dirInfo.CreationTime.ToString() + "\", ");
 			sb.AppendLine("\"modified\": \"" + dirInfo.LastWriteTime.ToString() + "\", ");
 			sb.AppendLine("\"timestamp\": "+ ((Int32)(dirInfo.CreationTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds).ToString());
@@ -145,8 +145,8 @@ public class filemanager : IHttpHandler
 			sb.AppendLine("\"name\": \"" + fileInfo.Name + "\",");
 			sb.AppendLine("\"extension\": \"" + fileInfo.Extension.Replace(".","") + "\",");
 			sb.AppendLine("\"path\": \"" + path + "\",");
-			sb.AppendLine("\"read_protected\": 0,");
-			sb.AppendLine("\"write_protected\": 0,");
+			sb.AppendLine("\"readable\": 1,");
+			sb.AppendLine("\"writable\": 1,");
 			sb.AppendLine("\"created\": \"" + fileInfo.CreationTime.ToString() + "\", ");
 			sb.AppendLine("\"modified\": \"" + fileInfo.LastWriteTime.ToString() + "\", ");
 			sb.AppendLine("\"timestamp\": "+ ((Int32)(fileInfo.CreationTime.Subtract(new DateTime(1970, 1, 1))).TotalSeconds).ToString() +", ");
