@@ -502,7 +502,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return (itemObject.id === targetItem.id);
 					});
 					// prevent on moving (to) protect folder or to the one of selected items
-					return !(targetItem.rdo.attributes.protected || matches.length > 0);
+					return !(targetItem.rdo.attributes.write_protected || matches.length > 0);
 				}
 
 				if(valueAccessor().rdo.type === "folder" || valueAccessor().rdo.type === "parent") {
@@ -919,12 +919,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						if(this.cdo.isFolder === true) {
 							cssClass.push('ico_folder');
 							extraClass.push('folder');
-							if(this.rdo.attributes.protected) {
+							if(this.rdo.attributes.read_protected) {
 								extraClass.push('lock');
 							}
 						} else {
 							cssClass.push('ico_file');
-							if(this.rdo.attributes.protected) {
+							if(this.rdo.attributes.read_protected) {
 								extraClass.push('file', 'lock');
 							} else {
 								extraClass.push('ext', this.rdo.attributes.extension);
@@ -1228,7 +1228,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					if(!node.cdo.isFolder) {
 						return false;
 					}
-					if(node.rdo.attributes.protected) {
+					if(node.rdo.attributes.read_protected) {
 						fm.error(lg.NOT_ALLOWED_SYSTEM);
 						return false;
 					}
@@ -1302,7 +1302,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							extraClass.push('loading');
 						} else {
 							extraClass.push('folder');
-							if(this.rdo.attributes.protected) {
+							if(this.rdo.attributes.read_protected) {
 								extraClass.push('lock');
 							} else if(this.isExpanded() || !this.isExpanded() && this.isSliding()) {
 								extraClass.push('open');
@@ -1310,7 +1310,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						}
 					} else {
 						cssClass = 'ico_file';
-						if(this.rdo.attributes.protected) {
+						if(this.rdo.attributes.read_protected) {
 							extraClass.push('file', 'lock');
 						} else {
 							extraClass.push('ext', this.rdo.attributes.extension);
@@ -1560,12 +1560,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					if(this.cdo.isFolder === true) {
 						cssClass = 'ico_folder';
 						extraClass.push('folder');
-						if(this.rdo.attributes.protected) {
+						if(this.rdo.attributes.read_protected) {
 							extraClass.push('lock');
 						}
 					} else {
 						cssClass = 'ico_file';
-						if(this.rdo.attributes.protected) {
+						if(this.rdo.attributes.read_protected) {
 							extraClass.push('file', 'lock');
 						} else {
 							extraClass.push('ext', this.rdo.attributes.extension);
@@ -1582,12 +1582,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						if(this.cdo.isFolder === true) {
 							cssClass.push('ico_folder');
 							extraClass.push('folder');
-							if(this.rdo.attributes.protected) {
+							if(this.rdo.attributes.read_protected) {
 								extraClass.push('lock');
 							}
 						} else {
 							cssClass.push('ico_file');
-							if(this.rdo.attributes.protected) {
+							if(this.rdo.attributes.read_protected) {
 								extraClass.push('file', 'lock');
 							} else {
 								extraClass.push('ext', this.rdo.attributes.extension);
@@ -2274,7 +2274,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var createImageUrl = function(resourceObject, thumbnail) {
 		var imageUrl;
 		if (isImageFile(resourceObject.id) &&
-			!resourceObject.attributes.protected && (
+			!resourceObject.attributes.read_protected && (
 			(thumbnail && config.viewer.image.showThumbs) ||
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
@@ -2918,7 +2918,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Retrieves file or folder info based on the path provided.
 	var getDetailView = function(resourceObject) {
-		if(resourceObject.attributes.protected) {
+		if(resourceObject.attributes.read_protected) {
 			fm.error(lg.NOT_ALLOWED_SYSTEM);
 			return false;
 		}
