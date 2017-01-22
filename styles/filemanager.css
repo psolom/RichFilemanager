@@ -685,6 +685,17 @@
     margin: 2em auto;
 }
 
+.fm-container .fm-preview .fm-preview-editor div.CodeMirror * {
+    font-family: monospace;
+    line-height: 15px;
+}
+
+.fm-container .fm-preview div.CodeMirror.CodeMirror-fullscreen {
+    width: 100%;
+    margin: 0;
+    z-index: 9;
+}
+
 
 /* IE10-11 styles */
 html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
@@ -704,12 +715,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
 html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
 html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     height: 23px;
-}
-
-.fm-container div.CodeMirror.CodeMirror-fullscreen {
-    width: 100%;
-    margin: 0;
-    z-index: 9;
 }
 
 
