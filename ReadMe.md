@@ -5,6 +5,7 @@ Rich Filemanager is an open-source file manager released under MIT license.
 Based on the @simogeo [Filemanager](https://github.com/simogeo/Filemanager), with a lot of improvements and new features:
 
 * Drag-and-drop support
+* Clipboard feature: copy, cut, paste, clear
 * Selectable files & folders support (mouse dragging & Ctrl key)
 * Multiple actions support for selected files & folders: move, delete, download
 * Before and After callback functions for some actions
@@ -74,6 +75,7 @@ Main features
 * Easy integration with [colorbox jquery plugin](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
 * 2 view modes: grid and list
 * Drag-and-drop support
+* Clipboard feature: copy, cut, paste, clear
 * Single file actions: upload, modify, move, delete, download
 * Single folder actions: create, modify, move, delete, download (zip archive)
 * Selectable support for files & folders (mouse dragging & Ctrl key)
