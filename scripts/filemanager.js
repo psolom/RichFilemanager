@@ -2081,7 +2081,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var n = parseFloat(bytes);
 		var d = parseFloat(round ? 1000 : 1024);
 		var c = 0;
-		var u = [lg.bytes, lg.kb, lg.mb, lg.gb];
+		var u = [lg.unit_bytes, lg.unit_kb, lg.unit_mb, lg.unit_gb];
 
 		while(true) {
 			if(n < d) {

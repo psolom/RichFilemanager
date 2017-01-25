@@ -59,8 +59,8 @@ class LocalUploadHandler extends BaseUploadHandler
         }
 
         $this->error_messages['accept_file_types'] = $this->fm->lang('INVALID_FILE_TYPE');
-        $this->error_messages['max_file_size'] = sprintf($this->fm->lang('UPLOAD_FILES_SMALLER_THAN'), (round($this->fm->config['upload']['fileSizeLimit'] / 1000 / 1000, 2)) . ' ' . $this->fm->lang('mb'));
-        $this->error_messages['max_storage_size'] = sprintf($this->fm->lang('STORAGE_SIZE_EXCEED'), (round($this->fm->config['options']['fileRootSizeLimit'] / 1000 / 1000, 2)) . ' ' . $this->fm->lang('mb'));
+        $this->error_messages['max_file_size'] = sprintf($this->fm->lang('UPLOAD_FILES_SMALLER_THAN'), (round($this->fm->config['upload']['fileSizeLimit'] / 1000 / 1000, 2)) . ' ' . $this->fm->lang('unit_mb'));
+        $this->error_messages['max_storage_size'] = sprintf($this->fm->lang('STORAGE_SIZE_EXCEED'), (round($this->fm->config['options']['fileRootSizeLimit'] / 1000 / 1000, 2)) . ' ' . $this->fm->lang('unit_mb'));
     }
 
     public function create_thumbnail_image($image_path)
