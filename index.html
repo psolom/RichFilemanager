@@ -40,20 +40,23 @@
 			</div>
 			<div class="buttons-panel">
 				<!-- ko if: clipboardModel.enabled() -->
-				<div class="button-group clipboards-controls" data-bind="with: clipboardModel">
-					<button id="clipboard-copy" type="button" data-bind="click: copy, visible: hasCapability('copy')"><span>&nbsp;</span></button>
-					<button id="clipboard-cut" type="button" data-bind="click: cut, visible: hasCapability('cut')"><span>&nbsp;</span></button>
-					<button id="clipboard-paste" type="button" data-bind="click: paste, visible: hasCapability('paste')"><span>&nbsp;</span></button>
-					<button id="clipboard-clear" type="button" data-bind="click: clear, visible: hasCapability('clear')"><span>&nbsp;</span></button>
-					<input id="clipboard-path" name="clipboard-path" type="hidden"/>
+				<div class="button-group clipboards-controls">
+					<button id="clipboard-copy" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: localizeGUI() ? lg().clipboard_copy : null}"><span>&nbsp;</span></button>
+					<button id="clipboard-cut" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: localizeGUI() ? lg().clipboard_cut : null}"><span>&nbsp;</span></button>
+					<button id="clipboard-paste" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: localizeGUI() ? lg().clipboard_paste_full : null}"><span>&nbsp;</span></button>
+					<button id="clipboard-clear" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: localizeGUI() ? lg().clipboard_clear_full : null}"><span>&nbsp;</span></button>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- /ko -->
 				<div class="button-group navigate-controls">
-					<button class="fm-btn-level-up no-label" type="button" data-bind="click: headerModel.goParent"><span>&nbsp;</span></button>
-					<button class="fm-btn-home no-label" type="button" data-bind="click: headerModel.goHome"><span>&nbsp;</span></button>
+					<button class="fm-btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
+						<span>&nbsp;</span>
+					</button>
+					<button class="fm-btn-home no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
+						<span>&nbsp;</span>
+					</button>
 				</div>
 				<!-- ko if: !browseOnly() -->
 				<div class="button-group upload-controls">
@@ -67,7 +70,7 @@
 							<input id="newfile" name="newfile" type="file" />
 						</div>
 						<button class="fm-upload" type="button">
-							<span data-bind="text: lg().upload"></span>
+							<span data-bind="text: lg().action_upload"></span>
 						</button>
 					</form>
 				</div>
@@ -78,10 +81,10 @@
 				</div>
 				<!-- /ko -->
 				<div class="button-group viewmode-controls">
-					<button class="fm-btn-grid no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
+					<button class="fm-btn-grid no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="fm-btn-list no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
+					<button class="fm-btn-list no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: localizeGUI() ? lg().list_view : null}, css: {active: viewMode() === 'list'}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -168,32 +171,32 @@
 							</button>
 							<!-- ko if: buttonVisibility('select') -->
 							<button id="select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
-								<span data-bind="text: $root.lg().select"></span>
+								<span data-bind="text: $root.lg().action_select"></span>
 							</button>
 							<!-- /ko -->
 							<!-- ko if: buttonVisibility('download') -->
 							<button id="download" type="button" data-bind="event: {click: function(data, event) {bindToolbar('download')}}">
-								<span data-bind="text: $root.lg().download"></span>
+								<span data-bind="text: $root.lg().action_download"></span>
 							</button>
 							<!-- /ko -->
 							<!-- ko if: buttonVisibility('rename') -->
 							<button id="rename" type="button" data-bind="event: {click: function(data, event) {bindToolbar('rename')}}">
-								<span data-bind="text: $root.lg().rename"></span>
+								<span data-bind="text: $root.lg().action_rename"></span>
 							</button>
 							<!-- /ko -->
 							<!-- ko if: buttonVisibility('move') -->
 							<button id="move" type="button" data-bind="event: {click: function(data, event) {bindToolbar('move')}}">
-								<span data-bind="text: $root.lg().move"></span>
+								<span data-bind="text: $root.lg().action_move"></span>
 							</button>
 							<!-- /ko -->
 							<!-- ko if: buttonVisibility('delete') -->
 							<button id="delete" type="button" data-bind="event: {click: function(data, event) {bindToolbar('delete')}}">
-								<span data-bind="text: $root.lg().del"></span>
+								<span data-bind="text: $root.lg().action_delete"></span>
 							</button>
 							<!-- /ko -->
 							<!-- ko if: buttonVisibility('replace') -->
 							<button id="replace" type="button" data-bind="event: {click: function(data, event) {bindToolbar('replace')}}">
-								<span data-bind="text: $root.lg().replace"></span>
+								<span data-bind="text: $root.lg().action_replace"></span>
 							</button>
 							<div class="hidden-file-input">
 								<input id="replacement" name="replacement" type="file" />
@@ -228,8 +231,8 @@
 								<textarea id="fm-js-editor-content" name="content" data-bind="textInput: editor.content"></textarea>
 								<input type="hidden" name="mode" value="savefile" />
 								<input type="hidden" name="path" value="" data-bind="textInput: rdo.id" />
-								<button class="edition" type="button" data-bind="text: $root.lg().quit_editor, click: closeEditor"></button>
-								<button class="edition" type="button" data-bind="text: $root.lg().save, click: saveFile"></button>
+								<button class="edition" type="button" data-bind="text: $root.lg().editor_quit, click: closeEditor"></button>
+								<button class="edition" type="button" data-bind="text: $root.lg().editor_save, click: saveFile"></button>
 							</form>
 						</div>
 						<!-- /ko -->
@@ -239,7 +242,7 @@
 						<div id="main-title">
 							<h1 data-bind="text: rdo.attributes.name, attr: {title: rdo.id}"></h1>
 							<div id="tools">
-								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
+								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
 								<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}"></a>
 							</div>
 						</div>
@@ -348,7 +351,7 @@
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->

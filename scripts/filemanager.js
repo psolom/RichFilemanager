@@ -665,18 +665,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
-		// finalize the FileManager UI initialization with localized text
-		if(config.options.localizeGUI === true) {
-			//$header.find('#newfolder').append(lg.button_new_folder);
-			//$header.find('#home').attr('title', lg.button_home);
-			//$header.find('#grid').attr('title', lg.button_mode_grid);
-			//$header.find('#list').attr('title', lg.button_mode_list);
-			//$header.find('#clipboard-copy').attr('title', lg.clipboard_copy);
-			//$header.find('#clipboard-cut').attr('title', lg.clipboard_cut);
-			//$header.find('#clipboard-paste').attr('title', lg.clipboard_paste_full);
-			//$header.find('#clipboard-clear').attr('title', lg.clipboard_clear_full);
-		}
-
 		// adding a close button triggering callback function if CKEditorCleanUpFuncNum passed
 		if($.urlParam('CKEditorCleanUpFuncNum')) {
 			$("body").append('<button id="fm-js-btn-close" type="button">' + lg.close + '</button>');
@@ -768,6 +756,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var model = this;
 		this.config = ko.observable(config);
 		this.lg = ko.observable(lg);
+        this.localizeGUI = ko.observable(config.options.localizeGUI);
 		this.loadingView = ko.observable(true);
 		this.previewFile = ko.observable(false);
 		this.viewMode = ko.observable(config.options.defaultViewMode);
@@ -2567,7 +2556,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			message: lg.new_filename,
 			value: config.security.allowChangeExtensions ? resourceObject.attributes.name : getFilename(resourceObject.attributes.name),
 			okBtn: {
-				label: lg.rename,
+				label: lg.action_rename,
 				autoClose: false,
 				click: doRename
 			},
@@ -2614,7 +2603,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				.on('fileuploadalways', function(e, data) {
 					$uploadButton.removeData().removeClass('loading').prop('disabled', false);
-					$uploadButton.children('span').text(lg.upload);
+					$uploadButton.children('span').text(lg.action_upload);
 					var response = data.result;
 
 					// handle server-side errors
@@ -2677,7 +2666,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			message: message,
 			value: fmModel.currentPath(),
 			okBtn: {
-				label: lg.move,
+				label: lg.action_move,
 				autoClose: false,
 				click: doMove
 			},
@@ -2935,15 +2924,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	function getContextMenuItems(resourceObject) {
         var clipboardDisabled = !fmModel.clipboardModel.enabled(),
             contextMenuItems = {
-                select: {name: lg.select, className: 'select'},
-                download: {name: lg.download, className: 'download'},
-                rename: {name: lg.rename, className: 'rename'},
-                move: {name: lg.move, className: 'move'},
-                replace: {name: lg.replace, className: 'replace'},
+                select: {name: lg.action_select, className: 'select'},
+                download: {name: lg.action_download, className: 'download'},
+                rename: {name: lg.action_rename, className: 'rename'},
+                move: {name: lg.action_move, className: 'move'},
+                replace: {name: lg.action_replace, className: 'replace'},
                 separator1: "-----",
                 copy: {name: lg.clipboard_copy, className: 'copy'},
                 cut: {name: lg.clipboard_cut, className: 'cut'},
-                delete: {name: lg.del, className: 'delete'}
+                delete: {name: lg.action_delete, className: 'delete'}
             };
 
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
@@ -3045,7 +3034,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					width: 'auto',
 					buttons: [{
 						type: "ok",
-						label: lg.upload,
+						label: lg.action_upload,
 						autoClose: false,
 						click: function(e, ui) {
 							if($dropzone.children('.upload-item').length > 0) {
@@ -3055,7 +3044,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							}
 						}
 					},{
-						label: lg.select,
+						label: lg.action_select,
 						closeOnClick: false,
 						click: function(e, ui) {
 							$('#fileupload', $uploadContainer).trigger('click');
@@ -3421,7 +3410,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				.on('fileuploadalways', function(e, data) {
 					$("#filepath").val('');
 					$uploadButton.removeData().removeClass('loading').prop('disabled', false);
-					$uploadButton.children('span').text(lg.upload);
+					$uploadButton.children('span').text(lg.action_upload);
 					var response = data.result;
 
 					// handle server-side errors
