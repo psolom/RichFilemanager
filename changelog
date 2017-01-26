@@ -1,3 +1,23 @@
+Version 2.2.0
+---------------------------
+- clipboard feature: copy, cut, paste, clear (header panel and context menu) #80;
+- implemented "copy" action at the client-side and PHP connector (see API) to support clipboard copy feature;
+- configurable clipboard availability via `clipboard` option in json configuration file;
+- implemented context menu on items background; include clipboard "paste" and "create folder" items;
+- more flexible permissions control: attribute "protected" has been split into two: readable and writable attributes #91, #92;
+- support [.md] markdown files editing out of the box #86;
+- create new and adjust existing translations;
+- better support of define RFM context for "select" action;
+- bugfix: error on filtering inside a subfolder #89;
+- bugfix: error upon setup default theme for CodeMirror #86;
+- bugfix: text editor remains open after close preview #79;
+- bugfix: corrupted PHP S3 plugin move/copy of thumbnails if located at AWS S3 storage;
+- included "purl" library to parse urls and updated CodeMirror library;
+
+Backward incompatible changes:
+- API: attribute "protected" has been split into two: readable and writable attributes #91, #92;
+
+
 Version 2.1.0
 ---------------------------
 - implemented selectable view items (mouse dragging & Ctrl key), see `manager`.`selection` config options #15, #38;
