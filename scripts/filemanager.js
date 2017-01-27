@@ -2370,18 +2370,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 Item Actions
 	 ---------------------------------------------------------*/
 
-	// Calls the SetUrl function for FCKEditor compatibility,
-	// passes file path, dimensions, and alt text back to the
-	// opening window. Triggered by clicking the "Select"
-	// button in detail views or choosing the "Select"
-	// contextual menu option in list views.
+	// Triggered by clicking the "Select" button in detail views
+	// or choosing the "Select" contextual menu option in list views.
 	// NOTE: closes the window when finished.
 	var selectItem = function(resourceObject) {
 		var previewUrl = createPreviewUrl(resourceObject, true);
         previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
 
+        // tinyMCE > 3.0 integration method
 		if(window.tinyMCEPopup) {
-			// use tinyMCE > 3.0 integration method
 			var win = tinyMCEPopup.getWindowArg("window");
 			win.document.getElementById(tinyMCEPopup.getWindowArg("input")).value = previewUrl;
 			if (typeof(win.ImageDialog) != "undefined") {
@@ -2431,8 +2428,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
+        // CKEditor 3.0 + integration method
 		if($.urlParam('CKEditor')) {
-			// use CKEditor 3.0 + integration method
 			if (window.opener) {
 				// Popup
 				window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
@@ -2441,8 +2438,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
 				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
 			}
-		} else if(window.opener) {
-			// use FCKEditor 2.0 integration method
+		}
+
+        // FCKEditor 2.0 integration method
+		if(window.opener && typeof window.opener.SetUrl === 'function') {
 			if(resourceObject.attributes.width) {
 				var p = previewUrl;
 				var w = resourceObject.attributes.width;
