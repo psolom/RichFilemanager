@@ -40,7 +40,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			beforeSelectItem: function (resourceObject, url) {
 				return url;
 			},
-			afterSelectItem: function (resourceObject, url) {}
+			afterSelectItem: function (resourceObject, url, contextWindow) {}
 		}
 	};
 
@@ -2358,8 +2358,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// check if plugin instance created inside some context
 	function hasContext() {
 		return window.opener // window.open()
+			|| (window.parent && window.self !== window.parent) // <iframe>
 			|| window.tinyMCEPopup // tinyMCE >= 3.0
-			|| window.self !== window.top // any <iframe>
 			|| $.urlParam('field_name') // tinymce 4 or colorbox
 			|| $.urlParam('CKEditor') // CKEditor 3.0 + integration method
 			|| $.urlParam('ImperaviElementId'); // Imperavi Redactor I >= 10.x.x
@@ -2374,7 +2374,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// or choosing the "Select" contextual menu option in list views.
 	// NOTE: closes the window when finished.
 	var selectItem = function(resourceObject) {
-		var previewUrl = createPreviewUrl(resourceObject, true);
+		var contextWindow = null,
+			previewUrl = createPreviewUrl(resourceObject, true);
+
         previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
 
         // tinyMCE > 3.0 integration method
@@ -2441,6 +2443,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
         // FCKEditor 2.0 integration method
+		// todo: https://docs.cksource.com/FCKeditor_2.x/Developers_Guide/JavaScript_API
 		if(window.opener && typeof window.opener.SetUrl === 'function') {
 			if(resourceObject.attributes.width) {
 				var p = previewUrl;
@@ -2452,7 +2455,25 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
-		fm.settings.callbacks.afterSelectItem(resourceObject, previewUrl);
+		// define context window if any
+        if (window.opener) {
+            contextWindow = window.opener;
+        }
+        if (window.parent && window.self !== window.parent) {
+            contextWindow = window.parent;
+        }
+
+		// sending post message to the context window
+        if (contextWindow) {
+            contextWindow.postMessage(
+            	{
+                    source: 'richfilemanager',
+                    preview_url: previewUrl
+                }, '*'
+            );
+		}
+
+		fm.settings.callbacks.afterSelectItem(resourceObject, previewUrl, contextWindow);
 	};
 
 	// Renames the current item and returns the new name.
@@ -2692,7 +2713,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}),
 			dataType: 'json',
 			success: function(response) {
-                console.log(response);
 				if(response.data) {
 					var newItem = response.data;
 
