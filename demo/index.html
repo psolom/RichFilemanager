@@ -4,6 +4,7 @@
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
 	<link rel="stylesheet" type="text/css" href="assets/bootstrap-3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css">
 
 	<style type="text/css">
 		.fm-modal {
@@ -29,6 +30,7 @@
 		<button id="js-window-button">SELECT</button>
 	</div>
 
+
 	<div class="input-append">
 		<input id="fm-bs-modal-input" type="text" value="">
 		<a data-toggle="modal" data-target="#fm-bs-modal" class="btn" type="button">Select</a>
@@ -48,11 +50,19 @@
 		</div>
 	</div>
 
+
+	<div class="input-append">
+		<input id="fancybox-input" type="text" value="">
+		<a id="fancybox-button" class="btn" type="button" href="./../index.html?context=fancybox">Select</a>
+	</div>
+
+
 	<form>
 		<textarea name="editor_ckeditor" id="editor_ckeditor" rows="10" cols="80">
 			This is my textarea to be replaced with CKEditor.
 		</textarea>
 	</form>
+
 
 	<form method="post">
 		<textarea name="editor_tinymce4" id="editor_tinymce4" rows="10" cols="80">
@@ -60,29 +70,94 @@
 		</textarea>
 	</form>
 
+
 	<script type="text/javascript" src="assets/jquery-1.11.3.min.js"></script>
 	<script type="text/javascript" src="//cdn.ckeditor.com/4.6.2/standard/ckeditor.js"></script>
 	<script type="text/javascript" src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.js"></script>
 	<script type="text/javascript" src="assets/bootstrap-3.3.7/js/bootstrap.min.js"></script>
 
 	<script type="text/javascript">
 
 		$(function() {
 			/*---------------------------------------------------------
-			 Bootstrap 3 modal window example
+			 Simple javascript window example
 			 ---------------------------------------------------------*/
-            $('#fm-bs-modal').on('show.bs.modal',function() {
-                $(this).find('iframe').attr('src', './../index.html?context=bootstrap');
+//            $('#js-window-button').on('click', function() {
+//                window.open("./../index.html?context=js-window", 'targetWindow',
+//                    'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800, height=800');
+//            });
+
+			$('#js-window-button').on('click', function() {
+                var opener = window.open("./../index.html", 'targetWindow',
+                    'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800, height=800');
+
+                function handlePostMessage(e) {
+                    var data = e.originalEvent.data;
+                    console.log('js-data', data);
+                    if (data.source === 'richfilemanager') {
+						$('#js-window-input').val(data.preview_url);
+                        opener.close();
+                    }
+
+                    // remove an event handler
+                    $(window).off('message', handlePostMessage);
+                }
+
+                $(window).on('message', handlePostMessage);
             });
 
 
 			/*---------------------------------------------------------
-			 Simple javascript window example
+			 Bootstrap 3 modal window with iframe example
 			 ---------------------------------------------------------*/
-            $('#js-window-button').click(function(){
-                window.open("./../index.html?context=js-window",'targetWindow',
-                    'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800, height=800')
+//            $('#fm-bs-modal').on('show.bs.modal', function() {
+//                $(this).find('iframe').attr('src', './../index.html?context=bootstrap');
+//            });
+
+            $('#fm-bs-modal').on('show.bs.modal', function() {
+                $(this).find('iframe').attr('src', './../index.html');
+
+                function handlePostMessage(e) {
+                    var data = e.originalEvent.data;
+                    if (data.source === 'richfilemanager') {
+                        $('#fm-bs-modal-input').val(data.preview_url);
+                        $('#fm-bs-modal').find('.close').click();
+
+                        // remove an event handler
+                        $(window).off('message', handlePostMessage);
+                    }
+                }
+
+                $(window).on('message', handlePostMessage);
             });
+
+
+			/*---------------------------------------------------------
+			 Fancybox iframe example
+			 ---------------------------------------------------------*/
+            $('#fancybox-button').fancybox({
+                'width': '90%',
+                'height': '90%',
+                'type': 'iframe',
+                'autoSize': false
+            });
+
+            $('#fancybox-button').on('click', function() {
+                function handlePostMessage(e) {
+                    var data = e.originalEvent.data;
+                    if (data.source === 'richfilemanager') {
+                        $('#fancybox-input').val(data.preview_url);
+                        $.fancybox.close();
+
+                        // remove an event handler
+                        $(window).off('message', handlePostMessage);
+                    }
+                }
+
+                $(window).on('message', handlePostMessage);
+            });
+
         });
 
 
