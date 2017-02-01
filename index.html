@@ -35,8 +35,12 @@
 	<div class="fm-loading-wrap"><!-- loading wrapper / removed when loaded --></div>
 	<div class="fm-wrapper">
 		<div class="fm-header">
-			<div class="current-path">
-				<h1 data-bind="text: lg().current_folder + currentPath()"></h1>
+			<div class="breadcrumbs">
+				<div class="bc-label" data-bind="text: lg().current_folder"></div>
+				<div data-bind="foreach: {data: breadcrumbsModel.items, as: 'bcItem'}">
+					<div data-bind="text: bcItem.label, click: bcItem.goto, css: bcItem.itemClass()"></div>
+					<div>/</div>
+				</div>
 			</div>
 			<div class="buttons-panel">
 				<!-- ko if: clipboardModel.enabled() -->
