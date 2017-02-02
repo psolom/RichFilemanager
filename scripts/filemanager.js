@@ -548,8 +548,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		$viewItems.selectable({
-            filter: "li:not(.directory-parent), tr:not(.directory-parent)",
-            cancel: ".directory-parent",
+            filter: "li:not(.directory-parent), tbody > tr:not(.directory-parent)",
+            cancel: ".directory-parent, thead",
             disabled: !config.manager.selection.enabled,
             appendTo: '.fm-container',
 			start: function(event, ui) {
