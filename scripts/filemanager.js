@@ -1856,7 +1856,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 this.active = (path === model.currentPath());
 
                 this.itemClass = function() {
-                    var cssClass = ['bc-item'];
+                    var cssClass = ['nav-item'];
                     if(bc_item.isRoot) {
                         cssClass.push('root');
                     }

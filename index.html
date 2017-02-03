@@ -36,10 +36,12 @@
 	<div class="fm-wrapper">
 		<div class="fm-header">
 			<div class="breadcrumbs">
-				<div class="bc-label" data-bind="text: lg().current_folder"></div>
+				<div class="nav-title" data-bind="text: lg().current_folder"></div>
 				<div data-bind="foreach: {data: breadcrumbsModel.items, as: 'bcItem'}">
 					<div data-bind="text: bcItem.label, click: bcItem.goto, css: bcItem.itemClass()"></div>
-					<div>/</div>
+					<!-- ko if: !bcItem.active -->
+					<div class="separator">&gt;</div>
+					<!-- /ko -->
 				</div>
 			</div>
 			<div class="buttons-panel">
