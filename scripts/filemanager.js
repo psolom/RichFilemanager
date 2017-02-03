@@ -1168,7 +1168,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				var n = model.itemsModel.objects()[cnt - 2].rdo.attributes.name;
 				//@todo: now I'm looking for element by it's name. It's sad, but there's only way I have found
 				var el = $('span.node_name:contains("' + n + '")');
-				if (offsetTop >= el.position().top && true !== model.treeModel.currentNode().done) {
+				if (offsetTop >= el.position().top && true !== model.treeModel.currentNode().isDone) {
 					model.treeModel.loadNodes(model.treeModel.currentNode());
 				}
 			};
