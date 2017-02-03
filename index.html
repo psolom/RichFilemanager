@@ -35,8 +35,12 @@
 	<div class="fm-loading-wrap"><!-- loading wrapper / removed when loaded --></div>
 	<div class="fm-wrapper">
 		<div class="fm-header">
-			<div class="current-path">
-				<h1 data-bind="text: lg().current_folder + currentPath()"></h1>
+			<div class="breadcrumbs">
+				<div class="bc-label" data-bind="text: lg().current_folder"></div>
+				<div data-bind="foreach: {data: breadcrumbsModel.items, as: 'bcItem'}">
+					<div data-bind="text: bcItem.label, click: bcItem.goto, css: bcItem.itemClass()"></div>
+					<div>/</div>
+				</div>
 			</div>
 			<div class="buttons-panel">
 				<!-- ko if: clipboardModel.enabled() -->
@@ -230,7 +234,7 @@
 							<form id="fm-js-editor-form">
 								<textarea id="fm-js-editor-content" name="content" data-bind="textInput: editor.content"></textarea>
 								<input type="hidden" name="mode" value="savefile" />
-								<input type="hidden" name="path" value="" data-bind="textInput: rdo.id" />
+								<input type="hidden" name="path" value="" data-bind="textInput: rdo().id" />
 								<button class="edition" type="button" data-bind="text: $root.lg().editor_quit, click: closeEditor"></button>
 								<button class="edition" type="button" data-bind="text: $root.lg().editor_save, click: saveFile"></button>
 							</form>
@@ -240,7 +244,7 @@
 
 					<div class="fm-preview-title">
 						<div id="main-title">
-							<h1 data-bind="text: rdo.attributes.name, attr: {title: rdo.id}"></h1>
+							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
 							<div id="tools">
 								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
 								<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}"></a>
@@ -250,21 +254,21 @@
 
 					<div class="fm-preview-details">
 						<table>
-							<tr data-bind="visible: cdo.sizeFormatted">
+							<tr data-bind="visible: cdo().sizeFormatted">
 								<td data-bind="text: $root.lg().size"></td>
-								<td data-bind="text: cdo.sizeFormatted"></td>
+								<td data-bind="text: cdo().sizeFormatted"></td>
 							</tr>
-							<tr data-bind="visible: cdo.dimensions">
+							<tr data-bind="visible: cdo().dimensions">
 								<td data-bind="text: $root.lg().dimensions"></td>
-								<td data-bind="text: cdo.dimensions"></td>
+								<td data-bind="text: cdo().dimensions"></td>
 							</tr>
-							<tr data-bind="visible: rdo.attributes.created">
+							<tr data-bind="visible: rdo().attributes.created">
 								<td data-bind="text: $root.lg().created"></td>
-								<td data-bind="text: rdo.attributes.created"></td>
+								<td data-bind="text: rdo().attributes.created"></td>
 							</tr>
-							<tr data-bind="visible: rdo.attributes.modified">
+							<tr data-bind="visible: rdo().attributes.modified">
 								<td data-bind="text: $root.lg().modified"></td>
-								<td data-bind="text: rdo.attributes.modified"></td>
+								<td data-bind="text: rdo().attributes.modified"></td>
 							</tr>
 						</table>
 					</div>

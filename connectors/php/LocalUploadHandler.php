@@ -69,7 +69,7 @@ class LocalUploadHandler extends BaseUploadHandler
         $file_path = $this->get_upload_path($file_name);
         if ($this->is_valid_image_file($file_path)) {
             $version = 'thumbnail';
-            if(isset($this->options['image_versions'][$version])) {
+            if (isset($this->options['image_versions'][$version])) {
                 $thumbnail_options = $this->options['image_versions'][$version];
                 $this->create_scaled_image($file_name, $version, $thumbnail_options);
                 // Free memory:
@@ -84,7 +84,7 @@ class LocalUploadHandler extends BaseUploadHandler
     }
 
     protected function get_unique_filename($file_path, $name, $size, $type, $error, $index, $content_range) {
-        if($this->fm->config['upload']['overwrite']) {
+        if ($this->fm->config['upload']['overwrite']) {
             return $name;
         }
         return parent::get_unique_filename($file_path, $name, $size, $type, $error, $index, $content_range);
@@ -141,7 +141,7 @@ class LocalUploadHandler extends BaseUploadHandler
             $file->error = $this->get_error_message('max_number_of_files');
             return false;
         }
-        if($this->fmData['images_only'] && !$this->is_valid_image_file($uploaded_file)) {
+        if($this->fmData['images_only'] && !$this->is_valid_image_name($file->name)) {
             $file->error = sprintf($this->fm->lang('UPLOAD_IMAGES_ONLY'));
             return false;
         }
@@ -149,8 +149,7 @@ class LocalUploadHandler extends BaseUploadHandler
         $max_height = @$this->options['max_height'];
         $min_width = @$this->options['min_width'];
         $min_height = @$this->options['min_height'];
-        if (($max_width || $max_height || $min_width || $min_height)
-            && preg_match($this->options['image_file_types'], $file->name)) {
+        if (($max_width || $max_height || $min_width || $min_height) && $this->is_valid_image_name($file->name)) {
             list($img_width, $img_height) = $this->get_image_size($uploaded_file);
 
             // If we are auto rotating the image by default, do the checks on

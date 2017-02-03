@@ -8,7 +8,7 @@
     background-color: #3F3F3B;
 }
 
-.fm-container .fm-header .current-path > h1 {
+.fm-container .fm-header .breadcrumbs {
     color: #fff;
 }
 

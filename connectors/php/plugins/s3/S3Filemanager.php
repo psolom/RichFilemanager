@@ -751,7 +751,8 @@ class S3Filemanager extends LocalFilemanager
 
 		Log::info('saved "' . $target_fullpath . '"');
 
-        return $item;
+        // get updated file info after save
+        return $this->get_file_info($target_path);
 	}
 
 	/**
