@@ -37,8 +37,24 @@
     float: left;
 }
 
-.fm-container .fm-header .breadcrumbs .bc-label {
-    margin-right: 5px;
+.fm-container .fm-header .breadcrumbs .separator {
+    color: #999999;
+    margin: 0 5px;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-title {
+    margin-right: 10px;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-item:not(.active) {
+    cursor: pointer;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-item.root {
+    width: 20px;
+    height: 20px;
+    background-image: url(../images/house.png);
+    background-size: 20px;
 }
 
 .fm-container .fm-header .buttons-panel {
