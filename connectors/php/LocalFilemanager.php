@@ -166,6 +166,7 @@ class LocalFilemanager extends BaseFilemanager
 		} else {
 			while (false !== ($file = readdir($handle))) {
 				if($file != "." && $file != "..") {
+					//@todo Skip files not in that dirty way
 					if ($lazyEnabled && $filesSkipped++ < $skipCount) continue;
 					array_push($files_list, $file);
 					if ($lazyEnabled && count($files_list) >= $lazyLimit) {

@@ -718,6 +718,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					},
 					onScroll: function() {
 						fmModel.itemsModel.isScrolling(false);
+						if (config.options.lazy)
+							fmModel.itemsModel.onCustomScrolling(this.mcs.topPct);
 					}
 				},
 				axis: "y",
@@ -1022,7 +1024,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				var path = targetNode ? targetNode.id : tree_model.treeData.id;
 				var filesCount = model.itemsModel.objects().length;
 				//All directories except root has additional element to go back to parent folder
-				if (!targetNode) filesCount++;
+				if (!targetNode) filesCount--;
 				if(targetNode) {
 					targetNode.isLoaded(false);
 				}
@@ -1043,11 +1045,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					data: {'skip': filesCount},
 					cache: false,
 					success: function(response) {
+						//WARNING!!! Now tree inside response.data.tree
 						if(response.data && response.data.tree) {
 							fmModel.currentPath(path);
                             fmModel.breadcrumbsModel.splitCurrent();
 							tree_model.currentNode(targetNode);
-							if (!targetNode || undefined === targetNode.done) {
+							if (!targetNode || undefined === targetNode.isDone) {
 								fmModel.itemsModel.setList(response.data.tree);
 							} else {
 								fmModel.itemsModel.extendList(response.data.tree);
@@ -1066,7 +1069,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							if(targetNode) {
 								targetNode.isLoaded(true);
 								tree_model.expandNode(targetNode);
-								targetNode.done = response.data.done;
+								targetNode.isDone = response.data.done;
 							}
 							expandFolderDefault(targetNode);
 						}
@@ -1339,6 +1342,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
 			this.isScrolling = ko.observable(false);
+			this.isDone = ko.observable(true);
 
 			this.createObject = function(resourceObject) {
 				return new ItemObject(resourceObject);
@@ -1356,7 +1360,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadList = function(path) {
 				model.loadingView(true);
-
+				var filesCount = model.itemsModel.objects().length;
+				//All directories except root has additional element to go back to parent folder
+				if (path !== '/') filesCount--;
 				var queryParams = {
 					mode: 'getfolder',
 					path: path
@@ -1369,12 +1375,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					type: 'GET',
 					url: buildConnectorUrl(queryParams),
 					dataType: "json",
+					data: {'skip': filesCount},
 					cache: false,
 					success: function(response) {
-						if(response.data) {
-							model.currentPath(path);
-                            model.breadcrumbsModel.splitCurrent();
-							model.itemsModel.setList(response.data);
+						if(response.data && response.data.tree) {
+							model.breadcrumbsModel.splitCurrent();
+							model.itemsModel.isDone(response.data.done);
+							if (model.currentPath() == path && model.itemsModel.objects().length > 0) {
+								model.itemsModel.extendList(response.data.tree);
+							} else {
+								model.currentPath(path);
+								model.itemsModel.setList(response.data.tree);
+							}
 						}
 						handleAjaxResponseErrors(response);
 					},
@@ -1623,6 +1635,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				return true;
 			}
+
+			this.onCustomScrolling = function(topPct){
+				if (topPct >= 95 && true !== model.itemsModel.isDone()) {
+					model.itemsModel.loadList(model.currentPath());
+				}
+			};
 		};
 
 		var TableViewModel = function() {
