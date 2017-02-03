@@ -708,7 +708,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				},
 				advanced: {
 					autoExpandHorizontalScroll:true,
-					updateOnContentResize: true
+					updateOnContentResize: true,
+                    updateOnSelectorChange: '.grid, .list'
 				},
 				callbacks: {
 					onScrollStart: function() {
