@@ -236,7 +236,8 @@ abstract class BaseFilemanager
                         break;
 
                     case 'getfolder':
-                        if($this->getvar('path')) {
+                        if($this->getvar('path') && $this->getvard('skip', true, 0)) {
+
                             $response = $this->actionGetFolder();
                         }
                         break;
@@ -441,6 +442,27 @@ abstract class BaseFilemanager
             }
             return true;
         }
+    }
+
+    /**
+     * Retrieve data from $_GET global var. Sets default value of variable if it wasn't set
+     * @param string $var
+     * @param bool $sanitize
+     * @param object $default
+     * @return bool
+     */
+    public function getvard($var, $sanitize = true, $default = null)
+    {
+        if(!isset($_GET[$var]) || $_GET[$var]=='') {
+            $this->get[$var] = $default;
+        } else {
+            if($sanitize) {
+                $this->get[$var] = $this->sanitize($_GET[$var]);
+            } else {
+                $this->get[$var] = $_GET[$var];
+            }
+        }
+        return true;
     }
 
     /**

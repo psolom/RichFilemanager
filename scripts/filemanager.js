@@ -696,6 +696,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					},
 					onScroll: function() {
 						fmModel.treeModel.isScrolling(false);
+						if (config.options.lazy)
+							fmModel.treeModel.onCustomScrolling(this.mcs.top * (-1) + this.mcs.content.parent().height());
 					}
 				},
 				axis: "yx"
@@ -717,6 +719,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					},
 					onScroll: function() {
 						fmModel.itemsModel.isScrolling(false);
+						if (config.options.lazy)
+							fmModel.itemsModel.onCustomScrolling(this.mcs.topPct);
 					}
 				},
 				axis: "y",
@@ -935,6 +939,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			var tree_model = this;
 			this.isScrolling = ko.observable(false);
 			this.selecledNode = ko.observable(null);
+			this.currentNode = ko.observable(null);
 
 			this.options = {
 				showLine: true,
@@ -1018,6 +1023,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadNodes = function(targetNode, refresh) {
 				var path = targetNode ? targetNode.id : tree_model.treeData.id;
+				var filesCount = model.itemsModel.objects().length;
+				//All directories except root has additional element to go back to parent folder
+				if (!targetNode) filesCount--;
 				if(targetNode) {
 					targetNode.isLoaded(false);
 				}
@@ -1035,15 +1043,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					type: 'GET',
 					url: buildConnectorUrl(queryParams),
 					dataType: "json",
+					data: {'skip': filesCount},
 					cache: false,
 					success: function(response) {
-						if(response.data) {
+						//WARNING!!! Now tree inside response.data.tree
+						if(response.data && response.data.tree) {
 							fmModel.currentPath(path);
                             fmModel.breadcrumbsModel.splitCurrent();
-							fmModel.itemsModel.setList(response.data);
+							tree_model.currentNode(targetNode);
+							if (!targetNode || undefined === targetNode.isDone) {
+								fmModel.itemsModel.setList(response.data.tree);
+							} else {
+								fmModel.itemsModel.extendList(response.data.tree);
+							}
 
 							var nodes = [];
-							$.each(response.data, function(i, resourceObject) {
+							$.each(response.data.tree, function(i, resourceObject) {
 								var nodeObject = tree_model.createNode(resourceObject);
 								nodes.push(nodeObject);
 							});
@@ -1055,6 +1070,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							if(targetNode) {
 								targetNode.isLoaded(true);
 								tree_model.expandNode(targetNode);
+								targetNode.isDone = response.data.done;
 							}
 							expandFolderDefault(targetNode);
 						}
@@ -1143,6 +1159,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					$.each(node.children(), function(index, cNode) {
 						tree_model.actualizeNodeObject(cNode, oldFolder, newFolder);
 					});
+				}
+			};
+
+			this.onCustomScrolling = function(offsetTop){
+				var cnt = model.itemsModel.objects().length;
+				//@todo I picked the second object since end, because we have cnt - 1 files and
+				//1 element for parent directory.
+				var n = model.itemsModel.objects()[cnt - 2].rdo.attributes.name;
+				//@todo: now I'm looking for element by it's name. It's sad, but there's only way I have found
+				var el = $('span.node_name:contains("' + n + '")');
+				if (offsetTop >= el.position().top && true !== model.treeModel.currentNode().isDone) {
+					model.treeModel.loadNodes(model.treeModel.currentNode());
 				}
 			};
 
@@ -1315,6 +1343,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
 			this.isScrolling = ko.observable(false);
+			this.isDone = ko.observable(true);
 
 			this.createObject = function(resourceObject) {
 				return new ItemObject(resourceObject);
@@ -1332,7 +1361,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadList = function(path) {
 				model.loadingView(true);
-
+				var filesCount = model.itemsModel.objects().length;
+				//All directories except root has additional element to go back to parent folder
+				if (path !== '/') filesCount--;
 				var queryParams = {
 					mode: 'getfolder',
 					path: path
@@ -1345,12 +1376,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					type: 'GET',
 					url: buildConnectorUrl(queryParams),
 					dataType: "json",
+					data: {'skip': filesCount},
 					cache: false,
 					success: function(response) {
-						if(response.data) {
-							model.currentPath(path);
-                            model.breadcrumbsModel.splitCurrent();
-							model.itemsModel.setList(response.data);
+						if(response.data && response.data.tree) {
+							model.breadcrumbsModel.splitCurrent();
+							model.itemsModel.isDone(response.data.done);
+							if (model.currentPath() == path && model.itemsModel.objects().length > 0) {
+								model.itemsModel.extendList(response.data.tree);
+							} else {
+								model.currentPath(path);
+								model.itemsModel.setList(response.data.tree);
+							}
 						}
 						handleAjaxResponseErrors(response);
 					},
@@ -1386,6 +1423,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					objects.push(items_model.createObject(resourceObject));
 				});
 				model.itemsModel.objects(objects);
+				model.itemsModel.sortObjects();
+				model.loadingView(false);
+			};
+
+			this.extendList = function(dataObjects) {
+				var objects = [];
+				$.each(dataObjects, function (i, resourceObject) {
+					objects.push(items_model.createObject(resourceObject));
+				});
+				ko.utils.arrayPushAll(model.itemsModel.objects(), objects);
 				model.itemsModel.sortObjects();
 				model.loadingView(false);
 			};
@@ -1589,6 +1636,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				return true;
 			}
+
+			this.onCustomScrolling = function(topPct){
+				if (topPct >= 95 && true !== model.itemsModel.isDone()) {
+					model.itemsModel.loadList(model.currentPath());
+				}
+			};
 		};
 
 		var TableViewModel = function() {

@@ -144,7 +144,12 @@ class LocalFilemanager extends BaseFilemanager
 		$files_list = [];
         $response_data = [];
         $target_path = $this->get['path'];
+		$skipCount = $this->get['skip'];
+		$filesSkipped = 0;
 		$target_fullpath = $this->getFullPath($target_path, true);
+		$lazyEnabled = $this->config['options']['lazy'];
+		$lazyLimit = $this->config['options']['lazyLimit'];
+		$lazyFlag = true;
 		Log::info('opening folder "' . $target_fullpath . '"');
 
 		if(!is_dir($target_fullpath)) {
@@ -161,7 +166,13 @@ class LocalFilemanager extends BaseFilemanager
 		} else {
 			while (false !== ($file = readdir($handle))) {
 				if($file != "." && $file != "..") {
+					//@todo Skip files not in that dirty way
+					if ($lazyEnabled && $filesSkipped++ < $skipCount) continue;
 					array_push($files_list, $file);
+					if ($lazyEnabled && count($files_list) >= $lazyLimit) {
+						$lazyFlag = false;
+						break;
+					}
 				}
 			}
 			closedir($handle);
@@ -179,7 +190,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-		return $response_data;
+		return array('tree' => $response_data, 'done' => $lazyFlag);
 	}
 
 	/**
