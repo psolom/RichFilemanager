@@ -78,6 +78,16 @@ $config = [
          * For the full list of capabilities @see BaseFilemanager::actions_list
          */
         "capabilities" => false,
+        /**
+         * Default value "true".
+         * Files downloads in lazy way
+         */
+        "lazy" => true,
+        /**
+         * Default value "100".
+         * Count of files per one lazy operation
+         */
+        "lazyLimit" => 100
     ],
     /**
      * Security section
