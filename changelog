@@ -1,3 +1,16 @@
+Version 2.2.1
+---------------------------
+- breadcrumbs instead of string for the current path #96;
+- improved determining of active context during "select" action;
+- implemented postMessage communication capability on "select" action;
+- demo page new examples: simple js window, fancybox iframe, tinyMCE 4 iframe;
+- updated translations in [el] and [fr] language files;
+- bugfix: scrollbar issues #98;
+- bugfix: sorting in list view doesn't work #97;
+- bugfix: file and folder info isn't updated after the file has been modified #95;
+- bugfix: (PHP connector) images uploads are failed in case "imagesOnly" configuration option is enabled #74;
+
+
 Version 2.2.0
 ---------------------------
 - clipboard feature: copy, cut, paste, clear (header panel and context menu) #80;
