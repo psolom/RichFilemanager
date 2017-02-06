@@ -1041,11 +1041,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					queryParams.type = $.urlParam('type');
 				}
 
+				var data = {};
+				if (model.currentPath() === path) data['skip'] = filesCount;
+
 				$.ajax({
 					type: 'GET',
 					url: buildConnectorUrl(queryParams),
 					dataType: "json",
-					data: {'skip': filesCount},
+					data: data,
 					cache: false,
 					success: function(response) {
 						//WARNING!!! Now tree inside response.data.tree
@@ -1374,11 +1377,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					queryParams.type = $.urlParam('type');
 				}
 
+				var data = {};
+				if (model.currentPath() === path) data['skip'] = filesCount;
+
 				$.ajax({
 					type: 'GET',
 					url: buildConnectorUrl(queryParams),
 					dataType: "json",
-					data: {'skip': filesCount},
+					data: data,
 					cache: false,
 					success: function(response) {
 						if(response.data && response.data.tree) {
