@@ -1027,7 +1027,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				var path = targetNode ? targetNode.id : tree_model.treeData.id;
 				var filesCount = model.itemsModel.objects().length;
 				//All directories except root has additional element to go back to parent folder
-				if (!targetNode) filesCount--;
+				if (targetNode) filesCount--;
 				if(targetNode) {
 					targetNode.isLoaded(false);
 				}
