@@ -304,7 +304,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// localize messages based on culture var or from URL
 	var localize = function() {
 		var langCode = $.urlParam('langCode');
-		var langPath = fm.settings.baseUrl + config.routes.languages;
+		var langPath = fm.settings.baseUrl + config.paths.languages;
 
 		function buildLangPath(code) {
 			return langPath + code + '.json';
@@ -352,10 +352,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         	secondary = [];
 
         // theme defined in configuration file
-        primary.push(config.routes.themes + config.options.theme + '/styles/theme.css');
+        primary.push(config.paths.themes + config.options.theme + '/styles/theme.css');
 
         if(config.customScrollbar.enabled) {
-            primary.push(config.routes.styles + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
+            primary.push(config.paths.styles + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
             primary.push(config.paths.scripts + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
         }
 
@@ -367,12 +367,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if(config.viewer.editable.enabled) {
 			var editorTheme = config.viewer.editable.theme;
             if (editorTheme && editorTheme !== 'default') {
-                secondary.push(config.routes.styles + 'CodeMirror/theme/' + editorTheme + '.css');
+                secondary.push(config.paths.styles + 'CodeMirror/theme/' + editorTheme + '.css');
             }
-            secondary.push(config.routes.styles + 'CodeMirror/lib/codemirror.css');
+            secondary.push(config.paths.styles + 'CodeMirror/lib/codemirror.css');
             secondary.push(config.paths.scripts + 'CodeMirror/lib/codemirror.js');
             secondary.push(config.paths.scripts + 'CodeMirror/addon/selection/active-line.js');
-            secondary.push(config.routes.styles + 'CodeMirror/addon/display/fullscreen.css');
+            secondary.push(config.paths.styles + 'CodeMirror/addon/display/fullscreen.css');
             secondary.push(config.paths.scripts + 'CodeMirror/addon/display/fullscreen.js');
 		}
 
@@ -388,7 +388,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/jquery.fileupload-validate.js');
 
 			if(config.upload.multiple) {
-                secondary.push(config.routes.styles + 'jQuery-File-Upload/css/dropzone.css');
+                secondary.push(config.paths.styles + 'jQuery-File-Upload/css/dropzone.css');
 			}
 		}
 
@@ -900,7 +900,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 model.previewFile(true);
 
 				// zeroClipboard code
-				ZeroClipboard.config({swfPath: fm.settings.baseUrl + config.routes.flash + 'zeroclipboard/dist/ZeroClipboard.swf'});
+				ZeroClipboard.config({swfPath: fm.settings.baseUrl + config.paths.flash + 'zeroclipboard/dist/ZeroClipboard.swf'});
 				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
 				client.on("ready", function(readyEvent) {
 					client.on("aftercopy", function(event) {
@@ -2128,7 +2128,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var loadTemplate = function(id, data) {
 		return $.ajax({
 			type: 'GET',
-			url: fm.settings.baseUrl + config.routes.templates + id + '.html',
+			url: fm.settings.baseUrl + config.paths.templates + id + '.html',
 			error: handleAjaxError
 		});
 	};
@@ -3380,7 +3380,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							var $template = $(tmpl('tmpl-upload-item', {
 								file: file,
 								lang: lg,
-								imagesPath: fm.settings.baseUrl + config.routes.images
+								imagesPath: fm.settings.baseUrl + config.paths.images
 							}));
 							file.context = $template;
 							$template.find('.buttons').data(data);
