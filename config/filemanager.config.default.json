@@ -170,7 +170,7 @@
         "extra_js": [],
         "extra_js_async": true
     },
-    "routes": {
+    "paths": {
         "flash": "/scripts/",
         "languages": "/languages/",
         "images": "/scripts/jQuery-File-Upload/img",

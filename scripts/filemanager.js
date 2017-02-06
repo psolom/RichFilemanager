@@ -356,7 +356,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         if(config.customScrollbar.enabled) {
             primary.push(config.routes.styles + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
-            primary.push(config.routes.scripts + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+            primary.push(config.paths.scripts + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
         }
 
         // add callback on loaded assets and inject primary ones
@@ -370,22 +370,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 secondary.push(config.routes.styles + 'CodeMirror/theme/' + editorTheme + '.css');
             }
             secondary.push(config.routes.styles + 'CodeMirror/lib/codemirror.css');
-            secondary.push(config.routes.scripts + 'CodeMirror/lib/codemirror.js');
-            secondary.push(config.routes.scripts + 'CodeMirror/addon/selection/active-line.js');
+            secondary.push(config.paths.scripts + 'CodeMirror/lib/codemirror.js');
+            secondary.push(config.paths.scripts + 'CodeMirror/addon/selection/active-line.js');
             secondary.push(config.routes.styles + 'CodeMirror/addon/display/fullscreen.css');
-            secondary.push(config.routes.scripts + 'CodeMirror/addon/display/fullscreen.js');
+            secondary.push(config.paths.scripts + 'CodeMirror/addon/display/fullscreen.js');
 		}
 
 		if(!config.options.browseOnly) {
 			// Loading jquery file upload library
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/canvas-to-blob.min.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/load-image.all.min.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/jquery.iframe-transport.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/jquery.fileupload.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/jquery.fileupload-process.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/jquery.fileupload-image.js');
-            secondary.push(config.routes.scripts + 'jQuery-File-Upload/js/jquery.fileupload-validate.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/canvas-to-blob.min.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/load-image.all.min.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/jquery.iframe-transport.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/jquery.fileupload.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/jquery.fileupload-process.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/jquery.fileupload-image.js');
+            secondary.push(config.paths.scripts + 'jQuery-File-Upload/js/jquery.fileupload-validate.js');
 
 			if(config.upload.multiple) {
                 secondary.push(config.routes.styles + 'jQuery-File-Upload/css/dropzone.css');
@@ -393,7 +393,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
 		if(config.options.charsLatinOnly) {
-            secondary.push(config.routes.scripts + 'speakingurl/speakingurl.min.js');
+            secondary.push(config.paths.scripts + 'speakingurl/speakingurl.min.js');
 		}
 
 		if(secondary.length) {
@@ -3597,44 +3597,44 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				currentMode = 'default';
 			}
 			if (extension === 'js') {
-                assets.push(config.routes.scripts + 'CodeMirror/mode/javascript/javascript.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/javascript/javascript.js');
 				currentMode = 'javascript';
 			}
 			if (extension === 'css') {
-                assets.push(config.routes.scripts + 'CodeMirror/mode/css/css.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/css/css.js');
 				currentMode = 'css';
 			}
 			if (extension === 'html') {
-                assets.push(config.routes.scripts + 'CodeMirror/mode/xml/xml.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/xml/xml.js');
 				currentMode = 'text/html';
 			}
 			if (extension === 'xml') {
-                assets.push(config.routes.scripts + 'CodeMirror/mode/xml/xml.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/xml/xml.js');
 				currentMode = 'application/xml';
 			}
 			if (extension === 'php') {
-                assets.push(config.routes.scripts + 'CodeMirror/mode/htmlmixed/htmlmixed.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/xml/xml.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/javascript/javascript.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/css/css.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/clike/clike.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/php/php.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/xml/xml.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/javascript/javascript.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/css/css.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/clike/clike.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/php/php.js');
 				currentMode = 'application/x-httpd-php';
 			}
 			if (extension === 'sql') {
-                assets.push(config.routes.scripts + 'CodeMirror/mode/sql/sql.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/sql/sql.js');
 				currentMode = 'text/x-mysql';
 			}
 			if (extension === 'md') {
-                assets.push(config.routes.scripts + 'CodeMirror/addon/mode/overlay.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/xml/xml.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/markdown/markdown.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/gfm/gfm.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/javascript/javascript.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/css/css.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/htmlmixed/htmlmixed.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/clike/clike.js');
-                assets.push(config.routes.scripts + 'CodeMirror/mode/meta.js');
+                assets.push(config.paths.scripts + 'CodeMirror/addon/mode/overlay.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/xml/xml.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/markdown/markdown.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/gfm/gfm.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/javascript/javascript.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/css/css.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/clike/clike.js');
+                assets.push(config.paths.scripts + 'CodeMirror/mode/meta.js');
 				currentMode = 'gfm';
 			}
 		}
