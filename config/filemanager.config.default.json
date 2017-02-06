@@ -172,8 +172,10 @@
     },
     "routes": {
         "flash": "/scripts/",
+        "languages": "/languages/",
         "scripts": "/scripts/",
         "styles": "/scripts/",
+        "themes": "/themes/",
         "templates": "/scripts/templates/"
     },
     "url": "https://github.com/servocoder/RichFilemanager",

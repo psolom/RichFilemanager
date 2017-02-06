@@ -302,7 +302,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// localize messages based on culture var or from URL
 	var localize = function() {
 		var langCode = $.urlParam('langCode');
-		var langPath = fm.settings.baseUrl + '/languages/';
+		var langPath = fm.settings.baseUrl + config.routes.languages;
 
 		function buildLangPath(code) {
 			return langPath + code + '.json';
@@ -350,11 +350,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         	secondary = [];
 
         // theme defined in configuration file
-        primary.push('/themes/' + config.options.theme + '/styles/theme.css');
+        primary.push(config.routes.themes + config.options.theme + '/styles/theme.css');
 
         if(config.customScrollbar.enabled) {
-            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
-            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+            primary.push(config.routes.styles + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
+            primary.push(config.routes.scripts + 'custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
         }
 
         // add callback on loaded assets and inject primary ones
