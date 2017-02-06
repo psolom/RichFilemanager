@@ -29,7 +29,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 */
 	var defaults = {
 		baseUrl: '.',	// relative path to the FM plugin folder
-		config: {},		// configuration options
+		config: {
+			'url': '/config/',
+		},		// configuration options
         callbacks: {
             beforeCreateImageUrl: function (resourceObject, url) {
                 return url;
@@ -2092,12 +2094,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		if(type === 'user') {
 			if($.urlParam('config') != 0) {
-				url = fm.settings.baseUrl + '/config/' + $.urlParam('config');
+				url = fm.settings.baseUrl + fm.settings.config.url + $.urlParam('config');
 			} else {
-				url = fm.settings.baseUrl + '/config/filemanager.config.json';
+				url = fm.settings.baseUrl + fm.settings.config.url + 'filemanager.config.json';
 			}
 		} else {
-			url = fm.settings.baseUrl + '/config/filemanager.config.default.json';
+			url = fm.settings.baseUrl + fm.settings.config.url + 'filemanager.config.default.json';
 		}
 
 		return $.ajax({
@@ -3378,7 +3380,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							var $template = $(tmpl('tmpl-upload-item', {
 								file: file,
 								lang: lg,
-								imagesPath: fm.settings.baseUrl + '/scripts/jQuery-File-Upload/img'
+								imagesPath: fm.settings.baseUrl + config.routes.images
 							}));
 							file.context = $template;
 							$template.find('.buttons').data(data);

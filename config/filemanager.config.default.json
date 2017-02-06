@@ -173,6 +173,7 @@
     "routes": {
         "flash": "/scripts/",
         "languages": "/languages/",
+        "images": "/scripts/jQuery-File-Upload/img",
         "scripts": "/scripts/",
         "styles": "/scripts/",
         "themes": "/themes/",
