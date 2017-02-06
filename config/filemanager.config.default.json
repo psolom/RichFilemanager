@@ -170,6 +170,12 @@
         "extra_js": [],
         "extra_js_async": true
     },
+    "routes": {
+        "flash": "/scripts/",
+        "scripts": "/scripts/",
+        "styles": "/scripts/",
+        "templates": "/scripts/templates/"
+    },
     "url": "https://github.com/servocoder/RichFilemanager",
     "version": "2.2.1"
 }
