@@ -2066,11 +2066,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		// handle folders position
 		var folderItems = [];
+		var parentItem;
 		var i = items.length;
 		while(i--) {
 			if(items[i].rdo.type === 'folder') {
 				folderItems.push(items[i]);
 				items.splice(i, 1);
+			} else if(items[i].rdo.type === 'parent') {
+				parentItem = items.splice(i, 1)[0];
 			}
 		}
 		if(config.options.folderPosition !== 'top') {
@@ -2083,6 +2086,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				items.push(folderItems[k]);
 			}
 		}
+		if(parentItem) items.unshift(parentItem);
 		return items;
 	};
 
