@@ -1388,8 +1388,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					cache: false,
 					success: function(response) {
 						if(response.data && response.data.tree) {
-                            model.currentPath(path);
-							model.breadcrumbsModel.splitCurrent();
 							model.itemsModel.isDone(response.data.done);
 							if (model.currentPath() == path && model.itemsModel.objects().length > 0) {
 								model.itemsModel.extendList(response.data.tree);
@@ -1397,6 +1395,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 								model.currentPath(path);
 								model.itemsModel.setList(response.data.tree);
 							}
+							model.currentPath(path);
+							model.breadcrumbsModel.splitCurrent();
 						}
 						handleAjaxResponseErrors(response);
 					},
