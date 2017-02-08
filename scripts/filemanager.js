@@ -1388,6 +1388,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					cache: false,
 					success: function(response) {
 						if(response.data && response.data.tree) {
+                            model.currentPath(path);
 							model.breadcrumbsModel.splitCurrent();
 							model.itemsModel.isDone(response.data.done);
 							if (model.currentPath() == path && model.itemsModel.objects().length > 0) {
