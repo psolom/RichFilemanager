@@ -769,6 +769,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.viewMode = ko.observable(config.options.defaultViewMode);
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
+		this.canCreateFolders = ko.observable(config.options.canCreateFolders);
 
         this.previewFile.subscribe(function (value) {
             if (!value) {

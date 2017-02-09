@@ -80,11 +80,13 @@
 						</button>
 					</form>
 				</div>
+				<!-- ko if: canCreateFolders() -->
 				<div class="button-group create-controls">
 					<button class="fm-btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg().new_folder"></span>
 					</button>
 				</div>
+				<!-- /ko -->
 				<!-- /ko -->
 				<div class="button-group viewmode-controls">
 					<button class="fm-btn-grid no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">

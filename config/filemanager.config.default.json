@@ -9,6 +9,7 @@
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
+        "canCreateFolders": true,
         "clipboard": true,
         "searchBox": true,
         "listFiles": true,
