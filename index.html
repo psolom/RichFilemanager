@@ -215,7 +215,7 @@
 						<!-- ko ifnot: editor.enabled() -->
 
 						<!-- ko if: viewer().type === 'default' -->
-						<img src="" data-bind="css: previewIconClass()" />
+						<img src="" data-bind="css: previewIconClass(), attr: {src: null}" />
 						<!-- /ko -->
 						<!-- ko if: viewer().type === 'image' -->
 						<img src="" data-bind="css: previewIconClass(), attr: {src: viewer().url}" />
