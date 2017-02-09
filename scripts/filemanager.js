@@ -882,7 +882,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				if(isMarkdownFile(filename) && config.viewer.markdown.enabled === true) {
 					viewerObject.type = 'markdown';
 					// Launch AJAX to retrieve .md file contents for rendering:
-					viewMarkdownItem(preview_item.rdo);
+					viewMarkdownItem(preview_item.rdo());
 				}
 
 				// Set whether or not the "Edit" button is displayed in the preview details:
@@ -957,9 +957,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.closeEditor = function() {
 				preview_item.editor.enabled(false);
-		        if (isMarkdownFile(preview_item.rdo.attributes.name) && config.viewer.markdown.enabled) {
+		        if (isMarkdownFile(preview_item.rdo().attributes.name) && config.viewer.markdown.enabled) {
 					// Restore the last-saved markdown content, because the user did not "Save" changes:
-					renderMarkdownHTML(preview_item.rdo, preview_item.rdo.markdownText)
+					renderMarkdownHTML(preview_item.rdo(), preview_item.rdo().markdownText)
 		        }
 			};
 
@@ -3805,9 +3805,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             editor.setOption("mode", currentMode);
 
             // If editing Markdown side-by-side, do live render updates:
-            if (isMarkdownFile(fmModel.previewModel.rdo.attributes.name) && config.viewer.markdown.enabled) {
+            if (isMarkdownFile(fmModel.previewModel.rdo().attributes.name) && config.viewer.markdown.enabled) {
 				editor.on("changes", function(cm, change) {
-					var resourceObject = fmModel.previewModel.rdo;
+					var resourceObject = fmModel.previewModel.rdo();
 					var markdownText = fmModel.previewModel.editor.codeMirror().getValue();
 					renderMarkdownHTML(resourceObject, markdownText);
 				});
