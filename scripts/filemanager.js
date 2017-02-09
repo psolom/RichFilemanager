@@ -1056,7 +1056,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             fmModel.breadcrumbsModel.splitCurrent();
 							tree_model.currentNode(targetNode);
 							if (!targetNode || undefined === targetNode.isDone) {
-								fmModel.itemsModel.setList(response.data.tree);
+								fmModel.itemsModel.setList(response.data.tree || refresh);
 							} else {
 								fmModel.itemsModel.extendList(response.data.tree);
 							}
@@ -1169,8 +1169,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.onCustomScrolling = function(offsetTop){
 				var cnt = model.treeModel.currentNode().children().length;
-				//@todo I picked the second object since end, because we have cnt - 1 files and
-				//1 element for parent directory.
 				var n = model.treeModel.currentNode().children()[cnt - 1].rdo.attributes.name;
 				//@todo: now I'm looking for element by it's name. It's sad, but there's only way I have found
 				var el = $('span.node_name:contains("' + n + '")');
