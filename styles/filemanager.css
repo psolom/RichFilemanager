@@ -687,7 +687,22 @@
 
 .fm-container .fm-preview .fm-preview-editor div.CodeMirror * {
     font-family: monospace;
-    line-height: 15px;
+    line-height: 17px;
+    font-size: 14px;
+}
+
+.fm-container .fm-preview .fm-preview-editor-side-by-side div.CodeMirror {
+    float: left;
+    text-align: left;
+    width: 49%;
+    border: 1px solid #eee;
+    height: auto;
+}
+
+.fm-container .fm-preview .fm-preview-editor-side-by-side div.CodeMirror * {
+    font-family: monospace;
+    line-height: 17px;
+    font-size: 14px;
 }
 
 .fm-container .fm-preview div.CodeMirror.CodeMirror-fullscreen {

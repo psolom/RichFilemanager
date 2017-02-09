@@ -203,11 +203,13 @@
 					</div>
 
 					<div class="fm-preview-viewer">
+						<!-- ko ifnot: editor.enabled() -->
+
+						<!-- ko if: viewer().type === 'default' -->
+						<img src="" data-bind="css: previewIconClass()" />
+						<!-- /ko -->
 						<!-- ko if: viewer().type === 'image' -->
 						<img src="" data-bind="css: previewIconClass(), attr: {src: viewer().url}" />
-						<!-- /ko -->
-						<!-- ko if: viewer().type === 'editable' -->
-						<img src="" data-bind="css: previewIconClass(), attr: {src: viewer().url}, visible: !editor.enabled()" />
 						<!-- /ko -->
 						<!-- ko if: viewer().type === 'audio' -->
 						<audio src="" controls="controls" data-bind="attr: {src: viewer().url}"></audio>
@@ -221,17 +223,26 @@
 						<!-- ko if: viewer().type === 'google' -->
 						<iframe src="" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
 						<!-- /ko -->
+						<!-- ko if: viewer().type === 'markdown' -->
+						<div data-bind="css: previewMarkdownClass(), html: viewer().renderedHTML"></div>
+						<!-- /ko -->
 
+						<!-- /ko -->
 						<!-- ko if: editor.enabled() -->
-						<div class="fm-preview-editor">
+
+						<div data-bind="css: previewEditorClass()">
 							<form id="fm-js-editor-form">
 								<textarea id="fm-js-editor-content" name="content" data-bind="textInput: editor.content"></textarea>
+								<!-- ko if: viewer().type === 'markdown' -->
+								<div data-bind="css: previewMarkdownClass(), html: viewer().renderedHTML"></div>
+								<!-- /ko -->
 								<input type="hidden" name="mode" value="savefile" />
 								<input type="hidden" name="path" value="" data-bind="textInput: rdo.id" />
 								<button class="edition" type="button" data-bind="text: $root.lg().quit_editor, click: closeEditor"></button>
 								<button class="edition" type="button" data-bind="text: $root.lg().save, click: saveFile"></button>
 							</form>
 						</div>
+
 						<!-- /ko -->
 					</div>
 
@@ -239,7 +250,7 @@
 						<div id="main-title">
 							<h1 data-bind="text: rdo.attributes.name, attr: {title: rdo.id}"></h1>
 							<div id="tools">
-								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
+								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().edit}, click: editFile, visible: viewer().isEditable && !editor.enabled()"></a>
 								<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}"></a>
 							</div>
 						</div>
@@ -348,7 +359,7 @@
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->
