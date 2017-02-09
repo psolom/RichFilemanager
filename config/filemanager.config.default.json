@@ -4,6 +4,7 @@
         "culture": "en",
         "theme": "flat-dark",
         "defaultViewMode": "grid",
+        "filemanagerMode": "split",
         "localizeGUI": true,
         "showFullPath": false,
         "showTitleAttr": false,

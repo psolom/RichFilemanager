@@ -1107,7 +1107,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					node.parentNode(targetNode);
 				});
 				var allNodes = targetNode.children().concat(newNodes);
-				targetNode.children(sortItems(allNodes));
+				targetNode.children(sortItems(allNodes, config.options.filemanagerMode === 'split' ? 'files' : ''));
 			};
 
 			this.expandNode = function(node) {
@@ -1474,7 +1474,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.sortObjects = function() {
-				var sortedList = sortItems(items_model.objects());
+				var sortedList = sortItems(items_model.objects(), config.options.filemanagerMode === 'split' ? 'folders' : '');
 				items_model.objects(sortedList);
 			};
 
@@ -1953,13 +1953,45 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 Helper functions
 	 ---------------------------------------------------------*/
 
-	var sortItems = function(items) {
+	var sortItems = function(items, exclude) {
 		var sortOrder = (fmModel.viewMode() === 'list') ? fmModel.itemsModel.listSortOrder() : configSortOrder;
 		var sortParams = {
 			natural: true,
 			order: sortOrder === 'asc' ? 1 : -1,
 			cases: false
 		};
+
+		var folderItems = [];
+		var parentItem;
+		var i = items.length;
+		while(i--) {
+			if(items[i].rdo.type === 'folder') {
+				folderItems.push(items[i]);
+				items.splice(i, 1);
+			} else if(items[i].rdo.type === 'parent') {
+				parentItem = items.splice(i, 1)[0];
+			}
+		}
+		switch (exclude) {
+			case 'folders':
+				break;
+			case 'files':
+				items = folderItems;
+				break;
+			default:
+				if (config.options.folderPosition !== 'top') {
+					folderItems.reverse();
+				}
+				for (var k = 0, fl = folderItems.length; k < fl; k++) {
+					if (config.options.folderPosition === 'top') {
+						items.unshift(folderItems[k]);
+					} else {
+						items.push(folderItems[k]);
+					}
+				}
+				if (parentItem) items.unshift(parentItem);
+				break;
+		}
 
 		items.sort(function(a, b) {
 			if(a.rdo.type === 'parent' || b.rdo.type === 'parent') {
@@ -2064,30 +2096,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 			return tz;
 		}
-
-		// handle folders position
-		var folderItems = [];
-		var parentItem;
-		var i = items.length;
-		while(i--) {
-			if(items[i].rdo.type === 'folder') {
-				folderItems.push(items[i]);
-				items.splice(i, 1);
-			} else if(items[i].rdo.type === 'parent') {
-				parentItem = items.splice(i, 1)[0];
-			}
-		}
-		if(config.options.folderPosition !== 'top') {
-			folderItems.reverse();
-		}
-		for(var k = 0, fl = folderItems.length; k < fl; k++) {
-			if(config.options.folderPosition === 'top') {
-				items.unshift(folderItems[k]);
-			} else {
-				items.push(folderItems[k]);
-			}
-		}
-		if(parentItem) items.unshift(parentItem);
 		return items;
 	};
 
