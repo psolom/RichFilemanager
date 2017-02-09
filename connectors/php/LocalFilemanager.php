@@ -682,7 +682,9 @@ class LocalFilemanager extends BaseFilemanager
 
 		Log::info('saved "' . $target_fullpath . '"');
 
-        return $item;
+		// get updated file info after save
+        clearstatcache();
+        return $this->get_file_info($target_path);
 	}
 
 	/**

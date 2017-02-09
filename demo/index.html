@@ -3,7 +3,8 @@
 
 <head>
 	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-	<link rel="stylesheet" type="text/css" href="assets/bootstrap-3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.css">
 
 	<style type="text/css">
 		.fm-modal {
@@ -25,6 +26,12 @@
 
 <body>
 	<div class="input-append">
+		<input id="js-window-input" type="text" value="">
+		<button id="js-window-button">SELECT</button>
+	</div>
+
+
+	<div class="input-append">
 		<input id="fm-bs-modal-input" type="text" value="">
 		<a data-toggle="modal" data-target="#fm-bs-modal" class="btn" type="button">Select</a>
 	</div>
@@ -43,62 +50,190 @@
 		</div>
 	</div>
 
+
+	<div class="input-append">
+		<input id="fancybox-input" type="text" value="">
+		<a id="fancybox-button" class="btn" type="button" href="./../index.html?context=fancybox">Select</a>
+	</div>
+
+
 	<form>
-		<textarea name="editor1" id="editor1" rows="10" cols="80">
+		<textarea name="editor_ckeditor" id="editor_ckeditor" rows="10" cols="80">
 			This is my textarea to be replaced with CKEditor.
 		</textarea>
 	</form>
 
+
+	<form method="post">
+		<textarea name="editor_tinymce4" id="editor_tinymce4" rows="10" cols="80">
+			This is my textarea to be replaced with TinyMCE 4 editor.
+		</textarea>
+	</form>
+
+
 	<script type="text/javascript" src="assets/jquery-1.11.3.min.js"></script>
-	<script type="text/javascript" src="assets/ckeditor/ckeditor.js"></script>
-	<script type="text/javascript" src="assets/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+	<script type="text/javascript" src="//cdn.ckeditor.com/4.6.2/standard/ckeditor.js"></script>
+	<script type="text/javascript" src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.js"></script>
+	<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 
 	<script type="text/javascript">
+
 		$(function() {
-			//$('#fm-bs-modal').on('shown.bs.modal',function() {
-			$('#fm-bs-modal').on('show.bs.modal',function() {
-				$(this).find('iframe').attr('src', './../index.html?context=bootstrap');
-			});
+			/*---------------------------------------------------------
+			 Simple javascript window example
+			 ---------------------------------------------------------*/
+//            $('#js-window-button').on('click', function() {
+//                window.open("./../index.html?context=js-window", 'targetWindow',
+//                    'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800, height=800');
+//            });
 
-            CKEDITOR.replace('editor1');
+			$('#js-window-button').on('click', function() {
+                var opener = window.open("./../index.html", 'targetWindow',
+                    'toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes,width=800, height=800');
 
-            CKEDITOR.on('dialogDefinition', function (event)
-            {
-                var editor = event.editor;
-                var dialogDefinition = event.data.definition;
-                var dialogName = event.data.name;
+                function handlePostMessage(e) {
+                    var data = e.originalEvent.data;
+                    console.log('js-data', data);
+                    if (data.source === 'richfilemanager') {
+						$('#js-window-input').val(data.preview_url);
+                        opener.close();
+                    }
 
-                var cleanUpFuncRef = CKEDITOR.tools.addFunction(function ()
-                {
-                    // Do the clean-up of filemanager here (called when an image was selected or cancel was clicked)
-                    $('#fm-iframe').remove();
-                    $("body").css("overflow-y", "scroll");
-                });
+                    // remove an event handler
+                    $(window).off('message', handlePostMessage);
+                }
 
-                var tabCount = dialogDefinition.contents.length;
-                for (var i = 0; i < tabCount; i++) {
-                    var browseButton = dialogDefinition.contents[i].get('browse');
+                $(window).on('message', handlePostMessage);
+            });
 
-                    if (browseButton !== null) {
-                        browseButton.hidden = false;
-                        browseButton.onClick = function (dialog, i)
-                        {
-                            editor._.filebrowserSe = this;
-                            var iframe = $("<iframe id='fm-iframe' class='fm-modal'/>").attr({
-                                src: './../index.html' + // Change it to wherever  Filemanager is stored.
-                                '?CKEditorFuncNum=' + CKEDITOR.instances[event.editor.name]._.filebrowserFn +
-                                '&CKEditorCleanUpFuncNum=' + cleanUpFuncRef +
-                                '&langCode=en' +
-                                '&CKEditor=' + event.editor.name
-                            });
 
-                            $("body").append(iframe);
-                            $("body").css("overflow-y", "hidden");  // Get rid of possible scrollbars in containing document
-                        }
+			/*---------------------------------------------------------
+			 Bootstrap 3 modal window with iframe example
+			 ---------------------------------------------------------*/
+//            $('#fm-bs-modal').on('show.bs.modal', function() {
+//                $(this).find('iframe').attr('src', './../index.html?context=bootstrap');
+//            });
+
+            $('#fm-bs-modal').on('show.bs.modal', function() {
+                $(this).find('iframe').attr('src', './../index.html');
+
+                function handlePostMessage(e) {
+                    var data = e.originalEvent.data;
+                    if (data.source === 'richfilemanager') {
+                        $('#fm-bs-modal-input').val(data.preview_url);
+                        $('#fm-bs-modal').find('.close').click();
+
+                        // remove an event handler
+                        $(window).off('message', handlePostMessage);
                     }
                 }
+
+                $(window).on('message', handlePostMessage);
             });
-		});
+
+
+			/*---------------------------------------------------------
+			 Fancybox iframe example
+			 ---------------------------------------------------------*/
+            $('#fancybox-button').fancybox({
+                'width': '90%',
+                'height': '90%',
+                'type': 'iframe',
+                'autoSize': false
+            });
+
+            $('#fancybox-button').on('click', function() {
+                function handlePostMessage(e) {
+                    var data = e.originalEvent.data;
+                    if (data.source === 'richfilemanager') {
+                        $('#fancybox-input').val(data.preview_url);
+                        $.fancybox.close();
+
+                        // remove an event handler
+                        $(window).off('message', handlePostMessage);
+                    }
+                }
+
+                $(window).on('message', handlePostMessage);
+            });
+
+        });
+
+
+		/*---------------------------------------------------------
+		 TinyMCE 4 init example
+		 ---------------------------------------------------------*/
+        tinymce.init({
+            selector: '#editor_tinymce4',
+            plugins : 'advlist autolink link image lists charmap print preview',
+            file_browser_callback : function(field_name, url, type, win) {
+                // from http://andylangton.co.uk/blog/development/get-viewport-size-width-and-height-javascript
+                var w = window,
+                    d = document,
+                    e = d.documentElement,
+                    g = d.getElementsByTagName('body')[0],
+                    x = w.innerWidth || e.clientWidth || g.clientWidth,
+                    y = w.innerHeight|| e.clientHeight|| g.clientHeight;
+
+                var cmsURL = './../index.html?&field_name='+field_name+'&langCode=en';
+
+                if(type == 'image') {
+                    cmsURL = cmsURL + "&type=images";
+                }
+
+                tinyMCE.activeEditor.windowManager.open({
+                    file : cmsURL,
+                    title : 'Filemanager',
+                    width : x * 0.8,
+                    height : y * 0.8,
+                    resizable : "yes",
+                    close_previous : "no"
+                });
+            }
+        });
+
+
+		/*---------------------------------------------------------
+		 CKEditor init example
+		 ---------------------------------------------------------*/
+        CKEDITOR.replace('editor_ckeditor');
+        CKEDITOR.on('dialogDefinition', function (event)
+        {
+            var editor = event.editor;
+            var dialogDefinition = event.data.definition;
+            var dialogName = event.data.name;
+
+            var cleanUpFuncRef = CKEDITOR.tools.addFunction(function ()
+            {
+                // Do the clean-up of filemanager here (called when an image was selected or cancel was clicked)
+                $('#fm-iframe').remove();
+                $("body").css("overflow-y", "scroll");
+            });
+
+            var tabCount = dialogDefinition.contents.length;
+            for (var i = 0; i < tabCount; i++) {
+                var browseButton = dialogDefinition.contents[i].get('browse');
+
+                if (browseButton !== null) {
+                    browseButton.hidden = false;
+                    browseButton.onClick = function (dialog, i)
+                    {
+                        editor._.filebrowserSe = this;
+                        var iframe = $("<iframe id='fm-iframe' class='fm-modal'/>").attr({
+                            src: './../index.html' + // Change it to wherever  Filemanager is stored.
+                            '?CKEditorFuncNum=' + CKEDITOR.instances[event.editor.name]._.filebrowserFn +
+                            '&CKEditorCleanUpFuncNum=' + cleanUpFuncRef +
+                            '&langCode=en' +
+                            '&CKEditor=' + event.editor.name
+                        });
+
+                        $("body").append(iframe);
+                        $("body").css("overflow-y", "hidden");  // Get rid of possible scrollbars in containing document
+                    }
+                }
+            }
+        });
 	</script>
 </body>
 

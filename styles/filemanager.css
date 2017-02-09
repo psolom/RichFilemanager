@@ -13,7 +13,7 @@
 .fm-container {
     padding: 10px;
     background-color: #ffffff;
-    overflow: hidden; /** prevent overflow if #uploader h1 path value is too long */
+    overflow: hidden;
 }
 
 .fm-container .fm-header {
@@ -24,13 +24,37 @@
     overflow: hidden;
 }
 
-.fm-container .fm-header .current-path > h1 {
+.fm-container .fm-header .breadcrumbs {
     display: block;
     float: left;
-    margin:0.2em 0 0 1em;
-    line-height:1.9em;
-    font-size: 0.8em;
-    word-break: break-all;
+    padding: 0.2em 0 0 1em;
+    line-height: 1.5em;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.fm-container .fm-header .breadcrumbs * {
+    float: left;
+}
+
+.fm-container .fm-header .breadcrumbs .separator {
+    color: #999999;
+    margin: 0 5px;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-title {
+    margin-right: 10px;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-item:not(.active) {
+    cursor: pointer;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-item.root {
+    width: 20px;
+    height: 20px;
+    background-image: url(../images/house.png);
+    background-size: 20px;
 }
 
 .fm-container .fm-header .buttons-panel {
