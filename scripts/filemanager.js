@@ -1026,9 +1026,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadNodes = function(targetNode, refresh) {
 				var path = targetNode ? targetNode.id : tree_model.treeData.id;
-				var filesCount = model.itemsModel.objects().length;
-				//All directories except root has additional element to go back to parent folder
-				if (targetNode) filesCount--;
+				var filesCount = model.treeModel.currentNode() ? model.treeModel.currentNode().children().length : 0;
 				if(targetNode) {
 					targetNode.isLoaded(false);
 				}
@@ -1078,6 +1076,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 								tree_model.expandNode(targetNode);
 								targetNode.isDone = response.data.done;
 							}
+							model.itemsModel.isDone(response.data.done);
 							expandFolderDefault(targetNode);
 						}
 						handleAjaxResponseErrors(response);
@@ -1169,10 +1168,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.onCustomScrolling = function(offsetTop){
-				var cnt = model.itemsModel.objects().length;
+				var cnt = model.treeModel.currentNode().children().length;
 				//@todo I picked the second object since end, because we have cnt - 1 files and
 				//1 element for parent directory.
-				var n = model.itemsModel.objects()[cnt - 2].rdo.attributes.name;
+				var n = model.treeModel.currentNode().children()[cnt - 1].rdo.attributes.name;
 				//@todo: now I'm looking for element by it's name. It's sad, but there's only way I have found
 				var el = $('span.node_name:contains("' + n + '")');
 				if (offsetTop >= el.position().top && true !== model.treeModel.currentNode().isDone) {
@@ -1247,7 +1246,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				this.toggleNode = function(node, forceReload) {
 					if(node.rdo.type === 'folder') {
-						if(!node.isExpanded() && (forceReload || !node.isLoaded())) {
+						if(!node.isExpanded() && (forceReload || !node.isLoaded() || config.options.filemanagerMode === 'split')) {
 							tree_model.loadNodes(node, true);
 						} else {
 							node.isSliding(true);
@@ -1369,7 +1368,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				model.loadingView(true);
 				var filesCount = model.itemsModel.objects().length;
 				//All directories except root has additional element to go back to parent folder
-				if (path !== '/') filesCount--;
+				if (path !== '/' && config.options.filemanagerMode !== 'split') filesCount--;
 				var queryParams = {
 					mode: 'getfolder',
 					path: path
