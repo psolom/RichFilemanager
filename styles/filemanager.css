@@ -484,10 +484,13 @@
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
 }
+/* FIXME: Why was this here? It breaks Markdown-below-dirlist, so I am commenting 
+   it out. Was it needed for some other reason? Just remove it if not... */
+/*
 .fm-container .view-items {
     height: 100%;
 }
-
+*/
 .fm-container .view-items .grid {
     padding: 15px;
     text-align: left;

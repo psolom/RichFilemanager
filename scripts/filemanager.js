@@ -773,6 +773,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.viewMode = ko.observable(config.options.defaultViewMode);
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
+		this.renderedMarkdownHTML = ko.observable(null);
 
         this.previewFile.subscribe(function (value) {
             if (!value) {
@@ -926,11 +927,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}, this);
 
 				this.previewMarkdownClass = ko.pureComputed(function() {
-					var editorClass = "fm-markdown-body";
+					var markdownClass = "fm-markdown-body";
 					if (preview_item.editor.enabled()) {
-						editorClass = "fm-markdown-body fm-markdown-body-side-by-side";
+						markdownClass = "fm-markdown-body fm-markdown-body-side-by-side";
 					}
-					return editorClass;
+					return markdownClass;
 				}, this);
 
                 preview_item.viewer(viewerObject);
@@ -1429,7 +1430,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					};
 					objects.push(parent);
 				}
+
+				fmModel.renderedMarkdownHTML(null);  // Clear previosly-rendered .md
+
 				$.each(dataObjects, function (i, resourceObject) {
+					if (resourceObject.attributes.name == config.viewer.markdown.directoryIndex && config.viewer.markdown.enabled) {
+						// Launch AJAX to retrieve .md file contents for rendering:
+						viewMarkdownItem(resourceObject);
+					}
 					objects.push(items_model.createObject(resourceObject));
 				});
 				model.itemsModel.objects(objects);
@@ -1684,9 +1692,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					model.previewFile(false);
 				}
 
-                if(parentFolder !== model.currentPath()) {
-					model.itemsModel.loadList(parentFolder);
-                }
+				model.itemsModel.loadList(parentFolder);
 			};
 
 			this.displayGrid = function() {
@@ -3025,10 +3031,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		var result = md.render(markdownText);
 
-		// Update the ko viewerObject with a new renderedHTML member:
-		viewerObject = fmModel.previewModel.viewer();
-		viewerObject.renderedHTML = result;
-		fmModel.previewModel.viewer(viewerObject);
+		// Update the ko object renderedMarkdownHTML() with the new content:
+		fmModel.renderedMarkdownHTML(result);
 
 		// Now add onClicks to local .md file links (to do AJAX previews):
 		$(".fm-markdown-body").find("a").each(function(index) {

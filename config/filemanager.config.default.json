@@ -150,6 +150,8 @@
         },
         "markdown": {
             "enabled": true,
+            "directoryIndex": "README.md",
+            "directoryIndexOnTop": true,
             "extensions": [
                 "md"
             ]
