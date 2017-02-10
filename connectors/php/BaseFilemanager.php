@@ -236,7 +236,7 @@ abstract class BaseFilemanager
                         break;
 
                     case 'getfolder':
-                        if($this->getvar('path') && $this->getvard('skip', true, 0)) {
+                        if($this->getvar('path') && $this->getvard('skip', true, 0) && $this->getvard('load', true, 0)) {
 
                             $response = $this->actionGetFolder();
                         }

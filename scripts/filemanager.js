@@ -974,7 +974,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 					if (node) {
 						tree_model.options.expandSpeed = 10;
-						tree_model.loadNodes(node, false);
+						tree_model.loadNodes(node, {'refresh': false});
 					} else {
 						fullexpandedFolder = null;
 						tree_model.options.expandSpeed = 200;
@@ -1024,13 +1024,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return null;
 			};
 
-			this.loadNodes = function(targetNode, refresh) {
+			//2nd parameter now 'options' array
+			this.loadNodes = function(targetNode, options) {
 				var path = targetNode ? targetNode.id : tree_model.treeData.id;
 				var filesCount = model.treeModel.currentNode() ? model.treeModel.currentNode().children().length : 0;
 				if(targetNode) {
 					targetNode.isLoaded(false);
 				}
-
+				if(typeof {} !== typeof options) options = {};
 				var queryParams = {
 					mode: 'getfolder',
 					path: path
@@ -1042,6 +1043,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				var data = {};
 				if (model.currentPath() === path) data['skip'] = filesCount;
+				//This parameter is important for lazy loading and split view mode
+				//It will separate loading for folders (1), files (2) or both (0)
+				//Default is 0 (both)
+				if (options.load && config.options.filemanagerMode === 'split') data['load'] = options.load;
 
 				$.ajax({
 					type: 'GET',
@@ -1056,7 +1061,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             fmModel.breadcrumbsModel.splitCurrent();
 							tree_model.currentNode(targetNode);
 							if (!targetNode || undefined === targetNode.isDone) {
-								fmModel.itemsModel.setList(response.data.tree || refresh);
+								fmModel.itemsModel.setList(response.data.tree || options.refresh);
 							} else {
 								fmModel.itemsModel.extendList(response.data.tree);
 							}
@@ -1066,7 +1071,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 								var nodeObject = tree_model.createNode(resourceObject);
 								nodes.push(nodeObject);
 							});
-							if(refresh) {
+							if(options.refresh) {
 								targetNode.children([]);
 							}
 							tree_model.addNodes(targetNode, nodes);
@@ -1173,7 +1178,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				//@todo: now I'm looking for element by it's name. It's sad, but there's only way I have found
 				var el = $('span.node_name:contains("' + n + '")');
 				if (offsetTop >= el.position().top && true !== model.treeModel.currentNode().isDone) {
-					model.treeModel.loadNodes(model.treeModel.currentNode());
+					model.treeModel.loadNodes(model.treeModel.currentNode(), {'load': 1});
 				}
 			};
 
@@ -1245,7 +1250,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				this.toggleNode = function(node, forceReload) {
 					if(node.rdo.type === 'folder') {
 						if(!node.isExpanded() && (forceReload || !node.isLoaded() || config.options.filemanagerMode === 'split')) {
-							tree_model.loadNodes(node, true);
+							tree_model.loadNodes(node, {'refresh': true});
 						} else {
 							node.isSliding(true);
 						}
@@ -1362,7 +1367,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				model.itemsModel.sortObjects();
 			};
 
-			this.loadList = function(path) {
+			this.loadList = function(path, options) {
 				model.loadingView(true);
 				var filesCount = model.itemsModel.objects().length;
 				//All directories except root has additional element to go back to parent folder
@@ -1371,12 +1376,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					mode: 'getfolder',
 					path: path
 				};
+				if (typeof {} !== typeof options) options = {};
 				if($.urlParam('type')) {
 					queryParams.type = $.urlParam('type');
 				}
 
 				var data = {};
 				if (model.currentPath() === path) data['skip'] = filesCount;
+				//This parameter is important for lazy loading and split view mode
+				//It will separate loading for folders (1), files (2) or both (0)
+				//Default is 0 (both)
+				if (options.load && config.options.filemanagerMode === 'split') data['load'] = options.load;
 
 				$.ajax({
 					type: 'GET',
@@ -1646,7 +1656,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.onCustomScrolling = function(topPct){
 				if (topPct >= 95 && true !== model.itemsModel.isDone()) {
-					model.itemsModel.loadList(model.currentPath());
+					model.itemsModel.loadList(model.currentPath(), {'load': 2});
 				}
 			};
 		};
@@ -2480,7 +2490,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Create FileTree and bind events
 	var createFileTree = function() {
-		fmModel.treeModel.loadNodes(null, false);
+		fmModel.treeModel.loadNodes(null, {'refresh': false});
 	};
 
 	// check if plugin instance created inside some context
