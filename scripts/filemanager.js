@@ -939,7 +939,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.options = {
 				showLine: true,
 				dblClickOpen: config.manager.dblClickOpen,
-				reloadOnClick: false,
+				reloadOnClick: true,
 				expandSpeed: 200
 			};
 
@@ -1224,17 +1224,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				this.openNode = function(node) {
 					if(node.rdo.type === 'file') {
 						getDetailView(node.rdo);
-					}
-					if(node.rdo.type === 'folder' && node.isLoaded()) {
-						var childrenObjects = [];
-						if(node.children().length) {
-							$.each(node.children(), function(index, cNode) {
-								childrenObjects.push(cNode.rdo);
-							});
-						}
-						model.currentPath(node.rdo.id);
-                        model.breadcrumbsModel.splitCurrent();
-						model.itemsModel.setList(childrenObjects);
 					}
 				};
 
