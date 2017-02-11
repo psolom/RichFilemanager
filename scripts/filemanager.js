@@ -1434,12 +1434,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				fmModel.renderedMarkdownHTML(null);  // Clear previosly-rendered .md
 
 				$.each(dataObjects, function (i, resourceObject) {
-					if (resourceObject.attributes.name == config.viewer.markdown.directoryIndex && config.viewer.markdown.enabled) {
+					if (config.viewer.markdown.enabled && resourceObject.attributes.name.toLowerCase() === config.viewer.markdown.directoryIndex.toLowerCase()) {
 						// Launch AJAX to retrieve .md file contents for rendering:
 						viewMarkdownItem(resourceObject);
 					}
 					objects.push(items_model.createObject(resourceObject));
 				});
+
 				model.itemsModel.objects(objects);
 				model.itemsModel.sortObjects();
 				model.loadingView(false);
@@ -2251,10 +2252,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return string.replace(regExp, '');
 	};
 
+	// Replace all leading chars with an empty string
+	var ltrim = function(string, char) {
+		var regExp = new RegExp('^' + char + '+', 'g');
+		return string.replace(regExp, '');
+	};
+
 	// Replace all trailing chars with an empty string
 	var rtrim = function(string, char) {
 		var regExp = new RegExp(char + '+$', 'g');
 		return string.replace(regExp, '');
+	};
+
+	var startsWith = function(string, searchString, position) {
+		position = position || 0;
+		return string.substr(position, searchString.length) === searchString;
 	};
 
 	var encodePath = function(path) {
@@ -2955,22 +2967,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	//
-	// Utils for path handling. See bash equivalents for examples.
-	//
-
-	// $ basename "./my/path/to/file.txt"
-	// file.txt
-	var basename = function(path) {
-		return path.replace(/\\/g,'/').replace( /.*\//, '' );
-	}
-
-	// bash$ dirname "./my/path/to/file.txt"
-	// ./my/path/to
-	var dirname = function(path) {
-		return path.replace(/\\/g,'/').replace(/\/[^\/]*$/, '');;
-	}
-
 	// Uses markdown-it.js to render the content of the Markdown file into HTML,
 	// and then places is in .fm-markdown-body or .fm-markdown-body-side-by-side
 	var renderMarkdownHTML = function(resourceObject, markdownText) {
@@ -2996,35 +2992,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			// Custom link function to enable <img ...> and file d/ls:
 			replaceLink: function (link, env) {
 
-				if (link.search("://") != -1 || link.startsWith('mailto:')) {
-					// We found something like http:// or ftp://, etc.
-					// or a mailto: link. Do not change it.
+                // do not change if link as http:// or ftp:// or mailto: etc.
+				if (link.search("://") != -1 || startsWith(link, 'mailto:')) {
 					return link;
 				}
 
-				// Local links are processed as simple file downloads,
-				// unless it's an .md file. Then it gets a previewModel 
-				// onClick handler (done below with jquery).
-				var path = '';
+				// define path depending on absolute / relative link type
+                var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(resourceObject.id);
+                var path = basePath + ltrim(link, '/');
 
-				if (link.startsWith('/')) {
-					// absolute path
-					path = link;
-				} else {
-					// relative path (to current .md file's dir):
-					path = dirname(resourceObject.id) + "/" + link
-				}
-
-				if (isMarkdownFile(path)) {
-					return path;  // (It will get a previewModel onClick below.)
-				} else {
-					// Linked files, including <img src=...> files,
-					// use mode: 'download' for normal HTTP file download.
-					var queryParams = {
-						mode: 'download',
-						path: path
-					};
-					return buildConnectorUrl(queryParams);
+                if(isMarkdownFile(path)) {
+                    // to apply previewModel on click in preview mode (see below)
+                    return path;
+                } else {
+                    return buildConnectorUrl({
+                        mode: 'readfile',
+                        path: path
+                    });
 				}
 			}
 		}).use(window.markdownitReplaceLink);
@@ -3038,17 +3022,30 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		$(".fm-markdown-body").find("a").each(function(index) {
 			var href = $(this).attr("href");
 
-			if (href.search("://") != -1 || href.startsWith('mailto:')) {
-				// We found something like http:// or ftp://, etc.
-				// or a mailto: link. Do not change it.
-				return;  // Do nothing.
+			if (href.search("://") != -1 || startsWith(href, 'mailto:')) {
+				return; // do nothing
 			}
 
 			if (isMarkdownFile(href)) {
-				// Replace the local Markdown link with a preview onClick:
-				$(this).click(function () {
-				    fmModel.previewModel.load({id: href, attributes: { name: href } });
-				    return false;  // Return false to absorb the onClick event
+				// set previewModel for clicked link
+				$(this).on("click", function (e) {
+                    $.ajax({
+                        type: 'GET',
+                        url: buildConnectorUrl({
+                            mode: 'getfile',
+                            path: href
+                        }),
+                        dataType: "json",
+                        success: function (response) {
+                            if(response.data) {
+                                getDetailView(response.data);
+                            }
+                            handleAjaxResponseErrors(response);
+                        },
+                        error: handleAjaxError
+                    });
+
+				    return false; // prevent onClick event
 				});
 			}
 		});
@@ -3056,17 +3053,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		// When editing Markdown, prevent the user from losing unsaved edits by
 		// clicking on a (rendered HTML) link that jumps off the page.
 		$(".fm-markdown-body-side-by-side").find("a").each(function(index) {
-			// Remove default onClick callback from above:
+			// remove onClick event handler
 			$(this).off("click");
 
 			// Replace the link with a popup showing where it will link to:
 			var href = $(this).attr("href");
-			$(this).click(function () {
-				fm.success(href);
-			    return false;  // Return false to absorb the onClick event
+			$(this).on("click", function () {
+				fm.log(href);
+			    return false; // prevent onClick event
 			});
 		});
-	}
+	};
 
 	// Retrieve the contents of a .md file using AJAX and render it to HTML:
 	var viewMarkdownItem = function(resourceObject) {
