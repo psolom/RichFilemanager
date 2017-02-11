@@ -635,13 +635,7 @@ class LocalFilemanager extends BaseFilemanager
             $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
         }
 
-		// check if file is writable
-		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
-		}
-
 		$content = file_get_contents($target_fullpath);
-		$content = htmlspecialchars($content);
 
 		if($content === false) {
 			$this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
@@ -680,8 +674,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error(sprintf($this->lang('ERROR_WRITING_PERM')));
 		}
 
-		$content = htmlspecialchars_decode($this->post['content']);
-		$result = file_put_contents($target_fullpath, $content, LOCK_EX);
+		$result = file_put_contents($target_fullpath, $this->post['content'], LOCK_EX);
 
 		if(!is_numeric($result)) {
 			$this->error(sprintf($this->lang('ERROR_SAVING_FILE')));

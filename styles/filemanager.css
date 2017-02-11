@@ -484,10 +484,13 @@
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
 }
+/* FIXME: Why was this here? It breaks Markdown-below-dirlist, so I am commenting 
+   it out. Was it needed for some other reason? Just remove it if not... */
+/*
 .fm-container .view-items {
     height: 100%;
 }
-
+*/
 .fm-container .view-items .grid {
     padding: 15px;
     text-align: left;
@@ -711,7 +714,22 @@
 
 .fm-container .fm-preview .fm-preview-editor div.CodeMirror * {
     font-family: monospace;
-    line-height: 15px;
+    line-height: 17px;
+    font-size: 14px;
+}
+
+.fm-container .fm-preview .fm-preview-editor-side-by-side div.CodeMirror {
+    float: left;
+    text-align: left;
+    width: 49%;
+    border: 1px solid #eee;
+    height: auto;
+}
+
+.fm-container .fm-preview .fm-preview-editor-side-by-side div.CodeMirror * {
+    font-family: monospace;
+    line-height: 17px;
+    font-size: 14px;
 }
 
 .fm-container .fm-preview div.CodeMirror.CodeMirror-fullscreen {
