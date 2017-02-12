@@ -452,13 +452,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					return false;
 				}
 				if(node.isExpanded() === false) {
-					$(element).slideDown(fmModel.treeModel.options.expandSpeed, function() {
+					$(element).slideDown(config.filetree.expandSpeed, function() {
 						node.isSliding(false);
 						node.isExpanded(true);
 					});
 				}
 				if(node.isExpanded() === true) {
-					$(element).slideUp(fmModel.treeModel.options.expandSpeed, function() {
+					$(element).slideUp(config.filetree.expandSpeed, function() {
 						node.isSliding(false);
 						node.isExpanded(false);
 					});
@@ -689,6 +689,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			$("#filepath").val($(this).val().replace(/.+[\\\/]/, ""));
 		});
 
+        prepareFileTree();
+        prepareFileView();
+        setupUploader();
+
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
 			$filetree.mCustomScrollbar({
@@ -744,19 +748,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			console.log('Total execution time : ' + time + ' ms');
 		}
 
-		// Provides support for adjustible columns.
-		$splitter.splitter({
-			sizeLeft: config.options.splitterWidth,
-			minLeft: config.options.splitterMinWidth,
-			minRight: 200
-		});
-
 		var $loading = $container.find('.fm-loading-wrap');
-		$loading.fadeOut(800); // remove loading screen div
-		$(window).trigger('resize');
-
-		createFileTree();
-		setupUploader();
+        // remove loading screen div
+		$loading.fadeOut(800, function() {
+            fm.setDimensions();
+		});
+        fm.setDimensions();
 	};
 
 	/**
@@ -984,13 +981,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.isScrolling = ko.observable(false);
 			this.selecledNode = ko.observable(null);
 
-			this.options = {
-				showLine: true,
-				dblClickOpen: config.manager.dblClickOpen,
-				reloadOnClick: false,
-				expandSpeed: 200
-			};
-
 			this.treeData = {
 				id: fileRoot,
 				level: ko.observable(-1),
@@ -1013,11 +1003,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}, parentNode);
 
 					if (node) {
-						tree_model.options.expandSpeed = 10;
+                        config.filetree.expandSpeed = 10;
 						tree_model.loadNodes(node, false);
 					} else {
 						fullexpandedFolder = null;
-						tree_model.options.expandSpeed = 200;
+                        config.filetree.expandSpeed = 200;
 					}
 				}
 			};
@@ -1086,10 +1076,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					cache: false,
 					success: function(response) {
 						if(response.data) {
-							fmModel.currentPath(path);
-                            fmModel.breadcrumbsModel.splitCurrent();
-							fmModel.itemsModel.setList(response.data);
-
 							var nodes = [];
 							$.each(response.data, function(i, resourceObject) {
 								var nodeObject = tree_model.createNode(resourceObject);
@@ -1124,7 +1110,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					targetNode = tree_model.treeData;
 				}
 				// list only folders in tree
-				if(!config.options.listFiles) {
+				if(config.filetree.foldersOnly) {
 					newNodes = $.grep(newNodes, function(node) {
 						return (node.cdo.isFolder);
 					});
@@ -1151,6 +1137,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 				return false;
 			};
+
+            this.toggleNode = function(node) {
+				if(!tree_model.collapseNode(node)) {
+                    tree_model.expandNode(node);
+				}
+            };
 
 			this.arrangeNode = function(node) {
 				var childrenLength = node.children().length;
@@ -1236,13 +1228,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						fm.error(lg.NOT_ALLOWED_SYSTEM);
 						return false;
 					}
-					tree_node.toggleNode(node, false);
+					if(!node.isLoaded()) {
+                        tree_node.openNode(node);
+					} else {
+						tree_model.toggleNode(node);
+					}
 				};
 
 				this.nodeClick = function(node) {
-					if(!tree_model.options.dblClickOpen) {
+					if(!config.manager.dblClickOpen) {
 						tree_node.openNode(node);
-						tree_node.toggleNode(node, tree_model.options.reloadOnClick);
 					}
 
 					if(tree_model.selecledNode() !== null) {
@@ -1253,19 +1248,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				};
 
 				this.nodeDblClick = function(node) {
-					if(tree_model.options.dblClickOpen) {
+					if(config.manager.dblClickOpen) {
 						tree_node.openNode(node);
-						tree_node.toggleNode(node, tree_model.options.reloadOnClick);
-					}
-				};
-
-				this.toggleNode = function(node, forceReload) {
-					if(node.rdo.type === 'folder') {
-						if(!node.isExpanded() && (forceReload || !node.isLoaded())) {
-							tree_model.loadNodes(node, true);
-						} else {
-							node.isSliding(true);
-						}
 					}
 				};
 
@@ -1273,17 +1257,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					if(node.rdo.type === 'file') {
 						getDetailView(node.rdo);
 					}
-					if(node.rdo.type === 'folder' && node.isLoaded()) {
-						var childrenObjects = [];
-						if(node.children().length) {
-							$.each(node.children(), function(index, cNode) {
-								childrenObjects.push(cNode.rdo);
+                    if(node.rdo.type === 'folder') {
+                        if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
+                            tree_model.loadNodes(node, true);
+                            model.itemsModel.loadList(node.id);
+                        } else {
+                            tree_model.toggleNode(node);
+
+                            fmModel.currentPath(node.id);
+                            fmModel.breadcrumbsModel.splitCurrent();
+                            var dataObjects = [];
+                            $.each(node.children(), function(i, cnode) {
+                                dataObjects.push(cnode.rdo);
 							});
-						}
-						model.currentPath(node.rdo.id);
-                        model.breadcrumbsModel.splitCurrent();
-						model.itemsModel.setList(childrenObjects);
-					}
+                            fmModel.itemsModel.setList(dataObjects);
+                        }
+                    }
 				};
 
 				this.remove = function() {
@@ -1326,7 +1315,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				this.switcherClass = ko.pureComputed(function() {
 					var cssClass = [];
-					if (tree_model.options.showLine) {
+					if (config.filetree.showLine) {
 						if (this.level() === 0 && this.isFirstNode() && this.isLastNode()) {
 							cssClass.push('root');
 						} else if (this.level() == 0 && this.isFirstNode()) {
@@ -1349,7 +1338,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}, this);
 
 				this.clusterClass = ko.pureComputed(function() {
-					return (tree_model.options.showLine && !this.isLastNode()) ? 'line' : '';
+					return (config.filetree.showLine && !this.isLastNode()) ? 'line' : '';
 				}, this);
 			};
 		};
@@ -2476,10 +2465,28 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 	};
 
-	// Create FileTree and bind events
-	var createFileTree = function() {
+	// Build FileTree and bind events
+	function prepareFileTree() {
+		if(!config.filetree.enabled) {
+			return;
+		}
+
+		$filetree.show();
+
+        // Provides support for adjustible columns.
+        $splitter.splitter({
+            sizeLeft: config.filetree.width,
+            minLeft: config.filetree.minWidth,
+            minRight: 200
+        });
+
 		fmModel.treeModel.loadNodes(null, false);
-	};
+	}
+
+    // Build FileTree and bind events
+    function prepareFileView() {
+        fmModel.itemsModel.loadList(fileRoot);
+	}
 
 	// check if plugin instance created inside some context
 	function hasContext() {

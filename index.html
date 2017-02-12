@@ -98,7 +98,7 @@
 		</div>
 
 		<div class="fm-splitter">
-			<div class="fm-filetree">
+			<div class="fm-filetree" data-bind="visible: config().filetree.enabled">
 				<div data-bind="template: {name: 'node-parent-template', foreach: treeModel.treeData.children, as: 'koNode', afterRender: treeModel.nodeRendered}"></div>
 			</div>
 

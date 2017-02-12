@@ -11,13 +11,10 @@
         "browseOnly": false,
         "clipboard": true,
         "searchBox": true,
-        "listFiles": true,
         "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
         "quickSelect": false,
         "charsLatinOnly": false,
-        "splitterWidth": 200,
-        "splitterMinWidth": 200,
         "logger": false,
         "capabilities": [
             "select",
@@ -29,6 +26,15 @@
             "replace",
             "delete"
         ]
+    },
+    "filetree": {
+        "enabled": true,
+        "foldersOnly": false,
+        "reloadOnClick": true,
+        "expandSpeed": 200,
+        "showLine": true,
+        "width": 200,
+        "minWidth": 200
     },
     "manager": {
         "dblClickOpen": false,
