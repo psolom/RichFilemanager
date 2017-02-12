@@ -187,20 +187,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Called on initial page load and on resize.
 	fm.setDimensions = function() {
 		var bheight = 0,
-			padding = $container.outerHeight(true) - $container.height();
+			padding = $wrapper.outerHeight(true) - $wrapper.height();
 
 		if($.urlParam('CKEditorCleanUpFuncNum')) bheight +=60;
 
-		var newH = $(window).height() - $header.height() - $footer.height() - padding - bheight;
-		$splitter.height(newH);
+        var newH = $(window).height() - $header.height() - $footer.height() - padding - bheight;
+        $splitter.height(newH);
 
-		// adjust height of filemanager if there are other DOM elemements on page
-		var delta = $(document).height() - $(window).height();
-		if(!$container.parent().is('body') && delta > 0) {
-			var diff = newH - delta;
-			newH = (diff > 0) ? diff : 1;
-			$splitter.height(newH);
-		}
+		// // adjust height of filemanager if there are other DOM elemements on page
+		// var delta = $(document).height() - $(window).height();
+		// if(!$container.parent().is('body') && delta > 0) {
+		// 	var diff = newH - delta;
+		// 	newH = (diff > 0) ? diff : 1;
+		// 	$splitter.height(newH);
+		// }
+
+        // $splitter.children().outerHeight($splitter.height());
 
 		// adjustment for window horizontal resize
 		var newW = $splitter.width() - $splitter.children(".splitter-bar-vertical").outerWidth() - $filetree.outerWidth();
@@ -551,9 +553,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             filter: "li:not(.directory-parent), tbody > tr:not(.directory-parent)",
             cancel: ".directory-parent, thead",
             disabled: !config.manager.selection.enabled,
-            appendTo: '.fm-container',
+            appendTo: $viewItems,
 			start: function(event, ui) {
 				clearSelection();
+                fmModel.itemsModel.isSelecting(true);
+			},
+			stop: function(event, ui) {
+                fmModel.itemsModel.isSelecting(false);
 			},
 			selected: function(event, ui) {
 				var koItem = ko.dataFor(ui.selected);
@@ -705,28 +711,52 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				axis: "yx"
 			});
 
-            $viewItems.mCustomScrollbar({
-				theme: config.customScrollbar.theme,
-				scrollButtons: {
-					enable: config.customScrollbar.button
-				},
-				advanced: {
-					autoExpandHorizontalScroll:true,
-					updateOnContentResize: true,
+            $fileinfo.find('.view-items-wrapper').mCustomScrollbar({
+                theme: config.customScrollbar.theme,
+                scrollButtons: {
+                    enable: config.customScrollbar.button
+                },
+                advanced: {
+                    autoExpandHorizontalScroll:true,
+                    updateOnContentResize: true,
                     updateOnSelectorChange: '.grid, .list'
-				},
-				callbacks: {
-					onScrollStart: function() {
-						fmModel.itemsModel.isScrolling(true);
-					},
-					onScroll: function() {
-						fmModel.itemsModel.isScrolling(false);
-					}
-				},
-				axis: "y",
-				alwaysShowScrollbar: 0
-			});
-		}
+                },
+                callbacks: {
+                    onScrollStart: function() {
+                        if (!fmModel.itemsModel.continiousSelection()) {
+                            this.yStartPosition = this.mcs.top;
+                            this.yStartTime = (new Date()).getTime();
+                        }
+                        fmModel.itemsModel.isScrolling(true);
+                    },
+                    onScroll: function() {
+                        fmModel.itemsModel.isScrolling(false);
+                    },
+                    whileScrolling: function() {
+                        if (config.manager.selection.enabled) {
+                            // would prefer to get scroll position from [onScrollStart],
+                            // but the [onScroll] should fire first, which happens with a big lag
+                            var timeDiff = (new Date()).getTime() - this.yStartTime;
+
+                            // check if selection lasso has not been dropped while scrolling
+                            if (!fmModel.itemsModel.continiousSelection() && timeDiff > 400) {
+                                this.yStartPosition = this.mcs.top;
+                            }
+
+                            // set flag if selection lasso is active
+                            if (fmModel.itemsModel.isSelecting()) {
+                                fmModel.itemsModel.continiousSelection(true);
+                            }
+
+                            var yIncrement = Math.abs(this.mcs.top) - Math.abs(this.yStartPosition);
+                            $viewItems.selectable("repositionCssHelper", yIncrement, 0);
+                        }
+                    }
+                },
+                axis: "y",
+                alwaysShowScrollbar: 0
+            });
+        }
 
 		// add useragent string to html element for IE 10/11 detection
 		var doc = document.documentElement;
@@ -1304,6 +1334,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
 			this.isScrolling = ko.observable(false);
+			this.isSelecting = ko.observable(false);
+			this.continiousSelection = ko.observable(false);
+
+			this.isSelecting.subscribe(function(state) {
+				if(!state) {
+				    // means selection lasso has been dropped
+                    items_model.continiousSelection(false);
+				}
+			});
 
 			this.createObject = function(resourceObject) {
 				return new ItemObject(resourceObject);
@@ -2982,10 +3021,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.summaryModel.size(size);
 
 					fmModel.summaryModel.enabled(true);
-					var $content = $('#summary-popup').clone().show();
+					var $summary = $('#summary-popup').clone().show();
 					fmModel.summaryModel.enabled(false);
 
-					fm.alert($content[0].outerHTML);
+					fm.alert($summary[0].outerHTML);
 				}
 				handleAjaxResponseErrors(response);
 			},
