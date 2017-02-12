@@ -107,11 +107,11 @@
 
 				<div class="view-items-wrapper" data-bind="visible: !loadingView() && !previewFile()">
 
-                    <!-- ko if: $root.renderedMarkdownHTML() && $root.config().viewer.markdown.directoryIndexOnTop -->
-                    <div class="fm-markdown-margin">
-                        <div class="fm-markdown-body" data-bind="html: $root.renderedMarkdownHTML()"></div>
-                    </div>
-                    <!-- /ko -->
+					<!-- ko if: $root.renderedMarkdownHTML() && $root.config().viewer.markdown.directoryIndexOnTop -->
+					<div class="fm-markdown-margin">
+						<div class="fm-markdown-body" data-bind="html: $root.renderedMarkdownHTML()"></div>
+					</div>
+					<!-- /ko -->
 
 					<div class="view-items">
 						<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
@@ -175,12 +175,11 @@
 						</table>
 					</div>
 
-                    <!-- ko if: $root.renderedMarkdownHTML() && !$root.config().viewer.markdown.directoryIndexOnTop -->
-                    <div class="fm-markdown-margin">
-                        <div class="fm-markdown-body" data-bind="html: $root.renderedMarkdownHTML()"></div>
-                    </div>
-                    <!-- /ko -->
-
+					<!-- ko if: $root.renderedMarkdownHTML() && !$root.config().viewer.markdown.directoryIndexOnTop -->
+					<div class="fm-markdown-margin">
+						<div class="fm-markdown-body" data-bind="html: $root.renderedMarkdownHTML()"></div>
+					</div>
+					<!-- /ko -->
 				</div>
 
 
