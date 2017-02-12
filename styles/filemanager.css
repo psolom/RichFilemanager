@@ -2,6 +2,30 @@
 * Icons are from http://icomoon.io/app/
 **/
 
+html, body {
+    height: 100%;
+}
+
+/* IE10-11 styles */
+html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
+html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
+    vertical-align: top;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
+html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
+    width: 220px;
+    height: 32px;
+    overflow: hidden;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
+html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
+    height: 22px;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
+html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
+    height: 23px;
+}
+
 .fm-container * {
     font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
     box-sizing: content-box;
@@ -11,9 +35,14 @@
 }
 
 .fm-container {
-    padding: 10px;
+    height: 100%;
     background-color: #ffffff;
     overflow: hidden;
+}
+
+.fm-container .fm-wrapper {
+    height: 100%;
+    padding: 10px;
 }
 
 .fm-container .fm-header {
@@ -147,8 +176,7 @@
 }
 
 .fm-container .fm-splitter {
-    height: 400px;
-    /* no padding allowed */
+    height: 100%;
 }
 
 .fm-container .fm-splitter .splitter-bar-vertical {
@@ -480,18 +508,21 @@
     cursor: pointer;
 }
 
-/* to expand selectable area to 100% vertically */
+/* to expand selectable area to 100% vertically in case no scroll */
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
 }
-/* FIXME: Why was this here? It breaks Markdown-below-dirlist, so I am commenting 
-   it out. Was it needed for some other reason? Just remove it if not... */
-/*
-.fm-container .view-items {
+
+.fm-container .view-items-wrapper {
     height: 100%;
 }
-*/
+
+.fm-container .view-items {
+    position: relative;
+}
+
 .fm-container .view-items .grid {
+    height: 100%;
     padding: 15px;
     text-align: left;
 }
@@ -736,27 +767,6 @@
     width: 100%;
     margin: 0;
     z-index: 9;
-}
-
-
-/* IE10-11 styles */
-html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
-html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
-    vertical-align: top;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
-html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
-    width: 220px;
-    height: 32px;
-    overflow: hidden;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
-html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
-    height: 22px;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
-html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
-    height: 23px;
 }
 
 
