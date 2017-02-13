@@ -168,12 +168,11 @@
 							</tbody>
 						</table>
 					</div>
-
 				</div>
 
 
-				<!-- ko if: previewFile() -->
-				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView()">
+				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView() && previewFile()">
+					<!-- ko if: $root.previewFile() -->
 					<div class="fm-preview-toolbar">
 						<form id="fm-js-preview-toolbar">
 							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
@@ -278,8 +277,8 @@
 							</tr>
 						</table>
 					</div>
+					<!-- /ko -->
 				</div>
-				<!-- /ko -->
 			</div>
 		</div>
 

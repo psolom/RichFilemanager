@@ -711,6 +711,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				axis: "yx"
 			});
 
+            $fileinfo.find('.fm-preview').mCustomScrollbar({
+                theme: config.customScrollbar.theme,
+                scrollButtons: {
+                    enable: config.customScrollbar.button
+                },
+                advanced: {
+                    autoExpandHorizontalScroll: true,
+                    updateOnContentResize: true,
+                    updateOnSelectorChange: '.fm-preview-viewer'
+                }
+			});
+
             $fileinfo.find('.view-items-wrapper').mCustomScrollbar({
                 theme: config.customScrollbar.theme,
                 scrollButtons: {
