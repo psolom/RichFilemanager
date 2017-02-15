@@ -3839,9 +3839,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 assets.push('/scripts/CodeMirror/mode/css/css.js');
                 assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
                 assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/shell/shell.js');
                 assets.push('/scripts/CodeMirror/mode/meta.js');
 				currentMode = 'gfm';
 			}
+			if (extension === 'sh') {
+                assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
+                assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
+                assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/meta.js');
+                assets.push('/scripts/CodeMirror/mode/shell/shell.js');
+				currentMode = 'shell';
+			}
+
 		}
 
         if(assets.length) {
@@ -3858,6 +3872,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 lineNumbers: config.viewer.editable.lineNumbers,
                 lineWrapping: config.viewer.editable.lineWrapping,
                 theme: config.viewer.editable.theme,
+                matchBrackets: config.viewer.editable.matchBrackets,
                 extraKeys: {
                     "F11": function (cm) {
                         cm.setOption("fullScreen", !cm.getOption("fullScreen"));
