@@ -377,6 +377,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             secondary.push('/scripts/CodeMirror/addon/display/fullscreen.js');
 		}
 
+		// Load Markdown-it, if enabled. For .md to HTML rendering:
+		if(config.viewer.markdown.enabled) {
+            secondary.push('/styles/fm-markdown.css');
+            secondary.push('/scripts/markdown-it/markdown-it.min.js');
+            secondary.push('/scripts/markdown-it/default.min.css');
+            secondary.push('/scripts/markdown-it/highlight.min.js');
+            secondary.push('/scripts/markdown-it/markdown-it-footnote.min.js');
+            secondary.push('/scripts/markdown-it/markdown-it-replace-link.min.js');
+		}
+
 		if(!config.options.browseOnly) {
 			// Loading jquery file upload library
             secondary.push('/scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
@@ -802,6 +812,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.viewMode = ko.observable(config.options.defaultViewMode);
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
+		this.renderedMarkdownHTML = ko.observable(null);
 
         this.previewFile.subscribe(function (value) {
             if (!value) {
@@ -868,13 +879,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				var filename = resourceObject.attributes.name;
 				var viewerObject = {
-					type: 'image',
-					url: createImageUrl(resourceObject, false),
+					type: 'default',
+					isEditable: false,
+					url: null,
 					options: {}
 				};
 
-				if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
-					viewerObject.type = 'editable';
+				// Set the file type and URL:
+				if(isImageFile(filename)) {
+					viewerObject.type = 'image';
+					var thumbnail = false;
+					viewerObject.url = createImageUrl(resourceObject, thumbnail);
 				}
 				if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
 					viewerObject.type = 'audio';
@@ -904,11 +919,24 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						height: config.viewer.google.readerHeight
 					};
 				}
+				if(isMarkdownFile(filename) && config.viewer.markdown.enabled === true) {
+					viewerObject.type = 'markdown';
+					// Launch AJAX to retrieve .md file contents for rendering:
+					viewMarkdownItem(preview_item.rdo());
+				}
 
+				// Set whether or not the "Edit" button is displayed in the preview details:
+				if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
+					viewerObject.isEditable = true;
+				}
+				
+				//
+				// Define functions to dynamically set CSS classes (based on preview type):
+				//
 				this.previewIconClass = ko.pureComputed(function() {
 					var cssClass = [],
 						extraClass = ['ico'];
-					if((viewerObject.type === 'image' || viewerObject.type === 'editable') && !viewerObject.url) {
+					if(viewerObject.type === 'default' || !viewerObject.url) {
 						cssClass.push('grid-icon');
 						if(this.cdo().isFolder === true) {
 							cssClass.push('ico_folder');
@@ -927,6 +955,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						cssClass.push(extraClass.join('_'));
 					}
 					return cssClass.join(' ');
+				}, this);
+
+				this.previewEditorClass = ko.pureComputed(function() {
+					var editorClass = "fm-preview-editor";
+					if (viewerObject.type === 'markdown') {
+						editorClass = "fm-preview-editor-side-by-side";
+					}
+					return editorClass;
+				}, this);
+
+				this.previewMarkdownClass = ko.pureComputed(function() {
+					var markdownClass = "fm-markdown-body";
+					if (preview_item.editor.enabled()) {
+						markdownClass = "fm-markdown-body fm-markdown-body-side-by-side";
+					}
+					return markdownClass;
 				}, this);
 
                 preview_item.viewer(viewerObject);
@@ -953,6 +997,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.closeEditor = function() {
 				preview_item.editor.enabled(false);
+		        if (isMarkdownFile(preview_item.rdo().attributes.name) && config.viewer.markdown.enabled) {
+					// Restore the last-saved markdown content, because the user did not "Save" changes:
+					renderMarkdownHTML(preview_item.rdo(), preview_item.rdo().markdownText)
+		        }
 			};
 
 			this.buttonVisibility = function(action) {
@@ -1422,9 +1470,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					};
 					objects.push(parent);
 				}
+
+				fmModel.renderedMarkdownHTML(null);  // Clear previosly-rendered .md
+
 				$.each(dataObjects, function (i, resourceObject) {
+					if (config.viewer.markdown.enabled && resourceObject.attributes.name.toLowerCase() === config.viewer.markdown.directoryIndex.toLowerCase()) {
+						// Launch AJAX to retrieve .md file contents for rendering:
+						viewMarkdownItem(resourceObject);
+					}
 					objects.push(items_model.createObject(resourceObject));
 				});
+
 				model.itemsModel.objects(objects);
 				model.itemsModel.sortObjects();
 				model.loadingView(false);
@@ -1677,9 +1733,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					model.previewFile(false);
 				}
 
-                if(parentFolder !== model.currentPath()) {
-					model.itemsModel.loadList(parentFolder);
-                }
+				model.itemsModel.loadList(parentFolder);
 			};
 
 			this.displayGrid = function() {
@@ -2241,10 +2295,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return string.replace(regExp, '');
 	};
 
+	// Replace all leading chars with an empty string
+	var ltrim = function(string, char) {
+		var regExp = new RegExp('^' + char + '+', 'g');
+		return string.replace(regExp, '');
+	};
+
 	// Replace all trailing chars with an empty string
 	var rtrim = function(string, char) {
 		var regExp = new RegExp(char + '+$', 'g');
 		return string.replace(regExp, '');
+	};
+
+	var startsWith = function(string, searchString, position) {
+		position = position || 0;
+		return string.substr(position, searchString.length) === searchString;
 	};
 
 	var encodePath = function(path) {
@@ -2332,6 +2397,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Supported file types: http://stackoverflow.com/q/24325363/1789808
 	var isGoogleDocsFile = function(filename) {
 		return ($.inArray(getExtension(filename), config.viewer.google.extensions) !== -1);
+	};
+
+	// Test if file is supported by Markdown-it, which renders .md Markdown to HTML:
+	var isMarkdownFile = function(filename) {
+		return ($.inArray(getExtension(filename), config.viewer.markdown.extensions) !== -1);
 	};
 
 	var buildConnectorUrl = function(params) {
@@ -2956,6 +3026,130 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				if(response.data) {
 					//window.location = buildConnectorUrl(queryParams);
 					$.fileDownload(buildConnectorUrl(queryParams));
+				}
+				handleAjaxResponseErrors(response);
+			},
+			error: handleAjaxError
+		});
+	};
+
+	// Uses markdown-it.js to render the content of the Markdown file into HTML,
+	// and then places is in .fm-markdown-body or .fm-markdown-body-side-by-side
+	var renderMarkdownHTML = function(resourceObject, markdownText) {
+
+		var md = window.markdownit({
+			// Basic options:
+			html: true,
+			linkify: true,
+			typographer: true,
+
+			// Custom highlight function to apply CSS class `highlight`:
+			highlight: function (str, lang) {
+				if (lang && hljs.getLanguage(lang)) {
+				  try {
+					return '<pre class="highlight"><code>' +
+						hljs.highlight(lang, str, true).value +
+						'</code></pre>';
+				  } catch (__) {}
+				}
+				return '<pre class="highlight"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+			},
+
+			// Custom link function to enable <img ...> and file d/ls:
+			replaceLink: function (link, env) {
+
+                // do not change if link as http:// or ftp:// or mailto: etc.
+				if (link.search("://") != -1 || startsWith(link, 'mailto:')) {
+					return link;
+				}
+
+				// define path depending on absolute / relative link type
+                var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(resourceObject.id);
+                var path = basePath + ltrim(link, '/');
+
+                if(isMarkdownFile(path)) {
+                    // to apply previewModel on click in preview mode (see below)
+                    return path;
+                } else {
+                    return buildConnectorUrl({
+                        mode: 'readfile',
+                        path: path
+                    });
+				}
+			}
+		}).use(window.markdownitReplaceLink);
+
+		var result = md.render(markdownText);
+
+		// Update the ko object renderedMarkdownHTML() with the new content:
+		fmModel.renderedMarkdownHTML(result);
+
+		// Now add onClicks to local .md file links (to do AJAX previews):
+		$(".fm-markdown-body").find("a").each(function(index) {
+			var href = $(this).attr("href");
+
+			if (href.search("://") != -1 || startsWith(href, 'mailto:')) {
+				return; // do nothing
+			}
+
+			if (isMarkdownFile(href)) {
+				// set previewModel for clicked link
+				$(this).on("click", function (e) {
+                    $.ajax({
+                        type: 'GET',
+                        url: buildConnectorUrl({
+                            mode: 'getfile',
+                            path: href
+                        }),
+                        dataType: "json",
+                        success: function (response) {
+                            if(response.data) {
+                                getDetailView(response.data);
+                            }
+                            handleAjaxResponseErrors(response);
+                        },
+                        error: handleAjaxError
+                    });
+
+				    return false; // prevent onClick event
+				});
+			}
+		});
+
+		// When editing Markdown, prevent the user from losing unsaved edits by
+		// clicking on a (rendered HTML) link that jumps off the page.
+		$(".fm-markdown-body-side-by-side").find("a").each(function(index) {
+			// remove onClick event handler
+			$(this).off("click");
+
+			// Replace the link with a popup showing where it will link to:
+			var href = $(this).attr("href");
+			$(this).on("click", function () {
+				fm.log(href);
+			    return false; // prevent onClick event
+			});
+		});
+	};
+
+	// Retrieve the contents of a .md file using AJAX and render it to HTML:
+	var viewMarkdownItem = function(resourceObject) {
+
+		resourceObject.markdownText = '';
+
+		$.ajax({
+			type: 'GET',
+			url: buildConnectorUrl({
+				mode: 'editfile',
+				path: resourceObject.id
+			}),
+			dataType: 'json',
+			success: function (response) {
+
+				if(response.data) {
+					// Cache the last-downloaded content. Useful for editor close w/o a save.
+					resourceObject.markdownText = response.data.attributes.content;
+					// Render the content into HTML and populate the DIV:
+					renderMarkdownHTML(resourceObject, resourceObject.markdownText);
 				}
 				handleAjaxResponseErrors(response);
 			},
@@ -3677,7 +3871,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             // setup "mode"
             editor.setOption("mode", currentMode);
 
+            // If editing Markdown side-by-side, do live render updates:
+            if (isMarkdownFile(fmModel.previewModel.rdo().attributes.name) && config.viewer.markdown.enabled) {
+				editor.on("changes", function(cm, change) {
+					var resourceObject = fmModel.previewModel.rdo();
+					var markdownText = fmModel.previewModel.editor.codeMirror().getValue();
+					renderMarkdownHTML(resourceObject, markdownText);
+				});
+            }
+
             fmModel.previewModel.editor.codeMirror(editor);
+
+            // Finally, trigger a re-render for the new side-by-side display
+            // and <a href...> onClicks:
+			var resourceObject = fmModel.previewModel.rdo;
+			var markdownText = fmModel.previewModel.editor.codeMirror().getValue();
+			renderMarkdownHTML(resourceObject, markdownText);
 		}
 	};
 

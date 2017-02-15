@@ -154,6 +154,14 @@
             "readerWidth": "640",
             "readerHeight": "480"
         },
+        "markdown": {
+            "enabled": true,
+            "directoryIndex": "README.md",
+            "directoryIndexOnTop": true,
+            "extensions": [
+                "md"
+            ]
+        },
         "editable": {
             "enabled": true,
             "theme": "default",
