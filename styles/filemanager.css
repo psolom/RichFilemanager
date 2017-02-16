@@ -175,6 +175,10 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-image: url(../images/folder_add.png);
 }
 
+.fm-container .fm-header .fm-btn-close span {
+    background-image: url(../images/reset.png);
+}
+
 .fm-container .fm-splitter {
     height: 100%;
 }

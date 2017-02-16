@@ -94,6 +94,13 @@
 						<span>&nbsp;</span>
 					</button>
 				</div>
+				<!-- ko if: headerModel.closeButton() -->
+				<div class="button-group">
+					<button class="fm-btn-close no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: localizeGUI() ? lg().close : null}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<!-- /ko -->
 			</div>
 		</div>
 

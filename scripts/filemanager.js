@@ -12,16 +12,6 @@
 
 (function($) {
 
-// function to retrieve GET params
-$.urlParam = function(name) {
-	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-	if (results) {
-		return results[1];
-	} else {
-		return 0;
-	}
-};
-
 $.richFilemanagerPlugin = function(element, pluginOptions)
 {
 	/**
@@ -187,26 +177,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Forces columns to fill the layout vertically.
 	// Called on initial page load and on resize.
 	fm.setDimensions = function() {
-		var bheight = 0,
-			padding = $wrapper.outerHeight(true) - $wrapper.height();
+		var padding = $wrapper.outerHeight(true) - $wrapper.height(),
+        	newH = $(window).height() - $header.height() - $footer.height() - padding,
+            newW = $splitter.width() - $splitter.children(".splitter-bar-vertical").outerWidth() - $filetree.outerWidth();
 
-		if($.urlParam('CKEditorCleanUpFuncNum')) bheight +=60;
-
-        var newH = $(window).height() - $header.height() - $footer.height() - padding - bheight;
         $splitter.height(newH);
-
-		// // adjust height of filemanager if there are other DOM elemements on page
-		// var delta = $(document).height() - $(window).height();
-		// if(!$container.parent().is('body') && delta > 0) {
-		// 	var diff = newH - delta;
-		// 	newH = (diff > 0) ? diff : 1;
-		// 	$splitter.height(newH);
-		// }
-
-        // $splitter.children().outerHeight($splitter.height());
-
-		// adjustment for window horizontal resize
-		var newW = $splitter.width() - $splitter.children(".splitter-bar-vertical").outerWidth() - $filetree.outerWidth();
 		$fileinfo.width(newW);
 	};
 
@@ -304,7 +279,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// localize messages based on culture var or from URL
 	var localize = function() {
-		var langCode = $.urlParam('langCode');
+		var langCode = _url_.param('langCode');
 		var langPath = fm.settings.baseUrl + '/languages/';
 
 		function buildLangPath(code) {
@@ -313,7 +288,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		return $.ajax()
 			.then(function() {
-				if(langCode != 0) {
+				if(langCode) {
 					// try to load lang file based on langCode in query params
 					return file_exists(buildLangPath(langCode))
 						.done(function() {
@@ -672,12 +647,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
 		// adding a close button triggering callback function if CKEditorCleanUpFuncNum passed
-		if($.urlParam('CKEditorCleanUpFuncNum')) {
-			$("body").append('<button id="fm-js-btn-close" type="button">' + lg.close + '</button>');
-
-			$('#fm-js-btn-close').click(function () {
-				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
-			});
+		if(_url_.param('CKEditorCleanUpFuncNum')) {
+            fmModel.headerModel.closeButton(true);
+            fmModel.headerModel.closeButtonOnClick = function() {
+                parent.CKEDITOR.tools.callFunction(_url_.param('CKEditorCleanUpFuncNum'));
+			};
 		}
 
 		// input file replacement
@@ -1059,8 +1033,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					path: path
 				};
 
-				if($.urlParam('type')) {
-					queryParams.type = $.urlParam('type');
+				if(_url_.param('type')) {
+					queryParams.type = _url_.param('type');
 				}
 
 				$.ajax({
@@ -1377,8 +1351,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					mode: 'getfolder',
 					path: path
 				};
-				if($.urlParam('type')) {
-					queryParams.type = $.urlParam('type');
+				if(_url_.param('type')) {
+					queryParams.type = _url_.param('type');
 				}
 
 				$.ajax({
@@ -1663,6 +1637,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		var HeaderModel = function() {
+			this.closeButton = ko.observable(false);
+
+            this.closeButtonOnClick = function() {
+				console.log('clicked');
+			};
+
 			this.goHome = function() {
 				model.previewFile(false);
 				model.itemsModel.loadList(fileRoot);
@@ -2081,8 +2061,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		type = (typeof type === "undefined") ? "user" : type;
 
 		if(type === 'user') {
-			if($.urlParam('config') != 0) {
-				url = fm.settings.baseUrl + '/config/' + $.urlParam('config');
+			if(_url_.param('config')) {
+				url = fm.settings.baseUrl + '/config/' + _url_.param('config');
 			} else {
 				url = fm.settings.baseUrl + '/config/filemanager.config.json';
 			}
@@ -2482,9 +2462,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return window.opener // window.open()
 			|| (window.parent && window.self !== window.parent) // <iframe>
 			|| window.tinyMCEPopup // tinyMCE >= 3.0
-			|| $.urlParam('field_name') // tinymce 4 or colorbox
-			|| $.urlParam('CKEditor') // CKEditor 3.0 + integration method
-			|| $.urlParam('ImperaviElementId'); // Imperavi Redactor I >= 10.x.x
+			|| _url_.param('field_name') // tinymce 4 or colorbox
+			|| _url_.param('CKEditor') // CKEditor 3.0 + integration method
+			|| _url_.param('ImperaviElementId'); // Imperavi Redactor I >= 10.x.x
 	}
 
 
@@ -2519,8 +2499,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
 		// tinymce 4 and colorbox
-		if($.urlParam('field_name')) {
-			parent.document.getElementById($.urlParam('field_name')).value = previewUrl;
+		if(_url_.param('field_name')) {
+			parent.document.getElementById(_url_.param('field_name')).value = previewUrl;
 
 			if(typeof parent.tinyMCE !== "undefined") {
 				parent.tinyMCE.activeEditor.windowManager.close();
@@ -2530,13 +2510,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
-		if($.urlParam('ImperaviElementId')) {
+		if(_url_.param('ImperaviElementId')) {
 			// use Imperavi Redactor I, tested on v.10.x.x
 			if (window.opener) {
 				// Popup
 			} else {
 				// Modal (in iframe)
-				var elementId = $.urlParam('ImperaviElementId'),
+				var elementId = _url_.param('ImperaviElementId'),
 					instance = parent.$('#'+elementId).redactor('core.getObject');
 
 				if(instance) {
@@ -2553,14 +2533,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
         // CKEditor 3.0 + integration method
-		if($.urlParam('CKEditor')) {
+		if(_url_.param('CKEditor')) {
 			if (window.opener) {
 				// Popup
-				window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
+				window.opener.CKEDITOR.tools.callFunction(_url_.param('CKEditorFuncNum'), previewUrl);
 			} else {
 				// Modal (in iframe)
-				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
-				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
+				parent.CKEDITOR.tools.callFunction(_url_.param('CKEditorFuncNum'), previewUrl);
+				parent.CKEDITOR.tools.callFunction(_url_.param('CKEditorCleanUpFuncNum'));
 			}
 		}
 
