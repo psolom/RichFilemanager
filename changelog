@@ -1,3 +1,13 @@
+Version 2.2.2
+---------------------------
+- new section "filetree" in configuration file;
+- independent ajax calls for filetree and fileview #103, #104;
+- selectable supports custom scrollbar (scrolling + selection);
+- bugfix: missed custom scrollbar for preview mode;
+- bugfix: bugfix: breadcrumbs is broken if "exclusiveFolder" is set #107;
+- bugfix: close button issue on integration with CKEditor #108;
+
+
 Version 2.2.1
 ---------------------------
 - breadcrumbs instead of string for the current path #96;
