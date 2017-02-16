@@ -76,6 +76,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		fullexpandedFolder = null,	// path to be automatically expanded by filetree plugin
 
 		/** service variables **/
+        _url_ = purl(),
 		timeStart = new Date().getTime();
 
 	/**
@@ -425,18 +426,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		configSortOrder = chunks[1] || 'asc';
 
         // changes files root to restrict the view to a given folder
-        if($.urlParam('exclusiveFolder') != 0) {
-            fileRoot += $.urlParam('exclusiveFolder');
-            if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
-            fileRoot = fileRoot.replace(/\/\//g, '\/');
+		var exclusiveFolder = _url_.param('exclusiveFolder');
+        if(exclusiveFolder) {
+            fileRoot = '/' + exclusiveFolder + '/';
+            fileRoot = normalizePath(fileRoot);
         }
 
         // get folder that should be expanded after filemanager is loaded
-        var expandedFolder = '';
-        if($.urlParam('expandedFolder') != 0) {
-            expandedFolder = $.urlParam('expandedFolder');
-            fullexpandedFolder = fileRoot + expandedFolder;
-            fullexpandedFolder = fullexpandedFolder.replace(/\/\//g, '\/');
+        var expandedFolder = _url_.param('expandedFolder');
+        if(expandedFolder) {
+            fullexpandedFolder = fileRoot + expandedFolder + '/';
+            fullexpandedFolder = normalizePath(fullexpandedFolder);
         }
 
 		// Activates knockout.js
@@ -719,6 +719,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}
 				},
 				axis: "yx"
+			});
+
+            $fileinfo.find('.fm-preview').mCustomScrollbar({
+                theme: config.customScrollbar.theme,
+                scrollButtons: {
+                    enable: config.customScrollbar.button
+                },
+                advanced: {
+                    autoExpandHorizontalScroll: true,
+                    updateOnContentResize: true,
+                    updateOnSelectorChange: '.fm-preview-viewer'
+                }
 			});
 
             $fileinfo.find('.view-items-wrapper').mCustomScrollbar({
@@ -1911,29 +1923,32 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.items = ko.observableArray([]);
 
             this.add = function(path, label) {
-                bc_model.items.unshift(new BcItem(path, label));
+                bc_model.items.push(new BcItem(path, label));
 			};
 
             this.splitCurrent = function() {
-            	var	chunks = model.currentPath().split('/');
-                bc_model.items([]);
+            	var	path = fileRoot,
+					cPath = model.currentPath(),
+					chunks = cPath.replace(new RegExp('^' + fileRoot), '').split('/');
 
-            	while (chunks.length > 0) {
-            		var chunk = chunks.pop();
+            	// reset breadcrumbs
+            	bc_model.items([]);
+				// push root node
+                bc_model.add(fileRoot, '');
+
+                while (chunks.length > 0) {
+            		var chunk = chunks.shift();
             		if (chunk) {
-            			var paths = chunks.slice(0);
-                        paths.push(chunk, '');
-                        bc_model.add(paths.join('/'), chunk);
+            			path += chunk + '/';
+                        bc_model.add(path, chunk);
 					}
 				}
-
-                bc_model.add(fileRoot, '');
             };
 
             var BcItem = function(path, label) {
                 var bc_item = this;
 				this.path = path;
-				this.label = label;
+                this.label = label;
                 this.isRoot = (path === fileRoot);
                 this.active = (path === model.currentPath());
 
@@ -2304,6 +2319,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 		return parts.join('/');
 	};
+
+	// invert backslashes and remove duplicated ones
+    var normalizePath = function(path) {
+        return path.replace(/\\/g, '/').replace(/\/+/g, '/');
+    };
 
 	// return filename extension
 	var getExtension = function(filename) {
@@ -3819,9 +3839,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 assets.push('/scripts/CodeMirror/mode/css/css.js');
                 assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
                 assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/shell/shell.js');
                 assets.push('/scripts/CodeMirror/mode/meta.js');
 				currentMode = 'gfm';
 			}
+			if (extension === 'sh') {
+                assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
+                assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
+                assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
+                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                assets.push('/scripts/CodeMirror/mode/css/css.js');
+                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                assets.push('/scripts/CodeMirror/mode/meta.js');
+                assets.push('/scripts/CodeMirror/mode/shell/shell.js');
+				currentMode = 'shell';
+			}
+
 		}
 
         if(assets.length) {
@@ -3838,6 +3872,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 lineNumbers: config.viewer.editable.lineNumbers,
                 lineWrapping: config.viewer.editable.lineWrapping,
                 theme: config.viewer.editable.theme,
+                matchBrackets: config.viewer.editable.matchBrackets,
                 extraKeys: {
                     "F11": function (cm) {
                         cm.setOption("fullScreen", !cm.getOption("fullScreen"));
