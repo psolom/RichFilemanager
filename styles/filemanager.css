@@ -327,13 +327,11 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 .fm-container .fm-footer .fm-loading-wrapper {
-    width: 28px;
-    height: 28px;
     display: inline-block;
 }
 
 .fm-container .fm-footer .fm-loading {
-    font-size: 28px;
+    font-size: 22px;
     animation-name: spin;
     animation-duration: 1s;
     animation-iteration-count: infinite;
