@@ -1249,8 +1249,8 @@
                             fm.error(lg.NOT_ALLOWED_SYSTEM);
                             return false;
                         }
-                        if (!node.isLoaded()) {
-                            tree_node.openNode(node);
+                        if (!node.isLoaded() || config.filetree.reloadOnClick) {
+                            tree_node.openNode(node, config.options.filemanagerMode === 'split' ? {'load': 1} : {})
                         } else {
                             tree_model.toggleNode(node);
                         }
@@ -1274,14 +1274,13 @@
                         }
                     };
 
-                    this.openNode = function(node) {
+                    this.openNode = function(node, options) {
                         if (node.rdo.type === 'file') {
                             getDetailView(node.rdo);
                         }
                         if (node.rdo.type === 'folder') {
                             if (!node.isLoaded() || (node.isExpanded() && (config.filetree.reloadOnClick || config.options.filemanagerMode === 'split'))) {
-                                tree_model.loadNodes(node, {'refresh': true});
-                                model.itemsModel.loadList(node.id);
+                                tree_model.loadNodes(node, Object.assign({}, options, {'refresh': true}));
                             } else {
                                 tree_model.toggleNode(node, false);
                                 fmModel.currentPath(node.id);
