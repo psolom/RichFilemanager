@@ -57,7 +57,7 @@ $config = [
          * - absolute path in case `serverRoot` set to "false", e.g. "/var/www/html/filemanager/userfiles/"
          * - relative path in case `serverRoot` set to "true", e.g. "/filemanager/userfiles/"
          */
-        "fileRoot" => false,
+        "fileRoot" => '/source',
         /**
          * Format of the date to display. See http://www.php.net/manual/en/function.date.php
          */

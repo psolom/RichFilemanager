@@ -32,6 +32,15 @@
             "delete"
         ]
     },
+    "filetree": {
+        "enabled": true,
+        "foldersOnly": false,
+        "reloadOnClick": true,
+        "expandSpeed": 200,
+        "showLine": true,
+        "width": 200,
+        "minWidth": 200
+    },
     "manager": {
         "dblClickOpen": false,
         "selection": {
