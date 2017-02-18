@@ -670,6 +670,7 @@
             // Loading CustomScrollbar if enabled
             if (config.customScrollbar.enabled) {
                 $filetree.mCustomScrollbar({
+                    mouseWheelPixels: 50,
                     theme: config.customScrollbar.theme,
                     scrollButtons: {
                         enable: config.customScrollbar.button
@@ -695,6 +696,7 @@
                 });
 
                 $fileinfo.find('.fm-preview').mCustomScrollbar({
+                    mouseWheelPixels: 50,
                     theme: config.customScrollbar.theme,
                     scrollButtons: {
                         enable: config.customScrollbar.button
@@ -707,6 +709,7 @@
                 });
 
                 $fileinfo.find('.view-items-wrapper').mCustomScrollbar({
+                    mouseWheelPixels: 50,
                     theme: config.customScrollbar.theme,
                     scrollButtons: {
                         enable: config.customScrollbar.button
@@ -1071,32 +1074,37 @@
                         success: function(response) {
                             //WARNING!!! Now tree inside response.data.tree
                             if (response.data && response.data.tree) {
-                                fmModel.currentPath(path);
-                                fmModel.breadcrumbsModel.splitCurrent();
-                                tree_model.currentNode(targetNode);
-                                if (!targetNode || undefined === targetNode.isDone || options.refresh) {
-                                    fmModel.itemsModel.setList(response.data.tree);
-                                    model.itemsModel.isDone(false);
-                                } else {
-                                    fmModel.itemsModel.extendList(response.data.tree);
-                                    model.itemsModel.isDone(response.data.done);
-                                }
-
                                 var nodes = [];
+                                var filesCount = 0;
                                 $.each(response.data.tree, function(i, resourceObject) {
                                     var nodeObject = tree_model.createNode(resourceObject);
+                                    if ('file' === resourceObject.type) filesCount++;
                                     nodes.push(nodeObject);
                                 });
-                                if (options.refresh) {
-                                    targetNode.children([]);
+
+                                fmModel.currentPath(path);
+                                fmModel.breadcrumbsModel.splitCurrent();
+                                if (filesCount) {
+                                    if (!targetNode || undefined === targetNode.isDone || options.refresh) {
+                                        fmModel.itemsModel.setList(response.data.tree);
+                                        model.itemsModel.isDone(false);
+                                    } else {
+                                        fmModel.itemsModel.extendList(response.data.tree);
+                                        model.itemsModel.isDone(response.data.done);
+                                    }
                                 }
-                                tree_model.addNodes(targetNode, nodes);
+
                                 // not root
                                 if (targetNode) {
                                     targetNode.isLoaded(true);
                                     tree_model.expandNode(targetNode);
                                     targetNode.isDone = response.data.done;
+                                    tree_model.currentNode(targetNode);
+                                    if (options.refresh) {
+                                        targetNode.children([]);
+                                    }
                                 }
+                                tree_model.addNodes(targetNode, nodes);
                                 expandFolderDefault(targetNode);
                                 model.loadingFolders(false);
                             }
@@ -1249,11 +1257,7 @@
                             fm.error(lg.NOT_ALLOWED_SYSTEM);
                             return false;
                         }
-                        if (!node.isLoaded() || config.filetree.reloadOnClick) {
-                            tree_node.openNode(node, config.options.filemanagerMode === 'split' ? {'load': 1} : {})
-                        } else {
-                            tree_model.toggleNode(node);
-                        }
+                        tree_node.openNode(node, config.options.filemanagerMode === 'split' ? {'load': 1} : {});
                     };
 
                     this.nodeClick = function(node) {
@@ -1279,8 +1283,12 @@
                             getDetailView(node.rdo);
                         }
                         if (node.rdo.type === 'folder') {
-                            if (!node.isLoaded() || (node.isExpanded() && (config.filetree.reloadOnClick || config.options.filemanagerMode === 'split'))) {
-                                tree_model.loadNodes(node, Object.assign({}, options, {'refresh': true}));
+                            if (node.isExpanded()) {
+                                tree_model.toggleNode(node, false);
+                            } else if (!node.isLoaded() || (node.isLoaded() && !node.isExpanded() && (config.filetree.reloadOnClick || config.options.filemanagerMode === 'split'))) {
+                                if (undefined === options) options = {};
+                                $.extend(options, {'refresh': true});
+                                tree_model.loadNodes(node, options);
                             } else {
                                 tree_model.toggleNode(node, false);
                                 fmModel.currentPath(node.id);
@@ -3296,6 +3304,7 @@
 
                     if (config.customScrollbar.enabled) {
                         $dropzoneWrapper.mCustomScrollbar({
+                            mouseWheelPixels: 50,
                             theme: config.customScrollbar.theme,
                             scrollButtons: {
                                 enable: config.customScrollbar.button
