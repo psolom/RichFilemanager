@@ -2183,6 +2183,7 @@ $.widget( "ui.droppable", {
 		scope: "default",
 		tolerance: "intersect",
 
+        // RichFilemanager customization:
 		// listening "over" and "out" events for: a) cloned item itself; b) non-accessible items
 		enableExtendedEvents: false,
 		onOverSelfEvent: "over",
@@ -2614,6 +2615,14 @@ var selectable = $.widget("ui.selectable", $.ui.mouse, {
 		filter: "*",
 		tolerance: "touch",
 
+		// RichFilemanager custom options:
+        cssHelper: {
+            offsetTop: 0,
+            offsetLeft: 0,
+            heightIncrement: 0,
+            widthIncrement: 0
+		},
+
 		// callbacks
 		selected: null,
 		selecting: null,
@@ -2651,6 +2660,16 @@ var selectable = $.widget("ui.selectable", $.ui.mouse, {
 				});
 			});
 		};
+
+		// RichFilemanager customization: support mCustomScrollbar
+		this.repositionCssHelper = function(heightIncrement, widthIncrement) {
+			if(this.dragged) {
+                this.options.cssHelper.heightIncrement = heightIncrement;
+                this.options.cssHelper.widthIncrement = widthIncrement;
+                this._mouseDrag(this.lastEvent);
+			}
+		};
+
 		this.refresh();
 
 		this.selectees = selectees.addClass("ui-selectee");
@@ -2683,14 +2702,18 @@ var selectable = $.widget("ui.selectable", $.ui.mouse, {
 
 		this._trigger("start", event);
 
-		$(options.appendTo).append(this.helper);
-		// position helper (lasso)
-		this.helper.css({
-			"left": event.pageX,
-			"top": event.pageY,
-			"width": 0,
-			"height": 0
-		});
+		// bugfix for offset: https://bugs.jqueryui.com/ticket/4377
+        this.options.cssHelper.offsetLeft = $(options.appendTo).offset().left;
+        this.options.cssHelper.offsetTop = $(options.appendTo).offset().top;
+
+        $(options.appendTo).append(this.helper);
+        // position helper (lasso)
+        this.helper.css({
+            "left": event.pageX - this.options.cssHelper.offsetLeft,
+            "top": event.pageY - this.options.cssHelper.offsetTop,
+            "width": 0,
+            "height": 0
+        });
 
 		if (options.autoRefresh) {
 			this.refresh();
@@ -2740,6 +2763,7 @@ var selectable = $.widget("ui.selectable", $.ui.mouse, {
 
 	_mouseDrag: function(event) {
 
+        this.lastEvent = event;
 		this.dragged = true;
 
 		if (this.options.disabled) {
@@ -2751,12 +2775,12 @@ var selectable = $.widget("ui.selectable", $.ui.mouse, {
 			options = this.options,
 			x1 = this.opos[0],
 			y1 = this.opos[1],
-			x2 = event.pageX,
-			y2 = event.pageY;
+			x2 = event.pageX + this.options.cssHelper.widthIncrement,
+			y2 = event.pageY + this.options.cssHelper.heightIncrement;
 
 		if (x1 > x2) { tmp = x2; x2 = x1; x1 = tmp; }
 		if (y1 > y2) { tmp = y2; y2 = y1; y1 = tmp; }
-		this.helper.css({ left: x1, top: y1, width: x2 - x1, height: y2 - y1 });
+        this.helper.css({left: x1 - this.options.cssHelper.offsetLeft, top: y1 - this.options.cssHelper.offsetTop, width: x2-x1, height: y2-y1});
 
 		this.selectees.each(function() {
 			var selectee = $.data(this, "selectable-item"),
@@ -2835,6 +2859,8 @@ var selectable = $.widget("ui.selectable", $.ui.mouse, {
 		var that = this;
 
 		this.dragged = false;
+        this.options.cssHelper.heightIncrement = 0;
+        this.options.cssHelper.widthIncrement = 0;
 
 		$(".ui-unselecting", this.element[0]).each(function() {
 			var selectee = $.data(this, "selectable-item");

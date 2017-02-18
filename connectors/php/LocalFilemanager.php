@@ -145,6 +145,8 @@ class LocalFilemanager extends BaseFilemanager
         $response_data = [];
         $target_path = $this->get['path'];
 		$skipCount = $this->get['skip'];
+		//$load = 0 - both, 1 - folders, 2 - files
+		$load = $this->get['load'];
 		$filesSkipped = 0;
 		$target_fullpath = $this->getFullPath($target_path, true);
 		$lazyEnabled = $this->config['options']['lazy'];
@@ -168,7 +170,8 @@ class LocalFilemanager extends BaseFilemanager
 				if($file != "." && $file != "..") {
 					//@todo Skip files not in that dirty way
 					if ($lazyEnabled && $filesSkipped++ < $skipCount) continue;
-					array_push($files_list, $file);
+					if ((is_dir($target_fullpath . $file) && $load != 2) || ($load != 1))
+						array_push($files_list, $file);
 					if ($lazyEnabled && count($files_list) >= $lazyLimit) {
 						$lazyFlag = false;
 						break;

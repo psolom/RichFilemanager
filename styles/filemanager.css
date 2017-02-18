@@ -2,6 +2,30 @@
 * Icons are from http://icomoon.io/app/
 **/
 
+html, body {
+    height: 100%;
+}
+
+/* IE10-11 styles */
+html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
+html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
+    vertical-align: top;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
+html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
+    width: 220px;
+    height: 32px;
+    overflow: hidden;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
+html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
+    height: 22px;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
+html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
+    height: 23px;
+}
+
 .fm-container * {
     font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
     box-sizing: content-box;
@@ -11,9 +35,14 @@
 }
 
 .fm-container {
-    padding: 10px;
+    height: 100%;
     background-color: #ffffff;
     overflow: hidden;
+}
+
+.fm-container .fm-wrapper {
+    height: 100%;
+    padding: 10px;
 }
 
 .fm-container .fm-header {
@@ -146,9 +175,12 @@
     background-image: url(../images/folder_add.png);
 }
 
+.fm-container .fm-header .fm-btn-close span {
+    background-image: url(../images/reset.png);
+}
+
 .fm-container .fm-splitter {
-    height: 400px;
-    /* no padding allowed */
+    height: 100%;
 }
 
 .fm-container .fm-splitter .splitter-bar-vertical {
@@ -198,7 +230,8 @@
     background-color: transparent;
     text-decoration: none;
     vertical-align: top;
-    display: inline-block
+    display: inline-block;
+    color: initial;
 }
 
 .fm-container .fm-filetree li a:hover {
@@ -288,6 +321,24 @@
     background: url(../images/spinner.gif) no-repeat center center;
 }
 
+@keyframes spin {
+    from {transform: rotate(0deg);}
+    to {transform: rotate(360deg);}
+}
+
+.fm-container .fm-footer .fm-loading-wrapper {
+    display: inline-block;
+}
+
+.fm-container .fm-footer .fm-loading {
+    font-size: 22px;
+    animation-name: spin;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    color: white;
+}
+
 .fm-container .fm-fileinfo #main-title {
     margin: 10px auto;
 }
@@ -309,6 +360,7 @@
 
 .fm-container .fm-preview {
     width: 100%;
+    height: 100%;
 }
 
 .fm-container .fm-preview .fm-preview-viewer {
@@ -461,8 +513,8 @@
     border: 1px solid #dcdcdc;
     margin: 0.5em 0 0;
     padding: 0.1em 0.3em;
-    line-height: 1.7em;
     width: 200px;
+    line-height: 1.7em;
 }
 
 .fm-container .search-box input:focus {
@@ -480,15 +532,20 @@
     cursor: pointer;
 }
 
-/* to expand selectable area to 100% vertically */
+/* to expand selectable area to 100% vertically in case no scroll */
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
 }
-.fm-container .view-items {
+.fm-container .view-items-wrapper {
     height: 100%;
 }
 
+.fm-container .view-items {
+    position: relative;
+}
+
 .fm-container .view-items .grid {
+    height: 100%;
     padding: 15px;
     text-align: left;
 }
@@ -719,28 +776,6 @@
     margin: 0;
     z-index: 9;
 }
-
-
-/* IE10-11 styles */
-html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
-html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
-    vertical-align: top;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
-html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
-    width: 220px;
-    height: 32px;
-    overflow: hidden;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
-html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
-    height: 22px;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
-html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
-    height: 23px;
-}
-
 
 /** Drag & Drop **/
 

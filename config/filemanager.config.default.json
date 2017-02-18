@@ -4,11 +4,13 @@
         "culture": "en",
         "theme": "flat-dark",
         "defaultViewMode": "grid",
+        "filemanagerMode": "split",
         "localizeGUI": true,
         "showFullPath": false,
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
+        "canCreateFolders": true,
         "clipboard": true,
         "searchBox": true,
         "listFiles": true,
@@ -29,6 +31,15 @@
             "replace",
             "delete"
         ]
+    },
+    "filetree": {
+        "enabled": true,
+        "foldersOnly": false,
+        "reloadOnClick": true,
+        "expandSpeed": 200,
+        "showLine": true,
+        "width": 200,
+        "minWidth": 200
     },
     "manager": {
         "dblClickOpen": false,
@@ -169,6 +180,15 @@
     "extras": {
         "extra_js": [],
         "extra_js_async": true
+    },
+    "paths": {
+        "flash": "/scripts/",
+        "languages": "/languages/",
+        "images": "/scripts/jQuery-File-Upload/img",
+        "scripts": "/scripts/",
+        "styles": "/scripts/",
+        "themes": "/themes/",
+        "templates": "/scripts/templates/"
     },
     "url": "https://github.com/servocoder/RichFilemanager",
     "version": "2.2.1"

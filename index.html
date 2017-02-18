@@ -80,11 +80,13 @@
 						</button>
 					</form>
 				</div>
+				<!-- ko if: canCreateFolders() -->
 				<div class="button-group create-controls">
 					<button class="fm-btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg().new_folder"></span>
 					</button>
 				</div>
+				<!-- /ko -->
 				<!-- /ko -->
 				<div class="button-group viewmode-controls">
 					<button class="fm-btn-grid no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
@@ -94,82 +96,90 @@
 						<span>&nbsp;</span>
 					</button>
 				</div>
+				<!-- ko if: headerModel.closeButton() -->
+				<div class="button-group">
+					<button class="fm-btn-close no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: localizeGUI() ? lg().close : null}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<!-- /ko -->
 			</div>
 		</div>
 
 		<div class="fm-splitter">
-			<div class="fm-filetree">
+			<div class="fm-filetree" data-bind="visible: config().filetree.enabled">
 				<div data-bind="template: {name: 'node-parent-template', foreach: treeModel.treeData.children, as: 'koNode', afterRender: treeModel.nodeRendered}"></div>
 			</div>
 
 			<div class="fm-fileinfo">
 				<div class="fm-loading-view" data-bind="visible: loadingView()"></div>
 
-				<div class="view-items" data-bind="visible: !loadingView() && !previewFile()">
-					<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
-						<!-- ko if: koItem.rdo.type === "parent" -->
-						<li class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
-							<div class="clip">
-								<img src="" class="grid-icon ico_folder_parent" data-bind="attr: {src: null, width: $root.config().viewer.image.thumbMaxWidth}" />
-							</div>
-							<p>..</p>
-						</li>
-						<!-- /ko -->
-
-						<!-- ko if: koItem.rdo.type !== "parent" -->
-						<li data-bind="event: {click: koItem.open, dblclick: koItem.open}, draggableView: koItem, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
-							<div class="item-background"></div>
-							<div class="item-content">
+				<div class="view-items-wrapper" data-bind="visible: !loadingView() && !previewFile()">
+					<div class="view-items">
+						<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
+							<!-- ko if: koItem.rdo.type === "parent" -->
+							<li class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
 								<div class="clip">
-									<img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+									<img src="" class="grid-icon ico_folder_parent" data-bind="attr: {src: null, width: $root.config().viewer.image.thumbMaxWidth}" />
 								</div>
-								<p data-bind="text: koItem.rdo.attributes.name"></p>
-							</div>
-						</li>
-						<!-- /ko -->
-					</ul>
+								<p>..</p>
+							</li>
+							<!-- /ko -->
+
+							<!-- ko if: koItem.rdo.type !== "parent" -->
+							<li data-bind="event: {click: koItem.open, dblclick: koItem.open}, draggableView: koItem, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
+								<div class="item-background"></div>
+								<div class="item-content">
+									<div class="clip">
+										<img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+									</div>
+									<p data-bind="text: koItem.rdo.attributes.name"></p>
+								</div>
+							</li>
+							<!-- /ko -->
+						</ul>
 
 
-					<table class="list" data-bind="visible: viewMode() === 'list'">
-						<thead>
-						<tr class="rowHeader" data-bind="with: tableViewModel">
-							<th data-bind="click: thName.sort, css: thName.sortClass()"><span data-bind="text: $root.lg().name"></span></th>
-							<th data-bind="click: thType.sort, css: thType.sortClass()"><span data-bind="text: $root.lg().type"></span></th>
-							<th data-bind="click: thSize.sort, css: thSize.sortClass()"><span data-bind="text: $root.lg().size"></span></th>
-							<th data-bind="click: thDimensions.sort, css: thDimensions.sortClass()"><span data-bind="text: $root.lg().dimensions"></span></th>
-							<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg().modified"></span></th>
-						</tr>
-						</thead>
-						<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
-						<!-- ko if: koItem.rdo.type === "parent" -->
-						<tr class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
-							<td>..</td>
-							<td></td>
-							<td></td>
-							<td></td>
-							<td></td>
-						</tr>
-						<!-- /ko -->
+						<table class="list" data-bind="visible: viewMode() === 'list'">
+							<thead>
+							<tr class="rowHeader" data-bind="with: tableViewModel">
+								<th data-bind="click: thName.sort, css: thName.sortClass()"><span data-bind="text: $root.lg().name"></span></th>
+								<th data-bind="click: thType.sort, css: thType.sortClass()"><span data-bind="text: $root.lg().type"></span></th>
+								<th data-bind="click: thSize.sort, css: thSize.sortClass()"><span data-bind="text: $root.lg().size"></span></th>
+								<th data-bind="click: thDimensions.sort, css: thDimensions.sortClass()"><span data-bind="text: $root.lg().dimensions"></span></th>
+								<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg().modified"></span></th>
+							</tr>
+							</thead>
+							<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
+							<!-- ko if: koItem.rdo.type === "parent" -->
+							<tr class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem" oncontextmenu="return false;">
+								<td>..</td>
+								<td></td>
+								<td></td>
+								<td></td>
+								<td></td>
+							</tr>
+							<!-- /ko -->
 
-						<!-- ko if: koItem.rdo.type !== "parent" -->
-						<tr data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
-							<td data-bind="draggableView: koItem">
-								<span class="list-icon" data-bind="css: koItem.listIconClass()"></span>
-								<span data-bind="text: koItem.rdo.attributes.name"></span>
-							</td>
-							<td data-bind="text: koItem.rdo.attributes.extension"></td>
-							<td data-bind="text: koItem.cdo.sizeFormatted"></td>
-							<td data-bind="text: koItem.cdo.dimensions"></td>
-							<td data-bind="text: koItem.rdo.attributes.modified"></td>
-						</tr>
-						<!-- /ko -->
-						</tbody>
-					</table>
+							<!-- ko if: koItem.rdo.type !== "parent" -->
+							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
+								<td data-bind="draggableView: koItem">
+									<span class="list-icon" data-bind="css: koItem.listIconClass()"></span>
+									<span data-bind="text: koItem.rdo.attributes.name"></span>
+								</td>
+								<td data-bind="text: koItem.rdo.attributes.extension"></td>
+								<td data-bind="text: koItem.cdo.sizeFormatted"></td>
+								<td data-bind="text: koItem.cdo.dimensions"></td>
+								<td data-bind="text: koItem.rdo.attributes.modified"></td>
+							</tr>
+							<!-- /ko -->
+							</tbody>
+						</table>
+					</div>
 				</div>
 
-
-				<!-- ko if: previewFile() -->
-				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView()">
+				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView() && previewFile()">
+					<!-- ko if: $root.previewFile() -->
 					<div class="fm-preview-toolbar">
 						<form id="fm-js-preview-toolbar">
 							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
@@ -274,8 +284,8 @@
 							</tr>
 						</table>
 					</div>
+					<!-- /ko -->
 				</div>
-				<!-- /ko -->
 			</div>
 		</div>
 
@@ -288,6 +298,7 @@
 			</div>
 
 			<div class="right">
+				<div class="fm-loading-wrapper"><div class="fm-loading" data-bind="visible: loadingFiles() || loadingFolders()">&#x262D;</div></div>
 				<div id="folder-info">
 					<span data-bind="text: itemsModel.objectsNumber() + ' ' + lg().items"></span> -
 					<span data-bind="text: lg().size + ': ' + itemsModel.objectsSize()"></span>
