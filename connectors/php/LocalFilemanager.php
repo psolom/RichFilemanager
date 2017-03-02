@@ -1124,9 +1124,11 @@ class LocalFilemanager extends BaseFilemanager
 	protected function getDynamicPath($fullPath)
 	{
 	    // empty string makes FM to use connector path for preview instead of absolute path
-        if(empty($this->dynamic_fileroot)) {
-            return '';
-        }
+        // COMMENTED: due to it prevents to build absolute URL when "serverRoot" is "false" and "fileRoot" is provided
+        // as well as "previewUrl" value in the JSON configuration file is set to the correct URL
+//        if(empty($this->dynamic_fileroot)) {
+//            return '';
+//        }
 	    $path = $this->dynamic_fileroot . '/' . $this->getRelativePath($fullPath);
         return $this->cleanPath($path);
 	}
