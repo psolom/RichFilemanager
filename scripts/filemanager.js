@@ -2324,7 +2324,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Build url to preview files
 	var createPreviewUrl = function(resourceObject, encode) {
-		encode = encode || false;
 		var previewUrl,
 			objectPath = resourceObject.attributes.path;
 
@@ -2332,7 +2331,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			if(encode) {
 				objectPath = encodePath(objectPath);
 			}
-            previewUrl = buildAbsolutePath(objectPath);
+            previewUrl = buildAbsolutePath(objectPath, false);
 		} else {
             previewUrl = buildConnectorUrl({
 				mode: 'readfile',
@@ -2353,7 +2352,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
 			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
-                imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path));
+                imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path), true);
 			} else {
 				var queryParams = {path: resourceObject.id};
 				if (resourceObject.attributes.extension === 'svg') {
@@ -2371,9 +2370,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return imageUrl;
 	};
 
-	var buildAbsolutePath = function(path) {
+	var buildAbsolutePath = function(path, disableCache) {
 		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : location.origin;
-		return trim(url, '/') + path + '?time=' + (new Date().getTime());
+        url = trim(url, '/') + path;
+		// add timestamp-based query parameter to disable browser caching
+		if (disableCache) {
+            url += '?time=' + (new Date().getTime());
+		}
+		return url;
 	};
 
 	// Returns container for filetree or fileinfo section based on scrollbar plugin state
