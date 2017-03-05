@@ -465,7 +465,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 							return $wrapper.append($cloned.html());
 						},
-						appendTo: config.customScrollbar.enabled ? $fileinfo.find('.mCustomScrollBox') : $fileinfo,
+						appendTo: config.customScrollbar.enabled ? $fileinfo.find('.view-items-wrapper').find('.mCustomScrollBox') : $fileinfo,
 						start: function(event, ui) {
 							if(!koItem.selected()) {
 								fmModel.itemsModel.unselectItems(false);
@@ -695,7 +695,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				axis: "yx"
 			});
 
-            $fileinfo.find('.fm-preview').mCustomScrollbar({
+            $fileinfo.find('.fm-preview-wrapper').mCustomScrollbar({
                 theme: config.customScrollbar.theme,
                 scrollButtons: {
                     enable: config.customScrollbar.button
@@ -786,12 +786,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.viewMode = ko.observable(config.options.defaultViewMode);
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
-		this.renderedMarkdownHTML = ko.observable(null);
+        this.previewModel = ko.observable(null);
 
-        this.previewFile.subscribe(function (value) {
-            if (!value) {
-            	// close editor upon disabling preview
-                model.previewModel.closeEditor();
+        this.previewObject = function(resourceObject) {
+            model.previewModel(new PreviewModel(resourceObject));
+            model.previewFile(true);
+		};
+
+        this.previewFile.subscribe(function (enabled) {
+            if (!enabled) {
+                // destruct preview model
+                model.previewModel(null);
 			}
         });
 
@@ -823,171 +828,204 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-		var PreviewModel = function() {
-			var preview_item = this;
+		var PreviewModel = function(resourceObject) {
+			var preview_model = this;
 
-			this.rdo = ko.observable({});
-			this.cdo = ko.observable({});
-			this.viewer = ko.observable({});
-			this.editor = {
-				enabled: ko.observable(false),
-				content: ko.observable(''),
-				codeMirror: ko.observable(null)
+			if (!resourceObject) {
+                resourceObject = {
+                	id: fileRoot,
+                    attributes: {
+                		name: ''
+					}
+				};
+			}
+
+            // original resource data object
+			this.rdo = ko.observable(resourceObject);
+            // computed resource data object
+			this.cdo = ko.observable({
+                isFolder: (resourceObject.type === 'folder'),
+                sizeFormatted: formatBytes(resourceObject.attributes.size),
+                dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
+            });
+
+			this.viewer = {
+                type: ko.observable('default'),
+                isEditable: ko.observable(false),
+                url: ko.observable(null),
+                options: ko.observable({}),
+                content: ko.observable(null),
+                codeMirror: ko.observable(null)
 			};
+            this.isInteractive = ko.observable(false);
+
+            this.renderer = new RenderModel();
+            this.editor = new EditorModel(preview_model.rdo().attributes.extension);
+
+            this.editor.content.subscribe(function (content) {
+                preview_model.renderer.render(content);
+            });
+
+            var filename = resourceObject.attributes.name;
+            var viewerObject = {
+                type: 'default',
+                url: null,
+                options: {}
+            };
+
+            if(isImageFile(filename)) {
+                viewerObject.type = 'image';
+                viewerObject.url = createImageUrl(resourceObject, false);
+            }
+            if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
+                viewerObject.type = 'audio';
+                viewerObject.url = createPreviewUrl(resourceObject, true);
+            }
+            if(isVideoFile(filename) && config.viewer.video.enabled === true) {
+                viewerObject.type = 'video';
+                viewerObject.url = createPreviewUrl(resourceObject, true);
+                viewerObject.options = {
+                    width: config.viewer.video.playerWidth,
+                    height: config.viewer.video.playerHeight
+                };
+            }
+            if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
+                viewerObject.type = 'opendoc';
+                viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
+                viewerObject.options = {
+                    width: config.viewer.opendoc.readerWidth,
+                    height: config.viewer.opendoc.readerHeight
+                };
+            }
+            if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
+                viewerObject.type = 'google';
+                viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
+                viewerObject.options = {
+                    width: config.viewer.google.readerWidth,
+                    height: config.viewer.google.readerHeight
+                };
+            }
+            if(isHtmlPreviewFile(filename) && config.viewer.html.enabled === true) {
+                viewerObject.type = 'html';
+            }
+            if(isMarkdownFile(filename) && config.viewer.markdown.enabled === true) {
+                viewerObject.type = 'markdown';
+                this.isInteractive(true);
+            }
+
+            this.viewer.type(viewerObject.type);
+            this.viewer.url(viewerObject.url);
+            this.viewer.options(viewerObject.options);
+
+            this.initiateEditor = function() {
+                preview_model.editor.createInstance('fm-js-editor-content', {
+                    readOnly: false,
+                    styleActiveLine: true
+                });
+			};
+
+            this.initiateRenderer = function() {
+                preview_model.renderer.createInstance(resourceObject);
+            };
+
+            // Set whether or not the "Edit" button is displayed in the preview details:
+            if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
+                preview_model.viewer.isEditable(true);
+                previewItem(resourceObject, function(content) {
+                    preview_model.viewer.content(content);
+                    preview_model.renderer.render(content);
+				});
+            } else {
+                preview_model.viewer.isEditable(false);
+            }
+
+            // zeroClipboard code
+            ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
+            var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
+            client.on("ready", function(readyEvent) {
+                client.on("aftercopy", function(event) {
+                    fm.success(lg.copied);
+                    // console.log("Copied text to clipboard: " + event.data["text/plain"]);
+                });
+            });
 
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
-				if (has_capability(preview_item.rdo(), action)) {
-					performAction(action, preview_item.rdo());
+				if (has_capability(preview_model.rdo(), action)) {
+					performAction(action, preview_model.rdo());
 				}
 			};
 
-			this.load = function(resourceObject) {
-				model.previewFile(false);
-				preview_item.rdo(resourceObject); // original resource data object
-				preview_item.cdo({ // computed data object
-					isFolder: (resourceObject.type === 'folder'),
-					sizeFormatted: formatBytes(resourceObject.attributes.size),
-					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
-				});
+            /**
+             * Define functions to dynamically set CSS classes (based on preview type)
+             */
+            this.previewIconClass = ko.pureComputed(function() {
+                var cssClass = [],
+                    extraClass = ['ico'];
+                if(preview_model.viewer.type() === 'default' || !preview_model.viewer.url()) {
+                    cssClass.push('grid-icon');
+                    if(this.cdo().isFolder === true) {
+                        cssClass.push('ico_folder');
+                        extraClass.push('folder');
+                        if(!this.rdo().attributes.readable) {
+                            extraClass.push('lock');
+                        }
+                    } else {
+                        cssClass.push('ico_file');
+                        if(this.rdo().attributes.readable) {
+                            extraClass.push('ext', this.rdo().attributes.extension);
+                        } else {
+                            extraClass.push('file', 'lock');
+                        }
+                    }
+                    cssClass.push(extraClass.join('_'));
+                }
+                return cssClass.join(' ');
+            }, this);
 
-				var filename = resourceObject.attributes.name;
-				var viewerObject = {
-					type: 'default',
-					isEditable: false,
-					url: null,
-					options: {}
-				};
+            this.previewEditorClass = ko.pureComputed(function() {
+                var editorClass = "fm-preview-editor";
+                if (preview_model.viewer.type() === 'markdown') {
+                    editorClass = "fm-preview-editor-side-by-side";
+                }
+                return editorClass;
+            }, this);
 
-				// Set the file type and URL:
-				if(isImageFile(filename)) {
-					viewerObject.type = 'image';
-					var thumbnail = false;
-					viewerObject.url = createImageUrl(resourceObject, thumbnail);
-				}
-				if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
-					viewerObject.type = 'audio';
-					viewerObject.url = createPreviewUrl(resourceObject, true);
-				}
-				if(isVideoFile(filename) && config.viewer.video.enabled === true) {
-					viewerObject.type = 'video';
-					viewerObject.url = createPreviewUrl(resourceObject, true);
-					viewerObject.options = {
-						width: config.viewer.video.playerWidth,
-						height: config.viewer.video.playerHeight
-					};
-				}
-				if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
-					viewerObject.type = 'opendoc';
-					viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
-					viewerObject.options = {
-						width: config.viewer.opendoc.readerWidth,
-						height: config.viewer.opendoc.readerHeight
-					};
-				}
-				if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
-					viewerObject.type = 'google';
-					viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
-					viewerObject.options = {
-						width: config.viewer.google.readerWidth,
-						height: config.viewer.google.readerHeight
-					};
-				}
-				if(isMarkdownFile(filename) && config.viewer.markdown.enabled === true) {
-					viewerObject.type = 'markdown';
-					// Launch AJAX to retrieve .md file contents for rendering:
-					viewMarkdownItem(preview_item.rdo());
-				}
-
-				// Set whether or not the "Edit" button is displayed in the preview details:
-				if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
-					viewerObject.isEditable = true;
-				}
-				
-				//
-				// Define functions to dynamically set CSS classes (based on preview type):
-				//
-				this.previewIconClass = ko.pureComputed(function() {
-					var cssClass = [],
-						extraClass = ['ico'];
-					if(viewerObject.type === 'default' || !viewerObject.url) {
-						cssClass.push('grid-icon');
-						if(this.cdo().isFolder === true) {
-							cssClass.push('ico_folder');
-							extraClass.push('folder');
-							if(!this.rdo().attributes.readable) {
-								extraClass.push('lock');
-							}
-						} else {
-							cssClass.push('ico_file');
-							if(this.rdo().attributes.readable) {
-                                extraClass.push('ext', this.rdo().attributes.extension);
-							} else {
-                                extraClass.push('file', 'lock');
-							}
-						}
-						cssClass.push(extraClass.join('_'));
-					}
-					return cssClass.join(' ');
-				}, this);
-
-				this.previewEditorClass = ko.pureComputed(function() {
-					var editorClass = "fm-preview-editor";
-					if (viewerObject.type === 'markdown') {
-						editorClass = "fm-preview-editor-side-by-side";
-					}
-					return editorClass;
-				}, this);
-
-				this.previewMarkdownClass = ko.pureComputed(function() {
-					var markdownClass = "fm-markdown-body";
-					if (preview_item.editor.enabled()) {
-						markdownClass = "fm-markdown-body fm-markdown-body-side-by-side";
-					}
-					return markdownClass;
-				}, this);
-
-                preview_item.viewer(viewerObject);
-                model.previewFile(true);
-
-				// zeroClipboard code
-				ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
-				var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
-				client.on("ready", function(readyEvent) {
-					client.on("aftercopy", function(event) {
-						fm.success(lg.copied);
-						// console.log("Copied text to clipboard: " + event.data["text/plain"]);
-					});
-				});
-			};
+            this.previewMarkdownClass = ko.pureComputed(function() {
+                var markdownClass = "fm-markdown-body";
+                if (preview_model.editor.enabled()) {
+                    markdownClass = "fm-markdown-body fm-markdown-body-side-by-side";
+                }
+                return markdownClass;
+            }, this);
 
 			this.editFile = function() {
-				editItem(preview_item.rdo())
+				var content = preview_model.viewer.content();
+                preview_model.editor.render(content);
 			};
 
 			this.saveFile = function() {
-				saveItem(preview_item.rdo())
+				saveItem(preview_model.rdo());
 			};
 
 			this.closeEditor = function() {
-				preview_item.editor.enabled(false);
-		        if (isMarkdownFile(preview_item.rdo().attributes.name) && config.viewer.markdown.enabled) {
-					// Restore the last-saved markdown content, because the user did not "Save" changes:
-					renderMarkdownHTML(preview_item.rdo(), preview_item.rdo().markdownText)
-		        }
+				var content = preview_model.viewer.content();
+
+                preview_model.editor.enabled(false);
+                preview_model.renderer.render(content);
 			};
 
 			this.buttonVisibility = function(action) {
 				switch(action) {
 					case 'select':
-						return (has_capability(preview_item.rdo(), action) && hasContext());
+						return (has_capability(preview_model.rdo(), action) && hasContext());
 					case 'move':
 					case 'rename':
 					case 'delete':
 					case 'replace':
-						return (has_capability(preview_item.rdo(), action) && config.options.browseOnly !== true);
+						return (has_capability(preview_model.rdo(), action) && config.options.browseOnly !== true);
 					case 'download':
-						return (has_capability(preview_item.rdo(), action));
+						return (has_capability(preview_model.rdo(), action));
 				}
 			};
 		};
@@ -1370,6 +1408,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.isScrolling = ko.observable(false);
 			this.isSelecting = ko.observable(false);
 			this.continiousSelection = ko.observable(false);
+            this.descriptivePanel = new RenderModel();
 
 			this.isSelecting.subscribe(function(state) {
 				if(!state) {
@@ -1445,12 +1484,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					objects.push(parent);
 				}
 
-				fmModel.renderedMarkdownHTML(null);  // Clear previosly-rendered .md
+                // clear previously rendered content
+                items_model.descriptivePanel.content(null);
 
 				$.each(dataObjects, function (i, resourceObject) {
 					if (config.viewer.markdown.enabled && resourceObject.attributes.name.toLowerCase() === config.viewer.markdown.directoryIndex.toLowerCase()) {
-						// Launch AJAX to retrieve .md file contents for rendering:
-						viewMarkdownItem(resourceObject);
+                        items_model.descriptivePanel.createInstance(resourceObject);
+                        previewItem(resourceObject, function(content) {
+                            items_model.descriptivePanel.render(content);
+                        });
 					}
 					objects.push(items_model.createObject(resourceObject));
 				});
@@ -1706,14 +1748,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.goParent = function() {
 				var parentFolder = model.previewFile()
-                    ? getDirname(model.previewModel.rdo().id)
+                    ? getDirname(model.previewModel().rdo().id)
                     : getParentDirname(model.currentPath());
 
 				if(model.previewFile()) {
 					model.previewFile(false);
 				}
 
-				model.itemsModel.loadList(parentFolder);
+                if(parentFolder !== model.currentPath()) {
+					model.itemsModel.loadList(parentFolder);
+                }
 			};
 
 			this.displayGrid = function() {
@@ -1951,10 +1995,268 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 		};
 
+        var RenderModel = function() {
+            var renderer,
+				render_model = this;
+
+            this.rdo = ko.observable({});
+            this.content = ko.observable(null);
+
+            this.render = function(data) {
+				renderer.process(data);
+            };
+
+            this.createInstance = function(resourceObject) {
+                render_model.rdo(resourceObject);
+
+                if (isMarkdownFile(resourceObject.attributes.name)) {
+                    // markdown renderer
+                    renderer = new MarkdownRenderer();
+                } else {
+                    // default renderer
+                    renderer = new CodeMirrorRenderer();
+				}
+            };
+
+            var CodeMirrorRenderer = function() {
+                var instance = new EditorModel(render_model.rdo().attributes.extension);
+
+                instance.createInstance('fm-js-viewer-content', {
+                    readOnly: 'nocursor',
+                    styleActiveLine: false
+                });
+
+                this.process = function(data) {
+                    instance.render(data);
+                    render_model.content(data);
+				};
+			};
+
+            var MarkdownRenderer = function(extension) {
+                var instance = window.markdownit({
+                    // Basic options:
+                    html: true,
+                    linkify: true,
+                    typographer: true,
+
+                    // Custom highlight function to apply CSS class `highlight`:
+                    highlight: function (str, lang) {
+                        if (lang && hljs.getLanguage(lang)) {
+                            try {
+                                return '<pre class="highlight"><code>' +
+                                    hljs.highlight(lang, str, true).value +
+                                    '</code></pre>';
+                            } catch (__) {}
+                        }
+                        return '<pre class="highlight"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+                    },
+
+                    // Custom link function to enable <img ...> and file d/ls:
+                    replaceLink: function (link, env) {
+
+                        // do not change if link as http:// or ftp:// or mailto: etc.
+                        if (link.search("://") != -1 || startsWith(link, 'mailto:')) {
+                            return link;
+                        }
+
+                        // define path depending on absolute / relative link type
+                        var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(resourceObject.id);
+                        var path = basePath + ltrim(link, '/');
+
+                        if(isMarkdownFile(path)) {
+                            // to apply previewModel on click in preview mode (see below)
+                            return path;
+                        } else {
+                            return buildConnectorUrl({
+                                mode: 'readfile',
+                                path: path
+                            });
+                        }
+                    }
+                }).use(window.markdownitReplaceLink);
+
+                this.process = function(data) {
+                    var result = instance.render(data);
+                    render_model.content(result);
+                    bindMarkdownEvents();
+                };
+
+                function bindMarkdownEvents() {
+                    // add onClicks to local .md file links (to do AJAX previews).
+                    $(".fm-markdown-body").find("a").each(function(index) {
+                        var href = $(this).attr("href");
+
+                        if (href.search("://") != -1 || startsWith(href, 'mailto:')) {
+                            return; // do nothing
+                        }
+
+                        if (isMarkdownFile(href)) {
+                            // set previewModel for clicked link
+                            $(this).on("click", function (e) {
+                                $.ajax({
+                                    type: 'GET',
+                                    url: buildConnectorUrl({
+                                        mode: 'getfile',
+                                        path: href
+                                    }),
+                                    dataType: "json",
+                                    success: function (response) {
+                                        if(response.data) {
+                                            getDetailView(response.data);
+                                        }
+                                        handleAjaxResponseErrors(response);
+                                    },
+                                    error: handleAjaxError
+                                });
+
+                                return false; // prevent onClick event
+                            });
+                        }
+                    });
+
+                    // When editing Markdown, prevent the user from losing unsaved edits by
+                    // clicking on a (rendered HTML) link that jumps off the page.
+                    $(".fm-markdown-body-side-by-side").find("a").each(function(index) {
+                        // remove onClick event handler
+                        $(this).off("click");
+
+                        // Replace the link with a popup showing where it will link to:
+                        var href = $(this).attr("href");
+                        $(this).on("click", function () {
+                            fm.log(href);
+                            return false; // prevent onClick event
+                        });
+                    });
+                }
+			};
+        };
+
+        var EditorModel = function(extension) {
+        	var editor_model = this;
+
+        	this.instance = null;
+        	this.enabled = ko.observable(false);
+        	this.content = ko.observable(null);
+            this.mode = ko.observable(null);
+
+            includeAssets();
+
+            this.render = function(content) {
+                editor_model.enabled(true);
+                editor_model.instance.setValue(content);
+                editor_model.instance.setOption('mode', editor_model.mode());
+				editor_model.instance.refresh();
+            };
+
+            this.createInstance = function(elementId, options) {
+                var cm,
+                    defaults = {
+                        readOnly: 'nocursor',
+                        styleActiveLine: false,
+                        viewportMargin: Infinity,
+                        lineNumbers: config.viewer.editable.lineNumbers,
+                        lineWrapping: config.viewer.editable.lineWrapping,
+                        theme: config.viewer.editable.theme,
+                        matchBrackets: config.viewer.editable.matchBrackets,
+                        extraKeys: {
+                            "F11": function (cm) {
+                                cm.setOption("fullScreen", !cm.getOption("fullScreen"));
+                            },
+                            "Esc": function (cm) {
+                                if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
+                            }
+                        }
+                    };
+
+                cm = CodeMirror.fromTextArea(document.getElementById(elementId), $.extend({}, defaults, options));
+
+                cm.on("changes", function(cm, change) {
+                    editor_model.content(cm.getValue());
+                });
+
+                editor_model.instance = cm;
+            };
+
+            function includeAssets() {
+                var currentMode,
+                    assets = [];
+
+                // if no code highlight needed, we apply default settings
+                if (!config.viewer.editable.codeHighlight) {
+                    currentMode = 'default';
+				// highlight code according to extension file
+                } else {
+                    if (extension === 'txt') {
+                        currentMode = 'default';
+                    }
+                    if (extension === 'js') {
+                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                        currentMode = 'javascript';
+                    }
+                    if (extension === 'css') {
+                        assets.push('/scripts/CodeMirror/mode/css/css.js');
+                        currentMode = 'css';
+                    }
+                    if (extension === 'html') {
+                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                        currentMode = 'text/html';
+                    }
+                    if (extension === 'xml') {
+                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                        currentMode = 'application/xml';
+                    }
+                    if (extension === 'php') {
+                        assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/scripts/CodeMirror/mode/css/css.js');
+                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                        assets.push('/scripts/CodeMirror/mode/php/php.js');
+                        currentMode = 'application/x-httpd-php';
+                    }
+                    if (extension === 'sql') {
+                        assets.push('/scripts/CodeMirror/mode/sql/sql.js');
+                        currentMode = 'text/x-mysql';
+                    }
+                    if (extension === 'md') {
+                        assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
+                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                        assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
+                        assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
+                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/scripts/CodeMirror/mode/css/css.js');
+                        assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                        assets.push('/scripts/CodeMirror/mode/shell/shell.js');
+                        assets.push('/scripts/CodeMirror/mode/meta.js');
+                        currentMode = 'gfm';
+                    }
+                    if (extension === 'sh') {
+                        assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
+                        assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
+                        assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
+                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/scripts/CodeMirror/mode/css/css.js');
+                        assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                        assets.push('/scripts/CodeMirror/mode/meta.js');
+                        assets.push('/scripts/CodeMirror/mode/shell/shell.js');
+                        currentMode = 'shell';
+                    }
+                }
+
+                editor_model.mode(currentMode);
+
+                if(assets.length) {
+                    loadAssets(assets);
+                }
+			}
+		};
+
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
-		this.previewModel = new PreviewModel();
+        this.previewModel(new PreviewModel());
 		this.headerModel = new HeaderModel();
 		this.summaryModel = new SummaryModel();
 		this.searchModel = new SearchModel();
@@ -2379,6 +2681,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return ($.inArray(getExtension(filename), config.viewer.google.extensions) !== -1);
 	};
 
+	// Test if file is supported to preview as HTML
+	var isHtmlPreviewFile = function(filename) {
+		return ($.inArray(getExtension(filename), config.viewer.html.extensions) !== -1);
+	};
+
 	// Test if file is supported by Markdown-it, which renders .md Markdown to HTML:
 	var isMarkdownFile = function(filename) {
 		return ($.inArray(getExtension(filename), config.viewer.markdown.extensions) !== -1);
@@ -2729,8 +3036,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							fmModel.itemsModel.loadList(newItem.id);
 						}
 						// ON rename currently previewed file
-						if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
-							fmModel.previewModel.load(newItem);
+						if(fmModel.previewFile() && fmModel.previewModel().rdo().id === oldPath) {
+                            fmModel.previewObject(newItem);
 						}
 
 						ui.closeDialog();
@@ -2809,7 +3116,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 						// set new file for preview
                         if(fmModel.previewFile()) {
-							fmModel.previewModel.load(resourceObject);
+                            fmModel.previewObject(resourceObject);
 						}
 
 						if(config.options.showConfirmation) {
@@ -2925,7 +3232,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						fmModel.itemsModel.loadList(newItem.id);
 					}
 					// ON move currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
+					if(fmModel.previewFile() && fmModel.previewModel().rdo().id === resourceObject.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -2975,7 +3282,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.removeItem(targetItem);
 
 					// ON delete currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
+					if(fmModel.previewFile() && fmModel.previewModel().rdo().id === targetItem.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -3013,132 +3320,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// Uses markdown-it.js to render the content of the Markdown file into HTML,
-	// and then places is in .fm-markdown-body or .fm-markdown-body-side-by-side
-	var renderMarkdownHTML = function(resourceObject, markdownText) {
-
-		var md = window.markdownit({
-			// Basic options:
-			html: true,
-			linkify: true,
-			typographer: true,
-
-			// Custom highlight function to apply CSS class `highlight`:
-			highlight: function (str, lang) {
-				if (lang && hljs.getLanguage(lang)) {
-				  try {
-					return '<pre class="highlight"><code>' +
-						hljs.highlight(lang, str, true).value +
-						'</code></pre>';
-				  } catch (__) {}
-				}
-				return '<pre class="highlight"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
-			},
-
-			// Custom link function to enable <img ...> and file d/ls:
-			replaceLink: function (link, env) {
-
-                // do not change if link as http:// or ftp:// or mailto: etc.
-				if (link.search("://") != -1 || startsWith(link, 'mailto:')) {
-					return link;
-				}
-
-				// define path depending on absolute / relative link type
-                var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(resourceObject.id);
-                var path = basePath + ltrim(link, '/');
-
-                if(isMarkdownFile(path)) {
-                    // to apply previewModel on click in preview mode (see below)
-                    return path;
-                } else {
-                    return buildConnectorUrl({
-                        mode: 'readfile',
-                        path: path
-                    });
-				}
-			}
-		}).use(window.markdownitReplaceLink);
-
-		var result = md.render(markdownText);
-
-		// Update the ko object renderedMarkdownHTML() with the new content:
-		fmModel.renderedMarkdownHTML(result);
-
-		// Now add onClicks to local .md file links (to do AJAX previews):
-		$(".fm-markdown-body").find("a").each(function(index) {
-			var href = $(this).attr("href");
-
-			if (href.search("://") != -1 || startsWith(href, 'mailto:')) {
-				return; // do nothing
-			}
-
-			if (isMarkdownFile(href)) {
-				// set previewModel for clicked link
-				$(this).on("click", function (e) {
-                    $.ajax({
-                        type: 'GET',
-                        url: buildConnectorUrl({
-                            mode: 'getfile',
-                            path: href
-                        }),
-                        dataType: "json",
-                        success: function (response) {
-                            if(response.data) {
-                                getDetailView(response.data);
-                            }
-                            handleAjaxResponseErrors(response);
-                        },
-                        error: handleAjaxError
-                    });
-
-				    return false; // prevent onClick event
-				});
-			}
-		});
-
-		// When editing Markdown, prevent the user from losing unsaved edits by
-		// clicking on a (rendered HTML) link that jumps off the page.
-		$(".fm-markdown-body-side-by-side").find("a").each(function(index) {
-			// remove onClick event handler
-			$(this).off("click");
-
-			// Replace the link with a popup showing where it will link to:
-			var href = $(this).attr("href");
-			$(this).on("click", function () {
-				fm.log(href);
-			    return false; // prevent onClick event
-			});
-		});
-	};
-
-	// Retrieve the contents of a .md file using AJAX and render it to HTML:
-	var viewMarkdownItem = function(resourceObject) {
-
-		resourceObject.markdownText = '';
-
-		$.ajax({
-			type: 'GET',
-			url: buildConnectorUrl({
-				mode: 'editfile',
-				path: resourceObject.id
-			}),
-			dataType: 'json',
-			success: function (response) {
-
-				if(response.data) {
-					// Cache the last-downloaded content. Useful for editor close w/o a save.
-					resourceObject.markdownText = response.data.attributes.content;
-					// Render the content into HTML and populate the DIV:
-					renderMarkdownHTML(resourceObject, resourceObject.markdownText);
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
-	};
-
 	// Creates CodeMirror instance to let user change the content of the file
-	var editItem = function(resourceObject) {
+	var previewItem = function(resourceObject, callbackFunction) {
 		$.ajax({
 			type: 'GET',
 			url: buildConnectorUrl({
@@ -3148,10 +3331,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			dataType: 'json',
 			success: function (response) {
 				if(response.data) {
-					fmModel.previewModel.editor.enabled(true);
-					fmModel.previewModel.editor.content(response.data.attributes.content);
-					// instantiate codeMirror according to config options
-                    instantiateCodeMirror(resourceObject.attributes.extension);
+                    callbackFunction(response.data.attributes.content);
 				}
 				handleAjaxResponseErrors(response);
 			},
@@ -3161,9 +3341,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Save CodeMirror editor content to file
 	var saveItem = function(resourceObject) {
-		var newValue = fmModel.previewModel.editor.codeMirror().getValue();
-		fmModel.previewModel.editor.content(newValue);
-
 		$.ajax({
 			type: 'POST',
 			url: buildConnectorUrl(), // request 'savefile' connector action
@@ -3171,16 +3348,24 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			data: $('#fm-js-editor-form').serializeArray(),
 			success: function (response) {
 				if(response.data) {
-                    var dataObject = response.data;
+                    var dataObject = response.data,
+                        preview_model = fmModel.previewModel(),
+						content = preview_model.editor.content();
 
-                    // close editor and assign received data to preview model
-					fmModel.previewModel.editor.enabled(false);
-                    fmModel.previewModel.load(dataObject);
+                    // close editor and assign new content to the viewer
+                    preview_model.editor.enabled(false);
+                    preview_model.viewer.content(content);
+                    preview_model.renderer.render(content);
 
                     // replace original item with a new one to adjust observable items
                     var newItem = fmModel.itemsModel.createObject(dataObject);
                     var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
                     fmModel.itemsModel.objects.replace(originalItem, newItem);
+
+                    // update content of descriptive panel
+                    if (fmModel.itemsModel.descriptivePanel.rdo().id === dataObject.id) {
+                        fmModel.itemsModel.descriptivePanel.render(content);
+					}
 
                     fm.success(lg.successful_edit);
 				}
@@ -3238,7 +3423,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			return false;
 		}
 		if(resourceObject.type === 'file') {
-			fmModel.previewModel.load(resourceObject);
+            fmModel.previewObject(resourceObject);
 		}
 		if(resourceObject.type === 'folder' || resourceObject.type === 'parent') {
 			fmModel.itemsModel.loadList(resourceObject.id);
@@ -3766,122 +3951,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					// server error 500, etc.
 					fm.error(lg.upload_failed);
 				});
-		}
-	};
-
-	var instantiateCodeMirror = function(extension) {
-		var currentMode,
-			assets = [];
-
-		// if no code highlight needed, we apply default settings
-		if (!config.viewer.editable.codeHighlight) {
-			currentMode = 'default';
-			// we highlight code according to extension file
-		} else {
-			if (extension === 'txt') {
-				currentMode = 'default';
-			}
-			if (extension === 'js') {
-                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-				currentMode = 'javascript';
-			}
-			if (extension === 'css') {
-                assets.push('/scripts/CodeMirror/mode/css/css.js');
-				currentMode = 'css';
-			}
-			if (extension === 'html') {
-                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
-				currentMode = 'text/html';
-			}
-			if (extension === 'xml') {
-                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
-				currentMode = 'application/xml';
-			}
-			if (extension === 'php') {
-                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
-                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-                assets.push('/scripts/CodeMirror/mode/css/css.js');
-                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
-                assets.push('/scripts/CodeMirror/mode/php/php.js');
-				currentMode = 'application/x-httpd-php';
-			}
-			if (extension === 'sql') {
-                assets.push('/scripts/CodeMirror/mode/sql/sql.js');
-				currentMode = 'text/x-mysql';
-			}
-			if (extension === 'md') {
-                assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
-                assets.push('/scripts/CodeMirror/mode/xml/xml.js');
-                assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
-                assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
-                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-                assets.push('/scripts/CodeMirror/mode/css/css.js');
-                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
-                assets.push('/scripts/CodeMirror/mode/shell/shell.js');
-                assets.push('/scripts/CodeMirror/mode/meta.js');
-				currentMode = 'gfm';
-			}
-			if (extension === 'sh') {
-                assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
-                assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
-                assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
-                assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-                assets.push('/scripts/CodeMirror/mode/css/css.js');
-                assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-                assets.push('/scripts/CodeMirror/mode/clike/clike.js');
-                assets.push('/scripts/CodeMirror/mode/meta.js');
-                assets.push('/scripts/CodeMirror/mode/shell/shell.js');
-				currentMode = 'shell';
-			}
-
-		}
-
-        if(assets.length) {
-            assets.push(runCodeMirror);
-            loadAssets(assets);
-        } else {
-            runCodeMirror();
-		}
-
-		function runCodeMirror() {
-            var editor = CodeMirror.fromTextArea(document.getElementById("fm-js-editor-content"), {
-                styleActiveLine: true,
-                viewportMargin: Infinity,
-                lineNumbers: config.viewer.editable.lineNumbers,
-                lineWrapping: config.viewer.editable.lineWrapping,
-                theme: config.viewer.editable.theme,
-                matchBrackets: config.viewer.editable.matchBrackets,
-                extraKeys: {
-                    "F11": function (cm) {
-                        cm.setOption("fullScreen", !cm.getOption("fullScreen"));
-                    },
-                    "Esc": function (cm) {
-                        if (cm.getOption("fullScreen")) cm.setOption("fullScreen", false);
-                    }
-                }
-            });
-
-            // setup "mode"
-            editor.setOption("mode", currentMode);
-
-            // If editing Markdown side-by-side, do live render updates:
-            if (isMarkdownFile(fmModel.previewModel.rdo().attributes.name) && config.viewer.markdown.enabled) {
-				editor.on("changes", function(cm, change) {
-					var resourceObject = fmModel.previewModel.rdo();
-					var markdownText = fmModel.previewModel.editor.codeMirror().getValue();
-					renderMarkdownHTML(resourceObject, markdownText);
-				});
-            }
-
-            fmModel.previewModel.editor.codeMirror(editor);
-
-            // Finally, trigger a re-render for the new side-by-side display
-            // and <a href...> onClicks:
-			var resourceObject = fmModel.previewModel.rdo;
-			var markdownText = fmModel.previewModel.editor.codeMirror().getValue();
-			renderMarkdownHTML(resourceObject, markdownText);
 		}
 	};
 

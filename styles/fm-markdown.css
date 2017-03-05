@@ -11,10 +11,6 @@
 .fm-fileinfo .fm-markdown-margin {
     margin: 25px;
 }
-.fm-fileinfo .fm-markdown-body-side-by-side {
-    margin-left: 51%;
-    margin-bottom: 2em;
-}
 .fm-fileinfo .fm-markdown-body *  {
     font-size: 16px;
 }
