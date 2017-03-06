@@ -192,7 +192,7 @@
 
 				<div class="fm-preview-wrapper" data-bind="visible: !loadingView() && previewFile()">
 					<!-- ko if: previewFile() -->
-					<div class="fm-preview" data-bind="with: previewModel()">
+					<div class="fm-preview" data-bind="with: previewModel">
 						<div class="fm-preview-toolbar">
 							<form id="fm-js-preview-toolbar">
 								<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
@@ -345,10 +345,10 @@
 
 		<!-- TEMPLATES Start -->
 		<script type="text/html" id="preview-editor-controls">
-			<!-- ko if: $root.previewModel().viewer.isEditable() && !$root.previewModel().editor.enabled() -->
+			<!-- ko if: $root.previewModel.viewer.isEditable() && !$root.previewModel.editor.enabled() -->
 			<button type="button" data-bind="text: $root.lg().editor_edit, click: editFile"></button>
 			<!-- /ko -->
-			<!-- ko if: $root.previewModel().editor.enabled() -->
+			<!-- ko if: $root.previewModel.editor.enabled() -->
 			<button type="button" data-bind="text: $root.lg().editor_quit, click: closeEditor"></button>
 			<button type="button" data-bind="text: $root.lg().editor_save, click: saveFile"></button>
 			<!-- /ko -->

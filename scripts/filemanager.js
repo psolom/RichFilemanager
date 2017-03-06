@@ -788,15 +788,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.browseOnly = ko.observable(config.options.browseOnly);
         this.previewModel = ko.observable(null);
 
-        this.previewObject = function(resourceObject) {
-            model.previewModel(new PreviewModel(resourceObject));
-            model.previewFile(true);
-		};
-
         this.previewFile.subscribe(function (enabled) {
             if (!enabled) {
-                // destruct preview model
-                model.previewModel(null);
+                // close editor upon disabling preview
+                model.previewModel.closeEditor();
 			}
         });
 
@@ -828,26 +823,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-		var PreviewModel = function(resourceObject) {
+		var PreviewModel = function() {
 			var preview_model = this;
 
-			if (!resourceObject) {
-                resourceObject = {
-                	id: fileRoot,
-                    attributes: {
-                		name: ''
-					}
-				};
-			}
-
-            // original resource data object
-			this.rdo = ko.observable(resourceObject);
+            this.rdo = ko.observable({});
             // computed resource data object
-			this.cdo = ko.observable({
-                isFolder: (resourceObject.type === 'folder'),
-                sizeFormatted: formatBytes(resourceObject.attributes.size),
-                dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
-            });
+            this.cdo = ko.observable({});
 
 			this.viewer = {
                 type: ko.observable('default'),
@@ -857,87 +838,90 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 content: ko.observable(null),
                 codeMirror: ko.observable(null)
 			};
-            this.isInteractive = ko.observable(false);
 
             this.renderer = new RenderModel();
-            this.editor = new EditorModel(preview_model.rdo().attributes.extension);
+            this.editor = new EditorModel();
+            this.isInteractive = ko.observable(false);
+
+            this.rdo.subscribe(function (resourceObject) {
+                preview_model.cdo({
+                    isFolder: (resourceObject.type === 'folder'),
+                    sizeFormatted: formatBytes(resourceObject.attributes.size),
+                    dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
+                });
+            });
 
             this.editor.content.subscribe(function (content) {
                 preview_model.renderer.render(content);
             });
 
-            var filename = resourceObject.attributes.name;
-            var viewerObject = {
-                type: 'default',
-                url: null,
-                options: {}
+            this.applyObject = function(resourceObject) {
+                var filename = resourceObject.attributes.name;
+                var viewerObject = {
+                    type: 'default',
+                    url: null,
+                    options: {}
+                };
+
+                preview_model.rdo(resourceObject);
+
+                if(isImageFile(filename)) {
+                    viewerObject.type = 'image';
+                    viewerObject.url = createImageUrl(resourceObject, false);
+                }
+                if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
+                    viewerObject.type = 'audio';
+                    viewerObject.url = createPreviewUrl(resourceObject, true);
+                }
+                if(isVideoFile(filename) && config.viewer.video.enabled === true) {
+                    viewerObject.type = 'video';
+                    viewerObject.url = createPreviewUrl(resourceObject, true);
+                    viewerObject.options = {
+                        width: config.viewer.video.playerWidth,
+                        height: config.viewer.video.playerHeight
+                    };
+                }
+                if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
+                    viewerObject.type = 'opendoc';
+                    viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
+                    viewerObject.options = {
+                        width: config.viewer.opendoc.readerWidth,
+                        height: config.viewer.opendoc.readerHeight
+                    };
+                }
+                if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
+                    viewerObject.type = 'google';
+                    viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
+                    viewerObject.options = {
+                        width: config.viewer.google.readerWidth,
+                        height: config.viewer.google.readerHeight
+                    };
+                }
+                if(isHtmlPreviewFile(filename) && config.viewer.html.enabled === true) {
+                    viewerObject.type = 'html';
+                }
+                if(isMarkdownFile(filename) && config.viewer.markdown.enabled === true) {
+                    viewerObject.type = 'markdown';
+                    preview_model.isInteractive(true);
+                }
+
+                preview_model.viewer.type(viewerObject.type);
+                preview_model.viewer.url(viewerObject.url);
+                preview_model.viewer.options(viewerObject.options);
+
+                // Set whether or not the "Edit" button is displayed in the preview details:
+                if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
+                    preview_model.viewer.isEditable(true);
+                    previewItem(resourceObject, function(content) {
+                        preview_model.viewer.content(content);
+                        preview_model.renderer.render(content);
+                    });
+                } else {
+                    preview_model.viewer.isEditable(false);
+                }
+
+                model.previewFile(true);
             };
-
-            if(isImageFile(filename)) {
-                viewerObject.type = 'image';
-                viewerObject.url = createImageUrl(resourceObject, false);
-            }
-            if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
-                viewerObject.type = 'audio';
-                viewerObject.url = createPreviewUrl(resourceObject, true);
-            }
-            if(isVideoFile(filename) && config.viewer.video.enabled === true) {
-                viewerObject.type = 'video';
-                viewerObject.url = createPreviewUrl(resourceObject, true);
-                viewerObject.options = {
-                    width: config.viewer.video.playerWidth,
-                    height: config.viewer.video.playerHeight
-                };
-            }
-            if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
-                viewerObject.type = 'opendoc';
-                viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
-                viewerObject.options = {
-                    width: config.viewer.opendoc.readerWidth,
-                    height: config.viewer.opendoc.readerHeight
-                };
-            }
-            if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
-                viewerObject.type = 'google';
-                viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
-                viewerObject.options = {
-                    width: config.viewer.google.readerWidth,
-                    height: config.viewer.google.readerHeight
-                };
-            }
-            if(isHtmlPreviewFile(filename) && config.viewer.html.enabled === true) {
-                viewerObject.type = 'html';
-            }
-            if(isMarkdownFile(filename) && config.viewer.markdown.enabled === true) {
-                viewerObject.type = 'markdown';
-                this.isInteractive(true);
-            }
-
-            this.viewer.type(viewerObject.type);
-            this.viewer.url(viewerObject.url);
-            this.viewer.options(viewerObject.options);
-
-            this.initiateEditor = function() {
-                preview_model.editor.createInstance('fm-js-editor-content', {
-                    readOnly: false,
-                    styleActiveLine: true
-                });
-			};
-
-            this.initiateRenderer = function() {
-                preview_model.renderer.createInstance(resourceObject);
-            };
-
-            // Set whether or not the "Edit" button is displayed in the preview details:
-            if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
-                preview_model.viewer.isEditable(true);
-                previewItem(resourceObject, function(content) {
-                    preview_model.viewer.content(content);
-                    preview_model.renderer.render(content);
-				});
-            } else {
-                preview_model.viewer.isEditable(false);
-            }
 
             // zeroClipboard code
             ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
@@ -948,6 +932,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     // console.log("Copied text to clipboard: " + event.data["text/plain"]);
                 });
             });
+
+            this.initiateEditor = function() {
+                preview_model.editor.createInstance(preview_model.rdo().attributes.extension, 'fm-js-editor-content', {
+                    readOnly: false,
+                    styleActiveLine: true
+                });
+			};
+
+            this.initiateRenderer = function() {
+                preview_model.renderer.createInstance(preview_model.rdo());
+            };
 
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
@@ -1748,7 +1743,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.goParent = function() {
 				var parentFolder = model.previewFile()
-                    ? getDirname(model.previewModel().rdo().id)
+                    ? getDirname(model.previewModel.rdo().id)
                     : getParentDirname(model.currentPath());
 
 				if(model.previewFile()) {
@@ -2019,9 +2014,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             var CodeMirrorRenderer = function() {
-                var instance = new EditorModel(render_model.rdo().attributes.extension);
+                var instance = new EditorModel();
 
-                instance.createInstance('fm-js-viewer-content', {
+                instance.createInstance(render_model.rdo().attributes.extension, 'fm-js-viewer-content', {
                     readOnly: 'nocursor',
                     styleActiveLine: false
                 });
@@ -2131,15 +2126,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
         };
 
-        var EditorModel = function(extension) {
+        var EditorModel = function() {
         	var editor_model = this;
 
         	this.instance = null;
         	this.enabled = ko.observable(false);
         	this.content = ko.observable(null);
             this.mode = ko.observable(null);
-
-            includeAssets();
 
             this.render = function(content) {
                 editor_model.enabled(true);
@@ -2148,7 +2141,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				editor_model.instance.refresh();
             };
 
-            this.createInstance = function(elementId, options) {
+            this.createInstance = function(extension, elementId, options) {
                 var cm,
                     defaults = {
                         readOnly: 'nocursor',
@@ -2175,9 +2168,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 });
 
                 editor_model.instance = cm;
+
+                includeAssets(extension);
             };
 
-            function includeAssets() {
+            function includeAssets(extension) {
                 var currentMode,
                     assets = [];
 
@@ -2256,7 +2251,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
-        this.previewModel(new PreviewModel());
+        this.previewModel = new PreviewModel();
 		this.headerModel = new HeaderModel();
 		this.summaryModel = new SummaryModel();
 		this.searchModel = new SearchModel();
@@ -3036,8 +3031,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							fmModel.itemsModel.loadList(newItem.id);
 						}
 						// ON rename currently previewed file
-						if(fmModel.previewFile() && fmModel.previewModel().rdo().id === oldPath) {
-                            fmModel.previewObject(newItem);
+						if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
+                            fmModel.previewModel.applyObject(newItem);
 						}
 
 						ui.closeDialog();
@@ -3116,7 +3111,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 						// set new file for preview
                         if(fmModel.previewFile()) {
-                            fmModel.previewObject(resourceObject);
+                            fmModel.previewModel.applyObject(resourceObject);
 						}
 
 						if(config.options.showConfirmation) {
@@ -3232,7 +3227,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						fmModel.itemsModel.loadList(newItem.id);
 					}
 					// ON move currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel().rdo().id === resourceObject.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -3282,7 +3277,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.removeItem(targetItem);
 
 					// ON delete currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel().rdo().id === targetItem.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -3349,8 +3344,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			success: function (response) {
 				if(response.data) {
                     var dataObject = response.data,
-                        preview_model = fmModel.previewModel(),
+                        preview_model = fmModel.previewModel,
 						content = preview_model.editor.content();
+
+                    // update preview object data
+                    preview_model.rdo(dataObject);
 
                     // close editor and assign new content to the viewer
                     preview_model.editor.enabled(false);
@@ -3423,7 +3421,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			return false;
 		}
 		if(resourceObject.type === 'file') {
-            fmModel.previewObject(resourceObject);
+            fmModel.previewModel.applyObject(resourceObject);
 		}
 		if(resourceObject.type === 'folder' || resourceObject.type === 'parent') {
 			fmModel.itemsModel.loadList(resourceObject.id);
