@@ -114,9 +114,9 @@
 
 				<div class="view-items-wrapper" data-bind="visible: !loadingView() && !previewFile()">
 
-					<!-- ko if: itemsModel.descriptivePanel.content() && config().viewer.markdown.directoryIndexOnTop -->
-					<div class="fm-markdown-margin">
-						<div class="fm-markdown-body" data-bind="html: itemsModel.descriptivePanel.content()"></div>
+					<!-- ko template: {if: config().manager.renderer.position === 'top' && itemsModel.descriptivePanel.content(), afterRender: itemsModel.initiateDescriptivePanel} -->
+					<div class="fm-renderer-container">
+						<div class="fm-markdown-renderer" data-bind="html: itemsModel.descriptivePanel.content()"></div>
 					</div>
 					<!-- /ko -->
 
@@ -182,9 +182,9 @@
 						</table>
 					</div>
 
-					<!-- ko if: itemsModel.descriptivePanel.content() && !config().viewer.markdown.directoryIndexOnTop -->
-					<div class="fm-markdown-margin">
-						<div class="fm-markdown-body" data-bind="html: itemsModel.descriptivePanel.content()"></div>
+					<!-- ko template: {if: config().manager.renderer.position === 'bottom' && itemsModel.descriptivePanel.content(), afterRender: itemsModel.initiateDescriptivePanel} -->
+					<div class="fm-renderer-container">
+						<div class="fm-markdown-renderer" data-bind="html: itemsModel.descriptivePanel.content()"></div>
 					</div>
 					<!-- /ko -->
 				</div>
@@ -268,7 +268,9 @@
 								</div>
 								<!-- /ko -->
 								<!-- ko template: {if: viewer.type() === 'markdown', afterRender: initiateRenderer} -->
-								<div data-bind="css: previewMarkdownClass(), html: renderer.content()"></div>
+								<div class="fm-renderer-container">
+									<div class="fm-markdown-renderer" data-bind="html: renderer.content()"></div>
+								</div>
 								<!-- /ko -->
 							</div>
 						</div>

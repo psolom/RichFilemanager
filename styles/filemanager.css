@@ -334,6 +334,18 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     margin-top: 3em
 }
 
+.fm-container .fm-fileinfo .fm-renderer-container {
+    display: block;
+    text-align: left;
+    margin: 0 auto;
+    width: 70%;
+}
+
+.fm-container .view-items-wrapper .fm-renderer-container {
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
 .fm-container div#tools {
     display: inline-block;
     margin-left: 1em;
@@ -447,6 +459,10 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-view-panel {
     margin-left: 51%;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-renderer-container {
+    width: 100%;
 }
 
 
