@@ -113,10 +113,9 @@
 				<div class="fm-loading-view" data-bind="visible: loadingView()"></div>
 
 				<div class="view-items-wrapper" data-bind="visible: !loadingView() && !previewFile()">
-
-					<!-- ko template: {if: config().manager.renderer.position === 'top' && itemsModel.descriptivePanel.content(), afterRender: itemsModel.initiateDescriptivePanel} -->
-					<div class="fm-renderer-container">
-						<div class="fm-markdown-renderer" data-bind="html: itemsModel.descriptivePanel.content()"></div>
+					<!-- ko if: config().manager.renderer.position === 'top' && itemsModel.descriptivePanel.renderer() -->
+					<div data-bind="visible: itemsModel.descriptivePanel.content()">
+						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel, afterRender: itemsModel.initiateRenderer} --><!-- /ko -->
 					</div>
 					<!-- /ko -->
 
@@ -182,9 +181,9 @@
 						</table>
 					</div>
 
-					<!-- ko template: {if: config().manager.renderer.position === 'bottom' && itemsModel.descriptivePanel.content(), afterRender: itemsModel.initiateDescriptivePanel} -->
-					<div class="fm-renderer-container">
-						<div class="fm-markdown-renderer" data-bind="html: itemsModel.descriptivePanel.content()"></div>
+					<!-- ko if: config().manager.renderer.position === 'bottom' && itemsModel.descriptivePanel.renderer() -->
+					<div data-bind="visible: itemsModel.descriptivePanel.content()">
+						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel, afterRender: itemsModel.initiateRenderer} --><!-- /ko -->
 					</div>
 					<!-- /ko -->
 				</div>
@@ -232,7 +231,7 @@
 							</form>
 						</div>
 
-						<div class="fm-preview-viewer" data-bind="css: {'side-by-side-panels': isInteractive() && editor.enabled()}">
+						<div class="fm-preview-viewer" data-bind="css: {'side-by-side-panels': editor.enabled() && editor.interactive()}">
 							<!-- ko template: {if: viewer.isEditable(), afterRender: initiateEditor} -->
 							<div class="fm-preview-edit-panel" data-bind="visible: editor.enabled()">
 								<form id="fm-js-editor-form">
@@ -262,14 +261,9 @@
 								<!-- ko if: viewer.type() === 'google' -->
 								<iframe src="" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}" allowfullscreen webkitallowfullscreen></iframe>
 								<!-- /ko -->
-								<!-- ko template: {if: viewer.type() === 'html', afterRender: initiateRenderer} -->
-								<div class="fm-js-viewer" data-bind="visible: !editor.enabled()">
-									<textarea id="fm-js-viewer-content" data-bind="textInput: renderer.content()"></textarea>
-								</div>
-								<!-- /ko -->
-								<!-- ko template: {if: viewer.type() === 'markdown', afterRender: initiateRenderer} -->
-								<div class="fm-renderer-container">
-									<div class="fm-markdown-renderer" data-bind="html: renderer.content()"></div>
+								<!-- ko if: viewer.type() === 'renderer' && renderer.renderer() -->
+								<div data-bind="visible: !editor.enabled() || editor.interactive()">
+									<!-- ko template: {name: 'renderer-template', data: renderer, afterRender: initiateRenderer} --><!-- /ko -->
 								</div>
 								<!-- /ko -->
 							</div>
@@ -346,6 +340,17 @@
 
 
 		<!-- TEMPLATES Start -->
+		<script type="text/html" id="renderer-template">
+			<div class="fm-renderer-container">
+				<!-- ko if: renderer().name === 'markdown' -->
+				<div class="fm-markdown-renderer" data-bind="html: content()"></div>
+				<!-- /ko -->
+				<!-- ko if: renderer().name === 'codeMirror' -->
+				<textarea id="fm-js-viewer-content" data-bind="textInput: content()"></textarea>
+				<!-- /ko -->
+			</div>
+		</script>
+
 		<script type="text/html" id="preview-editor-controls">
 			<!-- ko if: $root.previewModel.viewer.isEditable() && !$root.previewModel.editor.enabled() -->
 			<button type="button" data-bind="text: $root.lg().editor_edit, click: editFile"></button>

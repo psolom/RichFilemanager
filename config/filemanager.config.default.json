@@ -43,7 +43,7 @@
             "useCtrlKey": true
         },
         "renderer": {
-            "position": "top",
+            "position": false,
             "indexFile": "readme.md"
         }
     },

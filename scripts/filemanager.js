@@ -774,7 +774,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	/**
-	 * Knockout model to operate view items
+	 * Knockout general model
 	 * @constructor
 	 */
 	var FmModel = function() {
@@ -842,7 +842,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.renderer = new RenderModel();
             this.editor = new EditorModel();
-            this.isInteractive = ko.observable(false);
 
             this.rdo.subscribe(function (resourceObject) {
                 preview_model.cdo({
@@ -857,12 +856,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             });
 
             this.applyObject = function(resourceObject) {
-                var filename = resourceObject.attributes.name;
-                var viewerObject = {
-                    type: 'default',
-                    url: null,
-                    options: {}
-                };
+                var filename = resourceObject.attributes.name,
+                    editorObject = {
+                        interactive: false
+                    },
+                    viewerObject = {
+                        type: 'default',
+                        url: null,
+                        options: {}
+                    };
 
                 preview_model.rdo(resourceObject);
 
@@ -898,30 +900,38 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         height: config.viewer.google.readerHeight
                     };
                 }
-                if(isCodeMirrorFile(filename) && config.viewer.codeMirrorRenderer.enabled === true) {
-                    viewerObject.type = 'html';
-                }
-                if(isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true) {
-                    viewerObject.type = 'markdown';
-                    preview_model.isInteractive(true);
+                if (isCodeMirrorFile(filename) && config.viewer.codeMirrorRenderer.enabled === true) {
+                    viewerObject.type = 'renderer';
+				}
+				if (isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true) {
+                    viewerObject.type = 'renderer';
+                    editorObject.interactive = true;
                 }
 
                 preview_model.viewer.type(viewerObject.type);
                 preview_model.viewer.url(viewerObject.url);
                 preview_model.viewer.options(viewerObject.options);
+                preview_model.editor.interactive(editorObject.interactive);
 
-                // Set whether or not the "Edit" button is displayed in the preview details:
+                if (viewerObject.type === 'renderer') {
+                    preview_model.renderer.setRenderer(resourceObject);
+				}
+
                 if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
                     preview_model.viewer.isEditable(true);
-                    previewItem(resourceObject, function(content) {
-                        preview_model.viewer.content(content);
-                        preview_model.renderer.render(content);
+
+                    previewItem(resourceObject).then(function(response) {
+                        if(response.data) {
+                            var content = response.data.attributes.content;
+                            model.previewFile(true);
+                            preview_model.viewer.content(content);
+                            preview_model.renderer.render(content);
+						}
                     });
                 } else {
                     preview_model.viewer.isEditable(false);
+                    model.previewFile(true);
                 }
-
-                model.previewFile(true);
             };
 
             // zeroClipboard code
@@ -942,7 +952,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
             this.initiateRenderer = function(elements) {
-                preview_model.renderer.setRenderer(preview_model.rdo());
                 preview_model.renderer.setContainer(elements);
             };
 
@@ -953,9 +962,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			};
 
-            /**
-             * Define functions to dynamically set CSS classes (based on preview type)
-             */
             this.previewIconClass = ko.pureComputed(function() {
                 var cssClass = [],
                     extraClass = ['ico'];
@@ -980,17 +986,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 return cssClass.join(' ');
             }, this);
 
-            // TODO: REMOVE OR MOVE TO RENDERER MODEL
-            // this.previewMarkdownClass = ko.pureComputed(function() {
-            //     var markdownClass = "fm-markdown-body";
-            //     if (preview_model.editor.enabled()) {
-            //         markdownClass = "fm-markdown-body fm-markdown-body-side-by-side";
-            //     }
-            //     return markdownClass;
-            // }, this);
-
 			this.editFile = function() {
 				var content = preview_model.viewer.content();
+                preview_model.renderer.render(content);
                 preview_model.editor.render(content);
 			};
 
@@ -999,10 +997,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.closeEditor = function() {
-				var content = preview_model.viewer.content();
-
                 preview_model.editor.enabled(false);
-                preview_model.renderer.render(content);
+
+                // re-render viewer content
+                if (preview_model.renderer.renderer()) {
+                    preview_model.renderer.render(preview_model.viewer.content());
+				}
 			};
 
 			this.buttonVisibility = function(action) {
@@ -1411,7 +1411,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return new ItemObject(resourceObject);
 			};
 
-            this.initiateDescriptivePanel = function(elements) {
+            this.initiateRenderer = function(elements) {
                 items_model.descriptivePanel.setContainer(elements);
             };
 
@@ -1485,8 +1485,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					if (config.manager.renderer.position && resourceObject.attributes.name.toLowerCase() === config.manager.renderer.indexFile.toLowerCase()) {
                         items_model.descriptivePanel.setRenderer(resourceObject);
                         // load and render index file content
-                        previewItem(items_model.descriptivePanel.rdo(), function(content) {
-                            items_model.descriptivePanel.render(content);
+                        previewItem(items_model.descriptivePanel.rdo()).then(function(response) {
+                            if(response.data) {
+                                items_model.descriptivePanel.render(response.data.attributes.content);
+                            }
                         });
 					}
 					objects.push(items_model.createObject(resourceObject));
@@ -1999,7 +2001,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.renderer = ko.observable(null);
 
             this.render = function(data) {
-                render_model.renderer().process(data);
+                render_model.renderer().processContent(data);
             };
 
             this.setRenderer = function(resourceObject) {
@@ -2015,7 +2017,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             this.setContainer = function(templateElements) {
-            	console.log('templateElements', templateElements);
                 $.each(templateElements, function () {
                     if ($(this).hasClass('fm-renderer-container')) {
                         $containerElement = $(this);
@@ -2023,26 +2024,33 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 });
 
-                render_model.renderer().postProcess();
+                // make sure html is rendered
+                setTimeout(function() {
+                    render_model.renderer().processDomElements();
+                }, 0);
 			};
 
             var CodeMirrorRenderer = function() {
+                this.name = 'codeMirror';
+
                 var instance = new EditorModel();
 
-                instance.createInstance(render_model.rdo().attributes.extension, 'fm-js-viewer-content', {
-                    readOnly: 'nocursor',
-                    styleActiveLine: false
-                });
-
-                this.process = function(data) {
+                this.processContent = function(data) {
                     instance.render(data);
                     render_model.content(data);
 				};
 
-                this.postProcess = function() {};
+                this.processDomElements = function() {
+                    instance.createInstance(render_model.rdo().attributes.extension, 'fm-js-viewer-content', {
+                        readOnly: 'nocursor',
+                        styleActiveLine: false
+                    });
+				};
 			};
 
             var MarkdownRenderer = function() {
+                this.name = 'markdown';
+
                 var instance = window.markdownit({
                     // Basic options:
                     html: true,
@@ -2070,7 +2078,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         }
 
                         // define path depending on absolute / relative link type
-                        var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(resourceObject.id);
+                        var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(render_model.rdo().id);
                         var path = basePath + ltrim(link, '/');
 
                         if(isMarkdownFile(path)) {
@@ -2085,21 +2093,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 }).use(window.markdownitReplaceLink);
 
-                this.process = function(data) {
+                this.processContent = function(data) {
                     var result = instance.render(data);
                     render_model.content(result);
+                    setLinksBehavior();
                 };
 
-                this.postProcess = function() {
-                    console.log('containerElement', $containerElement.length);
-                    console.log('containerElement links', $containerElement.find("a").length);
+                this.processDomElements = function() {};
 
+                function setLinksBehavior() {
                     // add onClick events to local .md file links (to perform AJAX previews)
                     $containerElement.find("a").each(function() {
-                        var href = $(this).attr("href");
+                        var href = $(this).attr("href"),
+                            editor = fmModel.previewModel.editor;
 
-                        if (fmModel.previewModel.editor.enabled() && fmModel.previewModel.isInteractive()) {
-                            console.log('INTERACTIVE editor mode');
+                        if (editor.enabled() && editor.interactive()) {
                             // prevent user from losing unsaved changes in preview mode
                             // in case of clicking on a link that jumps off the page
                             $(this).off("click");
@@ -2107,7 +2115,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 return false; // prevent onClick event
                             });
                         } else {
-                            console.log('PREVIEW mode');
                             if (href.search("://") != -1 || startsWith(href, 'mailto:')) {
                                 return; // do nothing
                             }
@@ -2116,7 +2123,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 // open file in preview mode for clicked link
                                 $(this).on("click", function (e) {
                                     getItemInfo(href).then(function(response) {
-                                        console.log('getItemInfo', response);
                                         if(response.data) {
                                             getDetailView(response.data);
                                         }
@@ -2132,18 +2138,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         };
 
         var EditorModel = function() {
-        	var editor_model = this;
+        	var editor_model = this,
+				delayedContent = null;
 
         	this.instance = null;
         	this.enabled = ko.observable(false);
         	this.content = ko.observable(null);
             this.mode = ko.observable(null);
+            this.interactive = ko.observable(false);
 
             this.render = function(content) {
-                editor_model.enabled(true);
-                editor_model.instance.setValue(content);
-                editor_model.instance.setOption('mode', editor_model.mode());
-				editor_model.instance.refresh();
+            	if (editor_model.instance) {
+                    drawContent(content);
+				} else {
+                    delayedContent = content;
+				}
             };
 
             this.createInstance = function(extension, elementId, options) {
@@ -2174,8 +2183,19 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 editor_model.instance = cm;
 
+                if (delayedContent) {
+                    drawContent(delayedContent);
+				}
+
                 includeAssets(extension);
             };
+
+            function drawContent(content) {
+                editor_model.enabled(true);
+                editor_model.instance.setValue(content);
+                editor_model.instance.setOption('mode', editor_model.mode());
+                editor_model.instance.refresh();
+            }
 
             function includeAssets(extension) {
                 var currentMode,
@@ -2530,6 +2550,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Handle ajax json response error.
 	var handleAjaxResponseErrors = function(response) {
 		if(response.errors) {
+            if(config.options.logger) {
+                console.log(response.errors);
+            }
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(errorObject.title);
 			});
@@ -3321,8 +3344,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	// Creates CodeMirror instance to let user change the content of the file
-	var previewItem = function(resourceObject, callbackFunction) {
-		$.ajax({
+	var previewItem = function(resourceObject) {
+		return $.ajax({
 			type: 'GET',
 			url: buildConnectorUrl({
 				mode: 'editfile',
@@ -3330,9 +3353,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}),
 			dataType: 'json',
 			success: function (response) {
-				if(response.data) {
-                    callbackFunction(response.data.attributes.content);
-				}
 				handleAjaxResponseErrors(response);
 			},
 			error: handleAjaxError
@@ -3355,10 +3375,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     // update preview object data
                     preview_model.rdo(dataObject);
 
-                    // close editor and assign new content to the viewer
-                    preview_model.editor.enabled(false);
+                    // assign new content to the viewer and close editor
                     preview_model.viewer.content(content);
-                    preview_model.renderer.render(content);
+                    preview_model.closeEditor();
 
                     // replace original item with a new one to adjust observable items
                     var newItem = fmModel.itemsModel.createObject(dataObject);
