@@ -794,6 +794,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             if (!enabled) {
                 // close editor upon disabling preview
                 model.previewModel.closeEditor();
+
+                // update content of descriptive panel
+                if (model.itemsModel.descriptivePanel.rdo().id === model.previewModel.rdo().id) {
+                    model.itemsModel.descriptivePanel.render(model.previewModel.viewer.content());
+                }
 			}
         });
 
@@ -3382,11 +3387,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     var newItem = fmModel.itemsModel.createObject(dataObject);
                     var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
                     fmModel.itemsModel.objects.replace(originalItem, newItem);
-
-                    // update content of descriptive panel
-                    if (fmModel.itemsModel.descriptivePanel.rdo().id === dataObject.id) {
-                        fmModel.itemsModel.descriptivePanel.render(content);
-					}
 
                     fm.success(lg.successful_edit);
 				}
