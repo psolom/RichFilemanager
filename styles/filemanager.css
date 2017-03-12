@@ -341,9 +341,36 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     width: 70%;
 }
 
-.fm-container .view-items-wrapper .fm-renderer-container {
+.fm-container .fm-fileinfo .view-items-wrapper .fm-renderer-wrapper {
     margin-top: 25px;
     margin-bottom: 25px;
+    flex: 0 1 auto;
+}
+
+.fm-container .fm-fileinfo div.CodeMirror {
+    text-align: left;
+    height: auto;
+}
+
+.fm-container .fm-fileinfo div.CodeMirror * {
+    font-family: monospace;
+    line-height: 17px;
+    font-size: 14px;
+}
+
+.fm-container .fm-fileinfo div.CodeMirror.CodeMirror-fullscreen {
+    width: 100%;
+    margin: 0;
+    z-index: 9;
+}
+
+.fm-container .fm-fileinfo .fm-renderer-container div.CodeMirror {
+    padding: 10px;
+    background-color: #F7F7F7;
+}
+
+.fm-container .fm-preview .fm-preview-edit-panel div.CodeMirror {
+    background-color: #FFFFFF;
 }
 
 .fm-container div#tools {
@@ -425,31 +452,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-container .fm-preview .fm-preview-edit-panel button {
     color: black;
-}
-
-.fm-container .fm-preview div.CodeMirror {
-    text-align: left;
-    height: auto;
-}
-
-.fm-container .fm-preview div.CodeMirror * {
-    font-family: monospace;
-    line-height: 17px;
-    font-size: 14px;
-}
-
-.fm-container .fm-preview div.CodeMirror.CodeMirror-fullscreen {
-    width: 100%;
-    margin: 0;
-    z-index: 9;
-}
-
-.fm-container .fm-preview .fm-preview-view-panel div.CodeMirror {
-    background-color: #F7F7F7;
-}
-
-.fm-container .fm-preview .fm-preview-edit-panel div.CodeMirror {
-    background-color: #FFFFFF;
 }
 
 .fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-edit-panel {
@@ -601,16 +603,20 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 /* to expand selectable area to 100% vertically in case no scroll */
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
+    display: flex;
+    flex-flow: column;
 }
 
 .fm-container .view-items-wrapper {
     height: 100%;
+    display: flex;
+    flex-flow: column;
 }
 
 .fm-container .view-items {
     position: relative;
     width: 100%;
-    height: 100%;
+    flex: 1 1 auto;
 }
 
 .fm-container .view-items .grid {

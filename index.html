@@ -114,8 +114,8 @@
 
 				<div class="view-items-wrapper" data-bind="visible: !loadingView() && !previewFile()">
 					<!-- ko if: config().manager.renderer.position === 'top' && itemsModel.descriptivePanel.renderer() -->
-					<div data-bind="visible: itemsModel.descriptivePanel.content()">
-						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel, afterRender: itemsModel.initiateRenderer} --><!-- /ko -->
+					<div class="fm-renderer-wrapper" data-bind="visible: itemsModel.descriptivePanel.content()">
+						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel} --><!-- /ko -->
 					</div>
 					<!-- /ko -->
 
@@ -182,8 +182,8 @@
 					</div>
 
 					<!-- ko if: config().manager.renderer.position === 'bottom' && itemsModel.descriptivePanel.renderer() -->
-					<div data-bind="visible: itemsModel.descriptivePanel.content()">
-						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel, afterRender: itemsModel.initiateRenderer} --><!-- /ko -->
+					<div class="fm-renderer-wrapper" data-bind="visible: itemsModel.descriptivePanel.content()">
+						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel} --><!-- /ko -->
 					</div>
 					<!-- /ko -->
 				</div>
@@ -235,7 +235,7 @@
 							<!-- ko template: {if: viewer.isEditable(), afterRender: initiateEditor} -->
 							<div class="fm-preview-edit-panel" data-bind="visible: editor.enabled()">
 								<form id="fm-js-editor-form">
-									<textarea id="fm-js-editor-content" name="content" data-bind="textInput: editor.content()"></textarea>
+									<textarea class="fm-cm-editor-content" name="content" data-bind="textInput: editor.content()"></textarea>
 									<input type="hidden" name="mode" value="savefile" />
 									<input type="hidden" name="path" value="" data-bind="textInput: rdo().id" />
 								</form>
@@ -263,7 +263,7 @@
 								<!-- /ko -->
 								<!-- ko if: viewer.type() === 'renderer' && renderer.renderer() -->
 								<div data-bind="visible: !editor.enabled() || editor.interactive()">
-									<!-- ko template: {name: 'renderer-template', data: renderer, afterRender: initiateRenderer} --><!-- /ko -->
+									<!-- ko template: {name: 'renderer-template', data: renderer} --><!-- /ko -->
 								</div>
 								<!-- /ko -->
 							</div>
@@ -341,14 +341,16 @@
 
 		<!-- TEMPLATES Start -->
 		<script type="text/html" id="renderer-template">
+			<!-- ko template: {afterRender: setContainer} -->
 			<div class="fm-renderer-container">
 				<!-- ko if: renderer().name === 'markdown' -->
 				<div class="fm-markdown-renderer" data-bind="html: content()"></div>
 				<!-- /ko -->
 				<!-- ko if: renderer().name === 'codeMirror' -->
-				<textarea id="fm-js-viewer-content" data-bind="textInput: content()"></textarea>
+				<textarea class="fm-cm-renderer-content" data-bind="textInput: content()"></textarea>
 				<!-- /ko -->
 			</div>
+			<!-- /ko -->
 		</script>
 
 		<script type="text/html" id="preview-editor-controls">

@@ -50,8 +50,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		$footer = $wrapper.children('.fm-footer'),
 		$fileinfo = $splitter.children('.fm-fileinfo'),
 		$filetree = $splitter.children('.fm-filetree'),
-		$viewItems = $fileinfo.find('.view-items'),
+		$viewItemsWrapper = $fileinfo.find('.view-items-wrapper'),
 		$previewWrapper = $fileinfo.find('.fm-preview-wrapper'),
+        $viewItems = $viewItemsWrapper.find('.view-items'),
 		$uploadButton = $uploader.children('.fm-upload'),
 
 		config = null,				// configuration options
@@ -466,7 +467,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 							return $wrapper.append($cloned.html());
 						},
-						appendTo: config.customScrollbar.enabled ? $fileinfo.find('.view-items-wrapper').find('.mCustomScrollBox') : $fileinfo,
+						appendTo: config.customScrollbar.enabled ? $viewItemsWrapper.find('.mCustomScrollBox') : $fileinfo,
 						start: function(event, ui) {
 							if(!koItem.selected()) {
 								fmModel.itemsModel.unselectItems(false);
@@ -535,7 +536,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-		$viewItems.selectable({
+        $viewItems.selectable({
             filter: "li:not(.directory-parent), tbody > tr:not(.directory-parent)",
             cancel: ".directory-parent, thead",
             disabled: !config.manager.selection.enabled,
@@ -708,7 +709,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
 			});
 
-            $fileinfo.find('.view-items-wrapper').mCustomScrollbar({
+            $viewItemsWrapper.mCustomScrollbar({
                 theme: config.customScrollbar.theme,
                 scrollButtons: {
                     enable: config.customScrollbar.button
@@ -945,15 +946,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             });
 
             this.initiateEditor = function(elements) {
-                preview_model.editor.createInstance(preview_model.rdo().attributes.extension, 'fm-js-editor-content', {
+            	var textarea = $previewWrapper.find('.fm-cm-editor-content')[0];
+                preview_model.editor.createInstance(preview_model.rdo().attributes.extension, textarea, {
                     readOnly: false,
                     styleActiveLine: true
                 });
 			};
-
-            this.initiateRenderer = function(elements) {
-                preview_model.renderer.setContainer(elements);
-            };
 
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
@@ -1411,10 +1409,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return new ItemObject(resourceObject);
 			};
 
-            this.initiateRenderer = function(elements) {
-                items_model.descriptivePanel.setContainer(elements);
-            };
-
 			this.addNew = function(dataObjects) {
 				if(!$.isArray(dataObjects)) {
 					dataObjects = [dataObjects];
@@ -1482,7 +1476,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 items_model.descriptivePanel.content(null);
 
 				$.each(dataObjects, function (i, resourceObject) {
-					if (config.manager.renderer.position && resourceObject.attributes.name.toLowerCase() === config.manager.renderer.indexFile.toLowerCase()) {
+					if (config.manager.renderer.position && typeof config.manager.renderer.indexFile === 'string' &&
+						resourceObject.attributes.name.toLowerCase() === config.manager.renderer.indexFile.toLowerCase()
+					) {
                         items_model.descriptivePanel.setRenderer(resourceObject);
                         // load and render index file content
                         previewItem(items_model.descriptivePanel.rdo()).then(function(response) {
@@ -2024,10 +2020,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 });
 
-                // make sure html is rendered
-                setTimeout(function() {
-                    render_model.renderer().processDomElements();
-                }, 0);
+				render_model.renderer().processDomElements($containerElement);
 			};
 
             var CodeMirrorRenderer = function() {
@@ -2040,11 +2033,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     render_model.content(data);
 				};
 
-                this.processDomElements = function() {
-                    instance.createInstance(render_model.rdo().attributes.extension, 'fm-js-viewer-content', {
-                        readOnly: 'nocursor',
-                        styleActiveLine: false
-                    });
+                this.processDomElements = function($container) {
+                	if (!instance.instance) {
+                        var textarea = $container.find('.fm-cm-renderer-content')[0];
+                        instance.createInstance(render_model.rdo().attributes.extension, textarea, {
+                            readOnly: 'nocursor',
+                            styleActiveLine: false,
+                            lineNumbers: false
+                        });
+					}
 				};
 			};
 
@@ -2099,7 +2096,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     setLinksBehavior();
                 };
 
-                this.processDomElements = function() {};
+                this.processDomElements = function($container) {};
 
                 function setLinksBehavior() {
                     // add onClick events to local .md file links (to perform AJAX previews)
@@ -2155,7 +2152,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
             };
 
-            this.createInstance = function(extension, elementId, options) {
+            this.createInstance = function(extension, element, options) {
                 var cm,
                     defaults = {
                         readOnly: 'nocursor',
@@ -2175,7 +2172,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         }
                     };
 
-                cm = CodeMirror.fromTextArea(document.getElementById(elementId), $.extend({}, defaults, options));
+                cm = CodeMirror.fromTextArea(element, $.extend({}, defaults, options));
 
                 cm.on("changes", function(cm, change) {
                     editor_model.content(cm.getValue());
@@ -2194,7 +2191,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 editor_model.enabled(true);
                 editor_model.instance.setValue(content);
                 editor_model.instance.setOption('mode', editor_model.mode());
-                editor_model.instance.refresh();
+                setTimeout(function() {
+                	editor_model.instance.refresh();
+                }, 0);
             }
 
             function includeAssets(extension) {
