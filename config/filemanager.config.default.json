@@ -41,6 +41,10 @@
         "selection": {
             "enabled": true,
             "useCtrlKey": true
+        },
+        "renderer": {
+            "position": false,
+            "indexFile": "readme.md"
         }
     },
     "api": {
@@ -154,12 +158,28 @@
             "readerWidth": "640",
             "readerHeight": "480"
         },
+        "codeMirrorRenderer": {
+            "enabled": true,
+            "extensions": [
+                "php",
+                "java",
+                "txt",
+                "csv"
+            ]
+        },
+        "markdownRenderer": {
+            "enabled": true,
+            "extensions": [
+                "md"
+            ]
+        },
         "editable": {
             "enabled": true,
             "theme": "default",
             "lineNumbers": true,
             "lineWrapping": true,
             "codeHighlight": true,
+            "matchBrackets": true,
             "extensions": [
                 "txt",
                 "csv",

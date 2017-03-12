@@ -334,14 +334,57 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     margin-top: 3em
 }
 
+.fm-container .fm-fileinfo .fm-renderer-container {
+    display: block;
+    text-align: left;
+    margin: 0 auto;
+    width: 70%;
+}
+
+.fm-container .fm-fileinfo .view-items-wrapper .fm-renderer-wrapper {
+    margin-top: 25px;
+    margin-bottom: 25px;
+    flex: 0 1 auto;
+}
+
+.fm-container .fm-fileinfo div.CodeMirror {
+    text-align: left;
+    height: auto;
+}
+
+.fm-container .fm-fileinfo div.CodeMirror * {
+    font-family: monospace;
+    line-height: 17px;
+    font-size: 14px;
+}
+
+.fm-container .fm-fileinfo div.CodeMirror.CodeMirror-fullscreen {
+    width: 100%;
+    margin: 0;
+    z-index: 9;
+}
+
+.fm-container .fm-fileinfo .fm-renderer-container div.CodeMirror {
+    padding: 10px;
+    background-color: #F7F7F7;
+}
+
+.fm-container .fm-preview .fm-preview-edit-panel div.CodeMirror {
+    background-color: #FFFFFF;
+}
+
 .fm-container div#tools {
     display: inline-block;
     margin-left: 1em;
 }
 
-.fm-container .fm-preview {
-    width: 100%;
+.fm-container .fm-preview-wrapper {
     height: 100%;
+}
+
+.fm-container .fm-preview {
+    position: relative;
+    width: 100%;
 }
 
 .fm-container .fm-preview .fm-preview-viewer {
@@ -378,6 +421,50 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-container .fm-preview .fm-preview-toolbar button {
     cursor: pointer;
+}
+
+.fm-container .fm-preview .fm-btn-edit-file {
+    display: inline-block;
+    background: url(../images/edit.png) no-repeat center center;
+    width: 20px;
+    height: 18px;
+    margin: 0 0.2em;
+}
+
+.fm-container .fm-preview .fm-btn-clipboard {
+    display: inline-block;
+    background: url(../images/copy.png) no-repeat center center;
+    width: 20px;
+    height: 18px;
+    margin: 0 0.2em;
+}
+
+/*.fm-container .fm-preview .fm-preview-view-panel {*/
+    /*max-width: 80%;*/
+/*}*/
+
+.fm-container .fm-preview .fm-preview-edit-panel,
+.fm-container .fm-preview .fm-preview-view-panel .fm-js-viewer {
+    width: 70%;
+    border: 1px solid #eee;
+    margin: 0 auto;
+}
+
+.fm-container .fm-preview .fm-preview-edit-panel button {
+    color: black;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-edit-panel {
+    float: left;
+    width: 49%;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-view-panel {
+    margin-left: 51%;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-renderer-container {
+    width: 100%;
 }
 
 
@@ -516,18 +603,23 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 /* to expand selectable area to 100% vertically in case no scroll */
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
+    display: flex;
+    flex-flow: column;
 }
 
 .fm-container .view-items-wrapper {
     height: 100%;
+    display: flex;
+    flex-flow: column;
 }
 
 .fm-container .view-items {
     position: relative;
+    width: 100%;
+    flex: 1 1 auto;
 }
 
 .fm-container .view-items .grid {
-    height: 100%;
     padding: 15px;
     text-align: left;
 }
@@ -718,46 +810,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .fm-upload span { background-image: url(../images/upload.png); }
 .fm-container .fm-upload.loading span { background-image: url(../images/ajax-loader.gif);color:#555555;font-size:0.9em; }
 .fm-container #parentfolder span { background-image: url(../images/parentfolder.png); }
-
-
-.fm-container .fm-preview .fm-btn-edit-file {
-    display: inline-block;
-    background: url(../images/edit.png) no-repeat center center;
-    width: 20px;
-    height: 18px;
-    margin: 0 0.2em;
-}
-
-.fm-container .fm-preview .fm-btn-clipboard {
-    display: inline-block;
-    background: url(../images/copy.png) no-repeat center center;
-    width: 20px;
-    height: 18px;
-    margin: 0 0.2em;
-}
-
-.fm-container .fm-preview .fm-preview-editor button {
-    color: black;
-}
-
-.fm-container .fm-preview .fm-preview-editor div.CodeMirror {
-    text-align: left;
-    width: 70%;
-    border: 1px solid #eee;
-    height: auto;
-    margin: 2em auto;
-}
-
-.fm-container .fm-preview .fm-preview-editor div.CodeMirror * {
-    font-family: monospace;
-    line-height: 15px;
-}
-
-.fm-container .fm-preview div.CodeMirror.CodeMirror-fullscreen {
-    width: 100%;
-    margin: 0;
-    z-index: 9;
-}
 
 
 /** Drag & Drop **/

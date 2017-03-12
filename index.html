@@ -113,6 +113,11 @@
 				<div class="fm-loading-view" data-bind="visible: loadingView()"></div>
 
 				<div class="view-items-wrapper" data-bind="visible: !loadingView() && !previewFile()">
+					<!-- ko if: config().manager.renderer.position === 'top' && itemsModel.descriptivePanel.renderer() -->
+					<div class="fm-renderer-wrapper" data-bind="visible: itemsModel.descriptivePanel.content()">
+						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel} --><!-- /ko -->
+					</div>
+					<!-- /ko -->
 
 					<div class="view-items">
 						<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
@@ -175,117 +180,133 @@
 							</tbody>
 						</table>
 					</div>
-				</div>
 
-
-				<div class="fm-preview" data-bind="with: previewModel, visible: !loadingView() && previewFile()">
-					<!-- ko if: $root.previewFile() -->
-					<div class="fm-preview-toolbar">
-						<form id="fm-js-preview-toolbar">
-							<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
-								<span data-bind="text: $root.lg().parentfolder"></span>
-							</button>
-							<!-- ko if: buttonVisibility('select') -->
-							<button id="select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
-								<span data-bind="text: $root.lg().action_select"></span>
-							</button>
-							<!-- /ko -->
-							<!-- ko if: buttonVisibility('download') -->
-							<button id="download" type="button" data-bind="event: {click: function(data, event) {bindToolbar('download')}}">
-								<span data-bind="text: $root.lg().action_download"></span>
-							</button>
-							<!-- /ko -->
-							<!-- ko if: buttonVisibility('rename') -->
-							<button id="rename" type="button" data-bind="event: {click: function(data, event) {bindToolbar('rename')}}">
-								<span data-bind="text: $root.lg().action_rename"></span>
-							</button>
-							<!-- /ko -->
-							<!-- ko if: buttonVisibility('move') -->
-							<button id="move" type="button" data-bind="event: {click: function(data, event) {bindToolbar('move')}}">
-								<span data-bind="text: $root.lg().action_move"></span>
-							</button>
-							<!-- /ko -->
-							<!-- ko if: buttonVisibility('delete') -->
-							<button id="delete" type="button" data-bind="event: {click: function(data, event) {bindToolbar('delete')}}">
-								<span data-bind="text: $root.lg().action_delete"></span>
-							</button>
-							<!-- /ko -->
-							<!-- ko if: buttonVisibility('replace') -->
-							<button id="replace" type="button" data-bind="event: {click: function(data, event) {bindToolbar('replace')}}">
-								<span data-bind="text: $root.lg().action_replace"></span>
-							</button>
-							<div class="hidden-file-input">
-								<input id="replacement" name="replacement" type="file" />
-							</div>
-							<!-- /ko -->
-						</form>
-					</div>
-
-					<div class="fm-preview-viewer">
-						<!-- ko if: viewer().type === 'image' -->
-						<img src="" data-bind="css: previewIconClass(), attr: {src: viewer().url}" />
-						<!-- /ko -->
-						<!-- ko if: viewer().type === 'editable' -->
-						<img src="" data-bind="css: previewIconClass(), attr: {src: viewer().url}, visible: !editor.enabled()" />
-						<!-- /ko -->
-						<!-- ko if: viewer().type === 'audio' -->
-						<audio src="" controls="controls" data-bind="attr: {src: viewer().url}"></audio>
-						<!-- /ko -->
-						<!-- ko if: viewer().type === 'video' -->
-						<video src="" controls="controls" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}"></video>
-						<!-- /ko -->
-						<!-- ko if: viewer().type === 'opendoc' -->
-						<iframe src="" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
-						<!-- /ko -->
-						<!-- ko if: viewer().type === 'google' -->
-						<iframe src="" data-bind="attr: {src: viewer().url, width: viewer().options.width, height: viewer().options.height}" allowfullscreen webkitallowfullscreen></iframe>
-						<!-- /ko -->
-
-						<!-- ko if: editor.enabled() -->
-						<div class="fm-preview-editor">
-							<form id="fm-js-editor-form">
-								<textarea id="fm-js-editor-content" name="content" data-bind="textInput: editor.content"></textarea>
-								<input type="hidden" name="mode" value="savefile" />
-								<input type="hidden" name="path" value="" data-bind="textInput: rdo().id" />
-								<button class="edition" type="button" data-bind="text: $root.lg().editor_quit, click: closeEditor"></button>
-								<button class="edition" type="button" data-bind="text: $root.lg().editor_save, click: saveFile"></button>
-							</form>
-						</div>
-						<!-- /ko -->
-					</div>
-
-					<div class="fm-preview-title">
-						<div id="main-title">
-							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
-							<div id="tools">
-								<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile, visible: viewer().type === 'editable' && !editor.enabled()"></a>
-								<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer().url}"></a>
-							</div>
-						</div>
-					</div>
-
-					<div class="fm-preview-details">
-						<table>
-							<tr data-bind="visible: cdo().sizeFormatted">
-								<td data-bind="text: $root.lg().size"></td>
-								<td data-bind="text: cdo().sizeFormatted"></td>
-							</tr>
-							<tr data-bind="visible: cdo().dimensions">
-								<td data-bind="text: $root.lg().dimensions"></td>
-								<td data-bind="text: cdo().dimensions"></td>
-							</tr>
-							<tr data-bind="visible: rdo().attributes.created">
-								<td data-bind="text: $root.lg().created"></td>
-								<td data-bind="text: rdo().attributes.created"></td>
-							</tr>
-							<tr data-bind="visible: rdo().attributes.modified">
-								<td data-bind="text: $root.lg().modified"></td>
-								<td data-bind="text: rdo().attributes.modified"></td>
-							</tr>
-						</table>
+					<!-- ko if: config().manager.renderer.position === 'bottom' && itemsModel.descriptivePanel.renderer() -->
+					<div class="fm-renderer-wrapper" data-bind="visible: itemsModel.descriptivePanel.content()">
+						<!-- ko template: {name: 'renderer-template', data: itemsModel.descriptivePanel} --><!-- /ko -->
 					</div>
 					<!-- /ko -->
 				</div>
+
+
+				<div class="fm-preview-wrapper" data-bind="visible: !loadingView() && previewFile()">
+					<!-- ko if: previewFile() -->
+					<div class="fm-preview" data-bind="with: previewModel">
+						<div class="fm-preview-toolbar">
+							<form id="fm-js-preview-toolbar">
+								<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
+									<span data-bind="text: $root.lg().parentfolder"></span>
+								</button>
+								<!-- ko if: buttonVisibility('select') -->
+								<button id="select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
+									<span data-bind="text: $root.lg().action_select"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko if: buttonVisibility('download') -->
+								<button id="download" type="button" data-bind="event: {click: function(data, event) {bindToolbar('download')}}">
+									<span data-bind="text: $root.lg().action_download"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko if: buttonVisibility('rename') -->
+								<button id="rename" type="button" data-bind="event: {click: function(data, event) {bindToolbar('rename')}}">
+									<span data-bind="text: $root.lg().action_rename"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko if: buttonVisibility('move') -->
+								<button id="move" type="button" data-bind="event: {click: function(data, event) {bindToolbar('move')}}">
+									<span data-bind="text: $root.lg().action_move"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko if: buttonVisibility('delete') -->
+								<button id="delete" type="button" data-bind="event: {click: function(data, event) {bindToolbar('delete')}}">
+									<span data-bind="text: $root.lg().action_delete"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko if: buttonVisibility('replace') -->
+								<button id="replace" type="button" data-bind="event: {click: function(data, event) {bindToolbar('replace')}}">
+									<span data-bind="text: $root.lg().action_replace"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko template: {name: 'preview-editor-controls'} --><!-- /ko -->
+							</form>
+						</div>
+
+						<div class="fm-preview-viewer" data-bind="css: {'side-by-side-panels': editor.enabled() && editor.interactive()}">
+							<!-- ko template: {if: viewer.isEditable(), afterRender: initiateEditor} -->
+							<div class="fm-preview-edit-panel" data-bind="visible: editor.enabled()">
+								<form id="fm-js-editor-form">
+									<textarea class="fm-cm-editor-content" name="content" data-bind="textInput: editor.content()"></textarea>
+									<input type="hidden" name="mode" value="savefile" />
+									<input type="hidden" name="path" value="" data-bind="textInput: rdo().id" />
+								</form>
+							</div>
+							<!-- /ko -->
+
+							<div class="fm-preview-view-panel">
+								<!-- ko if: viewer.type() === 'default' -->
+								<img src="" data-bind="css: previewIconClass(), attr: {src: null}" />
+								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'image' -->
+								<img src="" data-bind="css: previewIconClass(), attr: {src: viewer.url()}" />
+								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'audio' -->
+								<audio src="" controls="controls" data-bind="attr: {src: viewer.url()}"></audio>
+								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'video' -->
+								<video src="" controls="controls" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}"></video>
+								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'opendoc' -->
+								<iframe src="" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}" allowfullscreen webkitallowfullscreen></iframe>
+								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'google' -->
+								<iframe src="" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}" allowfullscreen webkitallowfullscreen></iframe>
+								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'renderer' && renderer.renderer() -->
+								<div data-bind="visible: !editor.enabled() || editor.interactive()">
+									<!-- ko template: {name: 'renderer-template', data: renderer} --><!-- /ko -->
+								</div>
+								<!-- /ko -->
+							</div>
+						</div>
+
+						<div class="fm-preview-edit-controls">
+						<!-- ko template: {name: 'preview-editor-controls'} --><!-- /ko -->
+						</div>
+
+						<div class="fm-preview-title">
+							<div id="main-title">
+								<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
+								<div id="tools">
+									<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile, visible: viewer.isEditable() && !editor.enabled()"></a>
+									<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.url()}"></a>
+								</div>
+							</div>
+						</div>
+
+						<div class="fm-preview-details">
+							<table>
+								<tr data-bind="visible: cdo().sizeFormatted">
+									<td data-bind="text: $root.lg().size"></td>
+									<td data-bind="text: cdo().sizeFormatted"></td>
+								</tr>
+								<tr data-bind="visible: cdo().dimensions">
+									<td data-bind="text: $root.lg().dimensions"></td>
+									<td data-bind="text: cdo().dimensions"></td>
+								</tr>
+								<tr data-bind="visible: rdo().attributes.created">
+									<td data-bind="text: $root.lg().created"></td>
+									<td data-bind="text: rdo().attributes.created"></td>
+								</tr>
+								<tr data-bind="visible: rdo().attributes.modified">
+									<td data-bind="text: $root.lg().modified"></td>
+									<td data-bind="text: rdo().attributes.modified"></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+					<!-- /ko -->
+				</div>
+
 			</div>
 		</div>
 
@@ -317,6 +338,31 @@
 		</div>
 		<!-- /ko -->
 
+
+		<!-- TEMPLATES Start -->
+		<script type="text/html" id="renderer-template">
+			<!-- ko template: {afterRender: setContainer} -->
+			<div class="fm-renderer-container">
+				<!-- ko if: renderer().name === 'markdown' -->
+				<div class="fm-markdown-renderer" data-bind="html: content()"></div>
+				<!-- /ko -->
+				<!-- ko if: renderer().name === 'codeMirror' -->
+				<textarea class="fm-cm-renderer-content" data-bind="textInput: content()"></textarea>
+				<!-- /ko -->
+			</div>
+			<!-- /ko -->
+		</script>
+
+		<script type="text/html" id="preview-editor-controls">
+			<!-- ko if: $root.previewModel.viewer.isEditable() && !$root.previewModel.editor.enabled() -->
+			<button type="button" data-bind="text: $root.lg().editor_edit, click: editFile"></button>
+			<!-- /ko -->
+			<!-- ko if: $root.previewModel.editor.enabled() -->
+			<button type="button" data-bind="text: $root.lg().editor_quit, click: closeEditor"></button>
+			<button type="button" data-bind="text: $root.lg().editor_save, click: saveFile"></button>
+			<!-- /ko -->
+		</script>
+
 		<script type="text/html" id="node-parent-template">
 			<li data-bind="template: {name: 'node-template', data: koNode}"></li>
 		</script>
@@ -329,6 +375,8 @@
 			</a>
 			<ul data-bind="template: {name: 'node-parent-template', if: children().length > 0, foreach: children, as: 'koNode', afterRender: $root.treeModel.nodeRendered}, css: clusterClass(), toggleNodeVisibility: $data"></ul>
 		</script>
+		<!-- TEMPLATES End-->
+
 
         <div id="drag-helper-grid-template" style="display: none">
             <div class="item-background"></div>
@@ -367,7 +415,7 @@
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->
