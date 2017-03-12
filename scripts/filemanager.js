@@ -2302,9 +2302,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		items.sort(function(a, b) {
-			if(a.rdo.type === 'parent' || b.rdo.type === 'parent') {
-				return -1;
-			}
+            // commented to support IE sorting algorithm; parent item should be a first item
+            if(a.rdo.type === 'parent'/* || b.rdo.type === 'parent'*/) {
+                return -1;
+            }
 
 			var sortReturnNumber,
 				aa = getSortSubject(a),
