@@ -1,0 +1,24 @@
+group 'com.fabriceci.fmc'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+repositories {
+    mavenCentral()
+}
+
+task fatJar(type: Jar) {
+    baseName = project.name + '-all'
+    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
+    with jar
+}
+
+dependencies {
+    compile('javax.servlet:javax.servlet-api:3.1.0')
+    compile('org.slf4j:slf4j-api:1.7.21')
+    compile('org.imgscalr:imgscalr-lib:4.2')
+    testCompile('junit:junit:4.11')
+}
