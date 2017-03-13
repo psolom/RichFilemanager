@@ -1307,7 +1307,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     if(node.rdo.type === 'folder') {
                         if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
                             tree_model.loadNodes(node, true);
-                            model.itemsModel.loadList(node.id);
+                            getDetailView(node.rdo);
                         } else {
                             tree_model.toggleNode(node);
 
@@ -3458,7 +3458,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 ---------------------------------------------------------*/
 
 	// Retrieves file or folder info based on the path provided.
-	var getDetailView = function(resourceObject) {
+	function getDetailView(resourceObject) {
 		if(!resourceObject.attributes.readable) {
 			fm.error(lg.NOT_ALLOWED_SYSTEM);
 			return false;
@@ -3467,9 +3467,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             fmModel.previewModel.applyObject(resourceObject);
 		}
 		if(resourceObject.type === 'folder' || resourceObject.type === 'parent') {
+            fmModel.previewFile(false);
 			fmModel.itemsModel.loadList(resourceObject.id);
 		}
-	};
+	}
 
 	// Options for context menu plugin
 	function getContextMenuItems(resourceObject) {
