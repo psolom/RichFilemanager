@@ -190,7 +190,7 @@
 
 
 				<div class="fm-preview-wrapper" data-bind="visible: !loadingView() && previewFile()">
-					<!-- ko if: previewFile() -->
+					<!-- ko template: {if: previewFile(), afterRender: previewModel.afterRender} -->
 					<div class="fm-preview" data-bind="with: previewModel">
 						<div class="fm-preview-toolbar">
 							<form id="fm-js-preview-toolbar">
@@ -278,7 +278,7 @@
 								<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
 								<div id="tools">
 									<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile, visible: viewer.isEditable() && !editor.enabled()"></a>
-									<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.url()}"></a>
+									<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.pureUrl()}"></a>
 								</div>
 							</div>
 						</div>

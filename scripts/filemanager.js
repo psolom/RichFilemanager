@@ -841,6 +841,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 type: ko.observable('default'),
                 isEditable: ko.observable(false),
                 url: ko.observable(null),
+                pureUrl: ko.observable(null),
                 options: ko.observable({}),
                 content: ko.observable(null),
                 codeMirror: ko.observable(null)
@@ -862,6 +863,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             });
 
             this.applyObject = function(resourceObject) {
+                model.previewFile(false);
+
                 var filename = resourceObject.attributes.name,
                     editorObject = {
                         interactive: false
@@ -876,7 +879,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 if(isImageFile(filename)) {
                     viewerObject.type = 'image';
-                    viewerObject.url = createImageUrl(resourceObject, false);
+                    viewerObject.url = createImageUrl(resourceObject, false, true);
                 }
                 if(isAudioFile(filename) && config.viewer.audio.enabled === true) {
                     viewerObject.type = 'audio';
@@ -908,47 +911,51 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
                 if (isCodeMirrorFile(filename) && config.viewer.codeMirrorRenderer.enabled === true) {
                     viewerObject.type = 'renderer';
+                    preview_model.renderer.setRenderer(resourceObject);
 				}
 				if (isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true) {
                     viewerObject.type = 'renderer';
+                    preview_model.renderer.setRenderer(resourceObject);
                     editorObject.interactive = true;
                 }
 
                 preview_model.viewer.type(viewerObject.type);
                 preview_model.viewer.url(viewerObject.url);
                 preview_model.viewer.options(viewerObject.options);
+                preview_model.viewer.pureUrl(isImageFile(filename) ?
+                    createImageUrl(resourceObject, false, false) :
+                    createPreviewUrl(resourceObject, false)
+                );
+                preview_model.viewer.isEditable(isEditableFile(filename) && config.viewer.editable.enabled === true);
                 preview_model.editor.interactive(editorObject.interactive);
 
-                if (viewerObject.type === 'renderer') {
-                    preview_model.renderer.setRenderer(resourceObject);
-				}
-
-                if(isEditableFile(filename) && config.viewer.editable.enabled === true) {
-                    preview_model.viewer.isEditable(true);
-
+                if (viewerObject.type === 'renderer' || preview_model.viewer.isEditable()) {
                     previewItem(resourceObject).then(function(response) {
                         if(response.data) {
                             var content = response.data.attributes.content;
-                            model.previewFile(true);
                             preview_model.viewer.content(content);
-                            preview_model.renderer.render(content);
-						}
+                            model.previewFile(true);
+                        }
                     });
-                } else {
-                    preview_model.viewer.isEditable(false);
+				} else {
                     model.previewFile(true);
-                }
+				}
             };
 
-            // zeroClipboard code
             ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
-            var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
-            client.on("ready", function(readyEvent) {
-                client.on("aftercopy", function(event) {
-                    fm.success(lg.copied);
-                    // console.log("Copied text to clipboard: " + event.data["text/plain"]);
+
+            this.afterRender = function() {
+                preview_model.renderer.render(preview_model.viewer.content());
+
+                // zeroClipboard code
+                var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
+                client.on("ready", function(readyEvent) {
+                    client.on("aftercopy", function(event) {
+                        fm.success(lg.copied);
+                        // console.log("Copied text to clipboard: " + event.data["text/plain"]);
+                    });
                 });
-            });
+            };
 
             this.initiateEditor = function(elements) {
             	var textarea = $previewWrapper.find('.fm-cm-editor-content')[0];
@@ -1001,11 +1008,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.closeEditor = function() {
                 preview_model.editor.enabled(false);
-
                 // re-render viewer content
-                if (preview_model.renderer.renderer()) {
-                    preview_model.renderer.render(preview_model.viewer.content());
-				}
+                preview_model.renderer.render(preview_model.viewer.content());
 			};
 
 			this.buttonVisibility = function(action) {
@@ -1605,7 +1609,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					sizeFormatted: formatBytes(resourceObject.attributes.size),
 					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
 					cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
-					imageUrl: createImageUrl(resourceObject, true),
+					imageUrl: createImageUrl(resourceObject, true, true),
 					previewWidth: previewWidth
 				};
 				this.visible = ko.observable(true);
@@ -2002,7 +2006,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.renderer = ko.observable(null);
 
             this.render = function(data) {
-                render_model.renderer().processContent(data);
+                if (render_model.renderer()) {
+                    render_model.renderer().processContent(data);
+                }
             };
 
             this.setRenderer = function(resourceObject) {
@@ -2749,7 +2755,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	// Build url to display image or its thumbnail
-	var createImageUrl = function(resourceObject, thumbnail) {
+	var createImageUrl = function(resourceObject, thumbnail, disableCache) {
 		var imageUrl;
 		if (isImageFile(resourceObject.id) &&
 			resourceObject.attributes.readable && (
@@ -2757,7 +2763,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
 			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
-                imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path), true);
+                imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path), disableCache);
 			} else {
 				var queryParams = {path: resourceObject.id};
 				if (resourceObject.attributes.extension === 'svg') {
