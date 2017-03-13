@@ -2,6 +2,30 @@
 * Icons are from http://icomoon.io/app/
 **/
 
+html, body {
+    height: 100%;
+}
+
+/* IE10-11 styles */
+html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
+html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
+    vertical-align: top;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
+html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
+    width: 220px;
+    height: 32px;
+    overflow: hidden;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
+html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
+    height: 22px;
+}
+html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
+html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
+    height: 23px;
+}
+
 .fm-container * {
     font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
     box-sizing: content-box;
@@ -11,9 +35,14 @@
 }
 
 .fm-container {
-    padding: 10px;
+    height: 100%;
     background-color: #ffffff;
-    overflow: hidden; /** prevent overflow if #uploader h1 path value is too long */
+    overflow: hidden;
+}
+
+.fm-container .fm-wrapper {
+    height: 100%;
+    padding: 10px;
 }
 
 .fm-container .fm-header {
@@ -24,13 +53,37 @@
     overflow: hidden;
 }
 
-.fm-container .fm-header .current-path > h1 {
+.fm-container .fm-header .breadcrumbs {
     display: block;
     float: left;
-    margin:0.2em 0 0 1em;
-    line-height:1.9em;
-    font-size: 0.8em;
-    word-break: break-all;
+    padding: 0.2em 0 0 1em;
+    line-height: 1.5em;
+    font-size: 0.9em;
+    font-weight: bold;
+}
+
+.fm-container .fm-header .breadcrumbs * {
+    float: left;
+}
+
+.fm-container .fm-header .breadcrumbs .separator {
+    color: #999999;
+    margin: 0 5px;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-title {
+    margin-right: 10px;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-item:not(.active) {
+    cursor: pointer;
+}
+
+.fm-container .fm-header .breadcrumbs .nav-item.root {
+    width: 20px;
+    height: 20px;
+    background-image: url(../images/house.png);
+    background-size: 20px;
 }
 
 .fm-container .fm-header .buttons-panel {
@@ -122,9 +175,12 @@
     background-image: url(../images/folder_add.png);
 }
 
+.fm-container .fm-header .fm-btn-close span {
+    background-image: url(../images/reset.png);
+}
+
 .fm-container .fm-splitter {
-    height: 400px;
-    /* no padding allowed */
+    height: 100%;
 }
 
 .fm-container .fm-splitter .splitter-bar-vertical {
@@ -285,6 +341,7 @@
 
 .fm-container .fm-preview {
     width: 100%;
+    height: 100%;
 }
 
 .fm-container .fm-preview .fm-preview-viewer {
@@ -456,15 +513,21 @@
     cursor: pointer;
 }
 
-/* to expand selectable area to 100% vertically */
+/* to expand selectable area to 100% vertically in case no scroll */
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
 }
-.fm-container .view-items {
+
+.fm-container .view-items-wrapper {
     height: 100%;
 }
 
+.fm-container .view-items {
+    position: relative;
+}
+
 .fm-container .view-items .grid {
+    height: 100%;
     padding: 15px;
     text-align: left;
 }
@@ -694,27 +757,6 @@
     width: 100%;
     margin: 0;
     z-index: 9;
-}
-
-
-/* IE10-11 styles */
-html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
-html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
-    vertical-align: top;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
-html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
-    width: 220px;
-    height: 32px;
-    overflow: hidden;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
-html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
-    height: 22px;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
-html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
-    height: 23px;
 }
 
 

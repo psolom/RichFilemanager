@@ -12,16 +12,6 @@
 
 (function($) {
 
-// function to retrieve GET params
-$.urlParam = function(name) {
-	var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
-	if (results) {
-		return results[1];
-	} else {
-		return 0;
-	}
-};
-
 $.richFilemanagerPlugin = function(element, pluginOptions)
 {
 	/**
@@ -76,6 +66,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		fullexpandedFolder = null,	// path to be automatically expanded by filetree plugin
 
 		/** service variables **/
+        _url_ = purl(),
 		timeStart = new Date().getTime();
 
 	/**
@@ -186,24 +177,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Forces columns to fill the layout vertically.
 	// Called on initial page load and on resize.
 	fm.setDimensions = function() {
-		var bheight = 0,
-			padding = $container.outerHeight(true) - $container.height();
+		var padding = $wrapper.outerHeight(true) - $wrapper.height(),
+        	newH = $(window).height() - $header.height() - $footer.height() - padding,
+            newW = $splitter.width() - $splitter.children(".splitter-bar-vertical").outerWidth() - $filetree.outerWidth();
 
-		if($.urlParam('CKEditorCleanUpFuncNum')) bheight +=60;
-
-		var newH = $(window).height() - $header.height() - $footer.height() - padding - bheight;
-		$splitter.height(newH);
-
-		// adjust height of filemanager if there are other DOM elemements on page
-		var delta = $(document).height() - $(window).height();
-		if(!$container.parent().is('body') && delta > 0) {
-			var diff = newH - delta;
-			newH = (diff > 0) ? diff : 1;
-			$splitter.height(newH);
-		}
-
-		// adjustment for window horizontal resize
-		var newW = $splitter.width() - $splitter.children(".splitter-bar-vertical").outerWidth() - $filetree.outerWidth();
+        $splitter.height(newH);
 		$fileinfo.width(newW);
 	};
 
@@ -301,7 +279,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// localize messages based on culture var or from URL
 	var localize = function() {
-		var langCode = $.urlParam('langCode');
+		var langCode = _url_.param('langCode');
 		var langPath = fm.settings.baseUrl + '/languages/';
 
 		function buildLangPath(code) {
@@ -310,7 +288,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		return $.ajax()
 			.then(function() {
-				if(langCode != 0) {
+				if(langCode) {
 					// try to load lang file based on langCode in query params
 					return file_exists(buildLangPath(langCode))
 						.done(function() {
@@ -413,18 +391,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		configSortOrder = chunks[1] || 'asc';
 
         // changes files root to restrict the view to a given folder
-        if($.urlParam('exclusiveFolder') != 0) {
-            fileRoot += $.urlParam('exclusiveFolder');
-            if(isFile(fileRoot)) fileRoot += '/'; // add last '/' if needed
-            fileRoot = fileRoot.replace(/\/\//g, '\/');
+		var exclusiveFolder = _url_.param('exclusiveFolder');
+        if(exclusiveFolder) {
+            fileRoot = '/' + exclusiveFolder + '/';
+            fileRoot = normalizePath(fileRoot);
         }
 
         // get folder that should be expanded after filemanager is loaded
-        var expandedFolder = '';
-        if($.urlParam('expandedFolder') != 0) {
-            expandedFolder = $.urlParam('expandedFolder');
-            fullexpandedFolder = fileRoot + expandedFolder;
-            fullexpandedFolder = fullexpandedFolder.replace(/\/\//g, '\/');
+        var expandedFolder = _url_.param('expandedFolder');
+        if(expandedFolder) {
+            fullexpandedFolder = fileRoot + expandedFolder + '/';
+            fullexpandedFolder = normalizePath(fullexpandedFolder);
         }
 
 		// Activates knockout.js
@@ -442,13 +419,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					return false;
 				}
 				if(node.isExpanded() === false) {
-					$(element).slideDown(fmModel.treeModel.options.expandSpeed, function() {
+					$(element).slideDown(config.filetree.expandSpeed, function() {
 						node.isSliding(false);
 						node.isExpanded(true);
 					});
 				}
 				if(node.isExpanded() === true) {
-					$(element).slideUp(fmModel.treeModel.options.expandSpeed, function() {
+					$(element).slideUp(config.filetree.expandSpeed, function() {
 						node.isSliding(false);
 						node.isExpanded(false);
 					});
@@ -548,12 +525,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		$viewItems.selectable({
-            filter: "li:not(.directory-parent), tr:not(.directory-parent)",
-            cancel: ".directory-parent",
+            filter: "li:not(.directory-parent), tbody > tr:not(.directory-parent)",
+            cancel: ".directory-parent, thead",
             disabled: !config.manager.selection.enabled,
-            appendTo: '.fm-container',
+            appendTo: $viewItems,
 			start: function(event, ui) {
 				clearSelection();
+                fmModel.itemsModel.isSelecting(true);
+			},
+			stop: function(event, ui) {
+                fmModel.itemsModel.isSelecting(false);
 			},
 			selected: function(event, ui) {
 				var koItem = ko.dataFor(ui.selected);
@@ -666,18 +647,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
 		// adding a close button triggering callback function if CKEditorCleanUpFuncNum passed
-		if($.urlParam('CKEditorCleanUpFuncNum')) {
-			$("body").append('<button id="fm-js-btn-close" type="button">' + lg.close + '</button>');
-
-			$('#fm-js-btn-close').click(function () {
-				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
-			});
+		if(_url_.param('CKEditorCleanUpFuncNum')) {
+            fmModel.headerModel.closeButton(true);
+            fmModel.headerModel.closeButtonOnClick = function() {
+                parent.CKEDITOR.tools.callFunction(_url_.param('CKEditorCleanUpFuncNum'));
+			};
 		}
 
 		// input file replacement
 		$("#newfile").change(function() {
 			$("#filepath").val($(this).val().replace(/.+[\\\/]/, ""));
 		});
+
+        prepareFileTree();
+        prepareFileView();
+        setupUploader();
 
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
@@ -701,27 +685,64 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				axis: "yx"
 			});
 
-            $viewItems.mCustomScrollbar({
-				theme: config.customScrollbar.theme,
-				scrollButtons: {
-					enable: config.customScrollbar.button
-				},
-				advanced: {
-					autoExpandHorizontalScroll:true,
-					updateOnContentResize: true
-				},
-				callbacks: {
-					onScrollStart: function() {
-						fmModel.itemsModel.isScrolling(true);
-					},
-					onScroll: function() {
-						fmModel.itemsModel.isScrolling(false);
-					}
-				},
-				axis: "y",
-				alwaysShowScrollbar: 0
+            $fileinfo.find('.fm-preview').mCustomScrollbar({
+                theme: config.customScrollbar.theme,
+                scrollButtons: {
+                    enable: config.customScrollbar.button
+                },
+                advanced: {
+                    autoExpandHorizontalScroll: true,
+                    updateOnContentResize: true,
+                    updateOnSelectorChange: '.fm-preview-viewer'
+                }
 			});
-		}
+
+            $fileinfo.find('.view-items-wrapper').mCustomScrollbar({
+                theme: config.customScrollbar.theme,
+                scrollButtons: {
+                    enable: config.customScrollbar.button
+                },
+                advanced: {
+                    autoExpandHorizontalScroll:true,
+                    updateOnContentResize: true,
+                    updateOnSelectorChange: '.grid, .list'
+                },
+                callbacks: {
+                    onScrollStart: function() {
+                        if (!fmModel.itemsModel.continiousSelection()) {
+                            this.yStartPosition = this.mcs.top;
+                            this.yStartTime = (new Date()).getTime();
+                        }
+                        fmModel.itemsModel.isScrolling(true);
+                    },
+                    onScroll: function() {
+                        fmModel.itemsModel.isScrolling(false);
+                    },
+                    whileScrolling: function() {
+                        if (config.manager.selection.enabled) {
+                            // would prefer to get scroll position from [onScrollStart],
+                            // but the [onScroll] should fire first, which happens with a big lag
+                            var timeDiff = (new Date()).getTime() - this.yStartTime;
+
+                            // check if selection lasso has not been dropped while scrolling
+                            if (!fmModel.itemsModel.continiousSelection() && timeDiff > 400) {
+                                this.yStartPosition = this.mcs.top;
+                            }
+
+                            // set flag if selection lasso is active
+                            if (fmModel.itemsModel.isSelecting()) {
+                                fmModel.itemsModel.continiousSelection(true);
+                            }
+
+                            var yIncrement = Math.abs(this.mcs.top) - Math.abs(this.yStartPosition);
+                            $viewItems.selectable("repositionCssHelper", yIncrement, 0);
+                        }
+                    }
+                },
+                axis: "y",
+                alwaysShowScrollbar: 0
+            });
+        }
 
 		// add useragent string to html element for IE 10/11 detection
 		var doc = document.documentElement;
@@ -733,19 +754,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			console.log('Total execution time : ' + time + ' ms');
 		}
 
-		// Provides support for adjustible columns.
-		$splitter.splitter({
-			sizeLeft: config.options.splitterWidth,
-			minLeft: config.options.splitterMinWidth,
-			minRight: 200
-		});
-
 		var $loading = $container.find('.fm-loading-wrap');
-		$loading.fadeOut(800); // remove loading screen div
-		$(window).trigger('resize');
-
-		createFileTree();
-		setupUploader();
+        // remove loading screen div
+		$loading.fadeOut(800, function() {
+            fm.setDimensions();
+		});
+        fm.setDimensions();
 	};
 
 	/**
@@ -798,46 +812,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-		var SearchModel = function() {
-			var search_model = this;
-			this.value = ko.observable('');
-
-			this.findAll = function(data, event) {
-				var delay = 200,
-					insensitive = true;
-
-				search_model.value(event.target.value);
-
-				delayCallback(function(){
-					var searchString = insensitive ? search_model.value().toLowerCase() : search_model.value();
-
-					$.each(model.itemsModel.objects(), function(i, itemObject) {
-                        if(itemObject.rdo.type === 'parent') {
-                            return;
-                        }
-						var itemName = itemObject.rdo.attributes.name;
-						if(insensitive) {
-							itemName = itemName.toLowerCase();
-						}
-						var visibility = (itemName.indexOf(searchString) === 0);
-						itemObject.visible(visibility)
-					});
-				}, delay);
-			};
-
-			this.reset = function(data, event) {
-				search_model.value('');
-				$.each(model.itemsModel.objects(), function(i, itemObject) {
-					itemObject.visible(true);
-				});
-			};
-		};
-
 		var PreviewModel = function() {
 			var preview_item = this;
 
-			this.rdo = {};
-			this.cdo = {};
+			this.rdo = ko.observable({});
+			this.cdo = ko.observable({});
 			this.viewer = ko.observable({});
 			this.editor = {
 				enabled: ko.observable(false),
@@ -847,19 +826,19 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
-				if (has_capability(preview_item.rdo, action)) {
-					performAction(action, preview_item.rdo);
+				if (has_capability(preview_item.rdo(), action)) {
+					performAction(action, preview_item.rdo());
 				}
 			};
 
 			this.load = function(resourceObject) {
 				model.previewFile(false);
-				preview_item.rdo = resourceObject; // original resource data object
-				preview_item.cdo = { // computed data object
+				preview_item.rdo(resourceObject); // original resource data object
+				preview_item.cdo({ // computed data object
 					isFolder: (resourceObject.type === 'folder'),
 					sizeFormatted: formatBytes(resourceObject.attributes.size),
 					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
-				};
+				});
 
 				var filename = resourceObject.attributes.name;
 				var viewerObject = {
@@ -905,16 +884,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						extraClass = ['ico'];
 					if((viewerObject.type === 'image' || viewerObject.type === 'editable') && !viewerObject.url) {
 						cssClass.push('grid-icon');
-						if(this.cdo.isFolder === true) {
+						if(this.cdo().isFolder === true) {
 							cssClass.push('ico_folder');
 							extraClass.push('folder');
-							if(!this.rdo.attributes.readable) {
+							if(!this.rdo().attributes.readable) {
 								extraClass.push('lock');
 							}
 						} else {
 							cssClass.push('ico_file');
-							if(this.rdo.attributes.readable) {
-                                extraClass.push('ext', this.rdo.attributes.extension);
+							if(this.rdo().attributes.readable) {
+                                extraClass.push('ext', this.rdo().attributes.extension);
 							} else {
                                 extraClass.push('file', 'lock');
 							}
@@ -939,11 +918,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.editFile = function() {
-				editItem(preview_item.rdo)
+				editItem(preview_item.rdo())
 			};
 
 			this.saveFile = function() {
-				saveItem(preview_item.rdo)
+				saveItem(preview_item.rdo())
 			};
 
 			this.closeEditor = function() {
@@ -953,14 +932,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.buttonVisibility = function(action) {
 				switch(action) {
 					case 'select':
-						return (has_capability(preview_item.rdo, action) && hasContext());
+						return (has_capability(preview_item.rdo(), action) && hasContext());
 					case 'move':
 					case 'rename':
 					case 'delete':
 					case 'replace':
-						return (has_capability(preview_item.rdo, action) && config.options.browseOnly !== true);
+						return (has_capability(preview_item.rdo(), action) && config.options.browseOnly !== true);
 					case 'download':
-						return (has_capability(preview_item.rdo, action));
+						return (has_capability(preview_item.rdo(), action));
 				}
 			};
 		};
@@ -969,13 +948,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			var tree_model = this;
 			this.isScrolling = ko.observable(false);
 			this.selecledNode = ko.observable(null);
-
-			this.options = {
-				showLine: true,
-				dblClickOpen: config.manager.dblClickOpen,
-				reloadOnClick: false,
-				expandSpeed: 200
-			};
 
 			this.treeData = {
 				id: fileRoot,
@@ -999,11 +971,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}, parentNode);
 
 					if (node) {
-						tree_model.options.expandSpeed = 10;
+                        config.filetree.expandSpeed = 10;
 						tree_model.loadNodes(node, false);
 					} else {
 						fullexpandedFolder = null;
-						tree_model.options.expandSpeed = 200;
+                        config.filetree.expandSpeed = 200;
 					}
 				}
 			};
@@ -1061,8 +1033,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					path: path
 				};
 
-				if($.urlParam('type')) {
-					queryParams.type = $.urlParam('type');
+				if(_url_.param('type')) {
+					queryParams.type = _url_.param('type');
 				}
 
 				$.ajax({
@@ -1072,9 +1044,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					cache: false,
 					success: function(response) {
 						if(response.data) {
-							fmModel.currentPath(path);
-							fmModel.itemsModel.setList(response.data);
-
 							var nodes = [];
 							$.each(response.data, function(i, resourceObject) {
 								var nodeObject = tree_model.createNode(resourceObject);
@@ -1109,7 +1078,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					targetNode = tree_model.treeData;
 				}
 				// list only folders in tree
-				if(!config.options.listFiles) {
+				if(config.filetree.foldersOnly) {
 					newNodes = $.grep(newNodes, function(node) {
 						return (node.cdo.isFolder);
 					});
@@ -1136,6 +1105,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 				return false;
 			};
+
+            this.toggleNode = function(node) {
+				if(!tree_model.collapseNode(node)) {
+                    tree_model.expandNode(node);
+				}
+            };
 
 			this.arrangeNode = function(node) {
 				var childrenLength = node.children().length;
@@ -1221,13 +1196,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						fm.error(lg.NOT_ALLOWED_SYSTEM);
 						return false;
 					}
-					tree_node.toggleNode(node, false);
+					if(!node.isLoaded()) {
+                        tree_node.openNode(node);
+					} else {
+						tree_model.toggleNode(node);
+					}
 				};
 
 				this.nodeClick = function(node) {
-					if(!tree_model.options.dblClickOpen) {
+					if(!config.manager.dblClickOpen) {
 						tree_node.openNode(node);
-						tree_node.toggleNode(node, tree_model.options.reloadOnClick);
 					}
 
 					if(tree_model.selecledNode() !== null) {
@@ -1238,19 +1216,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				};
 
 				this.nodeDblClick = function(node) {
-					if(tree_model.options.dblClickOpen) {
+					if(config.manager.dblClickOpen) {
 						tree_node.openNode(node);
-						tree_node.toggleNode(node, tree_model.options.reloadOnClick);
-					}
-				};
-
-				this.toggleNode = function(node, forceReload) {
-					if(node.rdo.type === 'folder') {
-						if(!node.isExpanded() && (forceReload || !node.isLoaded())) {
-							tree_model.loadNodes(node, true);
-						} else {
-							node.isSliding(true);
-						}
 					}
 				};
 
@@ -1258,16 +1225,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					if(node.rdo.type === 'file') {
 						getDetailView(node.rdo);
 					}
-					if(node.rdo.type === 'folder' && node.isLoaded()) {
-						var childrenObjects = [];
-						if(node.children().length) {
-							$.each(node.children(), function(index, cNode) {
-								childrenObjects.push(cNode.rdo);
+                    if(node.rdo.type === 'folder') {
+                        if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
+                            tree_model.loadNodes(node, true);
+                            model.itemsModel.loadList(node.id);
+                        } else {
+                            tree_model.toggleNode(node);
+
+                            fmModel.currentPath(node.id);
+                            fmModel.breadcrumbsModel.splitCurrent();
+                            var dataObjects = [];
+                            $.each(node.children(), function(i, cnode) {
+                                dataObjects.push(cnode.rdo);
 							});
-						}
-						model.currentPath(node.rdo.id);
-						model.itemsModel.setList(childrenObjects);
-					}
+                            fmModel.itemsModel.setList(dataObjects);
+                        }
+                    }
 				};
 
 				this.remove = function() {
@@ -1310,7 +1283,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				this.switcherClass = ko.pureComputed(function() {
 					var cssClass = [];
-					if (tree_model.options.showLine) {
+					if (config.filetree.showLine) {
 						if (this.level() === 0 && this.isFirstNode() && this.isLastNode()) {
 							cssClass.push('root');
 						} else if (this.level() == 0 && this.isFirstNode()) {
@@ -1333,7 +1306,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}, this);
 
 				this.clusterClass = ko.pureComputed(function() {
-					return (tree_model.options.showLine && !this.isLastNode()) ? 'line' : '';
+					return (config.filetree.showLine && !this.isLastNode()) ? 'line' : '';
 				}, this);
 			};
 		};
@@ -1347,6 +1320,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
 			this.isScrolling = ko.observable(false);
+			this.isSelecting = ko.observable(false);
+			this.continiousSelection = ko.observable(false);
+
+			this.isSelecting.subscribe(function(state) {
+				if(!state) {
+				    // means selection lasso has been dropped
+                    items_model.continiousSelection(false);
+				}
+			});
 
 			this.createObject = function(resourceObject) {
 				return new ItemObject(resourceObject);
@@ -1369,8 +1351,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					mode: 'getfolder',
 					path: path
 				};
-				if($.urlParam('type')) {
-					queryParams.type = $.urlParam('type');
+				if(_url_.param('type')) {
+					queryParams.type = _url_.param('type');
 				}
 
 				$.ajax({
@@ -1381,6 +1363,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					success: function(response) {
 						if(response.data) {
 							model.currentPath(path);
+                            model.breadcrumbsModel.splitCurrent();
 							model.itemsModel.setList(response.data);
 						}
 						handleAjaxResponseErrors(response);
@@ -1654,6 +1637,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		var HeaderModel = function() {
+			this.closeButton = ko.observable(false);
+
+            this.closeButtonOnClick = function() {
+				console.log('clicked');
+			};
+
 			this.goHome = function() {
 				model.previewFile(false);
 				model.itemsModel.loadList(fileRoot);
@@ -1661,7 +1650,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.goParent = function() {
 				var parentFolder = model.previewFile()
-                    ? getDirname(model.previewModel.rdo.id)
+                    ? getDirname(model.previewModel.rdo().id)
                     : getParentDirname(model.currentPath());
 
 				if(model.previewFile()) {
@@ -1741,6 +1730,41 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 		};
 
+        var SearchModel = function() {
+            var search_model = this;
+            this.value = ko.observable('');
+
+            this.findAll = function(data, event) {
+                var delay = 200,
+                    insensitive = true;
+
+                search_model.value(event.target.value);
+
+                delayCallback(function(){
+                    var searchString = insensitive ? search_model.value().toLowerCase() : search_model.value();
+
+                    $.each(model.itemsModel.objects(), function(i, itemObject) {
+                        if(itemObject.rdo.type === 'parent') {
+                            return;
+                        }
+                        var itemName = itemObject.rdo.attributes.name;
+                        if(insensitive) {
+                            itemName = itemName.toLowerCase();
+                        }
+                        var visibility = (itemName.indexOf(searchString) === 0);
+                        itemObject.visible(visibility)
+                    });
+                }, delay);
+            };
+
+            this.reset = function(data, event) {
+                search_model.value('');
+                $.each(model.itemsModel.objects(), function(i, itemObject) {
+                    itemObject.visible(true);
+                });
+            };
+        };
+
 		var ClipboardModel = function() {
 			var cbItems = [],
 				cbMode = null,
@@ -1819,6 +1843,60 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
+        var BreadcrumbsModel = function() {
+        	var bc_model = this;
+
+			this.items = ko.observableArray([]);
+
+            this.add = function(path, label) {
+                bc_model.items.push(new BcItem(path, label));
+			};
+
+            this.splitCurrent = function() {
+            	var	path = fileRoot,
+					cPath = model.currentPath(),
+					chunks = cPath.replace(new RegExp('^' + fileRoot), '').split('/');
+
+            	// reset breadcrumbs
+            	bc_model.items([]);
+				// push root node
+                bc_model.add(fileRoot, '');
+
+                while (chunks.length > 0) {
+            		var chunk = chunks.shift();
+            		if (chunk) {
+            			path += chunk + '/';
+                        bc_model.add(path, chunk);
+					}
+				}
+            };
+
+            var BcItem = function(path, label) {
+                var bc_item = this;
+				this.path = path;
+                this.label = label;
+                this.isRoot = (path === fileRoot);
+                this.active = (path === model.currentPath());
+
+                this.itemClass = function() {
+                    var cssClass = ['nav-item'];
+                    if(bc_item.isRoot) {
+                        cssClass.push('root');
+                    }
+                    if(bc_item.active) {
+                        cssClass.push('active');
+                    }
+                    return cssClass.join(' ');
+				};
+
+                this.goto = function(item, e) {
+                	if (!item.active) {
+                        model.itemsModel.loadList(item.path);
+					}
+                };
+			};
+		};
+
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
@@ -1827,6 +1905,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.summaryModel = new SummaryModel();
 		this.searchModel = new SearchModel();
 		this.clipboardModel = new ClipboardModel();
+		this.breadcrumbsModel = new BreadcrumbsModel();
 	};
 
 
@@ -1982,8 +2061,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		type = (typeof type === "undefined") ? "user" : type;
 
 		if(type === 'user') {
-			if($.urlParam('config') != 0) {
-				url = fm.settings.baseUrl + '/config/' + $.urlParam('config');
+			if(_url_.param('config')) {
+				url = fm.settings.baseUrl + '/config/' + _url_.param('config');
 			} else {
 				url = fm.settings.baseUrl + '/config/filemanager.config.json';
 			}
@@ -2155,6 +2234,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 		return parts.join('/');
 	};
+
+	// invert backslashes and remove duplicated ones
+    var normalizePath = function(path) {
+        return path.replace(/\\/g, '/').replace(/\/+/g, '/');
+    };
 
 	// return filename extension
 	var getExtension = function(filename) {
@@ -2350,19 +2434,37 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 	};
 
-	// Create FileTree and bind events
-	var createFileTree = function() {
+	// Build FileTree and bind events
+	function prepareFileTree() {
+		if(!config.filetree.enabled) {
+			return;
+		}
+
+		$filetree.show();
+
+        // Provides support for adjustible columns.
+        $splitter.splitter({
+            sizeLeft: config.filetree.width,
+            minLeft: config.filetree.minWidth,
+            minRight: 200
+        });
+
 		fmModel.treeModel.loadNodes(null, false);
-	};
+	}
+
+    // Build FileTree and bind events
+    function prepareFileView() {
+        fmModel.itemsModel.loadList(fileRoot);
+	}
 
 	// check if plugin instance created inside some context
 	function hasContext() {
 		return window.opener // window.open()
 			|| (window.parent && window.self !== window.parent) // <iframe>
 			|| window.tinyMCEPopup // tinyMCE >= 3.0
-			|| $.urlParam('field_name') // tinymce 4 or colorbox
-			|| $.urlParam('CKEditor') // CKEditor 3.0 + integration method
-			|| $.urlParam('ImperaviElementId'); // Imperavi Redactor I >= 10.x.x
+			|| _url_.param('field_name') // tinymce 4 or colorbox
+			|| _url_.param('CKEditor') // CKEditor 3.0 + integration method
+			|| _url_.param('ImperaviElementId'); // Imperavi Redactor I >= 10.x.x
 	}
 
 
@@ -2397,8 +2499,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
 		// tinymce 4 and colorbox
-		if($.urlParam('field_name')) {
-			parent.document.getElementById($.urlParam('field_name')).value = previewUrl;
+		if(_url_.param('field_name')) {
+			parent.document.getElementById(_url_.param('field_name')).value = previewUrl;
 
 			if(typeof parent.tinyMCE !== "undefined") {
 				parent.tinyMCE.activeEditor.windowManager.close();
@@ -2408,13 +2510,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
-		if($.urlParam('ImperaviElementId')) {
+		if(_url_.param('ImperaviElementId')) {
 			// use Imperavi Redactor I, tested on v.10.x.x
 			if (window.opener) {
 				// Popup
 			} else {
 				// Modal (in iframe)
-				var elementId = $.urlParam('ImperaviElementId'),
+				var elementId = _url_.param('ImperaviElementId'),
 					instance = parent.$('#'+elementId).redactor('core.getObject');
 
 				if(instance) {
@@ -2431,14 +2533,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
         // CKEditor 3.0 + integration method
-		if($.urlParam('CKEditor')) {
+		if(_url_.param('CKEditor')) {
 			if (window.opener) {
 				// Popup
-				window.opener.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
+				window.opener.CKEDITOR.tools.callFunction(_url_.param('CKEditorFuncNum'), previewUrl);
 			} else {
 				// Modal (in iframe)
-				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorFuncNum'), previewUrl);
-				parent.CKEDITOR.tools.callFunction($.urlParam('CKEditorCleanUpFuncNum'));
+				parent.CKEDITOR.tools.callFunction(_url_.param('CKEditorFuncNum'), previewUrl);
+				parent.CKEDITOR.tools.callFunction(_url_.param('CKEditorCleanUpFuncNum'));
 			}
 		}
 
@@ -2557,7 +2659,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							fmModel.itemsModel.loadList(newItem.id);
 						}
 						// ON rename currently previewed file
-						if(fmModel.previewFile() && fmModel.previewModel.rdo.id === oldPath) {
+						if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
 							fmModel.previewModel.load(newItem);
 						}
 
@@ -2753,7 +2855,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						fmModel.itemsModel.loadList(newItem.id);
 					}
 					// ON move currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo.id === resourceObject.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -2803,7 +2905,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.removeItem(targetItem);
 
 					// ON delete currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo.id === targetItem.id) {
+					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
 						fmModel.previewFile(false);
 					}
 
@@ -2875,8 +2977,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			data: $('#fm-js-editor-form').serializeArray(),
 			success: function (response) {
 				if(response.data) {
+                    var dataObject = response.data;
+
+                    // close editor and assign received data to preview model
 					fmModel.previewModel.editor.enabled(false);
-					fm.success(lg.successful_edit);
+                    fmModel.previewModel.load(dataObject);
+
+                    // replace original item with a new one to adjust observable items
+                    var newItem = fmModel.itemsModel.createObject(dataObject);
+                    var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
+                    fmModel.itemsModel.objects.replace(originalItem, newItem);
+
+                    fm.success(lg.successful_edit);
 				}
 				handleAjaxResponseErrors(response);
 			},
@@ -2909,10 +3021,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					fmModel.summaryModel.size(size);
 
 					fmModel.summaryModel.enabled(true);
-					var $content = $('#summary-popup').clone().show();
+					var $summary = $('#summary-popup').clone().show();
 					fmModel.summaryModel.enabled(false);
 
-					fm.alert($content[0].outerHTML);
+					fm.alert($summary[0].outerHTML);
 				}
 				handleAjaxResponseErrors(response);
 			},
