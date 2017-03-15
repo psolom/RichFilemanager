@@ -2248,6 +2248,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         assets.push('/scripts/CodeMirror/mode/php/php.js');
                         currentMode = 'application/x-httpd-php';
                     }
+                    if (extension === 'java') {
+                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                        currentMode = 'text/x-java';
+                    }
                     if (extension === 'sql') {
                         assets.push('/scripts/CodeMirror/mode/sql/sql.js');
                         currentMode = 'text/x-mysql';
