@@ -12,7 +12,7 @@ class Logger {
     /**
      * @var boolean
      */
-    public $enabled = true;
+    public $enabled = false;
 
 
     public function __construct()

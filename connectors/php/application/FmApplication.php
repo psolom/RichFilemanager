@@ -23,6 +23,10 @@ class FmApplication {
         $base_config = require_once(FM_ROOT_PATH . '/config.php');
         $configuration = FmHelper::mergeConfigs($base_config, $custom_config);
 
+        if (isset($configuration['logger']) && $configuration['logger']['enabled'] == true ) {
+            $this->logger->enabled = true;
+        }
+
         if (isset($configuration['plugin']) && !empty($configuration['plugin'])) {
             $plugin_name = $configuration['plugin'];
             $plugin_path = FM_ROOT_PATH . "/plugins/{$plugin_name}/";
@@ -34,10 +38,6 @@ class FmApplication {
         } else {
             require_once(FM_ROOT_PATH . '/LocalFilemanager.php');
             $fm = new LocalFilemanager($configuration);
-        }
-
-        if (isset($configuration['logger']) && $configuration['logger']['enabled'] == true ) {
-            $this->logger->enabled = true;
         }
 
         if(!auth()) {

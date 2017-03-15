@@ -31,7 +31,7 @@ $config = [
      * Configure Logger class
      */
     "logger" => [
-        "enabled" => true,
+        "enabled" => false,
     ],
     /**
      * General options section
