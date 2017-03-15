@@ -858,10 +858,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 });
             });
 
-            this.editor.content.subscribe(function (content) {
-                preview_model.renderer.render(content);
-            });
-
             this.applyObject = function(resourceObject) {
                 model.previewFile(false);
 
@@ -2155,10 +2151,22 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.mode = ko.observable(null);
             this.interactive = ko.observable(false);
 
+            this.mode.subscribe(function(mode) {
+                if (mode) {
+                    editor_model.instance.setOption('mode', mode);
+                    if (delayedContent) {
+                        drawContent(delayedContent);
+                        delayedContent = null;
+                    }
+                }
+            });
+
             this.render = function(content) {
-            	if (editor_model.instance) {
+            	if (editor_model.mode()) {
+                    console.log('NOT delayedContent', content.length);
                     drawContent(content);
 				} else {
+                    console.log('delayedContent', content.length);
                     delayedContent = content;
 				}
             };
@@ -2191,17 +2199,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 editor_model.instance = cm;
 
-                if (delayedContent) {
-                    drawContent(delayedContent);
-				}
-
                 includeAssets(extension);
             };
 
             function drawContent(content) {
                 editor_model.enabled(true);
                 editor_model.instance.setValue(content);
-                editor_model.instance.setOption('mode', editor_model.mode());
+				// to make sure DOM is ready to render content
                 setTimeout(function() {
                 	editor_model.instance.refresh();
                 }, 0);
@@ -2275,11 +2279,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 }
 
-                editor_model.mode(currentMode);
+
 
                 if(assets.length) {
+                    assets.push(function() {
+                    	// after all required assets are loaded
+                        editor_model.mode(currentMode);
+					});
                     loadAssets(assets);
-                }
+                } else {
+                    editor_model.mode(currentMode);
+				}
 			}
 		};
 
