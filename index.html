@@ -231,7 +231,7 @@
 							</form>
 						</div>
 
-						<div class="fm-preview-viewer" data-bind="css: {'side-by-side-panels': editor.enabled() && editor.interactive()}">
+						<div class="fm-preview-viewer" data-bind="css: {'side-by-side-panels': editor.enabled() && editor.isInteractive()}">
 							<!-- ko template: {if: viewer.isEditable(), afterRender: initiateEditor} -->
 							<div class="fm-preview-edit-panel" data-bind="visible: editor.enabled()">
 								<form id="fm-js-editor-form">
@@ -262,7 +262,7 @@
 								<iframe src="" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}" allowfullscreen webkitallowfullscreen></iframe>
 								<!-- /ko -->
 								<!-- ko if: viewer.type() === 'renderer' && renderer.renderer() -->
-								<div data-bind="visible: !editor.enabled() || editor.interactive()">
+								<div data-bind="visible: !editor.enabled() || editor.isInteractive()">
 									<!-- ko template: {name: 'renderer-template', data: renderer} --><!-- /ko -->
 								</div>
 								<!-- /ko -->

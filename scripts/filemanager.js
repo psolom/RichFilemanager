@@ -858,6 +858,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 });
             });
 
+            this.editor.content.subscribe(function (content) {
+            	if (preview_model.editor.isInteractive()) {
+            		// instantly render changes of editor content
+                    preview_model.renderer.render(content);
+				}
+            });
+
             this.applyObject = function(resourceObject) {
                 model.previewFile(false);
 
@@ -905,15 +912,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         height: config.viewer.google.readerHeight
                     };
                 }
-                if (isCodeMirrorFile(filename) && config.viewer.codeMirrorRenderer.enabled === true) {
+                if ((isCodeMirrorFile(filename) && config.viewer.codeMirrorRenderer.enabled === true) ||
+                    (isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true)
+				) {
                     viewerObject.type = 'renderer';
                     preview_model.renderer.setRenderer(resourceObject);
+                    editorObject.interactive = preview_model.renderer.renderer().interactive;
 				}
-				if (isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true) {
-                    viewerObject.type = 'renderer';
-                    preview_model.renderer.setRenderer(resourceObject);
-                    editorObject.interactive = true;
-                }
 
                 preview_model.viewer.type(viewerObject.type);
                 preview_model.viewer.url(viewerObject.url);
@@ -923,7 +928,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     createPreviewUrl(resourceObject, false)
                 );
                 preview_model.viewer.isEditable(isEditableFile(filename) && config.viewer.editable.enabled === true);
-                preview_model.editor.interactive(editorObject.interactive);
+                preview_model.editor.isInteractive(editorObject.interactive);
 
                 if (viewerObject.type === 'renderer' || preview_model.viewer.isEditable()) {
                     previewItem(resourceObject).then(function(response) {
@@ -2032,6 +2037,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             var CodeMirrorRenderer = function() {
                 this.name = 'codeMirror';
+                this.interactive = false;
 
                 var instance = new EditorModel();
 
@@ -2054,6 +2060,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             var MarkdownRenderer = function() {
                 this.name = 'markdown';
+                this.interactive = true;
 
                 var instance = window.markdownit({
                     // Basic options:
@@ -2111,7 +2118,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         var href = $(this).attr("href"),
                             editor = fmModel.previewModel.editor;
 
-                        if (editor.enabled() && editor.interactive()) {
+                        if (editor.enabled() && editor.isInteractive()) {
                             // prevent user from losing unsaved changes in preview mode
                             // in case of clicking on a link that jumps off the page
                             $(this).off("click");
@@ -2149,7 +2156,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         	this.enabled = ko.observable(false);
         	this.content = ko.observable(null);
             this.mode = ko.observable(null);
-            this.interactive = ko.observable(false);
+            this.isInteractive = ko.observable(false);
 
             this.mode.subscribe(function(mode) {
                 if (mode) {
@@ -2163,10 +2170,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.render = function(content) {
             	if (editor_model.mode()) {
-                    console.log('NOT delayedContent', content.length);
                     drawContent(content);
 				} else {
-                    console.log('delayedContent', content.length);
                     delayedContent = content;
 				}
             };
