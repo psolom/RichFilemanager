@@ -110,7 +110,7 @@ Main features
 Screenshot
 -------------
 
-![Filemanager Screenshot](http://prntscr.com/ekre8u)
+![Filemanager Screenshot](http://image.prntscr.com/image/36ed7f7531454f75b5462764f02b2cbd.png)
 
 
 Contribution
