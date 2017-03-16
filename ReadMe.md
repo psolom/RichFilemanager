@@ -39,7 +39,7 @@ Compatibility
 -------------
 
 Filemanager was initially designed to interact with a number of programming languages via [connectors](https://github.com/servocoder/RichFilemanager/tree/master/connectors).
-But since many changes have been done recently, **PHP & ASHX connectors** are the only actual connectors currently. Compatibility with other connectors is most likely completely broken.
+But since many changes have been done recently, **PHP, Java & ASHX connectors** are the only actual connectors currently. Compatibility with other connectors is most likely completely broken.
 You are still able you to download unsupported v0.8 from [archive](https://github.com/simogeo/Filemanager/archive/v0.8.zip) (PHP, ASHX, ASP, CFM, lasso, PL and JSP)
 
 Browser compatibility:
@@ -87,7 +87,7 @@ Main features
 * Online text / code edition - based on [codeMirror](http://codemirror.net/)
 * Online PDF & OpenOffice documents viewer - based on [viewerJS](http://viewerjs.org/)
 * Online MS Office documents viewer - based on [Google Docs Viewer](http://docs.google.com/viewer/)
-* Several server-side language connectors available. **PHP & ASHX are up-to-date**
+* Several server-side language connectors available. **PHP, Java & ASHX are up-to-date**
 * Standardized API that follows JSON API best practices to create connectors for any server-side language
 * Independent client and server sides. Can be located on different servers.
 * [Opening a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
@@ -110,7 +110,7 @@ Main features
 Screenshot
 -------------
 
-![Filemanager Screenshot](http://i57.tinypic.com/35cqw74.png)
+![Filemanager Screenshot](http://prntscr.com/ekre8u)
 
 
 Contribution
