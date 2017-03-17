@@ -47,20 +47,20 @@
 			<div class="buttons-panel">
 				<!-- ko if: clipboardModel.enabled() -->
 				<div class="button-group clipboards-controls">
-					<button id="clipboard-copy" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: localizeGUI() ? lg().clipboard_copy : null}"><span>&nbsp;</span></button>
-					<button id="clipboard-cut" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: localizeGUI() ? lg().clipboard_cut : null}"><span>&nbsp;</span></button>
-					<button id="clipboard-paste" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: localizeGUI() ? lg().clipboard_paste_full : null}"><span>&nbsp;</span></button>
-					<button id="clipboard-clear" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: localizeGUI() ? lg().clipboard_clear_full : null}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: localizeGUI() ? lg().clipboard_copy : null}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: localizeGUI() ? lg().clipboard_cut : null}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: localizeGUI() ? lg().clipboard_paste_full : null}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: localizeGUI() ? lg().clipboard_clear_full : null}"><span>&nbsp;</span></button>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- /ko -->
 				<div class="button-group navigate-controls">
-					<button class="fm-btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
+					<button class="btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="fm-btn-home no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
+					<button class="btn-home-folder no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -81,22 +81,22 @@
 					</form>
 				</div>
 				<div class="button-group create-controls">
-					<button class="fm-btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
+					<button class="btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg().new_folder"></span>
 					</button>
 				</div>
 				<!-- /ko -->
 				<div class="button-group viewmode-controls">
-					<button class="fm-btn-grid no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
+					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="fm-btn-list no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: localizeGUI() ? lg().list_view : null}, css: {active: viewMode() === 'list'}">
+					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: localizeGUI() ? lg().list_view : null}, css: {active: viewMode() === 'list'}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
 				<!-- ko if: headerModel.closeButton() -->
 				<div class="button-group">
-					<button class="fm-btn-close no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: localizeGUI() ? lg().close : null}">
+					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: localizeGUI() ? lg().close : null}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -194,40 +194,52 @@
 					<div class="fm-preview" data-bind="with: previewModel">
 						<div class="fm-preview-toolbar">
 							<form id="fm-js-preview-toolbar">
-								<button id="parentfolder" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
+								<button class="btn-file-preview-close" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
 									<span data-bind="text: $root.lg().parentfolder"></span>
 								</button>
 								<!-- ko if: buttonVisibility('select') -->
-								<button id="select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
+								<button class="btn-file-select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
 									<span data-bind="text: $root.lg().action_select"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('download') -->
-								<button id="download" type="button" data-bind="event: {click: function(data, event) {bindToolbar('download')}}">
+								<button class="btn-file-download" type="button" data-bind="event: {click: function(data, event) {bindToolbar('download')}}">
 									<span data-bind="text: $root.lg().action_download"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('rename') -->
-								<button id="rename" type="button" data-bind="event: {click: function(data, event) {bindToolbar('rename')}}">
+								<button class="btn-file-rename" type="button" data-bind="event: {click: function(data, event) {bindToolbar('rename')}}">
 									<span data-bind="text: $root.lg().action_rename"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('move') -->
-								<button id="move" type="button" data-bind="event: {click: function(data, event) {bindToolbar('move')}}">
+								<button class="btn-file-move" type="button" data-bind="event: {click: function(data, event) {bindToolbar('move')}}">
 									<span data-bind="text: $root.lg().action_move"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('delete') -->
-								<button id="delete" type="button" data-bind="event: {click: function(data, event) {bindToolbar('delete')}}">
+								<button class="btn-file-delete" type="button" data-bind="event: {click: function(data, event) {bindToolbar('delete')}}">
 									<span data-bind="text: $root.lg().action_delete"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('replace') -->
-								<button id="replace" type="button" data-bind="event: {click: function(data, event) {bindToolbar('replace')}}">
+								<button class="btn-file-replace" type="button" data-bind="event: {click: function(data, event) {bindToolbar('replace')}}">
 									<span data-bind="text: $root.lg().action_replace"></span>
 								</button>
 								<!-- /ko -->
-								<!-- ko template: {name: 'preview-editor-controls'} --><!-- /ko -->
+								<!-- ko if: viewer.isEditable() && !editor.enabled() -->
+								<button class="btn-file-edit" type="button" data-bind="click: editFile">
+									<span data-bind="text: $root.lg().editor_edit"></span>
+								</button>
+								<!-- /ko -->
+								<!-- ko if: viewer.isEditable() && editor.enabled() -->
+								<button class="btn-file-save" type="button" data-bind="click: saveFile">
+									<span data-bind="text: $root.lg().editor_save"></span>
+								</button>
+								<button class="btn-file-editor-close" type="button" data-bind="click: closeEditor">
+									<span data-bind="text: $root.lg().editor_quit"></span>
+								</button>
+								<!-- /ko -->
 							</form>
 						</div>
 
@@ -269,17 +281,17 @@
 							</div>
 						</div>
 
-						<div class="fm-preview-edit-controls">
-						<!-- ko template: {name: 'preview-editor-controls'} --><!-- /ko -->
-						</div>
-
 						<div class="fm-preview-title">
-							<div id="main-title">
-								<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
-								<div id="tools">
-									<a href="#" class="fm-btn-edit-file" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile, visible: viewer.isEditable() && !editor.enabled()"></a>
-									<a href="#" class="fm-btn-clipboard" id="fm-js-clipboard-copy" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.pureUrl()}"></a>
-								</div>
+							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
+							<div class="fm-preview-title-controls">
+								<a href="#" class="btn-copy-url" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.pureUrl()}"></a>
+								<!-- ko if: viewer.isEditable() && !editor.enabled() -->
+								<a href="#" class="btn-editor-open" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile"></a>
+								<!-- /ko -->
+								<!-- ko if: viewer.isEditable() && editor.enabled() -->
+								<a href="#" class="btn-editor-save" data-bind="attr: {title: $root.lg().editor_save}, click: saveFile"></a>
+								<a href="#" class="btn-editor-quit" data-bind="attr: {title: $root.lg().editor_quit}, click: closeEditor"></a>
+								<!-- /ko -->
 							</div>
 						</div>
 
@@ -353,16 +365,6 @@
 			<!-- /ko -->
 		</script>
 
-		<script type="text/html" id="preview-editor-controls">
-			<!-- ko if: $root.previewModel.viewer.isEditable() && !$root.previewModel.editor.enabled() -->
-			<button type="button" data-bind="text: $root.lg().editor_edit, click: editFile"></button>
-			<!-- /ko -->
-			<!-- ko if: $root.previewModel.editor.enabled() -->
-			<button type="button" data-bind="text: $root.lg().editor_quit, click: closeEditor"></button>
-			<button type="button" data-bind="text: $root.lg().editor_save, click: saveFile"></button>
-			<!-- /ko -->
-		</script>
-
 		<script type="text/html" id="node-parent-template">
 			<li data-bind="template: {name: 'node-template', data: koNode}"></li>
 		</script>
@@ -415,7 +417,7 @@
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->

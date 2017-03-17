@@ -949,7 +949,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preview_model.renderer.render(preview_model.viewer.content());
 
                 // zeroClipboard code
-                var client = new ZeroClipboard(document.getElementById("fm-js-clipboard-copy"));
+                var client = new ZeroClipboard($previewWrapper.find('.btn-copy-url')[0]);
                 client.on("ready", function(readyEvent) {
                     client.on("aftercopy", function(event) {
                         fm.success(lg.copied);

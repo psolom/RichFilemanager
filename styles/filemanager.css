@@ -155,28 +155,43 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     border-style: inset;
 }
 
-.fm-container .fm-header .fm-btn-home span {
+.fm-container .fm-header .btn-home-folder span {
     background-image: url(../images/house.png);
 }
-
-.fm-container .fm-header .fm-btn-level-up span {
+.fm-container .fm-header .btn-level-up span {
     background-image: url(../images/level-up.png);
 }
-
-.fm-container .fm-header .fm-btn-grid span {
+.fm-container .fm-header .btn-grid-mode span {
     background-image: url(../images/application_view_icons.png);
 }
-
-.fm-container .fm-header .fm-btn-list span {
+.fm-container .fm-header .btn-list-mode span {
     background-image: url(../images/application_view_list.png);
 }
-
-.fm-container .fm-header .fm-btn-create-folder span {
+.fm-container .fm-header .btn-create-folder span {
     background-image: url(../images/folder_add.png);
 }
-
-.fm-container .fm-header .fm-btn-close span {
-    background-image: url(../images/reset.png);
+.fm-container .fm-header .btn-close-window span {
+    background-image: url(../images/reset_dark.png);
+}
+.fm-container .fm-header .btn-clipboard-cut span {
+    background-image: url(../images/clipboard/clipboard_cut.png);
+}
+.fm-container .fm-header .btn-clipboard-copy span {
+    background-image: url(../images/clipboard/clipboard_copy.png);
+}
+.fm-container .fm-header .btn-clipboard-paste span {
+    background-image: url(../images/clipboard/clipboard_paste.png);
+}
+.fm-container .fm-header .btn-clipboard-clear span {
+    background-image: url(../images/clipboard/clipboard_clear.png);
+}
+.fm-container .fm-header .fm-upload span {
+    background-image: url(../images/upload.png);
+}
+.fm-container .fm-header .fm-upload.loading span {
+    background-image: url(../images/ajax-loader.gif);
+    color: #555555;
+    font-size: 0.9em;
 }
 
 .fm-container .fm-splitter {
@@ -320,20 +335,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background: url(../images/spinner.gif) no-repeat center center;
 }
 
-.fm-container .fm-fileinfo #main-title {
-    margin: 10px auto;
-}
-
-.fm-container .fm-fileinfo h1 {
-    font-size: 20px;
-    display: inline-block;
-    color: #8fabc6;
-}
-
-.fm-container .fm-fileinfo > h1 {
-    margin-top: 3em
-}
-
 .fm-container .fm-fileinfo .fm-renderer-container {
     display: block;
     text-align: left;
@@ -373,11 +374,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-color: #FFFFFF;
 }
 
-.fm-container div#tools {
-    display: inline-block;
-    margin-left: 1em;
-}
-
 .fm-container .fm-preview-wrapper {
     height: 100%;
 }
@@ -393,6 +389,30 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-container .fm-preview .fm-preview-viewer img {
     max-width: 80%;
+}
+
+.fm-container .fm-preview .fm-preview-edit-panel,
+.fm-container .fm-preview .fm-preview-view-panel .fm-js-viewer {
+    width: 70%;
+    border: 1px solid #eee;
+    margin: 0 auto;
+}
+
+.fm-container .fm-preview .fm-preview-edit-panel button {
+    color: black;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-edit-panel {
+    float: left;
+    width: 49%;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-view-panel {
+    margin-left: 51%;
+}
+
+.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-renderer-container {
+    width: 100%;
 }
 
 .fm-container .fm-preview .fm-preview-details {
@@ -423,48 +443,70 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     cursor: pointer;
 }
 
-.fm-container .fm-preview .fm-btn-edit-file {
+.fm-container .fm-preview .btn-file-preview-close span {
+    background-image: url(../images/parentfolder.png);
+}
+.fm-container .fm-preview .btn-file-select span {
+    background-image: url(../images/accept.png);
+}
+.fm-container .fm-preview .btn-file-download span {
+    background-image: url(../images/download.png);
+}
+.fm-container .fm-preview .btn-file-rename span {
+    background-image: url(../images/tag.png);
+}
+.fm-container .fm-preview .btn-file-move span {
+    background-image: url(../images/move.png);
+}
+.fm-container .fm-preview .btn-file-replace span {
+    background-image: url(../images/replace.png);
+}
+.fm-container .fm-preview .btn-file-delete span {
+    background-image: url(../images/bin_closed.png);
+}
+.fm-container .fm-preview .btn-file-edit span {
+    background-image: url(../images/edit_dark.png);
+}
+.fm-container .fm-preview .btn-file-save span {
+    background-image: url(../images/save_dark.png);
+}
+.fm-container .fm-preview .btn-file-editor-close span {
+    background-image: url(../images/reset_dark.png);
+}
+
+.fm-container .fm-preview .fm-preview-title {
+    margin: 10px auto;
+}
+
+.fm-container .fm-preview .fm-preview-title h1 {
+    font-size: 20px;
     display: inline-block;
+}
+
+.fm-container .fm-preview .fm-preview-title-controls {
+    display: inline-block;
+    margin-left: 1em;
+}
+
+.fm-container .fm-preview .fm-preview-title-controls a {
+    display: inline-block;
+    vertical-align: bottom;
+    width: 18px;
+    height: 18px;
+    margin: 0 0.2em;
+}
+
+.fm-container .fm-preview .btn-editor-open {
     background: url(../images/edit.png) no-repeat center center;
-    width: 20px;
-    height: 18px;
-    margin: 0 0.2em;
 }
-
-.fm-container .fm-preview .fm-btn-clipboard {
-    display: inline-block;
+.fm-container .fm-preview .btn-editor-save {
+    background: url(../images/save.png) no-repeat center center;
+}
+.fm-container .fm-preview .btn-editor-quit {
+    background: url(../images/reset.png) no-repeat center center;
+}
+.fm-container .fm-preview .btn-copy-url {
     background: url(../images/copy.png) no-repeat center center;
-    width: 20px;
-    height: 18px;
-    margin: 0 0.2em;
-}
-
-/*.fm-container .fm-preview .fm-preview-view-panel {*/
-    /*max-width: 80%;*/
-/*}*/
-
-.fm-container .fm-preview .fm-preview-edit-panel,
-.fm-container .fm-preview .fm-preview-view-panel .fm-js-viewer {
-    width: 70%;
-    border: 1px solid #eee;
-    margin: 0 auto;
-}
-
-.fm-container .fm-preview .fm-preview-edit-panel button {
-    color: black;
-}
-
-.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-edit-panel {
-    float: left;
-    width: 49%;
-}
-
-.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-preview-view-panel {
-    margin-left: 51%;
-}
-
-.fm-container .fm-preview .fm-preview-viewer.side-by-side-panels .fm-renderer-container {
-    width: 100%;
 }
 
 
@@ -593,7 +635,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     position: absolute;
     width: 16px;
     height: 16px;
-    background: url(../images/reset.png) no-repeat center center;
+    background: url(../images/reset_dark.png) no-repeat center center;
     opacity: 0.5;
     right: 6px;
     top: 12px;
@@ -754,6 +796,9 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-position: center;
 }
 
+
+/** Context menu **/
+
 .fm-container .context-menu-list {
     min-width: 150px;
     background-color:#F4F1ED;
@@ -784,32 +829,36 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-color: inherit;
 }
 
-/* these apply to the context menus as well as the buttons */
-.fm-container #select span,
-.fm-container .context-menu-item.select:before { background-image: url(../images/accept.png); }
-.fm-container #download span,
-.fm-container .context-menu-item.download:before { background-image: url(../images/download.png); }
-.fm-container #rename span,
-.fm-container .context-menu-item.rename:before { background-image: url(../images/tag.png); }
-.fm-container #move span,
-.fm-container .context-menu-item.move:before { background-image: url(../images/move.png); }
-.fm-container #replace span,
-.fm-container .context-menu-item.replace:before { background-image: url(../images/replace.png); }
-.fm-container #delete span,
-.fm-container .context-menu-item.delete:before { background-image: url(../images/bin_closed.png); }
-.fm-container .context-menu-item.create-folder:before { background-image: url(../images/folder_add.png); }
-
-.fm-container #clipboard-cut span,
-.fm-container .context-menu-item.cut:before { background-image: url(../images/clipboard/clipboard_cut.png); background-position: center; }
-.fm-container #clipboard-copy span,
-.fm-container .context-menu-item.copy:before { background-image: url(../images/clipboard/clipboard_copy.png); background-position: center; }
-.fm-container #clipboard-paste span,
-.fm-container .context-menu-item.paste:before { background-image: url(../images/clipboard/clipboard_paste.png); background-position: center; }
-.fm-container #clipboard-clear span { background-image: url(../images/clipboard/clipboard_clear.png); background-position: center; }
-
-.fm-container .fm-upload span { background-image: url(../images/upload.png); }
-.fm-container .fm-upload.loading span { background-image: url(../images/ajax-loader.gif);color:#555555;font-size:0.9em; }
-.fm-container #parentfolder span { background-image: url(../images/parentfolder.png); }
+.fm-container .context-menu-item.select:before {
+    background-image: url(../images/accept.png);
+}
+.fm-container .context-menu-item.download:before {
+    background-image: url(../images/download.png);
+}
+.fm-container .context-menu-item.rename:before {
+    background-image: url(../images/tag.png);
+}
+.fm-container .context-menu-item.move:before {
+    background-image: url(../images/move.png);
+}
+.fm-container .context-menu-item.replace:before {
+    background-image: url(../images/replace.png);
+}
+.fm-container .context-menu-item.delete:before {
+    background-image: url(../images/bin_closed.png);
+}
+.fm-container .context-menu-item.create-folder:before {
+    background-image: url(../images/folder_add.png);
+}
+.fm-container .context-menu-item.cut:before {
+    background-image: url(../images/clipboard/clipboard_cut.png);
+}
+.fm-container .context-menu-item.copy:before {
+    background-image: url(../images/clipboard/clipboard_copy.png);
+}
+.fm-container .context-menu-item.paste:before {
+    background-image: url(../images/clipboard/clipboard_paste.png);
+}
 
 
 /** Drag & Drop **/
@@ -1004,14 +1053,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 .fm-popup.alertify #summary-popup .line {
     line-height: 1.4em;
-}
-
-#fm-js-btn-close {
-    margin-top: 5px;
-    display: block;
-    width: 100%;
-    font-variant: small-caps;
-    padding: 0.5em;
 }
 
 
