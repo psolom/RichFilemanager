@@ -1,3 +1,20 @@
+Version 2.3.0
+---------------------------
+- Java connector (Spring MVC) support, thanks @fabriceci #126;
+- Support Markdown files side-by-side interactive editing, thanks @dereks #88;
+- Custom renderers support. CodeMirror and MarkdownIt are implemented #85;
+- Capability to render index file content in folder listing mode (similar to what GitHub does) #88;
+- Capability to preview renderable files right after opening;
+- Support Java lang in renderer / editor preview #118;
+- PHP connector: added capability to define logfile path #123;
+- bugfix: remove "time" query parameter upon file selection #116;
+- bugfix: unable to retrieve absolute path, even when "previewUrl" is specified #116;
+- bugfix: issues while copying file URL; better preview mode support #120
+- bugfix: folder isn't loaded when opened from filetree and preview mode is enabled #120;
+- bugfix: logger configuration doesn't take effect in PHP connector #123;
+- bugfix: wrong position of "parent" item in IE #124;
+
+
 Version 2.2.2
 ---------------------------
 - new section "filetree" in configuration file;
