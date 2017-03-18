@@ -2217,17 +2217,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 
             function includeAssets(extension) {
-                var currentMode,
-                    assets = [];
+                var assets = [],
+                	currentMode = 'default';
 
-                // if no code highlight needed, we apply default settings
-                if (!config.viewer.editable.codeHighlight) {
-                    currentMode = 'default';
-				// highlight code according to extension file
-                } else {
-                    if (extension === 'txt') {
-                        currentMode = 'default';
-                    }
+                // highlight code according to extension file
+                if (config.viewer.editable.codeHighlight) {
                     if (extension === 'js') {
                         assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
                         currentMode = 'javascript';
@@ -2287,8 +2281,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         currentMode = 'shell';
                     }
                 }
-
-
 
                 if(assets.length) {
                     assets.push(function() {
