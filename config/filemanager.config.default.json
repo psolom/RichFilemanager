@@ -161,8 +161,6 @@
         "codeMirrorRenderer": {
             "enabled": true,
             "extensions": [
-                "php",
-                "java",
                 "txt",
                 "csv"
             ]
