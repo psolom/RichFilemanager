@@ -107,9 +107,9 @@ class LocalFilemanager extends BaseFilemanager
                 'culture' => $this->config['options']['culture'],
                 'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
                 'capabilities' => $this->config['options']['capabilities'],
+                'allowFolderDownload' => $this->config['options']['allowFolderDownload'],
             ],
             'security' => [
-                'allowFolderDownload' => $this->config['security']['allowFolderDownload'],
                 'allowChangeExtensions' => $this->config['security']['allowChangeExtensions'],
                 'allowNoExtension' => $this->config['security']['allowNoExtension'],
                 'normalizeFilename' => $this->config['security']['normalizeFilename'],
@@ -883,7 +883,7 @@ class LocalFilemanager extends BaseFilemanager
 
 		if($is_dir_target) {
 			// check if permission is granted
-			if($this->config['security']['allowFolderDownload'] == false ) {
+			if($this->config['options']['allowFolderDownload'] == false ) {
 				$this->error(sprintf($this->lang('NOT_ALLOWED')));
 			}
 

@@ -2588,7 +2588,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if (resourceObject.type === 'folder' && cap === 'replace') return false;
 		if (resourceObject.type === 'folder' && cap === 'select') return false;
 		if (resourceObject.type === 'folder' && cap === 'download') {
-			return (config.security.allowFolderDownload === true);
+			return (config.options.allowFolderDownload === true);
 		}
 		if (typeof(resourceObject.attributes.capabilities) !== "undefined") {
 			return $.inArray(cap, resourceObject.attributes.capabilities) > -1

@@ -383,9 +383,9 @@ public abstract class AbstractFileManager implements IFileManager {
         } else{
             options.put("capabilities", false);
         }
+        options.put("allowFolderDownload", Boolean.parseBoolean(propertiesConfig.getProperty("allowFolderDownload")));
 
         JSONObject security = new JSONObject();
-        security.put("allowFolderDownload", Boolean.parseBoolean(propertiesConfig.getProperty("allowFolderDownload")));
         security.put("allowChangeExtensions", Boolean.parseBoolean(propertiesConfig.getProperty("allowChangeExtensions")));
         security.put("allowNoExtension", Boolean.parseBoolean(propertiesConfig.getProperty("allowNoExtension")));
         security.put("normalizeFilename", Boolean.parseBoolean(propertiesConfig.getProperty("normalizeFilename")));

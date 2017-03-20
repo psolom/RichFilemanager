@@ -79,16 +79,16 @@ $config = [
          * For the full list of capabilities @see BaseFilemanager::actions_list
          */
         "capabilities" => false,
-    ],
-    /**
-     * Security section
-     */
-    "security" => [
         /**
          * Default value "false".
          * Allow users to download a Zip archive of a specific folder and contents (including subfolders).
          */
         "allowFolderDownload" => false,
+    ],
+    /**
+     * Security section
+     */
+    "security" => [
         /**
          * Default value "false".
          * Allow users to change extension when renaming files.

@@ -53,7 +53,6 @@
         "requestParams": []
     },
     "security": {
-        "allowFolderDownload": true,
         "allowChangeExtensions": false,
         "allowNoExtension": false,
         "normalizeFilename": true

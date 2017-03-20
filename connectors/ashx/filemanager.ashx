@@ -342,9 +342,9 @@ public class filemanager : IHttpHandler
 			sb.AppendLine("	\"culture\": \"nl\",");
 			sb.AppendLine("	\"charsLatinOnly\": false,");
 			sb.AppendLine("	\"capabilities\": false");
+			sb.AppendLine("	\"allowFolderDownload\": false,");
 			sb.AppendLine("},");
 			sb.AppendLine("\"security\": {");
-			sb.AppendLine("	\"allowFolderDownload\": false,");
 			sb.AppendLine("	\"allowChangeExtensions\": false,");
 			sb.AppendLine("	\"allowNoExtension\": false,");
 			sb.AppendLine("	\"normalizeFilename\": true");
