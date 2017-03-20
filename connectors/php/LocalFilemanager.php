@@ -101,31 +101,28 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionInitiate()
     {
-        $shared_config = [];
-        if($this->config['overrideClientConfig']) {
-            // config options to override at the client-side
-            $shared_config = [
-                'options' => [
-                    'culture' => $this->config['options']['culture'],
-                    'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
-                    'capabilities' => $this->config['options']['capabilities'],
-                ],
-                'security' => [
-                    'allowFolderDownload' => $this->config['security']['allowFolderDownload'],
-                    'allowChangeExtensions' => $this->config['security']['allowChangeExtensions'],
-                    'allowNoExtension' => $this->config['security']['allowNoExtension'],
-                    'normalizeFilename' => $this->config['security']['normalizeFilename'],
-                    'editRestrictions' => $this->config['security']['editRestrictions'],
-                ],
-                'upload' => [
-                    'paramName' => $this->config['upload']['paramName'],
-                    'chunkSize' => $this->config['upload']['chunkSize'],
-                    'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
-                    'policy' => $this->config['upload']['policy'],
-                    'restrictions' => $this->config['upload']['restrictions'],
-                ],
-            ];
-        }
+        // config options that affect the client-side
+        $shared_config = [
+            'options' => [
+                'culture' => $this->config['options']['culture'],
+                'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
+                'capabilities' => $this->config['options']['capabilities'],
+            ],
+            'security' => [
+                'allowFolderDownload' => $this->config['security']['allowFolderDownload'],
+                'allowChangeExtensions' => $this->config['security']['allowChangeExtensions'],
+                'allowNoExtension' => $this->config['security']['allowNoExtension'],
+                'normalizeFilename' => $this->config['security']['normalizeFilename'],
+                'editRestrictions' => $this->config['security']['editRestrictions'],
+            ],
+            'upload' => [
+                'paramName' => $this->config['upload']['paramName'],
+                'chunkSize' => $this->config['upload']['chunkSize'],
+                'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
+                'policy' => $this->config['upload']['policy'],
+                'restrictions' => $this->config['upload']['restrictions'],
+            ],
+        ];
 
         return [
             'id' => '/',
