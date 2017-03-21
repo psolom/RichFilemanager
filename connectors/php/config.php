@@ -157,12 +157,6 @@ $config = [
      */
     "upload" => [
         /**
-         * Default value "files".
-         * The parameter name for the file form data (the request argument name).
-         * See https://github.com/blueimp/jQuery-File-Upload/wiki/Options#paramname
-         */
-        "paramName" => "files",
-        /**
          * Default value "files". By default files will be uploaded as a whole.
          * To upload large files in smaller chunks, set this option to a preferred chunk size (in Bytes).
          * See https://github.com/blueimp/jQuery-File-Upload/wiki/Options#maxchunksize

@@ -114,7 +114,6 @@ class LocalFilemanager extends BaseFilemanager
                 'editRestrictions' => $this->config['security']['editRestrictions'],
             ],
             'upload' => [
-                'paramName' => $this->config['upload']['paramName'],
                 'chunkSize' => $this->config['upload']['chunkSize'],
                 'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
                 'policy' => $this->config['upload']['policy'],
@@ -226,8 +225,7 @@ class LocalFilemanager extends BaseFilemanager
 		])->post(false);
 
         $response_data = [];
-        $files = isset($content[$this->config['upload']['paramName']]) ?
-            $content[$this->config['upload']['paramName']] : null;
+        $files = isset($content['files']) ? $content['files'] : null;
         // there is only one file in the array as long as "singleFileUploads" is set to "true"
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];
@@ -550,7 +548,7 @@ class LocalFilemanager extends BaseFilemanager
         }
 
 		// check if the given file has the same extension as the old one
-		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($source_path, PATHINFO_EXTENSION))) {
+		if(strtolower(pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($source_path, PATHINFO_EXTENSION))) {
 			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' ' . pathinfo($source_path, PATHINFO_EXTENSION)));
 		}
 
@@ -569,8 +567,7 @@ class LocalFilemanager extends BaseFilemanager
         ])->post(false);
 
         $response_data = [];
-        $files = isset($content[$this->config['upload']['paramName']]) ?
-            $content[$this->config['upload']['paramName']] : null;
+        $files = isset($content['files']) ? $content['files'] : null;
         // there is only one file in the array as long as "singleFileUploads" is set to "true"
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];

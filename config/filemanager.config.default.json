@@ -59,7 +59,6 @@
     "upload": {
         "multiple": true,
         "maxNumberOfFiles": 5,
-        "paramName": "files",
         "chunkSize": false,
         "fileSizeLimit": 16000000,
         "policy": "DISALLOW_ALL",
