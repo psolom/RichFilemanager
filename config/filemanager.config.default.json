@@ -14,7 +14,6 @@
         "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
         "quickSelect": false,
-        "charsLatinOnly": false,
         "logger": false,
         "allowChangeExtensions": false,
         "capabilities": [
