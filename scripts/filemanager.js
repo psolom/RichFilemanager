@@ -260,12 +260,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         }).done(function(response) {
             if(response.data) {
                 var serverConfig = response.data.attributes.config;
-                // override configuration with options retrieved from the server (which are common)
+                // configuration options retrieved from the server
                 $.each(serverConfig, function(section, options) {
                     $.each(options, function(param, value) {
-                        if(config[section] !== "undefined" && config[section][param] !== "undefined") {
-                            config[section][param] = value;
+                        if(config[section] === undefined) {
+                            config[section] = [];
                         }
+                        config[section][param] = value;
                     });
                 });
             }
