@@ -60,7 +60,6 @@
         "multiple": true,
         "maxNumberOfFiles": 5,
         "chunkSize": false,
-        "fileSizeLimit": 16000000,
         "policy": "DISALLOW_ALL",
         "restrictions": [
             "jpg",
