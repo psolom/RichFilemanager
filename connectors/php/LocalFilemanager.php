@@ -111,7 +111,6 @@ class LocalFilemanager extends BaseFilemanager
             ],
             'security' => [
                 'allowNoExtension' => $this->config['security']['allowNoExtension'],
-                'normalizeFilename' => $this->config['security']['normalizeFilename'],
                 'editRestrictions' => $this->config['security']['editRestrictions'],
             ],
             'upload' => [

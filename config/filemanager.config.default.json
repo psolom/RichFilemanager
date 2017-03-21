@@ -54,8 +54,7 @@
         "requestParams": []
     },
     "security": {
-        "allowNoExtension": false,
-        "normalizeFilename": true
+        "allowNoExtension": false
     },
     "upload": {
         "multiple": true,

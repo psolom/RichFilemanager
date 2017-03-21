@@ -1781,7 +1781,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return;
 					}
 
-					folderName = cleanString(folderName);
 					$.ajax({
 						type: 'GET',
 						url: buildConnectorUrl({
@@ -2499,47 +2498,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// Sanitize and transliterate file/folder name as server side (connector) way
-	var cleanString = function(string, allowed) {
-		if(config.security.normalizeFilename) {
-			// replace chars which are not related to any language
-			var replacements = {' ': '_', '\'': '_', '/': '', '\\': ''};
-			string = string.replace(/[\s\S]/g, function(c) {return replacements[c] || c});
-		}
-
-		// allow only latin alphabet
-		if(config.options.charsLatinOnly) {
-			if (typeof allowed == "undefined") {
-				allowed = [];
-			}
-			// transliterate string
-			string = getSlug(string, {
-				separator: '_',
-				maintainCase: true,
-				custom: allowed
-			});
-
-			// clean up all non-latin chars
-			string = string.replace(/[^_a-zA-Z0-9]/g, "");
-		}
-
-		// remove double underscore
-		string = string.replace(/[_]+/g, "_");
-		return string;
-	};
-
-	// Separate filename from extension before calling cleanString()
-	var nameFormat = function(input) {
-		var filename = '';
-		if(input.lastIndexOf('.') != -1) {
-			filename  = cleanString(input.substr(0, input.lastIndexOf('.')));
-			filename += '.' + input.split('.').pop();
-		} else {
-			filename = cleanString(input);
-		}
-		return filename;
-	};
-
 	// Converts bytes to KB, MB, or GB as needed for display
 	var formatBytes = function(bytes, round) {
 		if(!bytes) return '';
@@ -3018,7 +2976,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 
 			if (! config.options.allowChangeExtensions) {
-				givenName = nameFormat(givenName);
 				var suffix = getExtension(resourceObject.attributes.name);
 				if(suffix.length > 0) {
 					givenName = givenName + '.' + suffix;

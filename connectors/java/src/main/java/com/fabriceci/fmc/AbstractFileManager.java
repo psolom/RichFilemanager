@@ -387,7 +387,6 @@ public abstract class AbstractFileManager implements IFileManager {
 
         JSONObject security = new JSONObject();
         security.put("allowNoExtension", Boolean.parseBoolean(propertiesConfig.getProperty("allowNoExtension")));
-        security.put("normalizeFilename", Boolean.parseBoolean(propertiesConfig.getProperty("normalizeFilename")));
         security.put("editRestrictions", propertiesConfig.getProperty("editRestrictions").split(","));
 
         JSONObject upload = new JSONObject();
