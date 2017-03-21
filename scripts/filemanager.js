@@ -3017,7 +3017,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return;
 			}
 
-			if (! config.security.allowChangeExtensions) {
+			if (! config.options.allowChangeExtensions) {
 				givenName = nameFormat(givenName);
 				var suffix = getExtension(resourceObject.attributes.name);
 				if(suffix.length > 0) {
@@ -3102,7 +3102,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		fm.prompt({
 			message: lg.new_filename,
-			value: config.security.allowChangeExtensions ? resourceObject.attributes.name : getFilename(resourceObject.attributes.name),
+			value: config.options.allowChangeExtensions ? resourceObject.attributes.name : getFilename(resourceObject.attributes.name),
 			okBtn: {
 				label: lg.action_rename,
 				autoClose: false,

@@ -96,11 +96,6 @@ $config = [
     "security" => [
         /**
          * Default value "false".
-         * Allow users to change extension when renaming files.
-         */
-        "allowChangeExtensions" => false,
-        /**
-         * Default value "false".
          * If set to "true", allow users to upload file with no extension.
          */
         "allowNoExtension" => false,

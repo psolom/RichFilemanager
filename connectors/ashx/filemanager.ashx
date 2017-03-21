@@ -345,7 +345,6 @@ public class filemanager : IHttpHandler
 			sb.AppendLine("	\"allowFolderDownload\": false,");
 			sb.AppendLine("},");
 			sb.AppendLine("\"security\": {");
-			sb.AppendLine("	\"allowChangeExtensions\": false,");
 			sb.AppendLine("	\"allowNoExtension\": false,");
 			sb.AppendLine("	\"normalizeFilename\": true");
 			sb.AppendLine("},");

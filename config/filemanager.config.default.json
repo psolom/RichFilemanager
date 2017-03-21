@@ -16,6 +16,7 @@
         "quickSelect": false,
         "charsLatinOnly": false,
         "logger": false,
+        "allowChangeExtensions": false,
         "capabilities": [
             "select",
             "upload",
@@ -53,7 +54,6 @@
         "requestParams": []
     },
     "security": {
-        "allowChangeExtensions": false,
         "allowNoExtension": false,
         "normalizeFilename": true
     },

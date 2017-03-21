@@ -110,7 +110,6 @@ class LocalFilemanager extends BaseFilemanager
                 'allowFolderDownload' => $this->config['options']['allowFolderDownload'],
             ],
             'security' => [
-                'allowChangeExtensions' => $this->config['security']['allowChangeExtensions'],
                 'allowNoExtension' => $this->config['security']['allowNoExtension'],
                 'normalizeFilename' => $this->config['security']['normalizeFilename'],
                 'editRestrictions' => $this->config['security']['editRestrictions'],
@@ -320,13 +319,6 @@ class LocalFilemanager extends BaseFilemanager
 
         // check if file extension is consistent to the security Policy settings
         if(is_file($old_file)) {
-            if (!$this->config['security']['allowChangeExtensions']) {
-                $ext_old = strtolower(pathinfo($old_file, PATHINFO_EXTENSION));
-                $ext_new = strtolower(pathinfo($new_file, PATHINFO_EXTENSION));
-                if($ext_old !== $ext_new) {
-                    $this->error(sprintf($this->lang('FORBIDDEN_CHANGE_EXTENSION')));
-                }
-            }
             if (!$this->is_allowed_file_type($new_file)) {
                 $this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
             }
