@@ -157,12 +157,6 @@ $config = [
      */
     "upload" => [
         /**
-         * Default value "files". By default files will be uploaded as a whole.
-         * To upload large files in smaller chunks, set this option to a preferred chunk size (in Bytes).
-         * See https://github.com/blueimp/jQuery-File-Upload/wiki/Options#maxchunksize
-         */
-        "chunkSize" => false,
-        /**
          * Default value "16000000" (16 MB).
          * The maximum allowed file size (in Bytes). If set to "false", no size limitations applied.
          * See https://github.com/blueimp/jQuery-File-Upload/wiki/Options#maxfilesize.

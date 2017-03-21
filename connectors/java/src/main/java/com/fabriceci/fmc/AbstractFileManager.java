@@ -390,11 +390,6 @@ public abstract class AbstractFileManager implements IFileManager {
         security.put("editRestrictions", propertiesConfig.getProperty("editRestrictions").split(","));
 
         JSONObject upload = new JSONObject();
-        if( propertiesConfig.getProperty("upload_chunkSize") != null ){
-            upload.put("chunkSize", propertiesConfig.getProperty("upload_chunkSize"));
-        } else{
-            upload.put("chunkSize", false);
-        }
         try {
             upload.put("fileSizeLimit", Long.parseLong(propertiesConfig.getProperty("upload_fileSizeLimit")));
         }catch (NumberFormatException e){

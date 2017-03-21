@@ -348,7 +348,6 @@ public class filemanager : IHttpHandler
 			sb.AppendLine("	\"allowNoExtension\": false,");
 			sb.AppendLine("},");
 			sb.AppendLine("\"upload\": {");
-			sb.AppendLine("	\"chunkSize\": false,");
 			sb.AppendLine("	\"fileSizeLimit\": 16000000,");
 			sb.AppendLine("	\"policy\": \"ALLOW_ALL\"");
 			//sb.AppendLine("	\"restrictions\": { \"jpg\" }");

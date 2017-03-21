@@ -114,7 +114,6 @@ class LocalFilemanager extends BaseFilemanager
                 'editRestrictions' => $this->config['security']['editRestrictions'],
             ],
             'upload' => [
-                'chunkSize' => $this->config['upload']['chunkSize'],
                 'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
                 'policy' => $this->config['upload']['policy'],
                 'restrictions' => $this->config['upload']['restrictions'],
