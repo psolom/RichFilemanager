@@ -342,16 +342,12 @@ public class filemanager : IHttpHandler
 			sb.AppendLine("	\"culture\": \"nl\",");
 			sb.AppendLine("	\"charsLatinOnly\": false,");
 			sb.AppendLine("	\"capabilities\": false");
+			sb.AppendLine("	\"allowFolderDownload\": false,");
 			sb.AppendLine("},");
 			sb.AppendLine("\"security\": {");
-			sb.AppendLine("	\"allowFolderDownload\": false,");
-			sb.AppendLine("	\"allowChangeExtensions\": false,");
 			sb.AppendLine("	\"allowNoExtension\": false,");
-			sb.AppendLine("	\"normalizeFilename\": true");
 			sb.AppendLine("},");
 			sb.AppendLine("\"upload\": {");
-			sb.AppendLine("	\"paramName\": \"files\",");
-			sb.AppendLine("	\"chunkSize\": false,");
 			sb.AppendLine("	\"fileSizeLimit\": 16000000,");
 			sb.AppendLine("	\"policy\": \"ALLOW_ALL\"");
 			//sb.AppendLine("	\"restrictions\": { \"jpg\" }");

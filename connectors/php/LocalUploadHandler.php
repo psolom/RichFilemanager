@@ -25,8 +25,8 @@ class LocalUploadHandler extends BaseUploadHandler
         $this->fmData = $this->options['fm']['data'];
 
         $this->options['upload_dir'] = $this->fmData['upload_dir'];
-        $this->options['param_name'] = $this->fm->config['upload']['paramName'];
-        $this->options['readfile_chunk_size'] = $this->fm->config['upload']['chunkSize'];
+        $this->options['param_name'] = 'files';
+        $this->options['readfile_chunk_size'] = 10 * 1024 * 1024;
         $this->options['max_file_size'] = $this->fm->config['upload']['fileSizeLimit'];
         // BaseFilemanager::is_allowed_file_type() is used instead of this regex check
         $this->options['accept_file_types'] = '/.+$/i';

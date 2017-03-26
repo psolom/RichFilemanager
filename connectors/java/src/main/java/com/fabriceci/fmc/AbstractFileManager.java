@@ -372,51 +372,37 @@ public abstract class AbstractFileManager implements IFileManager {
         JSONObject init = new JSONObject();
         JSONObject data = new JSONObject();
         JSONObject attributes = new JSONObject();
-        Boolean overrideClientConfig = Boolean.parseBoolean(propertiesConfig.getProperty("overrideClientConfig"));
         data.put("id", "/");
         data.put("type", "initiate");
 
-        if(overrideClientConfig){
-            JSONObject options = new JSONObject();
-            options.put("culture", propertiesConfig.getProperty("culture"));
-            options.put("charsLatinOnly", Boolean.parseBoolean(propertiesConfig.getProperty("charsLatinOnly")));
-            if( propertiesConfig.getProperty("capabilities") != null ){
-                options.put("capabilities", propertiesConfig.getProperty("capabilities"));
-            } else{
-                options.put("capabilities", false);
-            }
-
-            JSONObject security = new JSONObject();
-            security.put("allowFolderDownload", Boolean.parseBoolean(propertiesConfig.getProperty("allowFolderDownload")));
-            security.put("allowChangeExtensions", Boolean.parseBoolean(propertiesConfig.getProperty("allowChangeExtensions")));
-            security.put("allowNoExtension", Boolean.parseBoolean(propertiesConfig.getProperty("allowNoExtension")));
-            security.put("normalizeFilename", Boolean.parseBoolean(propertiesConfig.getProperty("normalizeFilename")));
-            security.put("editRestrictions", propertiesConfig.getProperty("editRestrictions").split(","));
-
-            JSONObject upload = new JSONObject();
-            upload.put("paramName", propertiesConfig.getProperty("upload_paramName"));
-            if( propertiesConfig.getProperty("upload_chunkSize") != null ){
-                upload.put("chunkSize", propertiesConfig.getProperty("upload_chunkSize"));
-            } else{
-                upload.put("chunkSize", false);
-            }
-            try {
-                upload.put("fileSizeLimit", Long.parseLong(propertiesConfig.getProperty("upload_fileSizeLimit")));
-            }catch (NumberFormatException e){
-                logger.error("fileSizeLimit -> Format Exception", e);
-            }
-            upload.put("policy", propertiesConfig.getProperty("upload_policy"));
-            upload.put("restrictions", propertiesConfig.getProperty("upload_restrictions").split(","));
-
-            JSONObject sharedConfig = new JSONObject();
-            sharedConfig.put("options", options);
-            sharedConfig.put("security", security);
-            sharedConfig.put("upload", upload);
-            attributes.put("config", sharedConfig);
+        JSONObject options = new JSONObject();
+        options.put("culture", propertiesConfig.getProperty("culture"));
+        options.put("charsLatinOnly", Boolean.parseBoolean(propertiesConfig.getProperty("charsLatinOnly")));
+        if( propertiesConfig.getProperty("capabilities") != null ){
+            options.put("capabilities", propertiesConfig.getProperty("capabilities"));
+        } else{
+            options.put("capabilities", false);
         }
-        else {
-            attributes.put("config", new JSONObject());
+        options.put("allowFolderDownload", Boolean.parseBoolean(propertiesConfig.getProperty("allowFolderDownload")));
+
+        JSONObject security = new JSONObject();
+        security.put("allowNoExtension", Boolean.parseBoolean(propertiesConfig.getProperty("allowNoExtension")));
+        security.put("editRestrictions", propertiesConfig.getProperty("editRestrictions").split(","));
+
+        JSONObject upload = new JSONObject();
+        try {
+            upload.put("fileSizeLimit", Long.parseLong(propertiesConfig.getProperty("upload_fileSizeLimit")));
+        }catch (NumberFormatException e){
+            logger.error("fileSizeLimit -> Format Exception", e);
         }
+        upload.put("policy", propertiesConfig.getProperty("upload_policy"));
+        upload.put("restrictions", propertiesConfig.getProperty("upload_restrictions").split(","));
+
+        JSONObject sharedConfig = new JSONObject();
+        sharedConfig.put("options", options);
+        sharedConfig.put("security", security);
+        sharedConfig.put("upload", upload);
+        attributes.put("config", sharedConfig);
 
         data.put("attributes", attributes);
         init.put("data", data);
