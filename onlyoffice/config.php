@@ -11,11 +11,11 @@ $GLOBALS['DOC_SERV_CONVERT'] = array(".doc",".odt",".xls",".ods",".ppt",".pps","
 
 $GLOBALS['DOC_SERV_TIMEOUT'] = "120000";
 
-$GLOBALS['DOC_SERV_STORAGE_URL'] = "https://YOUR.DOCUMENTSERVER.COM/FileUploader.ashx";
-$GLOBALS['DOC_SERV_CONVERTER_URL'] = "https://YOUR.DOCUMENTSERVER.COM/ConvertService.ashx";
-$GLOBALS['DOC_SERV_API_URL'] = "https://YOUR.DOCUMENTSERVER.COM/web-apps/apps/api/documents/api.js";
+$GLOBALS['DOC_SERV_STORAGE_URL'] = "https://renters.network/FileUploader.ashx";
+$GLOBALS['DOC_SERV_CONVERTER_URL'] = "https://renters.network/ConvertService.ashx";
+$GLOBALS['DOC_SERV_API_URL'] = "https://renters.network/web-apps/apps/api/documents/api.js";
 
-$GLOBALS['DOC_SERV_PRELOADER_URL'] = "https://YOUR.DOCUMENTSERVER.COM/web-apps/apps/api/documents/cache-scripts.html";
+$GLOBALS['DOC_SERV_PRELOADER_URL'] = "https://renters.network/web-apps/apps/api/documents/cache-scripts.html";
 
 
 $GLOBALS['ExtsSpreadsheet'] = array(".xls", ".xlsx",
