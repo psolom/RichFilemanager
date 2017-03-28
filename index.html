@@ -131,9 +131,9 @@
 							<!-- /ko -->
 
 							<!-- ko if: koItem.rdo.type !== "parent" -->
-							<li data-bind="event: {click: koItem.open, dblclick: koItem.open}, draggableView: koItem, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
+							<li data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
 								<div class="item-background"></div>
-								<div class="item-content">
+								<div class="item-content" data-bind="draggableView: koItem">
 									<div class="clip">
 										<img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
 									</div>
@@ -166,7 +166,7 @@
 							<!-- /ko -->
 
 							<!-- ko if: koItem.rdo.type !== "parent" -->
-							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
+							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
 								<td data-bind="draggableView: koItem">
 									<span class="list-icon" data-bind="css: koItem.listIconClass()"></span>
 									<span data-bind="text: koItem.rdo.attributes.name"></span>
@@ -366,12 +366,13 @@
 		</script>
 
 		<script type="text/html" id="node-parent-template">
-			<li data-bind="template: {name: 'node-template', data: koNode}"></li>
+			<li data-bind="template: {name: 'node-template', data: koNode}, css: {'selected': koNode.selected()}"></li>
 		</script>
 
 		<script type="text/html" id="node-template">
+			<div class="row" data-bind="droppableTree: $data"></div>
 			<span class="button switch" data-bind="css: switcherClass(), click: switchNode"></span>
-			<a data-bind="attr: {class: cdo.cssItemClass}, event: {click: nodeClick, dblclick: nodeDblClick}, draggableTree: $data, droppableTree: $data">
+			<a data-bind="attr: {class: cdo.cssItemClass}, event: {click: nodeClick, dblclick: nodeDblClick, mousedown: mouseDown}, draggableTree: $data">
 				<span class="button" data-bind="css: iconClass()"></span>
 				<span class="node_name" data-bind="text: nodeTitle(), attr: {title: title()}"></span>
 			</a>
@@ -380,28 +381,20 @@
 		<!-- TEMPLATES End-->
 
 
-        <div id="drag-helper-grid-template" style="display: none">
-            <div class="item-background"></div>
-            <div class="item-content">
-                <div class="clip">
-                    <img src="" class="grid-icon ico_multiple" />
-                </div>
-            </div>
-            <div class="dragging-stop">
-                <div class="cancel-image"></div>
-            </div>
-            <div class="dragging-counter">
-                <span data-bind="text: itemsModel.selectedNumber()"></span>
-            </div>
-        </div>
-
-        <div id="drag-helper-list-template" style="display: none">
-			<div class="list-line">
-				<span class="list-icon ico_file"></span>
-				<span data-bind="text: itemsModel.selectedNumber()"></span>
-				<span data-bind="text: lg().items"></span>
+		<div id="drag-helper-template" style="display: none">
+			<div class="drag-helper">
+				<div class="item-background"></div>
+				<div class="item-content">
+					<div class="clip grid-icon"></div>
+				</div>
+				<div class="dragging-stop">
+					<div class="cancel-image"></div>
+				</div>
+				<div class="dragging-counter" data-bind="visible: itemsModel.selectedNumber() > 1">
+					<span data-bind="text: itemsModel.selectedNumber()"></span>
+				</div>
 			</div>
-        </div>
+		</div>
 
 		<script type="text/javascript" src="scripts/jquery-1.11.3.min.js"></script>
         <!-- drag&drop + selectable build (includes customizations for RichFilemanager) -->
@@ -416,8 +409,9 @@
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
+		<script type="text/javascript" src="scripts/jquery-collision/jquery-collision.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->

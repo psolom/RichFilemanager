@@ -236,24 +236,44 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background: url(../images/filetree/line_conn.gif) 0 0 repeat-y;
 }
 
-.fm-container .fm-filetree li a {
+.fm-container .fm-filetree li > div.row {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 18px;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.fm-container .fm-filetree li > div.row.drop-hover {
+    background-color: #96a8cf;
+}
+
+.fm-container .fm-filetree li.selected > div.row {
+    background-color: red;
+}
+
+.fm-container .fm-filetree li > a {
+    position: relative;
     font-size: 12px;
     padding: 1px 3px 0 0;
     margin: 0;
     cursor: pointer;
-    height: 17px;
+    height: 18px;
     background-color: transparent;
     text-decoration: none;
     vertical-align: top;
     display: inline-block
 }
 
-.fm-container .fm-filetree li a:hover {
+.fm-container .fm-filetree li > a:hover {
     background-color: #55767F;
     text-decoration: none
 }
 
-.fm-container .fm-filetree li a.curSelectedNode {
+.fm-container .fm-filetree li > a.curSelectedNode {
     padding-top: 0;
     background-color: #FFE6B0;
     color: black;
@@ -262,17 +282,8 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     opacity: 0.8;
 }
 
-.fm-container .fm-filetree li a.drop-hover {
-    padding-top: 0;
-    background-color: #316AC5;
-    color: white;
-    height: 16px;
-    border: 1px #316AC5 solid;
-    opacity: 0.8;
-    filter: alpha(opacity=80)
-}
-
 .fm-container .fm-filetree li span {
+    position: relative;
     line-height: 16px;
 }
 
@@ -642,6 +653,11 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     cursor: pointer;
 }
 
+.fm-container .fm-splitter .mCSB_container_wrapper {
+    margin-right: 15px;
+    margin-bottom: 15px;
+}
+
 /* to expand selectable area to 100% vertically in case no scroll */
 .fm-container .fm-fileinfo .mCSB_container.mCS_no_scrollbar_y {
     height: 100%;
@@ -673,14 +689,11 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     text-align: center;
     overflow: hidden;
     margin: 10px;
+    cursor: pointer;
     border: 1px solid white;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
     border-radius: 2px;
-}
-
-.fm-container .view-items .grid li:hover {
-    cursor: pointer;
 }
 
 .fm-container .view-items .grid li:hover:not(.ui-selected) {
@@ -700,24 +713,24 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     overflow: hidden;
 }
 
-.fm-container .view-items .grid li.drop-hover,
-.fm-container .view-items .list tr.drop-hover {
-    background-color: #e0e0e0;
-}
-
-.fm-container .view-items .list tbody tr:hover {
-    cursor: pointer;
-}
-
-.fm-container .view-items .list tbody tr:hover:not(.ui-selected) {
-    background-color: #eee;
-}
-
 .fm-container .view-items .grid p {
     display: block;
     text-align: center;
     margin-bottom: 10px;
     white-space: nowrap;
+}
+
+.fm-container .view-items .grid li.drop-hover,
+.fm-container .view-items .list tr.drop-hover {
+    background-color: #e0e0e0;
+}
+
+.fm-container .view-items .list tbody tr {
+    cursor: pointer;
+}
+
+.fm-container .view-items .list tbody tr:hover:not(.ui-selected) {
+    background-color: #eee;
 }
 
 .fm-container .view-items .list {
@@ -863,47 +876,35 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 /** Drag & Drop **/
 
-.fm-container .drag-helper-list {
-    white-space: nowrap;
-}
-
-.fm-container .drag-helper-list .list-icon {
+.fm-container .drag-helper {
     display: inline-block;
-    width: 16px;
-    height: 16px;
-    vertical-align: middle;
-    background-repeat: no-repeat;
-    background-position: center;
-}
-
-.fm-container .drag-helper-grid {
-    display: inline-block;
-    width: 142px;
-    height: 142px;
+    width: 100px;
+    height: 100px;
     text-align: center;
     overflow: hidden;
-    margin: 10px;
+    margin: 0;
     border: 1px solid white;
     -webkit-border-radius: 2px;
     -moz-border-radius: 2px;
     border-radius: 2px;
+    z-index: 1000;
 }
 
-.fm-container .drag-helper-grid .clip {
-    width: 64px;
-    height: 64px;
+.fm-container .drag-helper .clip {
+    width: 60px;
+    height: 60px;
     margin: 10px auto;
     overflow: hidden;
 }
 
-.fm-container .drag-helper-grid .item-content {
+.fm-container .drag-helper .item-content {
     height: 100%;
     overflow: hidden;
     z-index: 1;
-    opacity: 0.7;
+    opacity: 0.9;
 }
 
-.fm-container .drag-helper-grid .item-background {
+.fm-container .drag-helper .item-background {
     position: absolute;
     width: 100%;
     height: 100%;
@@ -912,50 +913,46 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     z-index: 1;
 }
 
-.fm-container .drag-helper-grid .dragging-counter {
+.fm-container .drag-helper .dragging-counter {
     position: absolute;
-    top: 35px;
+    top: 30px;
     width: 100%;
     text-align: center;
     z-index: 2;
 }
 
-.fm-container .drag-helper-grid .dragging-counter span {
+.fm-container .drag-helper .dragging-counter span {
     display: inline-block;
     margin-left: 10px;
-    padding: 0.2em 0.4em;
+    padding: 0.2em 0.3em;
     background-color: #4e68e7;
     border: 1px solid #FFF;
     border-radius: 5px;
-    font-size: 15px !important;
+    font-size: 14px !important;
+    font-family: monospace;
+    font-weight: bold;
     color: #FFF;
 }
 
-.fm-container .drag-helper-grid .dragging-stop {
+.fm-container .drag-helper .dragging-stop {
     display: none;
     position: absolute;
-    bottom: 10px;
+    bottom: 5px;
     width: 100%;
     margin: 0;
     z-index: 2;
 }
 
-.fm-container .drag-helper-grid .dragging-stop .cancel-image {
-    width: 25px;
-    height: 25px;
+.fm-container .drag-helper .dragging-stop .cancel-image {
+    width: 20px;
+    height: 20px;
     margin: 0 auto;
     background: url(../images/fileicons/drag-n-drop/cancel-5.png) center center no-repeat;
     background-size: cover;
 }
 
-.fm-container .drag-helper-grid.drop-restricted .dragging-stop {
+.fm-container .drag-helper.drop-restricted .dragging-stop {
     display: block;
-}
-
-.fm-container .drag-helper-list .list-line {
-    display: inline-block;
-    text-align: left;
-    white-space: nowrap;
 }
 
 
@@ -1058,418 +1055,418 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 /** ICONS - List view and File tree related styles **/
 
-.fm-fileinfo .list-icon.ico_folder,
-.fm-filetree li span.button.ico_folder {
+.fm-container .list-icon.ico_folder,
+.fm-container li span.button.ico_folder {
     background: url(../images/filetree/ico_folder.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_folder_lock,
-.fm-filetree li span.button.ico_folder_lock {
+.fm-container .list-icon.ico_folder_lock,
+.fm-container li span.button.ico_folder_lock {
     background: url(../images/filetree/ico_folder_lock.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_folder_open,
-.fm-filetree li span.button.ico_folder_open {
+.fm-container .list-icon.ico_folder_open,
+.fm-container li span.button.ico_folder_open {
     background: url(../images/filetree/ico_folder_open.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_file,
-.fm-filetree li span.button.ico_file {
+.fm-container .list-icon.ico_file,
+.fm-container li span.button.ico_file {
     background: url(../images/filetree/ico_file.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_file_lock,
-.fm-filetree li span.button.ico_file_lock {
+.fm-container .list-icon.ico_file_lock,
+.fm-container li span.button.ico_file_lock {
     background: url(../images/filetree/ico_file_lock.png) left top no-repeat !important;
 }
 
-.fm-fileinfo .list-icon.ico_loading,
-.fm-filetree li span.button.ico_loading {
+.fm-container .list-icon.ico_loading,
+.fm-container li span.button.ico_loading {
     background: url(../images/filetree/loading.gif) left top no-repeat;
 }
 
 
 /** ICONS - List view and File tree related styles based on file extension **/
 
-.fm-fileinfo .list-icon.ico_ext_3g2,
-.fm-filetree li span.button.ico_ext_3g2 {
+.fm-container .list-icon.ico_ext_3g2,
+.fm-container li span.button.ico_ext_3g2 {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_3gp,
-.fm-filetree li span.button.ico_ext_3gp {
+.fm-container .list-icon.ico_ext_3gp,
+.fm-container li span.button.ico_ext_3gp {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_7z,
-.fm-filetree li span.button.ico_ext_7z {
+.fm-container .list-icon.ico_ext_7z,
+.fm-container li span.button.ico_ext_7z {
     background: url(../images/filetree/ico_zip.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_afp,
-.fm-filetree li span.button.ico_ext_afp {
+.fm-container .list-icon.ico_ext_afp,
+.fm-container li span.button.ico_ext_afp {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_afpa,
-.fm-filetree li span.button.ico_ext_afpa {
+.fm-container .list-icon.ico_ext_afpa,
+.fm-container li span.button.ico_ext_afpa {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_asp,
-.fm-filetree li span.button.ico_ext_asp {
+.fm-container .list-icon.ico_ext_asp,
+.fm-container li span.button.ico_ext_asp {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_aspx,
-.fm-filetree li span.button.ico_ext_aspx {
+.fm-container .list-icon.ico_ext_aspx,
+.fm-container li span.button.ico_ext_aspx {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_avi,
-.fm-filetree li span.button.ico_ext_avi {
+.fm-container .list-icon.ico_ext_avi,
+.fm-container li span.button.ico_ext_avi {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_bat,
-.fm-filetree li span.button.ico_ext_bat {
+.fm-container .list-icon.ico_ext_bat,
+.fm-container li span.button.ico_ext_bat {
     background: url(../images/filetree/ico_application.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_bmp,
-.fm-filetree li span.button.ico_ext_bmp {
+.fm-container .list-icon.ico_ext_bmp,
+.fm-container li span.button.ico_ext_bmp {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_c,
-.fm-filetree li span.button.ico_ext_c {
+.fm-container .list-icon.ico_ext_c,
+.fm-container li span.button.ico_ext_c {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_cfm,
-.fm-filetree li span.button.ico_ext_cfm {
+.fm-container .list-icon.ico_ext_cfm,
+.fm-container li span.button.ico_ext_cfm {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_cgi,
-.fm-filetree li span.button.ico_ext_cgi {
+.fm-container .list-icon.ico_ext_cgi,
+.fm-container li span.button.ico_ext_cgi {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_com,
-.fm-filetree li span.button.ico_ext_com {
+.fm-container .list-icon.ico_ext_com,
+.fm-container li span.button.ico_ext_com {
     background: url(../images/filetree/ico_application.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_cpp,
-.fm-filetree li span.button.ico_ext_cpp {
+.fm-container .list-icon.ico_ext_cpp,
+.fm-container li span.button.ico_ext_cpp {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_css,
-.fm-filetree li span.button.ico_ext_css {
+.fm-container .list-icon.ico_ext_css,
+.fm-container li span.button.ico_ext_css {
     background: url(../images/filetree/ico_css.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_csv,
-.fm-filetree li span.button.ico_ext_csv {
+.fm-container .list-icon.ico_ext_csv,
+.fm-container li span.button.ico_ext_csv {
     background: url(../images/filetree/ico_txt.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_doc,
-.fm-filetree li span.button.ico_ext_doc {
+.fm-container .list-icon.ico_ext_doc,
+.fm-container li span.button.ico_ext_doc {
     background: url(../images/filetree/ico_doc.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_docx,
-.fm-filetree li span.button.ico_ext_docx {
+.fm-container .list-icon.ico_ext_docx,
+.fm-container li span.button.ico_ext_docx {
     background: url(../images/filetree/ico_doc.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_exe,
-.fm-filetree li span.button.ico_ext_exe {
+.fm-container .list-icon.ico_ext_exe,
+.fm-container li span.button.ico_ext_exe {
     background: url(../images/filetree/ico_application.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_gif,
-.fm-filetree li span.button.ico_ext_gif {
+.fm-container .list-icon.ico_ext_gif,
+.fm-container li span.button.ico_ext_gif {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_f4v,
-.fm-filetree li span.button.ico_ext_f4v {
+.fm-container .list-icon.ico_ext_f4v,
+.fm-container li span.button.ico_ext_f4v {
     background: url(../images/filetree/ico_flash.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_fla,
-.fm-filetree li span.button.ico_ext_fla {
+.fm-container .list-icon.ico_ext_fla,
+.fm-container li span.button.ico_ext_fla {
     background: url(../images/filetree/ico_flash.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_flv,
-.fm-filetree li span.button.ico_ext_flv {
+.fm-container .list-icon.ico_ext_flv,
+.fm-container li span.button.ico_ext_flv {
     background: url(../images/filetree/ico_flash.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_h,
-.fm-filetree li span.button.ico_ext_h {
+.fm-container .list-icon.ico_ext_h,
+.fm-container li span.button.ico_ext_h {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_htm,
-.fm-filetree li span.button.ico_ext_htm {
+.fm-container .list-icon.ico_ext_htm,
+.fm-container li span.button.ico_ext_htm {
     background: url(../images/filetree/ico_html.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_html,
-.fm-filetree li span.button.ico_ext_html {
+.fm-container .list-icon.ico_ext_html,
+.fm-container li span.button.ico_ext_html {
     background: url(../images/filetree/ico_html.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_jar,
-.fm-filetree li span.button.ico_ext_jar {
+.fm-container .list-icon.ico_ext_jar,
+.fm-container li span.button.ico_ext_jar {
     background: url(../images/filetree/ico_java.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_jpg,
-.fm-filetree li span.button.ico_ext_jpg {
+.fm-container .list-icon.ico_ext_jpg,
+.fm-container li span.button.ico_ext_jpg {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_jpeg,
-.fm-filetree li span.button.ico_ext_jpeg {
+.fm-container .list-icon.ico_ext_jpeg,
+.fm-container li span.button.ico_ext_jpeg {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_js,
-.fm-filetree li span.button.ico_ext_js {
+.fm-container .list-icon.ico_ext_js,
+.fm-container li span.button.ico_ext_js {
     background: url(../images/filetree/ico_script.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_lasso,
-.fm-filetree li span.button.ico_ext_lasso {
+.fm-container .list-icon.ico_ext_lasso,
+.fm-container li span.button.ico_ext_lasso {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_log,
-.fm-filetree li span.button.ico_ext_log {
+.fm-container .list-icon.ico_ext_log,
+.fm-container li span.button.ico_ext_log {
     background: url(../images/filetree/ico_txt.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_m4p,
-.fm-filetree li span.button.ico_ext_m4p {
+.fm-container .list-icon.ico_ext_m4p,
+.fm-container li span.button.ico_ext_m4p {
     background: url(../images/filetree/ico_music.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_m4v,
-.fm-filetree li span.button.ico_ext_m4v {
+.fm-container .list-icon.ico_ext_m4v,
+.fm-container li span.button.ico_ext_m4v {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_mov,
-.fm-filetree li span.button.ico_ext_mov {
+.fm-container .list-icon.ico_ext_mov,
+.fm-container li span.button.ico_ext_mov {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_mp3,
-.fm-filetree li span.button.ico_ext_mp3 {
+.fm-container .list-icon.ico_ext_mp3,
+.fm-container li span.button.ico_ext_mp3 {
     background: url(../images/filetree/ico_music.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_mp4,
-.fm-filetree li span.button.ico_ext_mp4 {
+.fm-container .list-icon.ico_ext_mp4,
+.fm-container li span.button.ico_ext_mp4 {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_mpg,
-.fm-filetree li span.button.ico_ext_mpg {
+.fm-container .list-icon.ico_ext_mpg,
+.fm-container li span.button.ico_ext_mpg {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_mpeg,
-.fm-filetree li span.button.ico_ext_mpeg {
+.fm-container .list-icon.ico_ext_mpeg,
+.fm-container li span.button.ico_ext_mpeg {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_odp,
-.fm-filetree li span.button.ico_ext_odp {
+.fm-container .list-icon.ico_ext_odp,
+.fm-container li span.button.ico_ext_odp {
     background: url(../images/filetree/ico_ppt.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_ods,
-.fm-filetree li span.button.ico_ext_ods {
+.fm-container .list-icon.ico_ext_ods,
+.fm-container li span.button.ico_ext_ods {
     background: url(../images/filetree/ico_xls.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_odt,
-.fm-filetree li span.button.ico_ext_odt {
+.fm-container .list-icon.ico_ext_odt,
+.fm-container li span.button.ico_ext_odt {
     background: url(../images/filetree/ico_doc.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_ogv,
-.fm-filetree li span.button.ico_ext_ogv {
+.fm-container .list-icon.ico_ext_ogv,
+.fm-container li span.button.ico_ext_ogv {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_ogg,
-.fm-filetree li span.button.ico_ext_ogg {
+.fm-container .list-icon.ico_ext_ogg,
+.fm-container li span.button.ico_ext_ogg {
     background: url(../images/filetree/ico_music.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_pcx,
-.fm-filetree li span.button.ico_ext_pcx {
+.fm-container .list-icon.ico_ext_pcx,
+.fm-container li span.button.ico_ext_pcx {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_pdf,
-.fm-filetree li span.button.ico_ext_pdf {
+.fm-container .list-icon.ico_ext_pdf,
+.fm-container li span.button.ico_ext_pdf {
     background: url(../images/filetree/ico_pdf.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_php,
-.fm-filetree li span.button.ico_ext_php {
+.fm-container .list-icon.ico_ext_php,
+.fm-container li span.button.ico_ext_php {
     background: url(../images/filetree/ico_php.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_png,
-.fm-filetree li span.button.ico_ext_png {
+.fm-container .list-icon.ico_ext_png,
+.fm-container li span.button.ico_ext_png {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_ppt,
-.fm-filetree li span.button.ico_ext_ppt {
+.fm-container .list-icon.ico_ext_ppt,
+.fm-container li span.button.ico_ext_ppt {
     background: url(../images/filetree/ico_ppt.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_pptx,
-.fm-filetree li span.button.ico_ext_pptx {
+.fm-container .list-icon.ico_ext_pptx,
+.fm-container li span.button.ico_ext_pptx {
     background: url(../images/filetree/ico_ppt.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_psd,
-.fm-filetree li span.button.ico_ext_psd {
+.fm-container .list-icon.ico_ext_psd,
+.fm-container li span.button.ico_ext_psd {
     background: url(../images/filetree/ico_psd.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_pl,
-.fm-filetree li span.button.ico_ext_pl {
+.fm-container .list-icon.ico_ext_pl,
+.fm-container li span.button.ico_ext_pl {
     background: url(../images/filetree/ico_script.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_py,
-.fm-filetree li span.button.ico_ext_py {
+.fm-container .list-icon.ico_ext_py,
+.fm-container li span.button.ico_ext_py {
     background: url(../images/filetree/ico_script.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_rar,
-.fm-filetree li span.button.ico_ext_rar {
+.fm-container .list-icon.ico_ext_rar,
+.fm-container li span.button.ico_ext_rar {
     background: url(../images/filetree/ico_zip.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_rb,
-.fm-filetree li span.button.ico_ext_rb {
+.fm-container .list-icon.ico_ext_rb,
+.fm-container li span.button.ico_ext_rb {
     background: url(../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_rbx,
-.fm-filetree li span.button.ico_ext_rbx {
+.fm-container .list-icon.ico_ext_rbx,
+.fm-container li span.button.ico_ext_rbx {
     background: url(../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_rhtml,
-.fm-filetree li span.button.ico_ext_rhtml {
+.fm-container .list-icon.ico_ext_rhtml,
+.fm-container li span.button.ico_ext_rhtml {
     background: url(../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_rpm,
-.fm-filetree li span.button.ico_ext_rpm {
+.fm-container .list-icon.ico_ext_rpm,
+.fm-container li span.button.ico_ext_rpm {
     background: url(../images/filetree/ico_linux.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_ruby,
-.fm-filetree li span.button.ico_ext_ruby {
+.fm-container .list-icon.ico_ext_ruby,
+.fm-container li span.button.ico_ext_ruby {
     background: url(../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_sql,
-.fm-filetree li span.button.ico_ext_sql {
+.fm-container .list-icon.ico_ext_sql,
+.fm-container li span.button.ico_ext_sql {
     background: url(../images/filetree/ico_db.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_swf,
-.fm-filetree li span.button.ico_ext_swf {
+.fm-container .list-icon.ico_ext_swf,
+.fm-container li span.button.ico_ext_swf {
     background: url(../images/filetree/ico_flash.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_tar,
-.fm-filetree li span.button.ico_ext_tar {
+.fm-container .list-icon.ico_ext_tar,
+.fm-container li span.button.ico_ext_tar {
     background: url(../images/filetree/ico_zip.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_tif,
-.fm-filetree li span.button.ico_ext_tif {
+.fm-container .list-icon.ico_ext_tif,
+.fm-container li span.button.ico_ext_tif {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_tiff,
-.fm-filetree li span.button.ico_ext_tiff {
+.fm-container .list-icon.ico_ext_tiff,
+.fm-container li span.button.ico_ext_tiff {
     background: url(../images/filetree/ico_picture.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_txt,
-.fm-filetree li span.button.ico_ext_txt {
+.fm-container .list-icon.ico_ext_txt,
+.fm-container li span.button.ico_ext_txt {
     background: url(../images/filetree/ico_txt.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_vb,
-.fm-filetree li span.button.ico_ext_vb {
+.fm-container .list-icon.ico_ext_vb,
+.fm-container li span.button.ico_ext_vb {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_wav,
-.fm-filetree li span.button.ico_ext_wav {
+.fm-container .list-icon.ico_ext_wav,
+.fm-container li span.button.ico_ext_wav {
     background: url(../images/filetree/ico_music.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_weba,
-.fm-filetree li span.button.ico_ext_weba {
+.fm-container .list-icon.ico_ext_weba,
+.fm-container li span.button.ico_ext_weba {
     background: url(../images/filetree/ico_music.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_webm,
-.fm-filetree li span.button.ico_ext_webm {
+.fm-container .list-icon.ico_ext_webm,
+.fm-container li span.button.ico_ext_webm {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_wmv,
-.fm-filetree li span.button.ico_ext_wmv {
+.fm-container .list-icon.ico_ext_wmv,
+.fm-container li span.button.ico_ext_wmv {
     background: url(../images/filetree/ico_film.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_xls,
-.fm-filetree li span.button.ico_ext_xls {
+.fm-container .list-icon.ico_ext_xls,
+.fm-container li span.button.ico_ext_xls {
     background: url(../images/filetree/ico_xls.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_xlsx,
-.fm-filetree li span.button.ico_ext_xlsx {
+.fm-container .list-icon.ico_ext_xlsx,
+.fm-container li span.button.ico_ext_xlsx {
     background: url(../images/filetree/ico_xls.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_xml,
-.fm-filetree li span.button.ico_ext_xml {
+.fm-container .list-icon.ico_ext_xml,
+.fm-container li span.button.ico_ext_xml {
     background: url(../images/filetree/ico_code.png) left top no-repeat;
 }
 
-.fm-fileinfo .list-icon.ico_ext_zip,
-.fm-filetree li span.button.ico_ext_zip {
+.fm-container .list-icon.ico_ext_zip,
+.fm-container li span.button.ico_ext_zip {
     background: url(../images/filetree/ico_zip.png) left top no-repeat;
 }
 
 
 /** ICONS - Grid view related styles **/
 
-.fm-fileinfo .grid-icon {
+.fm-container .grid-icon {
     display: block;
     margin: 0 auto;
     overflow: hidden;
@@ -1479,277 +1476,277 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-position: center center;
 }
 
-.fm-fileinfo .grid-icon {
+.fm-container .fm-fileinfo .view-items .grid-icon {
     width: 64px;
     height: 64px;
 }
 
-.fm-fileinfo .fm-preview .grid-icon {
+.fm-container .fm-fileinfo .fm-preview .grid-icon {
     width: 128px;
     height: 128px;
 }
 
-.fm-fileinfo .grid-icon.ico_file {
+.fm-container .grid-icon.ico_file {
     background-image: url(../images/fileicons/icon_file.png);
 }
 
-.fm-fileinfo .grid-icon.ico_file_lock {
+.fm-container .grid-icon.ico_file_lock {
     background-image: url(../images/fileicons/icon_file_lock.png);
 }
 
-.fm-fileinfo .grid-icon.ico_folder {
+.fm-container .grid-icon.ico_folder {
     background-image: url(../images/fileicons/icon_folder.png);
 }
 
-.fm-fileinfo .grid-icon.ico_folder_lock {
+.fm-container .grid-icon.ico_folder_lock {
     background-image: url(../images/fileicons/icon_folder_lock.png);
 }
 
-.fm-fileinfo .grid-icon.ico_folder_parent {
+.fm-container .grid-icon.ico_folder_parent {
     background-image: url(../images/fileicons/icon_folder_parent.png);
 }
 
-.fm-fileinfo .grid-icon.ico_multiple {
+.fm-container .grid-icon.ico_multiple {
     background-image: url(../images/fileicons/icon_multiple.png);
 }
 
 
 /** ICONS - Grid view related styles based on file extension **/
 
-.fm-fileinfo .grid-icon.ico_ext_3g2 {
+.fm-container .grid-icon.ico_ext_3g2 {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_3gp {
+.fm-container .grid-icon.ico_ext_3gp {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_7z {
+.fm-container .grid-icon.ico_ext_7z {
     background-image: url(../images/fileicons/icon_zip.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_aac {
+.fm-container .grid-icon.ico_ext_aac {
     background-image: url(../images/fileicons/icon_aac.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_avi {
+.fm-container .grid-icon.ico_ext_avi {
     background-image: url(../images/fileicons/icon_avi.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_bmp {
+.fm-container .grid-icon.ico_ext_bmp {
     background-image: url(../images/fileicons/icon_bmp.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_chm {
+.fm-container .grid-icon.ico_ext_chm {
     background-image: url(../images/fileicons/icon_chm.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_css {
+.fm-container .grid-icon.ico_ext_css {
     background-image: url(../images/fileicons/icon_css.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_csv {
+.fm-container .grid-icon.ico_ext_csv {
     background-image: url(../images/fileicons/icon_txt.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_dll {
+.fm-container .grid-icon.ico_ext_dll {
     background-image: url(../images/fileicons/icon_dll.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_doc,
-.fm-fileinfo .grid-icon.ico_ext_docx {
+.fm-container .grid-icon.ico_ext_doc,
+.fm-container .grid-icon.ico_ext_docx {
     background-image: url(../images/fileicons/icon_doc.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_fla {
+.fm-container .grid-icon.ico_ext_fla {
     background-image: url(../images/fileicons/icon_fla.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_gif {
+.fm-container .grid-icon.ico_ext_gif {
     background-image: url(../images/fileicons/icon_gif.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_htm,
-.fm-fileinfo .grid-icon.ico_ext_html {
+.fm-container .grid-icon.ico_ext_htm,
+.fm-container .grid-icon.ico_ext_html {
     background-image: url(../images/fileicons/icon_html.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_ini {
+.fm-container .grid-icon.ico_ext_ini {
     background-image: url(../images/fileicons/icon_ini.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_jar {
+.fm-container .grid-icon.ico_ext_jar {
     background-image: url(../images/fileicons/icon_jar.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_jpg,
-.fm-fileinfo .grid-icon.ico_ext_jpeg {
+.fm-container .grid-icon.ico_ext_jpg,
+.fm-container .grid-icon.ico_ext_jpeg {
     background-image: url(../images/fileicons/icon_jpg.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_js {
+.fm-container .grid-icon.ico_ext_js {
     background-image: url(../images/fileicons/icon_js.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_lasso {
+.fm-container .grid-icon.ico_ext_lasso {
     background-image: url(../images/fileicons/icon_lasso.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_m4p {
+.fm-container .grid-icon.ico_ext_m4p {
     background-image: url(../images/fileicons/icon_music.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_m4v {
+.fm-container .grid-icon.ico_ext_m4v {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_mdb {
+.fm-container .grid-icon.ico_ext_mdb {
     background-image: url(../images/fileicons/icon_mdb.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_mov {
+.fm-container .grid-icon.ico_ext_mov {
     background-image: url(../images/fileicons/icon_mov.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_mp3 {
+.fm-container .grid-icon.ico_ext_mp3 {
     background-image: url(../images/fileicons/icon_mp3.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_mp4 {
+.fm-container .grid-icon.ico_ext_mp4 {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_mpg {
+.fm-container .grid-icon.ico_ext_mpg {
     background-image: url(../images/fileicons/icon_mpg.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_mpeg {
+.fm-container .grid-icon.ico_ext_mpeg {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_odp {
+.fm-container .grid-icon.ico_ext_odp {
     background-image: url(../images/fileicons/icon_odp.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_ods {
+.fm-container .grid-icon.ico_ext_ods {
     background-image: url(../images/fileicons/icon_ods.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_odt {
+.fm-container .grid-icon.ico_ext_odt {
     background-image: url(../images/fileicons/icon_odt.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_ogg {
+.fm-container .grid-icon.ico_ext_ogg {
     background-image: url(../images/fileicons/icon_music.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_pcx {
+.fm-container .grid-icon.ico_ext_pcx {
     background-image: url(../images/fileicons/icon_image.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_ogv {
+.fm-container .grid-icon.ico_ext_ogv {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_pdf {
+.fm-container .grid-icon.ico_ext_pdf {
     background-image: url(../images/fileicons/icon_pdf.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_php {
+.fm-container .grid-icon.ico_ext_php {
     background-image: url(../images/fileicons/icon_php.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_png {
+.fm-container .grid-icon.ico_ext_png {
     background-image: url(../images/fileicons/icon_png.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_ppt,
-.fm-fileinfo .grid-icon.ico_ext_pptx {
+.fm-container .grid-icon.ico_ext_ppt,
+.fm-container .grid-icon.ico_ext_pptx {
     background-image: url(../images/fileicons/icon_ppt.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_py {
+.fm-container .grid-icon.ico_ext_py {
     background-image: url(../images/fileicons/icon_py.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_rar {
+.fm-container .grid-icon.ico_ext_rar {
     background-image: url(../images/fileicons/icon_zip.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_rb {
+.fm-container .grid-icon.ico_ext_rb {
     background-image: url(../images/fileicons/icon_rb.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_real {
+.fm-container .grid-icon.ico_ext_real {
     background-image: url(../images/fileicons/icon_real.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_reg {
+.fm-container .grid-icon.ico_ext_reg {
     background-image: url(../images/fileicons/icon_reg.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_rtf {
+.fm-container .grid-icon.ico_ext_rtf {
     background-image: url(../images/fileicons/icon_rtf.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_sql {
+.fm-container .grid-icon.ico_ext_sql {
     background-image: url(../images/fileicons/icon_sql.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_swf {
+.fm-container .grid-icon.ico_ext_swf {
     background-image: url(../images/fileicons/icon_swf.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_tar {
+.fm-container .grid-icon.ico_ext_tar {
     background-image: url(../images/fileicons/icon_zip.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_tif,
-.fm-fileinfo .grid-icon.ico_ext_tiff {
+.fm-container .grid-icon.ico_ext_tif,
+.fm-container .grid-icon.ico_ext_tiff {
     background-image: url(../images/fileicons/icon_image.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_txt {
+.fm-container .grid-icon.ico_ext_txt {
     background-image: url(../images/fileicons/icon_txt.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_vbs {
+.fm-container .grid-icon.ico_ext_vbs {
     background-image: url(../images/fileicons/icon_vbs.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_wav {
+.fm-container .grid-icon.ico_ext_wav {
     background-image: url(../images/fileicons/icon_wav.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_weba {
+.fm-container .grid-icon.ico_ext_weba {
     background-image: url(../images/fileicons/icon_music.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_webm {
+.fm-container .grid-icon.ico_ext_webm {
     background-image: url(../images/fileicons/icon_movie.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_wma {
+.fm-container .grid-icon.ico_ext_wma {
     background-image: url(../images/fileicons/icon_wma.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_wmv {
+.fm-container .grid-icon.ico_ext_wmv {
     background-image: url(../images/fileicons/icon_wmv.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_xls,
-.fm-fileinfo .grid-icon.ico_ext_xlsx {
+.fm-container .grid-icon.ico_ext_xls,
+.fm-container .grid-icon.ico_ext_xlsx {
     background-image: url(../images/fileicons/icon_xls.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_xml {
+.fm-container .grid-icon.ico_ext_xml {
     background-image: url(../images/fileicons/icon_xml.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_xsl {
+.fm-container .grid-icon.ico_ext_xsl {
     background-image: url(../images/fileicons/icon_xsl.png);
 }
 
-.fm-fileinfo .grid-icon.ico_ext_zip {
+.fm-container .grid-icon.ico_ext_zip {
     background-image: url(../images/fileicons/icon_zip.png);
 }
