@@ -247,12 +247,18 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     user-select: none;
 }
 
-.fm-container .fm-filetree li > div.row.drop-hover {
-    background-color: #96a8cf;
+.fm-container .fm-filetree li.drop-hover > div.row {
+    background-color: #bbbbbb;
+}
+.fm-container .fm-filetree li.drop-hover > a {
+    color: #000000;
 }
 
-.fm-container .fm-filetree li.selected > div.row {
-    background-color: red;
+.fm-container .fm-filetree li.ui-selected > div.row {
+    background-color: #b8c6da;
+}
+.fm-container .fm-filetree li.ui-selected > a {
+    color: #000000;
 }
 
 .fm-container .fm-filetree li > a {
@@ -269,7 +275,8 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 .fm-container .fm-filetree li > a:hover {
-    background-color: #55767F;
+    color: #000000;
+    background-color: #b8c6da;
     text-decoration: none
 }
 
@@ -947,7 +954,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     width: 20px;
     height: 20px;
     margin: 0 auto;
-    background: url(../images/fileicons/drag-n-drop/cancel-5.png) center center no-repeat;
+    background: url(../images/fileicons/drag-n-drop/cancel-4.png) center center no-repeat;
     background-size: cover;
 }
 

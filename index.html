@@ -366,7 +366,7 @@
 		</script>
 
 		<script type="text/html" id="node-parent-template">
-			<li data-bind="template: {name: 'node-template', data: koNode}, css: {'selected': koNode.selected()}"></li>
+			<li data-bind="template: {name: 'node-template', data: koNode}, css: koNode.itemClass()"></li>
 		</script>
 
 		<script type="text/html" id="node-template">
