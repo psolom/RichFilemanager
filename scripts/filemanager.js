@@ -446,7 +446,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
         $wrapper.on('DOMMouseScroll mousewheel', function(e){
-            var $collision = $(".drag-helper.cloned").collision(".mCSB_container", {
+            var $collision = fmModel.dragModel.dragHelper().collision(".mCSB_container", {
             	mode: "collision"
             });
 
@@ -472,24 +472,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						refreshPositions: false,
                         appendTo: $wrapper,
                         containment: $splitter,
-						helper: function() {
-							var $cloned,
-                                iconClass,
-								selectedItems = fmModel.itemsModel.getSelected();
-
-                            if (selectedItems.length > 1) {
-                                iconClass = 'ico_multiple';
-							} else {
-                                iconClass = (koItem.rdo.type === "folder")
-									? 'ico_folder'
-									: 'ico_file ico_ext_' + getExtension(koItem.rdo.id);
-							}
-
-							$cloned = $('#drag-helper-template').children('.drag-helper').clone();
-                            $cloned.addClass('cloned');
-                            $cloned.find('.clip').addClass(iconClass);
-
-							return $cloned;
+                        helper: function () {
+                            return fmModel.dragModel.createHelper(koItem, fmModel.itemsModel.getSelected());
 						},
 						start: function(event, ui) {
                             fmModel.dragModel.items(fmModel.itemsModel.getSelected());
@@ -499,6 +483,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         },
                         stop: function(event, ui) {
                             fmModel.dragModel.items([]);
+                            fmModel.dragModel.dragHelper(null);
 						}
 					});
 				}
@@ -584,25 +569,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						refreshPositions: false,
                         appendTo: $wrapper,
                         containment: $splitter,
-						helper: function() {
-                            var $cloned,
-                                iconClass,
-                                selectedItems = fmModel.itemsModel.getSelected();
-
-                            if (selectedItems.length > 1) {
-                                iconClass = 'ico_multiple';
-                            } else {
-                                iconClass = (koItem.rdo.type === "folder")
-                                    ? 'ico_folder'
-                                    : 'ico_file ico_ext_' + getExtension(koItem.rdo.id);
-                            }
-
-                            $cloned = $('#drag-helper-template').children('.drag-helper').clone();
-                            $cloned.addClass('cloned');
-                            $cloned.find('.clip').addClass(iconClass);
-
-                            return $cloned;
-						},
+                        helper: function () {
+                            return fmModel.dragModel.createHelper(koItem, [fmModel.treeModel.selectedNode()]);
+                        },
                         start: function(event, ui) {
                             fmModel.dragModel.items([fmModel.treeModel.selectedNode()]);
                         },
@@ -611,6 +580,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						},
                         stop: function(event, ui) {
                             fmModel.dragModel.items([]);
+                            fmModel.dragModel.dragHelper(null);
                         }
 					});
 				}
@@ -908,37 +878,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			if(viewItem) {
 				viewItem.remove();
 			}
-		};
-
-		var DragModel = function() {
-            var drag_model = this,
-				restrictedCssClass = 'drop-restricted',
-				$dragHelper = $('#drag-helper-template');
-
-            this.items = ko.observableArray([]);
-            this.hoveredItem = ko.observable(null);
-            this.cursorPosition = {
-                left: Math.floor($dragHelper.width() / 2),
-                bottom: 15
-            };
-
-            this.hover = function (item) {
-            	if (drag_model.hoveredItem() !== null) {
-                    drag_model.hoveredItem().dragHovered(false);
-				}
-                drag_model.hoveredItem(item);
-                if (item) {
-                    item.dragHovered(true);
-				}
-			};
-
-            this.restrict = function ($helper, flag) {
-            	if (flag) {
-                    $helper.addClass(restrictedCssClass);
-				} else {
-                    $helper.removeClass(restrictedCssClass);
-				}
-			};
 		};
 
 		var PreviewModel = function() {
@@ -1351,7 +1290,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			};
 
-			var TreeNodeModel = function(resourceObject) {
+            var TreeNodeModel = function(resourceObject) {
 				var tree_node = this;
 				this.id = resourceObject.id;
 				this.rdo = resourceObject;
@@ -1895,6 +1834,58 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.thDimensions = new SortableHeader('dimensions');
 			this.thModified = new SortableHeader('modified');
 		};
+
+        var DragModel = function() {
+            var drag_model = this,
+                restrictedCssClass = 'drop-restricted',
+                $dragHelperTemplate = $('#drag-helper-template');
+
+            this.items = ko.observableArray([]);
+            this.hoveredItem = ko.observable(null);
+            this.dragHelper = ko.observable(null);
+            this.cursorPosition = {
+                left: Math.floor($dragHelperTemplate.width() / 2),
+                bottom: 15
+            };
+
+            this.hover = function (item) {
+                if (drag_model.hoveredItem() !== null) {
+                    drag_model.hoveredItem().dragHovered(false);
+                }
+                drag_model.hoveredItem(item);
+                if (item) {
+                    item.dragHovered(true);
+                }
+            };
+
+            this.restrict = function ($helper, flag) {
+                if (flag) {
+                    $helper.addClass(restrictedCssClass);
+                } else {
+                    $helper.removeClass(restrictedCssClass);
+                }
+            };
+
+            this.createHelper = function (item, selectedItems) {
+                var $cloned,
+                    iconClass;
+
+                if (selectedItems.length > 1) {
+                    iconClass = 'ico_multiple';
+                } else {
+                    iconClass = (item.rdo.type === "folder")
+                        ? 'ico_folder'
+                        : 'ico_file ico_ext_' + getExtension(item.rdo.id);
+                }
+
+                $cloned = $dragHelperTemplate.children('.drag-helper').clone();
+                $cloned.find('.clip').addClass(iconClass);
+
+                drag_model.dragHelper($cloned);
+
+                return $cloned;
+            }
+        };
 
 		var HeaderModel = function() {
 			this.closeButton = ko.observable(false);
