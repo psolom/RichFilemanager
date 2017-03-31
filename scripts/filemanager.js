@@ -445,191 +445,71 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-        $wrapper.on('DOMMouseScroll mousewheel', function(e){
-            var $collision = fmModel.dragModel.dragHelper().collision(".mCSB_container", {
-            	mode: "collision"
-            });
-
-            if ($collision.length && !$collision.hasClass('mCS_y_hidden') && !$collision.parent().hasClass('mCS_y_hidden')) {
-            	var direction = (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) ? '+' : '-';
-                var $scrollBar = $collision.closest('.mCustomScrollbar');
-
-                $scrollBar.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
-                    scrollInertia: 500,
-                    scrollEasing: "easeOut"
-                });
+        //$wrapper.on('DOMMouseScroll mousewheel', function (e) {
+        $wrapper.mousewheel(function(e) {
+        	if (!fmModel.ddModel.dragHelper) {
+        		return false;
 			}
+
+            var $collision,
+                $scrollPane,
+                direction = (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) ? '+' : '-';
+
+            if (config.customScrollbar.enabled) {
+                $collision = fmModel.ddModel.dragHelper.collision(".mCSB_container", {
+                    mode: "collision"
+                });
+
+                if ($collision.length && !$collision.hasClass('mCS_y_hidden') && !$collision.parent().hasClass('mCS_y_hidden')) {
+                    $scrollPane = $collision.closest('.mCustomScrollbar');
+
+                    $scrollPane.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
+                        scrollInertia: 500,
+                        scrollEasing: "easeOut",
+						callbacks: true
+                    });
+                }
+            } else {
+                $collision = fmModel.ddModel.dragHelper.collision(".splitter-pane", {
+                    mode: "collision"
+                });
+
+                $scrollPane = $collision.first();
+
+                var scrollPosition = $scrollPane.scrollTop();
+                var scrollOffset = scrollPosition - (200 * e.deltaY);
+
+                fmModel.ddModel.isScrolling = true;
+                scrollOffset = (scrollOffset < 0) ? 0 : scrollOffset;
+                $scrollPane.stop().animate({scrollTop: scrollOffset}, 100, 'linear', function() {
+                    fmModel.ddModel.isScrolling = false;
+                    fmModel.ddModel.isScrolled = true;
+				});
+            }
+
         });
 
 		ko.bindingHandlers.draggableView = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
-				var koItem = valueAccessor();
-				if(koItem.rdo.type === "file" || koItem.rdo.type === "folder") {
-					$(element).draggable({
-						distance: 3,
-						cursor: "pointer",
-                        cursorAt: fmModel.dragModel.cursorPosition,
-						refreshPositions: false,
-                        appendTo: $wrapper,
-                        containment: $splitter,
-                        helper: function () {
-                            return fmModel.dragModel.createHelper(koItem, fmModel.itemsModel.getSelected());
-						},
-						start: function(event, ui) {
-                            fmModel.dragModel.items(fmModel.itemsModel.getSelected());
-						},
-                        drag: function(event, ui) {
-                            $(this).draggable('option', 'refreshPositions', fmModel.itemsModel.isScrolling() || fmModel.treeModel.isScrolling());
-                        },
-                        stop: function(event, ui) {
-                            fmModel.dragModel.items([]);
-                            fmModel.dragModel.dragHelper(null);
-						}
-					});
-				}
+                fmModel.ddModel.makeDraggable(valueAccessor(), element);
 			}
 		};
 
-        // check whether draggable items can be accepted by target item
-        function isDropAllowed(targetItem) {
-
-            var matches = $.grep(fmModel.dragModel.items(), function(itemObject, i) {
-                if (targetItem.rdo.type === "folder") {
-                    // drop folder inside descending folders (filetree)
-                	if (startsWith(targetItem.rdo.id, itemObject.rdo.id)) {
-                        return true;
-					}
-                    // drop items inside the same folder (filetree)
-                    if (targetItem.rdo.id === getClosestNode(itemObject.rdo.id)) {
-                        return true;
-                    }
-                }
-                // drop item to itself
-                return (itemObject.id === targetItem.id);
-            });
-            // prevent on moving (to) protect folder or to the one of selected items
-            return (targetItem.rdo.attributes.writable && matches.length === 0);
-        }
-
 		ko.bindingHandlers.droppableView = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
-                var targetItem = valueAccessor();
-				if(valueAccessor().rdo.type === "folder" || valueAccessor().rdo.type === "parent") {
-					$(element).droppable({
-                        tolerance: "pointer",
-                        enableExtendedEvents: true,
-                        accept: function ($draggable) {
-                            var dragItem = ko.dataFor($draggable[0]),
-                                type = dragItem ? dragItem.rdo.type : null;
-
-                            return (type === "file" || type === "folder");
-                        },
-                        over: function (event, ui) {
-                            // prevent "over" event fire before "out" event
-                            // http://stackoverflow.com/a/28457286/7095038
-                            setTimeout(function () {
-                                fmModel.dragModel.hover(null);
-                                fmModel.dragModel.restrict(ui.helper, false);
-
-                                if (isDropAllowed(targetItem)) {
-                                    fmModel.dragModel.hover(targetItem);
-                                } else {
-                                    fmModel.dragModel.restrict(ui.helper, true);
-                                }
-                            }, 0);
-                        },
-                        out: function (event, ui) {
-                            fmModel.dragModel.hover(null);
-                            fmModel.dragModel.restrict(ui.helper, false);
-                        },
-                        drop: function (event, ui) {
-                            fmModel.dragModel.hover(null);
-
-                            if (!isDropAllowed(targetItem)) {
-                                return false;
-                            }
-
-                            processMultipleActions(fmModel.dragModel.items(), function (i, itemObject) {
-                                return moveItem(itemObject.rdo, targetItem.id);
-                            });
-                        }
-					});
-				}
+                fmModel.ddModel.makeDroppable(valueAccessor(), element);
 			}
 		};
 
 		ko.bindingHandlers.draggableTree = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
-				var koItem = valueAccessor();
-				if(koItem.rdo.type === "file" || koItem.rdo.type === "folder") {
-					$(element).draggable({
-						distance: 3,
-						cursor: "pointer",
-                        cursorAt: fmModel.dragModel.cursorPosition,
-						refreshPositions: false,
-                        appendTo: $wrapper,
-                        containment: $splitter,
-                        helper: function () {
-                            return fmModel.dragModel.createHelper(koItem, [fmModel.treeModel.selectedNode()]);
-                        },
-                        start: function(event, ui) {
-                            fmModel.dragModel.items([fmModel.treeModel.selectedNode()]);
-                        },
-						drag: function(event, ui) {
-							$(this).draggable('option', 'refreshPositions', fmModel.itemsModel.isScrolling() || fmModel.treeModel.isScrolling());
-						},
-                        stop: function(event, ui) {
-                            fmModel.dragModel.items([]);
-                            fmModel.dragModel.dragHelper(null);
-                        }
-					});
-				}
+                fmModel.ddModel.makeDraggable(valueAccessor(), element);
 			}
 		};
 
 		ko.bindingHandlers.droppableTree = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
-                var targetItem = valueAccessor();
-				if(valueAccessor().rdo.type === "folder" || valueAccessor().rdo.type === "parent") {
-					$(element).droppable({
-                        tolerance: "pointer",
-                        accept: function ($draggable) {
-                            var dragItem = ko.dataFor($draggable[0]),
-                                type = dragItem ? dragItem.rdo.type : null;
-
-                            return (type === "file" || type === "folder");
-                        },
-                        over: function (event, ui) {
-                            // prevent "over" event fire before "out" event
-                            // http://stackoverflow.com/a/28457286/7095038
-                            setTimeout(function () {
-                                fmModel.dragModel.hover(null);
-                                fmModel.dragModel.restrict(ui.helper, false);
-
-                                if (isDropAllowed(targetItem)) {
-                                    fmModel.dragModel.hover(targetItem);
-                                } else {
-                                    fmModel.dragModel.restrict(ui.helper, true);
-                                }
-                            }, 0);
-                        },
-                        out: function (event, ui) {
-                            fmModel.dragModel.hover(null);
-                            fmModel.dragModel.restrict(ui.helper, false);
-                        },
-                        drop: function (event, ui) {
-                            fmModel.dragModel.hover(null);
-
-                            if (!isDropAllowed(targetItem)) {
-                                return false;
-                            }
-
-                            processMultipleActions(fmModel.dragModel.items(), function (i, itemObject) {
-                                return moveItem(itemObject.rdo, targetItem.id);
-                            });
-                        }
-					});
-				}
+                fmModel.ddModel.makeDroppable(valueAccessor(), element);
 			}
 		};
 
@@ -738,10 +618,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				},
 				callbacks: {
 					onScrollStart: function() {
-						fmModel.treeModel.isScrolling(true);
+						fmModel.ddModel.isScrolling = true;
 					},
 					onScroll: function() {
-						fmModel.treeModel.isScrolling(false);
+						fmModel.ddModel.isScrolling = false;
 					}
 				},
 				axis: "yx"
@@ -775,10 +655,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             this.yStartPosition = this.mcs.top;
                             this.yStartTime = (new Date()).getTime();
                         }
-                        fmModel.itemsModel.isScrolling(true);
+                        fmModel.ddModel.isScrolling = true;
                     },
                     onScroll: function() {
-                        fmModel.itemsModel.isScrolling(false);
+                    	fmModel.ddModel.isScrolling = false;
+                        fmModel.ddModel.isScrolled = true;
                     },
                     whileScrolling: function() {
                         if (config.manager.selection.enabled) {
@@ -1080,7 +961,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		var TreeModel = function() {
 			var tree_model = this;
-			this.isScrolling = ko.observable(false);
 			this.selectedNode = ko.observable(null);
 
 			this.treeData = {
@@ -1292,6 +1172,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             var TreeNodeModel = function(resourceObject) {
 				var tree_node = this;
+                this.ancestor = tree_model;
 				this.id = resourceObject.id;
 				this.rdo = resourceObject;
 				this.cdo = { // computed data object
@@ -1409,7 +1290,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         cssClass.push('ui-selected');
                     }
                     if (this.dragHovered()) {
-                        cssClass.push('drop-hover');
+                        cssClass.push(model.ddModel.hoveredCssClass);
                     }
                     return cssClass.join(' ');
                 }, this);
@@ -1478,7 +1359,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.selectedNumber = ko.observable(0);
 			this.listSortField = ko.observable(configSortField);
 			this.listSortOrder = ko.observable(configSortOrder);
-			this.isScrolling = ko.observable(false);
 			this.isSelecting = ko.observable(false);
 			this.continiousSelection = ko.observable(false);
             this.descriptivePanel = new RenderModel();
@@ -1546,7 +1426,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 readable: true,
                                 writable: true
 							}
-						}
+						},
+                        dragHovered: ko.observable(false)
 					};
 
 					parent.open = function(item, e) {
@@ -1554,6 +1435,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             items_model.loadList(parent.id);
                         }
 					};
+
+                    parent.itemClass = ko.pureComputed(function() {
+                        var cssClass = [];
+                        if (parent.dragHovered()) {
+                            cssClass.push(model.ddModel.hoveredCssClass);
+                        }
+                        return cssClass.join(' ');
+                    });
+
 					objects.push(parent);
 				}
 
@@ -1678,6 +1568,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					previewWidth = resourceObject.attributes.width;
 				}
 
+                this.ancestor = items_model;
 				this.id = resourceObject.id; // for search purpose
 				this.rdo = resourceObject; // original resource data object
 				this.cdo = { // computed data object
@@ -1709,7 +1600,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						cssClass.push('ui-selected');
 					}
                     if (this.dragHovered()) {
-                        cssClass.push('drop-hover');
+                        cssClass.push(model.ddModel.hoveredCssClass);
                     }
 					return this.cdo.cssItemClass + ' ' + cssClass.join(' ');
 				}, this);
@@ -1834,58 +1725,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.thDimensions = new SortableHeader('dimensions');
 			this.thModified = new SortableHeader('modified');
 		};
-
-        var DragModel = function() {
-            var drag_model = this,
-                restrictedCssClass = 'drop-restricted',
-                $dragHelperTemplate = $('#drag-helper-template');
-
-            this.items = ko.observableArray([]);
-            this.hoveredItem = ko.observable(null);
-            this.dragHelper = ko.observable(null);
-            this.cursorPosition = {
-                left: Math.floor($dragHelperTemplate.width() / 2),
-                bottom: 15
-            };
-
-            this.hover = function (item) {
-                if (drag_model.hoveredItem() !== null) {
-                    drag_model.hoveredItem().dragHovered(false);
-                }
-                drag_model.hoveredItem(item);
-                if (item) {
-                    item.dragHovered(true);
-                }
-            };
-
-            this.restrict = function ($helper, flag) {
-                if (flag) {
-                    $helper.addClass(restrictedCssClass);
-                } else {
-                    $helper.removeClass(restrictedCssClass);
-                }
-            };
-
-            this.createHelper = function (item, selectedItems) {
-                var $cloned,
-                    iconClass;
-
-                if (selectedItems.length > 1) {
-                    iconClass = 'ico_multiple';
-                } else {
-                    iconClass = (item.rdo.type === "folder")
-                        ? 'ico_folder'
-                        : 'ico_file ico_ext_' + getExtension(item.rdo.id);
-                }
-
-                $cloned = $dragHelperTemplate.children('.drag-helper').clone();
-                $cloned.find('.clip').addClass(iconClass);
-
-                drag_model.dragHelper($cloned);
-
-                return $cloned;
-            }
-        };
 
 		var HeaderModel = function() {
 			this.closeButton = ko.observable(false);
@@ -2444,7 +2283,160 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-		this.dragModel = new DragModel();
+        var DragAndDropModel = function() {
+            var drag_model = this,
+                restrictedCssClass = 'drop-restricted',
+                $dragHelperTemplate = $('#drag-helper-template');
+
+            this.items = [];
+            this.hoveredItem = null;
+            this.dragHelper = null;
+            this.isScrolling = false;
+            this.isScrolled = false;
+            this.hoveredCssClass = 'drop-hover';
+
+            this.makeDraggable = function(item, element) {
+                if(item.rdo.type === "file" || item.rdo.type === "folder") {
+                    $(element).draggable({
+                        distance: 3,
+                        cursor: "pointer",
+                        cursorAt: {
+                            left: Math.floor($dragHelperTemplate.width() / 2),
+                            bottom: 15
+                        },
+                        appendTo: $wrapper,
+                        containment: $splitter,
+                        refreshPositions: false,
+                        helper: function () {
+                            var $cloned,
+                                iconClass;
+
+                            if (getSelected(item).length > 1) {
+                                iconClass = 'ico_multiple';
+                            } else {
+                                iconClass = (item.rdo.type === "folder")
+                                    ? 'ico_folder'
+                                    : 'ico_file ico_ext_' + getExtension(item.rdo.id);
+                            }
+
+                            $cloned = $dragHelperTemplate.children('.drag-helper').clone();
+                            $cloned.find('.clip').addClass(iconClass);
+
+                            drag_model.dragHelper = $cloned;
+                            return $cloned;
+                        },
+                        start: function(event, ui) {
+                            drag_model.items = getSelected(item);
+                        },
+                        drag: function(event, ui) {
+                        	console.log($(this).draggable('option', 'refreshPositions'));
+                            $(this).draggable('option', 'refreshPositions', drag_model.isScrolling || drag_model.isScrolled);
+                            drag_model.isScrolled = false;
+                        },
+                        stop: function(event, ui) {
+                            drag_model.items = [];
+                            drag_model.dragHelper = null;
+                        }
+                    });
+                }
+            };
+
+            this.makeDroppable = function(targetItem, element) {
+                if(targetItem.rdo.type === "folder" || targetItem.rdo.type === "parent") {
+                    $(element).droppable({
+                        tolerance: "pointer",
+                        enableExtendedEvents: targetItem.ancestor === model.itemsModel,
+                        accept: function ($draggable) {
+                            var dragItem = ko.dataFor($draggable[0]),
+                                type = dragItem ? dragItem.rdo.type : null;
+
+                            return (type === "file" || type === "folder");
+                        },
+                        over: function (event, ui) {
+                            // prevent "over" event fire before "out" event
+                            // http://stackoverflow.com/a/28457286/7095038
+                            setTimeout(function () {
+                                markHovered(null);
+                                markRestricted(ui.helper, false);
+
+                                if (isDropAllowed(targetItem)) {
+                                    markHovered(targetItem);
+                                } else {
+                                    markRestricted(ui.helper, true);
+                                }
+                            }, 0);
+                        },
+                        out: function (event, ui) {
+                            markHovered(null);
+                            markRestricted(ui.helper, false);
+                        },
+                        drop: function (event, ui) {
+                            markHovered(null);
+
+                            if (!isDropAllowed(targetItem)) {
+                                return false;
+                            }
+
+                            processMultipleActions(drag_model.items, function (i, itemObject) {
+                                return moveItem(itemObject.rdo, targetItem.id);
+                            });
+                        }
+                    });
+                }
+            };
+
+            // check whether draggable items can be accepted by target item
+            function isDropAllowed(targetItem) {
+                var matches = $.grep(drag_model.items, function(itemObject, i) {
+                    if (targetItem.rdo.type === "folder") {
+                        // drop folder inside descending folders (filetree)
+                        if (startsWith(targetItem.rdo.id, itemObject.rdo.id)) {
+                            return true;
+                        }
+                        // drop items inside the same folder (filetree)
+                        if (targetItem.rdo.id === getClosestNode(itemObject.rdo.id)) {
+                            return true;
+                        }
+                    }
+                    // drop item to itself
+                    return (itemObject.id === targetItem.id);
+                });
+                // prevent on moving (to) protect folder or to the one of selected items
+                return (targetItem.rdo.attributes.writable && matches.length === 0);
+            }
+
+            // fetch selected view items OR tree nodes
+            function getSelected(item) {
+                if (item.ancestor === model.treeModel) {
+                    return [fmModel.treeModel.selectedNode()];
+                }
+                if (item.ancestor === model.itemsModel) {
+                    return fmModel.itemsModel.getSelected();
+                }
+                throw new Error('Unknown item type.');
+            }
+
+            // mark item as hovered if it accepts draggable item
+            function markHovered(item) {
+                if (drag_model.hoveredItem !== null) {
+                    drag_model.hoveredItem.dragHovered(false);
+                }
+                drag_model.hoveredItem = item;
+                if (item) {
+                    item.dragHovered(true);
+                }
+            }
+
+            // mark helper as restricted if target item doesn't accept draggable item
+            function markRestricted($helper, flag) {
+                if (flag) {
+                    $helper.addClass(restrictedCssClass);
+                } else {
+                    $helper.removeClass(restrictedCssClass);
+                }
+            }
+        };
+
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
@@ -2454,6 +2446,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.searchModel = new SearchModel();
 		this.clipboardModel = new ClipboardModel();
 		this.breadcrumbsModel = new BreadcrumbsModel();
+        this.ddModel = new DragAndDropModel();
 	};
 
 
