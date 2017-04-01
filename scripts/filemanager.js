@@ -445,50 +445,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		};
 
-        //$wrapper.on('DOMMouseScroll mousewheel', function (e) {
-        $wrapper.mousewheel(function(e) {
-        	if (!fmModel.ddModel.dragHelper) {
-        		return false;
-			}
-
-            var $collision,
-                $scrollPane,
-                direction = (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) ? '+' : '-';
-
-            if (config.customScrollbar.enabled) {
-                $collision = fmModel.ddModel.dragHelper.collision(".mCSB_container", {
-                    mode: "collision"
-                });
-
-                if ($collision.length && !$collision.hasClass('mCS_y_hidden') && !$collision.parent().hasClass('mCS_y_hidden')) {
-                    $scrollPane = $collision.closest('.mCustomScrollbar');
-
-                    $scrollPane.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
-                        scrollInertia: 500,
-                        scrollEasing: "easeOut",
-						callbacks: true
-                    });
-                }
-            } else {
-                $collision = fmModel.ddModel.dragHelper.collision(".splitter-pane", {
-                    mode: "collision"
-                });
-
-                $scrollPane = $collision.first();
-
-                var scrollPosition = $scrollPane.scrollTop();
-                var scrollOffset = scrollPosition - (200 * e.deltaY);
-
-                fmModel.ddModel.isScrolling = true;
-                scrollOffset = (scrollOffset < 0) ? 0 : scrollOffset;
-                $scrollPane.stop().animate({scrollTop: scrollOffset}, 100, 'linear', function() {
-                    fmModel.ddModel.isScrolling = false;
-                    fmModel.ddModel.isScrolled = true;
-				});
-            }
-
-        });
-
 		ko.bindingHandlers.draggableView = {
 			init: function(element, valueAccessor, allBindingsAccessor) {
                 fmModel.ddModel.makeDraggable(valueAccessor(), element);
@@ -512,6 +468,78 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 fmModel.ddModel.makeDroppable(valueAccessor(), element);
 			}
 		};
+
+        $wrapper.mousewheel(function(e) {
+            if (!fmModel.ddModel.dragHelper) {
+                return false;
+            }
+
+            var collisions,
+                obstacleIndex = null,
+                obstacleSelector = null,
+                direction = (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) ? '+' : '-';
+
+            if (config.customScrollbar.enabled) {
+                obstacleSelector = '.mCSB_container';
+            } else {
+                obstacleSelector = '.splitter-pane';
+            }
+
+            collisions = fmModel.ddModel.dragHelper.collision(obstacleSelector, {
+                mode: "collision",
+                relative: "obstacle",
+                as: "<div/>",
+                obstacleData: "odata",
+                colliderData: "cdata"
+            });
+
+            // in case drag helper overlaps both panes
+            if (collisions.length === 2) {
+                var c = $(collisions[0]).data("cdata");
+                var o1 = $(collisions[0]).data("odata");
+                var o2 = $(collisions[1]).data("odata");
+                var middle = c.offset().left + c.outerWidth() / 2;
+
+                if (middle <= (o1.offset().left + o1.width())) {
+                    obstacleIndex = 0;
+                }
+                if (middle >= o2.offset().left) {
+                    obstacleIndex = 1;
+                }
+            } else {
+                obstacleIndex = 0;
+            }
+
+            // no one appropriate obstacle is overlapped
+            if (obstacleIndex === null) {
+                return false;
+            }
+
+            var $obstacle = $(collisions[obstacleIndex]).data("odata");
+
+            if (config.customScrollbar.enabled) {
+                if ($obstacle && !$obstacle.hasClass('mCS_y_hidden') && !$obstacle.parent().hasClass('mCS_y_hidden')) {
+                    var $scrollPane = $obstacle.closest('.mCustomScrollbar');
+
+                    $scrollPane.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
+                        scrollInertia: 500,
+                        scrollEasing: "easeOut",
+                        callbacks: true
+                    });
+                }
+            } else {
+                var scrollPosition = $obstacle.scrollTop();
+                var scrollOffset = scrollPosition - (200 * e.deltaY);
+
+                fmModel.ddModel.isScrolling = true;
+                scrollOffset = (scrollOffset < 0) ? 0 : scrollOffset;
+                $obstacle.stop().animate({scrollTop: scrollOffset}, 100, 'linear', function() {
+                    fmModel.ddModel.isScrolling = false;
+                    fmModel.ddModel.isScrolled = true;
+                });
+            }
+
+        });
 
         $viewItems.selectable({
             filter: "li:not(.directory-parent), tbody > tr:not(.directory-parent)",
