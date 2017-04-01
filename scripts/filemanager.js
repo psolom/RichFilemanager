@@ -2332,8 +2332,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             left: Math.floor($dragHelperTemplate.width() / 2),
                             bottom: 15
                         },
+                        scroll: false,
                         appendTo: $wrapper,
-                        containment: $splitter,
+                        containment: $container,
                         refreshPositions: false,
                         helper: function () {
                             var $cloned,
@@ -2357,7 +2358,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             drag_model.items = getSelected(item);
                         },
                         drag: function(event, ui) {
-                        	console.log($(this).draggable('option', 'refreshPositions'));
                             $(this).draggable('option', 'refreshPositions', drag_model.isScrolling || drag_model.isScrolled);
                             drag_model.isScrolled = false;
                         },
