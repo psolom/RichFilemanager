@@ -946,7 +946,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     display: none;
     position: absolute;
     bottom: 5px;
-    width: 100%;
+    right: 5px;
     margin: 0;
     z-index: 2;
 }

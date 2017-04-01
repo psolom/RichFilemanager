@@ -2416,7 +2416,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             // check whether draggable items can be accepted by target item
             function isDropAllowed(targetItem) {
                 var matches = $.grep(drag_model.items, function(itemObject, i) {
-                    if (targetItem.rdo.type === "folder") {
+                    if (targetItem.rdo.type === "folder" || targetItem.rdo.type === "parent") {
                         // drop folder inside descending folders (filetree)
                         if (startsWith(targetItem.rdo.id, itemObject.rdo.id)) {
                             return true;
