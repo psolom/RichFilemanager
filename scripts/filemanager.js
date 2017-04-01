@@ -2387,11 +2387,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 markHovered(null);
                                 markRestricted(ui.helper, false);
 
-                                if (isDropAllowed(targetItem)) {
-                                    markHovered(targetItem);
-                                } else {
+                                if (!isDropAllowed(targetItem)) {
                                     markRestricted(ui.helper, true);
                                 }
+                                markHovered(targetItem);
                             }, 0);
                         },
                         out: function (event, ui) {
