@@ -1388,13 +1388,20 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.addNew = function(dataObjects) {
+				// use underlying array for better performance
+				// http://www.knockmeout.net/2012/04/knockoutjs-performance-gotcha.html
+                var items = model.itemsModel.objects();
+
 				if(!$.isArray(dataObjects)) {
 					dataObjects = [dataObjects];
 				}
-				$.each(dataObjects, function (i, resourceObject) {
-					model.itemsModel.objects.push(items_model.createObject(resourceObject));
-				});
-				model.itemsModel.sortObjects();
+
+                $.each(dataObjects, function (i, resourceObject) {
+                    items.push(items_model.createObject(resourceObject));
+                });
+
+                items = sortItems(items);
+                model.itemsModel.objects.valueHasMutated();
 			};
 
 			this.loadList = function(path) {
@@ -1414,11 +1421,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					dataType: "json",
 					cache: false,
 					success: function(response) {
-						if(response.data) {
-							model.currentPath(path);
+                        if (response.data) {
+                            model.currentPath(path);
                             model.breadcrumbsModel.splitCurrent();
-							model.itemsModel.setList(response.data);
-						}
+                            model.itemsModel.setList(response.data);
+                        }
 						handleAjaxResponseErrors(response);
 					},
 					error: handleAjaxError
@@ -1478,8 +1485,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					objects.push(items_model.createObject(resourceObject));
 				});
 
-				model.itemsModel.objects(objects);
-				model.itemsModel.sortObjects();
+				model.itemsModel.objects(sortItems(objects));
 				model.loadingView(false);
 			};
 
