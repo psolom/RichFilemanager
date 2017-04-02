@@ -1437,7 +1437,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				// add parent folder object
 				if(!isFile(model.currentPath()) && model.currentPath() !== fileRoot) {
 					var parentPath = getParentDirname(model.currentPath());
-					var parent = {
+					var parentItem = {
 						id: parentPath,
 						rdo: {
 							id: parentPath,
@@ -1450,21 +1450,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         dragHovered: ko.observable(false)
 					};
 
-					parent.open = function(item, e) {
+                    parentItem.open = function(item, e) {
                         if(isItemOpenable(e)) {
-                            items_model.loadList(parent.id);
+                            items_model.loadList(parentItem.id);
                         }
 					};
 
-                    parent.itemClass = ko.pureComputed(function() {
+                    parentItem.itemClass = ko.pureComputed(function() {
                         var cssClass = [];
-                        if (parent.dragHovered()) {
+                        if (parentItem.dragHovered()) {
                             cssClass.push(model.ddModel.hoveredCssClass);
                         }
                         return cssClass.join(' ');
                     });
 
-					objects.push(parent);
+					objects.push(parentItem);
 				}
 
                 // clear previously rendered content
@@ -2484,6 +2484,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 ---------------------------------------------------------*/
 
 	var sortItems = function(items) {
+		var parentItem;
 		var sortOrder = (fmModel.viewMode() === 'list') ? fmModel.itemsModel.listSortOrder() : configSortOrder;
 		var sortParams = {
 			natural: true,
@@ -2491,12 +2492,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			cases: false
 		};
 
-		items.sort(function(a, b) {
-            // commented to support IE sorting algorithm; parent item should be a first item
-            if(a.rdo.type === 'parent'/* || b.rdo.type === 'parent'*/) {
-                return -1;
-            }
+		// shift parent item to unshift it back after sorting
+		if (items[0].rdo.type === 'parent') {
+            parentItem = items.shift();
+		}
 
+		items.sort(function(a, b) {
 			var sortReturnNumber,
 				aa = getSortSubject(a),
 				bb = getSortSubject(b);
@@ -2615,6 +2616,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				items.push(folderItems[k]);
 			}
 		}
+
+        if (parentItem) {
+            items.unshift(parentItem);
+		}
+
 		return items;
 	};
 
