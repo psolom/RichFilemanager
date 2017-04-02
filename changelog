@@ -1,3 +1,12 @@
+Version 2.3.1
+---------------------------
+- extended drag and drop: ability to drag items between panels (tree <-> view) #133;
+- improved items behavior on draggable and selectable actions
+- improved view items rendering performance
+- bugfix: wrong unselect behavior for selected items
+- bugfix: wrong position of "parent" item in case "folderPosition" options is set to "top" #143;
+
+
 Version 2.3.0
 ---------------------------
 - Java connector (Spring MVC) support, thanks @fabriceci #126;
