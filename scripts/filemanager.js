@@ -474,69 +474,54 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 return false;
             }
 
-            var collisions,
-                obstacleIndex = null,
-                obstacleSelector = null,
+            var $panes,
+                $obstacle = null,
                 direction = (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) ? '+' : '-';
 
             if (config.customScrollbar.enabled) {
-                obstacleSelector = '.mCSB_container';
+                $panes = $([$viewItemsWrapper[0], $filetree[0]]);
             } else {
-                obstacleSelector = '.splitter-pane';
+                $panes = $splitter.children('.splitter-pane');
             }
 
-            collisions = fmModel.ddModel.dragHelper.collision(obstacleSelector, {
-                mode: "collision",
-                relative: "obstacle",
-                as: "<div/>",
-                obstacleData: "odata",
-                colliderData: "cdata"
-            });
+            $panes.each(function(i) {
+            	var $pane = $(this),
+            		top = $pane.offset().top,
+            		left = $pane.offset().left;
 
-            // in case drag helper overlaps both panes
-            if (collisions.length === 2) {
-                var c = $(collisions[0]).data("cdata");
-                var o1 = $(collisions[0]).data("odata");
-                var o2 = $(collisions[1]).data("odata");
-                var middle = c.offset().left + c.outerWidth() / 2;
-
-                if (middle <= (o1.offset().left + o1.width())) {
-                    obstacleIndex = 0;
-                }
-                if (middle >= o2.offset().left) {
-                    obstacleIndex = 1;
-                }
-            } else {
-                obstacleIndex = 0;
-            }
+				if ((e.offsetY >= top && e.offsetY <= top + $pane.height()) &&
+					(e.offsetX >= left && e.offsetX <= left + $pane.width())) {
+                    $obstacle = $pane;
+                    return false;
+				}
+			});
 
             // no one appropriate obstacle is overlapped
-            if (obstacleIndex === null) {
+            if ($obstacle === null) {
                 return false;
             }
 
-            var $obstacle = $(collisions[obstacleIndex]).data("odata");
-
             if (config.customScrollbar.enabled) {
-                if ($obstacle && !$obstacle.hasClass('mCS_y_hidden') && !$obstacle.parent().hasClass('mCS_y_hidden')) {
-                    var $scrollPane = $obstacle.closest('.mCustomScrollbar');
-
-                    $scrollPane.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
+                var $scrollBar = $obstacle.find('.mCSB_scrollTools_vertical');
+                if ($scrollBar.is(':visible')) {
+                    $obstacle.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
                         scrollInertia: 500,
                         scrollEasing: "easeOut",
                         callbacks: true
                     });
                 }
             } else {
-                var scrollPosition = $obstacle.scrollTop();
-                var scrollOffset = scrollPosition - (200 * e.deltaY);
+                if ($obstacle[0].scrollHeight > $obstacle[0].clientHeight) {
+                    var scrollPosition = $obstacle.scrollTop();
+                    var scrollOffset = scrollPosition - (200 * e.deltaY);
 
-                fmModel.ddModel.isScrolling = true;
-                scrollOffset = (scrollOffset < 0) ? 0 : scrollOffset;
-                $obstacle.stop().animate({scrollTop: scrollOffset}, 100, 'linear', function() {
-                    fmModel.ddModel.isScrolling = false;
-                    fmModel.ddModel.isScrolled = true;
-                });
+                    fmModel.ddModel.isScrolling = true;
+                    scrollOffset = (scrollOffset < 0) ? 0 : scrollOffset;
+                    $obstacle.stop().animate({scrollTop: scrollOffset}, 100, 'linear', function() {
+                        fmModel.ddModel.isScrolling = false;
+                        fmModel.ddModel.isScrolled = true;
+                    });
+				}
             }
 
         });
