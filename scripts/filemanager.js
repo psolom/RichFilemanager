@@ -1609,7 +1609,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				};
 				this.visible = ko.observable(true);
 				this.selected = ko.observable(false);
-				this.toUnselect = ko.observable(false);
                 this.dragHovered = ko.observable(false);
 
                 this.selected.subscribe(function (value) {
@@ -1684,14 +1683,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         fmModel.itemsModel.unselectItems(e.ctrlKey);
                     }
 
-                    item.toUnselect(item.selected());
+                    model.selectionModel.unselect = item.selected();
                     item.selected(true);
                 };
 
 				this.open = function(item, e) {
-					// case: click + ctrlKey on selected item
-                    if (item.toUnselect()) {
-                        !item.selected(false);
+                    if (model.selectionModel.unselect) {
+                        // case: click + ctrlKey on selected item
+                    	if (e.ctrlKey) {
+                            item.selected(false);
+						}
+						// drop selection
+                        if (!e.ctrlKey && config.manager.dblClickOpen) {
+                            fmModel.itemsModel.unselectItems(e.ctrlKey);
+                            item.selected(true);
+						}
 					}
 
 					if(isItemOpenable(e)) {
@@ -2464,6 +2470,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
         };
 
+        var SelectionModel = function() {
+            this.unselect = false;
+		};
+
 		this.treeModel = new TreeModel();
 		this.itemsModel = new ItemsModel();
 		this.tableViewModel = new TableViewModel();
@@ -2474,6 +2484,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.clipboardModel = new ClipboardModel();
 		this.breadcrumbsModel = new BreadcrumbsModel();
         this.ddModel = new DragAndDropModel();
+        this.selectionModel = new SelectionModel();
 	};
 
 

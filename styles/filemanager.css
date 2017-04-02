@@ -732,10 +732,11 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-color: #e0e0e0;
 }
 
-.fm-container .view-items .list tbody tr .list-item  {
+.fm-container .view-items .list tbody tr .list-item {
     display: inline-block;
-    cursor: pointer;
+    min-width: 200px;
     padding: 4px;
+    cursor: pointer;
 }
 
 .fm-container .view-items .list tbody tr:hover:not(.ui-selected) {
