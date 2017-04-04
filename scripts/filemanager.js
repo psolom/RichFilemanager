@@ -475,8 +475,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 
             var $panes,
-                $obstacle = null,
-                direction = (e.originalEvent.wheelDelta > 0 || e.originalEvent.detail < 0) ? '+' : '-';
+                $obstacle = null;
 
             if (config.customScrollbar.enabled) {
                 $panes = $([$viewItemsWrapper[0], $filetree[0]]);
@@ -502,9 +501,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 
             if (config.customScrollbar.enabled) {
-                var $scrollBar = $obstacle.find('.mCSB_scrollTools_vertical');
+                var $scrollBar = $obstacle.find('.mCSB_scrollTools_vertical'),
+					directionSign = (e.deltaY === 1) ? '+' : '-';
+
                 if ($scrollBar.is(':visible')) {
-                    $obstacle.mCustomScrollbar("scrollTo", [direction + "=250", 0], {
+                    $obstacle.mCustomScrollbar("scrollTo", [directionSign + "=250", 0], {
                         scrollInertia: 500,
                         scrollEasing: "easeOut",
                         callbacks: true
