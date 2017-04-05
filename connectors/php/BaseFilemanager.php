@@ -188,6 +188,12 @@ abstract class BaseFilemanager
     abstract function actionSummarize();
 
     /**
+     * Extracts files and folders from archive - filemanager action
+     * @return array
+     */
+    abstract function actionExtract();
+
+    /**
      * Set userfiles root folder
      * @param string $path
      * @param bool $mkdir
@@ -298,6 +304,12 @@ abstract class BaseFilemanager
 
                     case 'summarize':
                         $response = $this->actionSummarize();
+                        break;
+
+                    case 'extract':
+                        if($this->getvar('source') && $this->getvar('target')) {
+                            $response = $this->actionExtract();
+                        }
                         break;
                 }
 

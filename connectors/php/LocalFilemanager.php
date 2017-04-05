@@ -969,6 +969,82 @@ class LocalFilemanager extends BaseFilemanager
         ];
 	}
 
+    /**
+     * @inheritdoc
+     */
+    public function actionExtract()
+    {
+        if (!extension_loaded('zip')) {
+            $this->error(sprintf($this->lang('ERROR_SERVER')));
+        }
+
+        $source_path = $this->get['source'];
+        $target_path = $this->get['target'];
+        $source_fullpath = $this->getFullPath($source_path, true);
+        $target_fullpath = $this->getFullPath($target_path, true);
+
+        // check if target is writable
+        if(!$this->has_system_permission($target_fullpath, ['w'])) {
+            $this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+        }
+
+        if(is_dir($source_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($source_fullpath) !== true) {
+            $this->error(sprintf($this->lang('ERROR_SERVER')));
+        }
+
+        $root_files = [];
+        // whether to output and return info for extracted file
+        $output_info = strpos($source_path, $target_path) === 0;
+
+        // make all the folders
+        for($i = 0; $i < $zip->numFiles; $i++) {
+            $file_name = $zip->getNameIndex($i);
+            $file_stat = $zip->statIndex($i);
+
+            if ($file_stat['name'][strlen($file_stat['name'])-1] === "/") {
+                $dir_name = $this->cleanPath($target_fullpath . '/' . $file_stat['name']);
+                $created = mkdir($dir_name, 0700, true);
+
+                if ($created && $output_info && substr_count($file_name, '/') === 1) {
+                    $root_files[] = $file_name;
+                }
+            }
+        }
+
+        // unzip into the folders
+        for($i = 0; $i < $zip->numFiles; $i++) {
+            $file_name = $zip->getNameIndex($i);
+            $file_stat = $zip->statIndex($i);
+
+            if ($file_stat['name'][strlen($file_stat['name'])-1] !== "/") {
+                if ($this->is_allowed_file_type($file_name)) {
+                    $dir_name = $this->cleanPath($target_fullpath . '/' . $file_stat['name']);
+                    $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
+
+                    if($copied && $output_info && strpos($file_name, '/') === false) {
+                        $root_files[] = $file_name;
+                    }
+                }
+            }
+        }
+
+        $zip->close();
+
+        $response_data = [];
+        foreach ($root_files as $file_name) {
+            $relative_path = $this->cleanPath($target_path . '/' . $file_name);
+            $item = $this->get_file_info($relative_path);
+            $response_data[] = $item;
+        }
+
+        return $response_data;
+    }
+
 	/**
 	 * Creates a zip file from source to destination
 	 * @param  	string $source Source path for zip
