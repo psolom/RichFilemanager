@@ -975,7 +975,7 @@ class LocalFilemanager extends BaseFilemanager
     public function actionExtract()
     {
         if (!extension_loaded('zip')) {
-            $this->error(sprintf($this->lang('ERROR_SERVER')));
+            $this->error(sprintf($this->lang('NOT_FOUND_SYSTEM_MODULE'), 'zip'));
         }
 
         $source_path = $this->get['source'];
@@ -994,7 +994,7 @@ class LocalFilemanager extends BaseFilemanager
 
         $zip = new ZipArchive();
         if ($zip->open($source_fullpath) !== true) {
-            $this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
+            $this->error(sprintf($this->lang('ERROR_EXTRACTING_FILE')));
         }
 
         $root_files = [];

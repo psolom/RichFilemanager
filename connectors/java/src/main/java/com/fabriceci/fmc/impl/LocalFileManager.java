@@ -907,7 +907,7 @@ public class LocalFileManager extends AbstractFileManager {
                 try {
                     uploadFileSizeLimit = Long.parseLong(uploadFileSizeLimitString);
                 } catch (NumberFormatException e) {
-                    throw new FMConfigException(String.format(dictionnary.getProperty("ERROR_CONFIG"), "upload_fileSizeLimit:" + uploadFileSizeLimitString));
+                    throw new FMConfigException(String.format(dictionnary.getProperty("ERROR_CONFIG_FILE"), "upload_fileSizeLimit:" + uploadFileSizeLimitString));
                 }
 
                 if (uploadedFile.getSize() > uploadFileSizeLimit) {
