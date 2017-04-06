@@ -2494,7 +2494,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		// shift parent item to unshift it back after sorting
-		if (items[0].rdo.type === 'parent') {
+		if (items[0] && items[0].rdo.type === 'parent') {
             parentItem = items.shift();
 		}
 
