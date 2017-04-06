@@ -386,7 +386,7 @@ class LocalFilemanager extends BaseFilemanager
 
         $target_input = $this->get['target'];
         $target_path = $target_input . '/';
-        $target_path = $this->expandPath($target_path, true);
+        $target_path = $this->expandPath($target_path, false);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
@@ -465,7 +465,7 @@ class LocalFilemanager extends BaseFilemanager
 
         $target_input = $this->get['new'];
         $target_path = $target_input . '/';
-        $target_path = $this->expandPath($target_path, true);
+        $target_path = $this->expandPath($target_path, false);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
