@@ -24,7 +24,8 @@
             "copy",
             "move",
             "replace",
-            "delete"
+            "delete",
+            "extract"
         ]
     },
     "filetree": {

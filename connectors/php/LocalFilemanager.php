@@ -978,8 +978,8 @@ class LocalFilemanager extends BaseFilemanager
             $this->error(sprintf($this->lang('NOT_FOUND_SYSTEM_MODULE'), 'zip'));
         }
 
-        $source_path = $this->get['source'];
-        $target_path = $this->get['target'];
+        $source_path = $this->post['source'];
+        $target_path = $this->post['target'];
         $source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
 

@@ -866,6 +866,9 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .context-menu-item.replace:before {
     background-image: url(../images/replace.png);
 }
+.fm-container .context-menu-item.extract:before {
+    background-image: url(../images/extract.png);
+}
 .fm-container .context-menu-item.delete:before {
     background-image: url(../images/bin_closed.png);
 }

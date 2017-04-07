@@ -391,7 +391,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	var initialize = function () {
 		// reads capabilities from config files if exists else apply default settings
-		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'replace'];
+		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract', 'replace'];
 
 		// defines sort params
 		var chunks = [];
@@ -2765,9 +2765,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'copy', 'move'
 	function has_capability(resourceObject, cap) {
 		if(capabilities.indexOf(cap) === -1) return false;
-		if (resourceObject.type === 'folder' && cap === 'replace') return false;
-		if (resourceObject.type === 'folder' && cap === 'select') return false;
-		if (resourceObject.type === 'folder' && cap === 'download') {
+        if (cap === 'select' && resourceObject.type === 'folder') return false;
+		if (cap === 'replace' && resourceObject.type === 'folder') return false;
+        if (cap === 'extract') {
+            var extension = getExtension(resourceObject.attributes.name);
+            return (resourceObject.type === 'file' && extension === 'zip');
+        }
+		if (cap === 'download' && resourceObject.type === 'folder') {
 			return (config.security.allowFolderDownload === true);
 		}
 		if (typeof(resourceObject.attributes.capabilities) !== "undefined") {
@@ -3649,6 +3653,62 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
+    // Prompts for confirmation, then extracts the current archive.
+    var extractItemPrompt = function(resourceObject) {
+        var doExtract = function(e, ui) {
+            var targetPath = ui.getInputValue();
+            if(!targetPath) {
+                fm.error(lg.prompt_foldername);
+                return;
+            }
+            targetPath = rtrim(targetPath, '/') + '/';
+
+            extractItem(resourceObject, targetPath)
+        };
+
+        fm.prompt({
+            message: lg.prompt_extract,
+            value: fmModel.currentPath(),
+            okBtn: {
+                label: lg.action_extract,
+                autoClose: false,
+                click: doExtract
+            },
+            cancelBtn: {
+                label: lg.cancel
+            }
+        });
+    };
+
+    // Extract files and folders from archive.
+    // Called by choosing the "Extract" contextual menu option in list views.
+    var extractItem = function(resourceObject, targetPath) {
+        $.ajax({
+            type: 'POST',
+            url: buildConnectorUrl(),
+            data: {
+                mode: 'extract',
+                source: resourceObject.id,
+                target: targetPath
+            },
+            dataType: 'json',
+            success: function(response) {
+                if(response.data) {
+                	// TODO: implement "addItems", add in batches
+                	$.each(response.data, function(i, resourceObject) {
+                        fmModel.addItem(resourceObject, targetPath);
+                    });
+
+                    alertify.clearDialogs();
+                    if(config.options.showConfirmation) {
+                        fm.success(lg.successful_extracted);
+                    }
+                }
+                handleAjaxResponseErrors(response);
+            },
+            error: handleAjaxError
+        });
+    };
 
 	/*---------------------------------------------------------
 	 Functions to Retrieve File and Folder Details
@@ -3681,13 +3741,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 separator1: "-----",
                 copy: {name: lg.clipboard_copy, className: 'copy'},
                 cut: {name: lg.clipboard_cut, className: 'cut'},
-                delete: {name: lg.action_delete, className: 'delete'}
+                delete: {name: lg.action_delete, className: 'delete'},
+                extract: {name: lg.action_extract, className: 'extract'}
             };
 
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
         if(!has_capability(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
         if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
 		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
+		if(!has_capability(resourceObject, 'extract') || config.options.browseOnly === true) delete contextMenuItems.extract;
 		if(!has_capability(resourceObject, 'copy') || config.options.browseOnly === true || clipboardDisabled) delete contextMenuItems.copy;
 		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true || clipboardDisabled) {
             delete contextMenuItems.cut;
@@ -3737,6 +3799,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return deleteItem(itemObject.id);
 					});
 				});
+				break;
+
+			case 'extract':
+                extractItemPrompt(targetObject);
 				break;
 
 			case 'copy':

@@ -305,12 +305,6 @@ abstract class BaseFilemanager
                     case 'summarize':
                         $response = $this->actionSummarize();
                         break;
-
-                    case 'extract':
-                        if($this->getvar('source') && $this->getvar('target')) {
-                            $response = $this->actionExtract();
-                        }
-                        break;
                 }
 
             } else if(isset($_POST['mode']) && $_POST['mode']!='') {
@@ -336,6 +330,12 @@ abstract class BaseFilemanager
                     case 'savefile':
                         if($this->postvar('path') && $this->postvar('content', false)) {
                             $response = $this->actionSaveFile();
+                        }
+                        break;
+
+                    case 'extract':
+                        if($this->postvar('source') && $this->postvar('target')) {
+                            $response = $this->actionExtract();
                         }
                         break;
                 }
