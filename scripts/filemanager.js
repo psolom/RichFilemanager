@@ -2740,6 +2740,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 	};
 
+    // Format server-side response single error object
+    var formatServerError = function(errorObject) {
+        var message;
+        // look for message in case an error CODE is provided
+        if (lg && lg[errorObject.message]) {
+            message = lg[errorObject.message];
+            $.each(errorObject.arguments, function(i, argument) {
+                message = message.replace('%s', argument);
+            });
+        } else {
+            message = errorObject.message;
+        }
+        return message;
+    };
+
 	// Handle ajax request error.
 	var handleAjaxError = function(response) {
 		if(config.options.logger) {
@@ -2756,17 +2771,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 console.log(response.errors);
             }
 			$.each(response.errors, function(i, errorObject) {
-				var message;
-				// look for message in case an error CODE is provided
-				if (lg && lg[errorObject.message]) {
-                    message = lg[errorObject.message];
-                    $.each(errorObject.arguments, function(i, argument) {
-                        message = message.replace('%s', argument);
-					});
-				} else {
-                    message = errorObject.message;
-				}
-				fm.error(message);
+				fm.error(formatServerError(errorObject));
 			});
 		}
 	};
@@ -3350,7 +3355,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 					// handle server-side errors
 					if(response && response.errors) {
-						fm.error(lg.upload_failed + "<br>" + response.errors[0].title);
+						fm.error(lg.upload_failed + "<br>" + formatServerError(response.errors[0]));
 					}
 					if(response && response.data) {
 						var resourceObject = response.data[0];
@@ -4093,7 +4098,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							// handle server-side errors
 							if(response && response.errors) {
 								$node.removeClass('added process').addClass('error');
-								$node.find('.error-message').text(response.errors[0].title);
+								$node.find('.error-message').text(formatServerError(response.errors[0]));
 								$node.find('.button-start').remove();
 							} else {
 								// remove file preview item on success upload
@@ -4231,7 +4236,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 					// handle server-side errors
 					if(response && response.errors) {
-						fm.error(lg.upload_failed + "<br>" + response.errors[0].title);
+						fm.error(lg.upload_failed + "<br>" + formatServerError(response.errors[0]));
 					}
 					if(response && response.data) {
 						var resourceObject = response.data[0];
