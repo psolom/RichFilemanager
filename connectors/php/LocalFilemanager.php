@@ -492,8 +492,6 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-        $this->error('ERROR_MOVING_DIRECTORY', [$filename, $target_input]);
-
 		// should be retrieved before rename operation
 		$old_thumbnail = $this->get_thumbnail_path($source_fullpath);
 
