@@ -974,6 +974,7 @@ class S3Filemanager extends LocalFilemanager
             $this->error('FORBIDDEN_ACTION_DIR');
         }
 
+        // copy archive from S3 to local system temporary folder
         $temp_archive = sys_get_temp_dir() . '/' . uniqid();
         if (!copy($source_fullpath, $temp_archive)) {
             $this->error('ERROR_SERVER');
@@ -1001,14 +1002,14 @@ class S3Filemanager extends LocalFilemanager
             }
         }
 
-        // since there is no concept of "folder" in S3 we have to extract first level folders manually
+        // extract root-level folders from archive manually
         $root_folders = [];
         foreach($folders as $name) {
             $name = ltrim($name, '/');
             $root = substr($name, 0, strpos($name, '/') + 1);
             $root_folders[$root] = $root;
         }
-        $first_level_items = array_values($root_folders);
+        $root_level_items = array_values($root_folders);
 
         // unzip into the folders
         for($i = 0; $i < $zip->numFiles; $i++) {
@@ -1021,7 +1022,7 @@ class S3Filemanager extends LocalFilemanager
                     $copied = copy('zip://'. $temp_archive .'#'. $file_name, $dir_name);
 
                     if($copied && strpos($file_name, '/') === false) {
-                        $first_level_items[] = $file_name;
+                        $root_level_items[] = $file_name;
                     }
                 }
             }
@@ -1029,7 +1030,7 @@ class S3Filemanager extends LocalFilemanager
 
         $zip->close();
 
-        foreach ($first_level_items as $file_name) {
+        foreach ($root_level_items as $file_name) {
             $relative_path = $this->cleanPath($target_path . '/' . $file_name);
             $item = $this->get_file_info($relative_path);
             $response_data[] = $item;

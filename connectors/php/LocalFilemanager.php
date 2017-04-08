@@ -984,23 +984,31 @@ class LocalFilemanager extends BaseFilemanager
             $this->error('ERROR_EXTRACTING_FILE');
         }
 
+        $folders = [];
         $response_data = [];
-        $first_level_items = [];
 
         // make all the folders
         for($i = 0; $i < $zip->numFiles; $i++) {
-            $file_name = $zip->getNameIndex($i);
             $file_stat = $zip->statIndex($i);
 
             if ($file_stat['name'][strlen($file_stat['name'])-1] === "/") {
-                $dir_name = $this->cleanPath($target_fullpath . '/' . $file_stat['name']);
+                $dir_name = $target_fullpath . $file_stat['name'];
                 $created = mkdir($dir_name, 0700, true);
 
-                if ($created && substr_count($file_name, '/') === 1) {
-                    $first_level_items[] = $file_name;
+                if ($created) {
+                    $folders[] = $file_stat['name'];
                 }
             }
         }
+
+        // extract root-level folders from archive manually
+        $root_folders = [];
+        foreach($folders as $name) {
+            $name = ltrim($name, '/');
+            $root = substr($name, 0, strpos($name, '/') + 1);
+            $root_folders[$root] = $root;
+        }
+        $root_level_items = array_values($root_folders);
 
         // unzip into the folders
         for($i = 0; $i < $zip->numFiles; $i++) {
@@ -1009,11 +1017,11 @@ class LocalFilemanager extends BaseFilemanager
 
             if ($file_stat['name'][strlen($file_stat['name'])-1] !== "/") {
                 if ($this->is_allowed_file_type($file_name)) {
-                    $dir_name = $this->cleanPath($target_fullpath . '/' . $file_stat['name']);
+                    $dir_name = $target_fullpath . $file_stat['name'];
                     $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
 
                     if($copied && strpos($file_name, '/') === false) {
-                        $first_level_items[] = $file_name;
+                        $root_level_items[] = $file_name;
                     }
                 }
             }
@@ -1021,7 +1029,7 @@ class LocalFilemanager extends BaseFilemanager
 
         $zip->close();
 
-        foreach ($first_level_items as $file_name) {
+        foreach ($root_level_items as $file_name) {
             $relative_path = $this->cleanPath($target_path . '/' . $file_name);
             $item = $this->get_file_info($relative_path);
             $response_data[] = $item;
