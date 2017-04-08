@@ -298,16 +298,8 @@ public class LocalFileManager extends AbstractFileManager {
         }
 
         if (!sourceFile.isDirectory()) {
-
-            if (!Boolean.parseBoolean(propertiesConfig.getProperty("allowChangeExtensions"))) {
-                String newFileExt = FileUtils.getExtension(targetName);
-                String oldFileExt = FileUtils.getExtension(sourceFile.getName());
-                if (!oldFileExt.equals(newFileExt)) {
-                    return getErrorResponse(dictionnary.getProperty("FORBIDDEN_CHANGE_EXTENSION"));
-                }
-                if (!isAllowedFileType(targetName)) {
-                    return getErrorResponse(dictionnary.getProperty("INVALID_FILE_TYPE"));
-                }
+            if (!isAllowedFileType(targetName)) {
+                return getErrorResponse(dictionnary.getProperty("INVALID_FILE_TYPE"));
             }
         }
 

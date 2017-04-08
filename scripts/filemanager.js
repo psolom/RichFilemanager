@@ -260,12 +260,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         }).done(function(response) {
             if(response.data) {
                 var serverConfig = response.data.attributes.config;
-                // override configuration with options retrieved from the server (which are common)
+                // configuration options retrieved from the server
                 $.each(serverConfig, function(section, options) {
                     $.each(options, function(param, value) {
-                        if(config[section] !== "undefined" && config[section][param] !== "undefined") {
-                            config[section][param] = value;
+                        if(config[section] === undefined) {
+                            config[section] = [];
                         }
+                        config[section][param] = value;
                     });
                 });
             }
@@ -1796,7 +1797,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return;
 					}
 
-					folderName = cleanString(folderName);
 					$.ajax({
 						type: 'GET',
 						url: buildConnectorUrl({
@@ -2679,47 +2679,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// Sanitize and transliterate file/folder name as server side (connector) way
-	var cleanString = function(string, allowed) {
-		if(config.security.normalizeFilename) {
-			// replace chars which are not related to any language
-			var replacements = {' ': '_', '\'': '_', '/': '', '\\': ''};
-			string = string.replace(/[\s\S]/g, function(c) {return replacements[c] || c});
-		}
-
-		// allow only latin alphabet
-		if(config.options.charsLatinOnly) {
-			if (typeof allowed == "undefined") {
-				allowed = [];
-			}
-			// transliterate string
-			string = getSlug(string, {
-				separator: '_',
-				maintainCase: true,
-				custom: allowed
-			});
-
-			// clean up all non-latin chars
-			string = string.replace(/[^_a-zA-Z0-9]/g, "");
-		}
-
-		// remove double underscore
-		string = string.replace(/[_]+/g, "_");
-		return string;
-	};
-
-	// Separate filename from extension before calling cleanString()
-	var nameFormat = function(input) {
-		var filename = '';
-		if(input.lastIndexOf('.') != -1) {
-			filename  = cleanString(input.substr(0, input.lastIndexOf('.')));
-			filename += '.' + input.split('.').pop();
-		} else {
-			filename = cleanString(input);
-		}
-		return filename;
-	};
-
 	// Converts bytes to KB, MB, or GB as needed for display
 	var formatBytes = function(bytes, round) {
 		if(!bytes) return '';
@@ -2787,7 +2746,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             return (resourceObject.type === 'file' && extension === 'zip');
         }
 		if (cap === 'download' && resourceObject.type === 'folder') {
-			return (config.security.allowFolderDownload === true);
+			return (config.options.allowFolderDownload === true);
 		}
 		if (typeof(resourceObject.attributes.capabilities) !== "undefined") {
 			return $.inArray(cap, resourceObject.attributes.capabilities) > -1
@@ -3216,8 +3175,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return;
 			}
 
-			if (! config.security.allowChangeExtensions) {
-				givenName = nameFormat(givenName);
+			if (! config.options.allowChangeExtensions) {
 				var suffix = getExtension(resourceObject.attributes.name);
 				if(suffix.length > 0) {
 					givenName = givenName + '.' + suffix;
@@ -3301,7 +3259,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		fm.prompt({
 			message: lg.new_filename,
-			value: config.security.allowChangeExtensions ? resourceObject.attributes.name : getFilename(resourceObject.attributes.name),
+			value: config.options.allowChangeExtensions ? resourceObject.attributes.name : getFilename(resourceObject.attributes.name),
 			okBtn: {
 				label: lg.action_rename,
 				autoClose: false,
@@ -3326,7 +3284,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					autoUpload: true,
 					dataType: 'json',
 					url: buildConnectorUrl(),
-					paramName: config.upload.paramName
+					paramName: 'files'
 				})
 
 				.on('fileuploadadd', function(e, data) {
@@ -4023,7 +3981,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						dropZone: $dropzone,
 						maxChunkSize: config.upload.chunkSize,
 						url: buildConnectorUrl(),
-						paramName: config.upload.paramName,
+						paramName: 'files',
 						singleFileUploads: true,
 						formData: {
 							mode: 'upload',
@@ -4211,7 +4169,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					autoUpload: false,
 					dataType: 'json',
 					url: buildConnectorUrl(),
-					paramName: config.upload.paramName,
+					paramName: 'files',
 					maxChunkSize: config.upload.chunkSize
 				})
 

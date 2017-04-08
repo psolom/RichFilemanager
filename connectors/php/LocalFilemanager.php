@@ -101,30 +101,23 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionInitiate()
     {
-        $shared_config = [];
-        if($this->config['overrideClientConfig']) {
-            // config options to override at the client-side
-            $shared_config = [
-                'options' => [
-                    'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
-                    'capabilities' => $this->config['options']['capabilities'],
-                ],
-                'security' => [
-                    'allowFolderDownload' => $this->config['security']['allowFolderDownload'],
-                    'allowChangeExtensions' => $this->config['security']['allowChangeExtensions'],
-                    'allowNoExtension' => $this->config['security']['allowNoExtension'],
-                    'normalizeFilename' => $this->config['security']['normalizeFilename'],
-                    'editRestrictions' => $this->config['security']['editRestrictions'],
-                ],
-                'upload' => [
-                    'paramName' => $this->config['upload']['paramName'],
-                    'chunkSize' => $this->config['upload']['chunkSize'],
-                    'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
-                    'policy' => $this->config['upload']['policy'],
-                    'restrictions' => $this->config['upload']['restrictions'],
-                ],
-            ];
-        }
+        // config options that affect the client-side
+        $shared_config = [
+            'options' => [
+                'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
+                'capabilities' => $this->config['options']['capabilities'],
+                'allowFolderDownload' => $this->config['options']['allowFolderDownload'],
+            ],
+            'security' => [
+                'allowNoExtension' => $this->config['security']['allowNoExtension'],
+                'editRestrictions' => $this->config['security']['editRestrictions'],
+            ],
+            'upload' => [
+                'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
+                'policy' => $this->config['upload']['policy'],
+                'restrictions' => $this->config['upload']['restrictions'],
+            ],
+        ];
 
         return [
             'id' => '/',
@@ -230,8 +223,7 @@ class LocalFilemanager extends BaseFilemanager
 		])->post(false);
 
         $response_data = [];
-        $files = isset($content[$this->config['upload']['paramName']]) ?
-            $content[$this->config['upload']['paramName']] : null;
+        $files = isset($content['files']) ? $content['files'] : null;
         // there is only one file in the array as long as "singleFileUploads" is set to "true"
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];
@@ -323,13 +315,6 @@ class LocalFilemanager extends BaseFilemanager
 
         // check if file extension is consistent to the security Policy settings
         if(is_file($old_file)) {
-            if (!$this->config['security']['allowChangeExtensions']) {
-                $ext_old = strtolower(pathinfo($old_file, PATHINFO_EXTENSION));
-                $ext_new = strtolower(pathinfo($new_file, PATHINFO_EXTENSION));
-                if($ext_old !== $ext_new) {
-                    $this->error('FORBIDDEN_CHANGE_EXTENSION');
-                }
-            }
             if (!$this->is_allowed_file_type($new_file)) {
                 $this->error('INVALID_FILE_TYPE');
             }
@@ -567,7 +552,7 @@ class LocalFilemanager extends BaseFilemanager
 
 		// check if the given file has the same extension as the old one
         $source_extension = pathinfo($source_path, PATHINFO_EXTENSION);
-		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower($source_extension)) {
+		if(strtolower(pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION)) != strtolower($source_extension)) {
 			$this->error('ERROR_REPLACING_FILE', [$source_extension]);
 		}
 
@@ -586,8 +571,7 @@ class LocalFilemanager extends BaseFilemanager
         ])->post(false);
 
         $response_data = [];
-        $files = isset($content[$this->config['upload']['paramName']]) ?
-            $content[$this->config['upload']['paramName']] : null;
+        $files = isset($content['files']) ? $content['files'] : null;
         // there is only one file in the array as long as "singleFileUploads" is set to "true"
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];
@@ -892,8 +876,8 @@ class LocalFilemanager extends BaseFilemanager
 
 		if($is_dir_target) {
 			// check if permission is granted
-			if($this->config['security']['allowFolderDownload'] == false ) {
-				$this->error('NOT_ALLOWED');
+			if($this->config['options']['allowFolderDownload'] == false ) {
+                $this->error('NOT_ALLOWED');
 			}
 
 			// check if not requesting main FM userfiles folder
