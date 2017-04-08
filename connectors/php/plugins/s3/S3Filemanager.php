@@ -163,8 +163,6 @@ class S3Filemanager extends LocalFilemanager
 			$this->error('DIRECTORY_NOT_EXIST', [$target_path]);
 		}
 
-        //$res = $this->getFilesList($target_fullpath);
-
 		if(!$handle = @opendir($target_fullpath)) {
 			$this->error('UNABLE_TO_OPEN_DIRECTORY', [$target_path]);
 		} else {

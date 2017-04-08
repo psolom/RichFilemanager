@@ -1,9 +1,31 @@
+Version 2.3.2
+---------------------------
+- implement "extract" action to unzip archives #22;
+- removed duplicated configuration options (common for both client and server sides) #109;
+- new isolated way to handle server-side errors;
+- bugfix: wrong scroll behavior in IE #151;
+- bugfix: error when copying to a folder with spaces #153;
+- bugfix: not loading userfiles folder when it's empty #154;
+
+Backward incompatible changes:
+- server-side language files specific for a particular connector should be removed;
+- new format for server-side errors: label + arguments to be treated with JSON lang files;
+- `security`.`allowFolderDownload` server-side configuration option moved to `options` section;
+- removed the following server-side configuration options (see details in #109):
+	* `overrideClientConfig` (since no duplicated options now);
+	* `options`.`culture` (since no translations at the server side now);
+	* `security`.`allowChangeExtensions` (no affect security, clint-side only now);
+	* `upload`.`paramName` (no sense to change value for this option);
+	* `upload`.`chunkSize` (client-side solely option);
+- reduced a list of parameters in "initiate" server-side action;
+
+
 Version 2.3.1
 ---------------------------
 - extended drag and drop: ability to drag items between panels (tree <-> view) #133;
-- improved items behavior on draggable and selectable actions
-- improved view items rendering performance
-- bugfix: wrong unselect behavior for selected items
+- improved items behavior on draggable and selectable actions;
+- improved view items rendering performance;
+- bugfix: wrong unselect behavior for selected items;
 - bugfix: wrong position of "parent" item in case "folderPosition" options is set to "top" #143;
 
 
