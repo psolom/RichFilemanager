@@ -997,8 +997,8 @@ class LocalFilemanager extends BaseFilemanager
             $this->error(sprintf($this->lang('ERROR_EXTRACTING_FILE')));
         }
 
-        $root_files = [];
         $response_data = [];
+        $first_level_items = [];
 
         // make all the folders
         for($i = 0; $i < $zip->numFiles; $i++) {
@@ -1010,7 +1010,7 @@ class LocalFilemanager extends BaseFilemanager
                 $created = mkdir($dir_name, 0700, true);
 
                 if ($created && substr_count($file_name, '/') === 1) {
-                    $root_files[] = $file_name;
+                    $first_level_items[] = $file_name;
                 }
             }
         }
@@ -1026,7 +1026,7 @@ class LocalFilemanager extends BaseFilemanager
                     $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
 
                     if($copied && strpos($file_name, '/') === false) {
-                        $root_files[] = $file_name;
+                        $first_level_items[] = $file_name;
                     }
                 }
             }
@@ -1034,7 +1034,7 @@ class LocalFilemanager extends BaseFilemanager
 
         $zip->close();
 
-        foreach ($root_files as $file_name) {
+        foreach ($first_level_items as $file_name) {
             $relative_path = $this->cleanPath($target_path . '/' . $file_name);
             $item = $this->get_file_info($relative_path);
             $response_data[] = $item;

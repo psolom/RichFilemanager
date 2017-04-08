@@ -163,6 +163,8 @@ class S3Filemanager extends LocalFilemanager
 			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
 		}
 
+        //$res = $this->getFilesList($target_fullpath);
+
 		if(!$handle = @opendir($target_fullpath)) {
 			$this->error(sprintf($this->lang('UNABLE_TO_OPEN_DIRECTORY'), $target_path));
 		} else {
@@ -961,6 +963,90 @@ class S3Filemanager extends LocalFilemanager
             'attributes' => $attributes,
         ];
 	}
+
+    /**
+     * @inheritdoc
+     */
+    public function actionExtract()
+    {
+        if (!extension_loaded('zip')) {
+            $this->error(sprintf($this->lang('NOT_FOUND_SYSTEM_MODULE'), 'zip'));
+        }
+
+        $source_path = $this->post['source'];
+        $target_path = $this->post['target'];
+        $source_fullpath = $this->getFullPath($source_path, true);
+        $target_fullpath = $this->getFullPath($target_path, true);
+
+        if(is_dir($source_fullpath)) {
+            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+        }
+
+        $temp_archive = sys_get_temp_dir() . '/' . uniqid();
+        if (!copy($source_fullpath, $temp_archive)) {
+            $this->error(sprintf($this->lang('ERROR_SERVER')));
+        }
+
+        $zip = new ZipArchive();
+        if ($zip->open($temp_archive) !== true) {
+            $this->error(sprintf($this->lang('ERROR_EXTRACTING_FILE')));
+        }
+
+        $folders = [];
+        $response_data = [];
+
+        // make all the folders
+        for($i = 0; $i < $zip->numFiles; $i++) {
+            $file_stat = $zip->statIndex($i);
+
+            if ($file_stat['name'][strlen($file_stat['name'])-1] === "/") {
+                $dir_name = $target_fullpath . $file_stat['name'];
+                $created = mkdir($dir_name, 0755, true);
+
+                if ($created) {
+                    $folders[] = $file_stat['name'];
+                }
+            }
+        }
+
+        // since there is no concept of "folder" in S3 we have to extract first level folders manually
+        $root_folders = [];
+        foreach($folders as $name) {
+            $name = ltrim($name, '/');
+            $root = substr($name, 0, strpos($name, '/') + 1);
+            $root_folders[$root] = $root;
+        }
+        $first_level_items = array_values($root_folders);
+
+        // unzip into the folders
+        for($i = 0; $i < $zip->numFiles; $i++) {
+            $file_name = $zip->getNameIndex($i);
+            $file_stat = $zip->statIndex($i);
+
+            if ($file_stat['name'][strlen($file_stat['name'])-1] !== "/") {
+                if ($this->is_allowed_file_type($file_name)) {
+                    $dir_name = $target_fullpath . $file_stat['name'];
+                    $copied = copy('zip://'. $temp_archive .'#'. $file_name, $dir_name);
+
+                    if($copied && strpos($file_name, '/') === false) {
+                        $first_level_items[] = $file_name;
+                    }
+                }
+            }
+        }
+
+        $zip->close();
+
+        foreach ($first_level_items as $file_name) {
+            $relative_path = $this->cleanPath($target_path . '/' . $file_name);
+            $item = $this->get_file_info($relative_path);
+            $response_data[] = $item;
+        }
+
+        unlink($temp_archive);
+
+        return $response_data;
+    }
 
 
 	/*******************************************************************************
