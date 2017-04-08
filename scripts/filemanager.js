@@ -3223,10 +3223,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			if (isFile(oldPath) && !isAuthorizedFile(givenName)) {
 				var str = '<p>' + lg.INVALID_FILE_TYPE + '</p>';
 				if(config.upload.policy == 'DISALLOW_ALL') {
-					str += '<p>' + lg.ALLOWED_FILE_TYPE +  config.upload.restrictions.join(', ') + '.</p>';
+					str += '<p>' + lg.ALLOWED_FILE_TYPE.replace('%s', config.upload.restrictions.join(', ')) + '.</p>';
 				}
 				if(config.upload.policy == 'ALLOW_ALL') {
-					str += '<p>' + lg.DISALLOWED_FILE_TYPE +  config.upload.restrictions.join(', ') + '.</p>';
+					str += '<p>' + lg.DISALLOWED_FILE_TYPE.replace('%s', config.upload.restrictions.join(', ')) + '.</p>';
 				}
 				$("#filepath").val('');
 				fm.error(str);
@@ -3328,7 +3328,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					var file = data.files[0];
 					// Check if file extension is matching with the original
 					if(getExtension(file.name) != resourceObject.attributes.extension) {
-						fm.error(lg.ERROR_REPLACING_FILE + " ." + resourceObject.attributes.extension);
+						fm.error(lg.ERROR_REPLACING_FILE.replace('%s', '.' + resourceObject.attributes.extension));
 						return false;
 					}
 					data.submit();
@@ -3846,7 +3846,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					currentPath = fmModel.currentPath(),
 					templateContainer = tmpl('tmpl-fileupload-container', {
 						folder: lg.current_folder + currentPath,
-						info: lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles) + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true),
+						info: lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles) + ' ' + lg.upload_file_size_limit.replace('%s', formatBytes(config.upload.fileSizeLimit, true)),
 						lang: lg
 					});
 
@@ -4030,9 +4030,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						acceptFileTypes: allowedFileTypes,
 						maxFileSize: config.upload.fileSizeLimit,
 						messages: {
-							maxNumberOfFiles: lg.upload_files_number_limit.replace("%s", config.upload.maxNumberOfFiles),
+							maxNumberOfFiles: lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles),
 							acceptFileTypes: lg.upload_file_type_invalid,
-							maxFileSize: lg.upload_file_too_big + ' ' + lg.upload_file_size_limit + formatBytes(config.upload.fileSizeLimit, true)
+							maxFileSize: lg.upload_file_too_big + ' ' + lg.upload_file_size_limit.replace('%s', formatBytes(config.upload.fileSizeLimit, true))
 						},
 						// image preview options
 						previewMaxHeight: 120,
@@ -4045,7 +4045,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$.each(data.files, function (index, file) {
 							// skip selected files if total files number exceed "maxNumberOfFiles"
 							if($items.length >= config.upload.maxNumberOfFiles) {
-								fm.error(lg.upload_files_number_limit.replace("%s", config.upload.maxNumberOfFiles), {
+								fm.error(lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles), {
 									logClass: 'fileuploadadd',
 									unique: true
 								});

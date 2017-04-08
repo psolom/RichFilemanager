@@ -566,8 +566,9 @@ class LocalFilemanager extends BaseFilemanager
         }
 
 		// check if the given file has the same extension as the old one
-		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower(pathinfo($source_path, PATHINFO_EXTENSION))) {
-			$this->error(sprintf($this->lang('ERROR_REPLACING_FILE') . ' ' . pathinfo($source_path, PATHINFO_EXTENSION)));
+        $source_extension = pathinfo($source_path, PATHINFO_EXTENSION);
+		if(strtolower(pathinfo($_FILES[$this->config['upload']['paramName']]['name'], PATHINFO_EXTENSION)) != strtolower($source_extension)) {
+			$this->error('ERROR_REPLACING_FILE', [$source_extension]);
 		}
 
 		// check if file is writable
