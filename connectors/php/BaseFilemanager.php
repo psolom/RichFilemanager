@@ -220,7 +220,7 @@ abstract class BaseFilemanager
         $response = '';
 
         if(!isset($_GET)) {
-            $this->error($this->lang('INVALID_ACTION'));
+            $this->error('INVALID_ACTION');
         } else {
 
             if(isset($_GET['mode']) && $_GET['mode']!='') {
@@ -228,7 +228,7 @@ abstract class BaseFilemanager
                 switch($_GET['mode']) {
 
                     default:
-                        $this->error($this->lang('MODE_ERROR'));
+                        $this->error('MODE_ERROR');
                         break;
 
                     case 'initiate':
@@ -312,7 +312,7 @@ abstract class BaseFilemanager
                 switch($_POST['mode']) {
 
                     default:
-                        $this->error($this->lang('MODE_ERROR'));
+                        $this->error('MODE_ERROR');
                         break;
 
                     case 'upload':
@@ -398,24 +398,30 @@ abstract class BaseFilemanager
 
     /**
      * Echo error message and terminate the application
-     * @param string $title
+     * @param string $label
+     * @param array $arguments
      */
-    public function error($title)
+    public function error($label, $arguments = [])
     {
-        Log::info('error message: "' . $title . '"');
+        $log_message = 'Error code: ' . $label;
+        if ($arguments) {
+            $log_message .= ', arguments: ' . json_encode($arguments);
+        }
+        Log::info($log_message);
 
         if($this->isAjaxRequest()) {
             $error_object = [
                 'id' => 'server',
                 'code' => '500',
-                'title' => $title
+                'message' => $label,
+                'arguments' => $arguments
             ];
 
             echo json_encode([
                 'errors' => [$error_object],
             ]);
         } else {
-            echo "<h2>Server error: {$title}</h2>";
+            echo "<h2>Server error: {$label}</h2>";
         }
 
         exit;
@@ -444,7 +450,7 @@ abstract class BaseFilemanager
     public function getvar($var, $sanitize = true)
     {
         if(!isset($_GET[$var]) || $_GET[$var]=='') {
-            $this->error(sprintf($this->lang('INVALID_VAR'),$var));
+            $this->error('INVALID_VAR', [$var]);
         } else {
             if($sanitize) {
                 $this->get[$var] = $this->sanitize($_GET[$var]);
@@ -464,7 +470,7 @@ abstract class BaseFilemanager
     public function postvar($var, $sanitize = true)
     {
         if(!isset($_POST[$var]) || ($var != 'content' && $_POST[$var]=='')) {
-            $this->error(sprintf($this->lang('INVALID_VAR'),$var));
+            $this->error('INVALID_VAR', [$var]);
         } else {
             if($sanitize) {
                 $this->post[$var] = $this->sanitize($_POST[$var]);

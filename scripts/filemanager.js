@@ -2756,7 +2756,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 console.log(response.errors);
             }
 			$.each(response.errors, function(i, errorObject) {
-				fm.error(errorObject.title);
+				var message;
+				// look for message in case an error CODE is provided
+				if (lg && lg[errorObject.message]) {
+                    message = lg[errorObject.message];
+                    $.each(errorObject.arguments, function(i, argument) {
+                        message = message.replace('%s', argument);
+					});
+				} else {
+                    message = errorObject.message;
+				}
+				fm.error(message);
 			});
 		}
 	};

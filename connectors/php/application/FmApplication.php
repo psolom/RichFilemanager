@@ -39,7 +39,7 @@ class FmApplication {
         }
 
         if(!auth()) {
-            $fm->error($fm->lang('AUTHORIZATION_REQUIRED'));
+            $fm->error('AUTHORIZATION_REQUIRED');
         }
 
         return $fm;

@@ -148,16 +148,16 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('opening folder "' . $target_fullpath . '"');
 
 		if(!is_dir($target_fullpath)) {
-			$this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
+			$this->error('DIRECTORY_NOT_EXIST', [$target_path]);
 		}
 
 		// check if folder is readable
 		if(!$this->has_system_permission($target_fullpath, ['r'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		if(!$handle = @opendir($target_fullpath)) {
-			$this->error(sprintf($this->lang('UNABLE_TO_OPEN_DIRECTORY'), $target_path));
+			$this->error('UNABLE_TO_OPEN_DIRECTORY', [$target_path]);
 		} else {
 			while (false !== ($file = readdir($handle))) {
 				if($file != "." && $file != "..") {
@@ -192,17 +192,17 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('opening file "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+            $this->error('FORBIDDEN_ACTION_DIR');
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		// check if file is readable
 		if(!$this->has_system_permission($target_fullpath, ['r'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
         return $this->get_file_info($target_path);
@@ -219,11 +219,11 @@ class LocalFilemanager extends BaseFilemanager
 
 		// check if file is writable
 		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		if(!$this->hasPermission('upload')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
         $content = $this->initUploader([
@@ -244,7 +244,7 @@ class LocalFilemanager extends BaseFilemanager
                 $response_data[] = $item;
             }
         } else {
-            $this->error(sprintf($this->lang('ERROR_UPLOADING_FILE')));
+            $this->error('ERROR_UPLOADING_FILE');
         }
 
         return $response_data;
@@ -264,16 +264,16 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('adding folder "' . $new_fullpath . '"');
 
         if(is_dir($new_fullpath)) {
-            $this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $target_name));
+            $this->error('DIRECTORY_ALREADY_EXISTS', [$target_name]);
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($folder_name, true)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_NAME'), $target_name));
+            $this->error('FORBIDDEN_NAME', [$target_name]);
         }
 
 		if(!mkdir($new_fullpath, 0755)) {
-			$this->error(sprintf($this->lang('UNABLE_TO_CREATE_DIRECTORY'), $target_name));
+			$this->error('UNABLE_TO_CREATE_DIRECTORY', [$target_name]);
 		}
 
         $relative_path = $this->cleanPath('/' . $target_path . '/' . $folder_name . '/');
@@ -303,22 +303,22 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
 		if(!$this->hasPermission('rename')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
 		// forbid to change path during rename
 		if(strrpos($this->get['new'], '/') !== false) {
-			$this->error(sprintf($this->lang('FORBIDDEN_CHAR_SLASH')));
+			$this->error('FORBIDDEN_CHAR_SLASH');
 		}
 
 		// check if file is writable
 		if(!$this->has_system_permission($old_file, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($old_file)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
         // check if file extension is consistent to the security Policy settings
@@ -327,36 +327,36 @@ class LocalFilemanager extends BaseFilemanager
                 $ext_old = strtolower(pathinfo($old_file, PATHINFO_EXTENSION));
                 $ext_new = strtolower(pathinfo($new_file, PATHINFO_EXTENSION));
                 if($ext_old !== $ext_new) {
-                    $this->error(sprintf($this->lang('FORBIDDEN_CHANGE_EXTENSION')));
+                    $this->error('FORBIDDEN_CHANGE_EXTENSION');
                 }
             }
             if (!$this->is_allowed_file_type($new_file)) {
-                $this->error(sprintf($this->lang('INVALID_FILE_TYPE')));
+                $this->error('INVALID_FILE_TYPE');
             }
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($old_file, $suffix === '/')) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
         if(!$this->is_allowed_name($new_name, $suffix === '/')) {
-            $this->error(sprintf($this->lang('FORBIDDEN_NAME'), $new_name));
+            $this->error('FORBIDDEN_NAME', [$new_name]);
         }
 
 		if(file_exists($new_file)) {
 			if($suffix === '/' && is_dir($new_file)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), $new_name));
+				$this->error('DIRECTORY_ALREADY_EXISTS', [$new_name]);
 			}
 			if($suffix === '' && is_file($new_file)) {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), $new_name));
+				$this->error('FILE_ALREADY_EXISTS', [$new_name]);
 			}
 		}
 
 		if(!rename($old_file, $new_file)) {
 			if(is_dir($old_file)) {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_DIRECTORY'), $filename, $new_name));
+				$this->error('ERROR_RENAMING_DIRECTORY', [$filename, $new_name]);
 			} else {
-				$this->error(sprintf($this->lang('ERROR_RENAMING_FILE'), $filename, $new_name));
+				$this->error('ERROR_RENAMING_FILE', [$filename, $new_name]);
 			}
 		} else {
 			Log::info('renamed "' . $old_file . '" to "' . $new_file . '"');
@@ -394,45 +394,46 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('copying "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
         if(!$this->hasPermission('copy')) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+            $this->error('NOT_ALLOWED');
         }
 
         if(!is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
+            $this->error('DIRECTORY_NOT_EXIST', [$target_path]);
         }
 
 		// check system permissions
 		if(!$this->has_system_permission($source_fullpath, ['r']) || !$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($source_fullpath)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
         // check if the name is not in "excluded" list
         if (!$this->is_allowed_name($target_fullpath, true) ||
             !$this->is_allowed_name($source_fullpath, is_dir($source_fullpath))
         ) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
+            $item_name = rtrim($target_input, '/') . '/' . $filename;
 			if(is_dir($new_fullpath)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
+				$this->error('DIRECTORY_ALREADY_EXISTS', [$item_name]);
 			} else {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
+				$this->error('FILE_ALREADY_EXISTS', [$item_name]);
 			}
 		}
 
 		// move file or folder
 		if(!FmHelper::copyRecursive($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error(sprintf($this->lang('ERROR_COPYING_DIRECTORY'), $filename, $target_input));
+				$this->error('ERROR_COPYING_DIRECTORY', [$filename, $target_input]);
 			} else {
-				$this->error(sprintf($this->lang('ERROR_COPYING_FILE'), $filename, $target_input));
+				$this->error('ERROR_COPYING_FILE', [$filename, $target_input]);
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
@@ -473,38 +474,41 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
         if(!$this->hasPermission('move')) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+            $this->error('NOT_ALLOWED');
         }
 
         if(!is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('DIRECTORY_NOT_EXIST'), $target_path));
+            $this->error('DIRECTORY_NOT_EXIST', [$target_path]);
         }
 
         // check system permissions
 		if(!$this->has_system_permission($source_fullpath, ['r']) || !$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($source_fullpath)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
         // check if the name is not in "excluded" list
         if (!$this->is_allowed_name($target_fullpath, true) ||
             !$this->is_allowed_name($source_fullpath, is_dir($source_fullpath))
         ) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
+            $item_name = rtrim($target_input, '/') . '/' . $filename;
 			if(is_dir($new_fullpath)) {
-				$this->error(sprintf($this->lang('DIRECTORY_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
+				$this->error('DIRECTORY_ALREADY_EXISTS', [$item_name]);
 			} else {
-				$this->error(sprintf($this->lang('FILE_ALREADY_EXISTS'), rtrim($target_input, '/') . '/' . $filename));
+				$this->error('FILE_ALREADY_EXISTS', [$item_name]);
 			}
 		}
+
+        $this->error('ERROR_MOVING_DIRECTORY', [$filename, $target_input]);
 
 		// should be retrieved before rename operation
 		$old_thumbnail = $this->get_thumbnail_path($source_fullpath);
@@ -512,9 +516,9 @@ class LocalFilemanager extends BaseFilemanager
 		// move file or folder
 		if(!rename($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error(sprintf($this->lang('ERROR_MOVING_DIRECTORY'), $filename, $target_input));
+				$this->error('ERROR_MOVING_DIRECTORY', [$filename, $target_input]);
 			} else {
-				$this->error(sprintf($this->lang('ERROR_MOVING_FILE'), $filename, $target_input));
+				$this->error('ERROR_MOVING_FILE', [$filename, $target_input]);
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
@@ -549,16 +553,16 @@ class LocalFilemanager extends BaseFilemanager
         Log::info('replacing target path "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('replace') || !$this->hasPermission('upload')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
 		if(is_dir($source_fullpath)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($source_fullpath, false)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		// check if the given file has the same extension as the old one
@@ -568,12 +572,12 @@ class LocalFilemanager extends BaseFilemanager
 
 		// check if file is writable
 		if(!$this->has_system_permission($source_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		// check if target path is writable
 		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
         $content = $this->initUploader([
@@ -605,7 +609,7 @@ class LocalFilemanager extends BaseFilemanager
                 $response_data[] = $item;
             }
         } else {
-            $this->error(sprintf($this->lang('ERROR_UPLOADING_FILE')));
+            $this->error('ERROR_UPLOADING_FILE');
         }
 
         return $response_data;
@@ -623,22 +627,22 @@ class LocalFilemanager extends BaseFilemanager
         $item = $this->get_file_info($target_path);
 
         if(is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+            $this->error('FORBIDDEN_ACTION_DIR');
         }
 
         if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+            $this->error('NOT_ALLOWED');
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		$content = file_get_contents($target_fullpath);
 
 		if($content === false) {
-			$this->error(sprintf($this->lang('ERROR_OPENING_FILE')));
+			$this->error('ERROR_OPENING_FILE');
 		}
 
         $item['attributes']['content'] = $content;
@@ -657,27 +661,27 @@ class LocalFilemanager extends BaseFilemanager
         $item = $this->get_file_info($target_path);
 
         if(is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+            $this->error('FORBIDDEN_ACTION_DIR');
         }
 
         if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED')));
+            $this->error('NOT_ALLOWED');
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
         // check if file is writable
 		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('ERROR_WRITING_PERM')));
+			$this->error('ERROR_WRITING_PERM');
 		}
 
 		$result = file_put_contents($target_fullpath, $this->post['content'], LOCK_EX);
 
 		if(!is_numeric($result)) {
-			$this->error(sprintf($this->lang('ERROR_SAVING_FILE')));
+			$this->error('ERROR_SAVING_FILE');
 		}
 
 		Log::info('saved "' . $target_fullpath . '"');
@@ -698,17 +702,17 @@ class LocalFilemanager extends BaseFilemanager
         Log::info('reading file "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+            $this->error('FORBIDDEN_ACTION_DIR');
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
         // check if file is readable
         if(!$this->has_system_permission($target_fullpath, ['r'])) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+            $this->error('NOT_ALLOWED_SYSTEM');
         }
 
 		$filesize = filesize($target_fullpath);
@@ -778,17 +782,17 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('loading image "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+            $this->error('FORBIDDEN_ACTION_DIR');
         }
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
         // check if file is readable
         if(!$this->has_system_permission($target_fullpath, ['r'])) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+            $this->error('NOT_ALLOWED_SYSTEM');
         }
 
 		// if $thumbnail is set to true we return the thumbnail
@@ -818,22 +822,22 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('deleting "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('delete')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
 		// check if file is writable
 		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($target_fullpath)) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
 		// check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_path, is_dir($target_fullpath))) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
         $item = $this->get_file_info($target_path);
@@ -871,28 +875,28 @@ class LocalFilemanager extends BaseFilemanager
 		Log::info('downloading "' . $target_fullpath . '"');
 
 		if(!$this->hasPermission('download')) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED')));
+			$this->error('NOT_ALLOWED');
 		}
 
 		// check if file is writable
 		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
         // check if the name is not in "excluded" list
         if(!$this->is_allowed_name($target_fullpath, $is_dir_target)) {
-            $this->error(sprintf($this->lang('INVALID_DIRECTORY_OR_FILE')));
+            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		if($is_dir_target) {
 			// check if permission is granted
 			if($this->config['security']['allowFolderDownload'] == false ) {
-				$this->error(sprintf($this->lang('NOT_ALLOWED')));
+				$this->error('NOT_ALLOWED');
 			}
 
 			// check if not requesting main FM userfiles folder
 			if($this->is_root_folder($target_fullpath)) {
-				$this->error(sprintf($this->lang('NOT_ALLOWED')));
+				$this->error('NOT_ALLOWED');
 			}
 		}
 
@@ -959,7 +963,7 @@ class LocalFilemanager extends BaseFilemanager
 		try {
 			$this->getDirSummary($path, $attributes);
 		} catch (Exception $e) {
-			$this->error(sprintf($this->lang('ERROR_SERVER')));
+			$this->error('ERROR_SERVER');
 		}
 
         return [
@@ -975,7 +979,7 @@ class LocalFilemanager extends BaseFilemanager
     public function actionExtract()
     {
         if (!extension_loaded('zip')) {
-            $this->error(sprintf($this->lang('NOT_FOUND_SYSTEM_MODULE'), 'zip'));
+            $this->error('NOT_FOUND_SYSTEM_MODULE', ['zip']);
         }
 
         $source_path = $this->post['source'];
@@ -985,16 +989,16 @@ class LocalFilemanager extends BaseFilemanager
 
         // check if target is writable
         if(!$this->has_system_permission($target_fullpath, ['w'])) {
-            $this->error(sprintf($this->lang('NOT_ALLOWED_SYSTEM')));
+            $this->error('NOT_ALLOWED_SYSTEM');
         }
 
         if(is_dir($source_fullpath)) {
-            $this->error(sprintf($this->lang('FORBIDDEN_ACTION_DIR')));
+            $this->error('FORBIDDEN_ACTION_DIR');
         }
 
         $zip = new ZipArchive();
         if ($zip->open($source_fullpath) !== true) {
-            $this->error(sprintf($this->lang('ERROR_EXTRACTING_FILE')));
+            $this->error('ERROR_EXTRACTING_FILE');
         }
 
         $response_data = [];
@@ -1177,7 +1181,7 @@ class LocalFilemanager extends BaseFilemanager
 		if($verify === true) {
 			if(!file_exists($full_path) || !$this->is_valid_path($full_path)) {
 				$langKey = is_dir($full_path) ? 'DIRECTORY_NOT_EXIST' : 'FILE_DOES_NOT_EXIST';
-				$this->error(sprintf($this->lang($langKey), $path));
+				$this->error($langKey, [$path]);
 			}
 		}
 		return $full_path;
