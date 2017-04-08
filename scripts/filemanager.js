@@ -381,10 +381,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
-		if(config.options.charsLatinOnly) {
-            secondary.push('/scripts/speakingurl/speakingurl.min.js');
-		}
-
 		if(secondary.length) {
             loadAssets(secondary);
 		}

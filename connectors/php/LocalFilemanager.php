@@ -104,7 +104,6 @@ class LocalFilemanager extends BaseFilemanager
         // config options that affect the client-side
         $shared_config = [
             'options' => [
-                'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
                 'capabilities' => $this->config['options']['capabilities'],
                 'allowFolderDownload' => $this->config['options']['allowFolderDownload'],
             ],
