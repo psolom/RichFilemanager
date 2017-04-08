@@ -20,7 +20,6 @@ abstract class BaseFilemanager
 
     public $config = [];
     protected $refParams = [];
-    protected $language = [];
     protected $get = [];
     protected $post = [];
     protected $fm_path = '';
@@ -97,7 +96,6 @@ abstract class BaseFilemanager
         }
 
         $this->setParams();
-        $this->loadLanguageFile();
     }
 
     /**
@@ -368,25 +366,6 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Load language file and retrieve all messages.
-     * Defines language code based on "langCode" variable if exists otherwise uses configuration option.
-     */
-    protected function loadLanguageFile()
-    {
-        $lang = $this->config['options']['culture'];
-        if(isset($this->refParams['langCode'])) {
-            $lang = $this->refParams['langCode'];
-        }
-
-        $lang_path = dirname(dirname(dirname(__FILE__))) . "/languages/{$lang}.json";
-
-        if (file_exists($lang_path)) {
-            $stream = file_get_contents($lang_path);
-            $this->language = json_decode($stream, true);
-        }
-    }
-
-    /**
      * Checking if permission is set or not for a given action
      * @param string $action
      * @return boolean
@@ -425,20 +404,6 @@ abstract class BaseFilemanager
         }
 
         exit;
-    }
-
-    /**
-     * Setup language by code
-     * @param $string
-     * @return string
-     */
-    public function lang($string)
-    {
-        if(!empty($this->language[$string])) {
-            return $this->language[$string];
-        } else {
-            return 'Language string error on ' . $string;
-        }
     }
 
     /**

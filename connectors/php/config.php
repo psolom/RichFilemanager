@@ -44,12 +44,6 @@ $config = [
      */
     "options" => [
         /**
-         * Set culture to display localized messages.
-         * Available languages are listed in the languages folder
-         * See https://github.com/servocoder/RichFilemanager/tree/master/scripts/languages
-         */
-        "culture" => "en",
-        /**
          * Default value "true".
          * By default the application will search `fileRoot` folder under server root folder.
          * Set value to "false" in case the `fileRoot` folder located outside server root folder.

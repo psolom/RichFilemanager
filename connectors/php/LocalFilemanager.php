@@ -106,7 +106,6 @@ class LocalFilemanager extends BaseFilemanager
             // config options to override at the client-side
             $shared_config = [
                 'options' => [
-                    'culture' => $this->config['options']['culture'],
                     'charsLatinOnly' => $this->config['options']['charsLatinOnly'],
                     'capabilities' => $this->config['options']['capabilities'],
                 ],
@@ -237,7 +236,8 @@ class LocalFilemanager extends BaseFilemanager
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];
             if(isset($file->error)) {
-                $this->error($file->error);
+                $error = is_array($file->error) ? $file->error : [$file->error];
+                $this->error($error[0], isset($error[1]) ? $error[1] : []);
             } else {
                 $relative_path = $this->cleanPath('/' . $target_path . '/' . $file->name);
                 $item = $this->get_file_info($relative_path);
@@ -592,7 +592,8 @@ class LocalFilemanager extends BaseFilemanager
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];
             if(isset($file->error)) {
-                $this->error($file->error);
+                $error = is_array($file->error) ? $file->error : [$file->error];
+                $this->error($error[0], isset($error[1]) ? $error[1] : []);
             } else {
                 $replacement_fullpath = $target_fullpath . $file->name;
                 Log::info('replacing "' . $source_fullpath . '" with "' . $replacement_fullpath . '"');
@@ -911,7 +912,7 @@ class LocalFilemanager extends BaseFilemanager
                 if($this->zipFile($target_fullpath, $destination_path, true)) {
                     $target_fullpath = $destination_path;
                 } else {
-                    $this->error($this->lang('ERROR_CREATING_ZIP'));
+                    $this->error('ERROR_CREATING_ZIP');
                 }
             }
             $file_size = $this->get_real_filesize($target_fullpath);
