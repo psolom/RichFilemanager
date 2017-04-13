@@ -38,7 +38,7 @@ class FmApplication {
             $fm = new LocalFilemanager($configuration);
         }
 
-        if(!auth()) {
+        if(!fm_authenticate()) {
             $fm->error('AUTHORIZATION_REQUIRED');
         }
 

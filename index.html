@@ -289,7 +289,7 @@
 							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
 							<div class="fm-preview-title-controls">
 								<a href="#" class="btn-copy-url" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.pureUrl()}"></a>
-								<!-- ko if: viewer.isEditable() && !editor.enabled() -->
+								<!-- ko if: viewer.isEditable() && !editor.enabled() && viewer.options().is_writable -->
 								<a href="#" class="btn-editor-open" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile"></a>
 								<!-- /ko -->
 								<!-- ko if: viewer.isEditable() && editor.enabled() -->

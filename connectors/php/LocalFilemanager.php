@@ -103,18 +103,16 @@ class LocalFilemanager extends BaseFilemanager
     {
         // config options that affect the client-side
         $shared_config = [
-            'options' => [
-                'capabilities' => $this->config['options']['capabilities'],
-                'allowFolderDownload' => $this->config['options']['allowFolderDownload'],
-            ],
             'security' => [
-                'allowNoExtension' => $this->config['security']['allowNoExtension'],
-                'editRestrictions' => $this->config['security']['editRestrictions'],
+                'read_only' => $this->config['security']['read_only'],
+                'extensions' => [
+                    'policy' => $this->config['security']['extensions']['policy'],
+                    'ignorecase' => $this->config['security']['extensions']['ignorecase'],
+                    'restrictions' => $this->config['security']['extensions']['restrictions'],
+                ],
             ],
             'upload' => [
                 'fileSizeLimit' => $this->config['upload']['fileSizeLimit'],
-                'policy' => $this->config['upload']['policy'],
-                'restrictions' => $this->config['upload']['restrictions'],
             ],
         ];
 
@@ -136,15 +134,13 @@ class LocalFilemanager extends BaseFilemanager
         $response_data = [];
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+
+		$this->check_read_permission($target_fullpath);
+
 		Log::info('opening folder "' . $target_fullpath . '"');
 
 		if(!is_dir($target_fullpath)) {
 			$this->error('DIRECTORY_NOT_EXIST', [$target_path]);
-		}
-
-		// check if folder is readable
-		if(!$this->has_system_permission($target_fullpath, ['r'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		if(!$handle = @opendir($target_fullpath)) {
@@ -163,8 +159,8 @@ class LocalFilemanager extends BaseFilemanager
                     $file_path .= '/';
                 }
 
-                $item = $this->get_file_info($file_path);
-                if($this->filter_output($item)) {
+                if($this->has_read_permission($target_fullpath . $file)) {
+                    $item = $this->get_file_info($file_path);
                     $response_data[] = $item;
                 }
 			}
@@ -180,21 +176,14 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
+
+		$this->check_read_permission($target_fullpath);
+
 		Log::info('opening file "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
         }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-
-		// check if file is readable
-		if(!$this->has_system_permission($target_fullpath, ['r'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
 
         return $this->get_file_info($target_path);
 	}
@@ -206,16 +195,10 @@ class LocalFilemanager extends BaseFilemanager
 	{
 	    $target_path = $this->post['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
+
+		$this->check_write_permission($target_fullpath);
+
 		Log::info('uploading to "' . $target_fullpath . '"');
-
-		// check if file is writable
-		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
-
-		if(!$this->hasPermission('upload')) {
-			$this->error('NOT_ALLOWED');
-		}
 
         $content = $this->initUploader([
 			'upload_dir' => $target_fullpath,
@@ -252,15 +235,13 @@ class LocalFilemanager extends BaseFilemanager
         $target_name = $this->get['name'];
 		$folder_name = $this->normalizeString(trim($target_name, '/'));
 		$new_fullpath = $target_fullpath . '/'. $folder_name . '/';
+
+		$this->check_write_permission($new_fullpath);
+
 		Log::info('adding folder "' . $new_fullpath . '"');
 
         if(is_dir($new_fullpath)) {
             $this->error('DIRECTORY_ALREADY_EXISTS', [$target_name]);
-        }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($folder_name, true)) {
-            $this->error('FORBIDDEN_NAME', [$target_name]);
         }
 
 		if(!mkdir($new_fullpath, 0755)) {
@@ -278,6 +259,8 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$suffix = '';
 
+		// FIXME: These string-parsing substr() lines of code should be replaced by a single
+		// call to pathinfo().
 		if(substr($this->get['old'], -1, 1) == '/') {
 			$this->get['old'] = substr($this->get['old'], 0, (strlen($this->get['old'])-1));
 			$suffix = '/';
@@ -291,41 +274,30 @@ class LocalFilemanager extends BaseFilemanager
 
 		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
 		$new_file = $this->getFullPath($new_path, true) . '/' . $new_name . $suffix;
+
+		$this->check_write_permission($old_file);
+		$this->check_write_permission($new_file);
+
+		// This function will also move the thumbnail, if it exists. Check perms:
+		$old_thumbnail = $this->get_thumbnail_path($old_file);
+		$new_thumbnail = $this->get_thumbnail_path($new_file);
+		if(file_exists($old_thumbnail)) {
+			$this->check_write_permission($old_thumbnail);
+			$this->check_write_permission($new_thumbnail);
+		}
+
 		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
-		if(!$this->hasPermission('rename')) {
-			$this->error('NOT_ALLOWED');
-		}
-
 		// forbid to change path during rename
+		// FIXME: Move/rename actions should be the same action, and without this arbitrary restriction
 		if(strrpos($this->get['new'], '/') !== false) {
 			$this->error('FORBIDDEN_CHAR_SLASH');
-		}
-
-		// check if file is writable
-		if(!$this->has_system_permission($old_file, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($old_file)) {
 			$this->error('NOT_ALLOWED');
 		}
-
-        // check if file extension is consistent to the security Policy settings
-        if(is_file($old_file)) {
-            if (!$this->is_allowed_file_type($new_file)) {
-                $this->error('INVALID_FILE_TYPE');
-            }
-        }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($old_file, $suffix === '/')) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-        if(!$this->is_allowed_name($new_name, $suffix === '/')) {
-            $this->error('FORBIDDEN_NAME', [$new_name]);
-        }
 
 		if(file_exists($new_file)) {
 			if($suffix === '/' && is_dir($new_file)) {
@@ -363,6 +335,8 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionCopy()
 	{
+		// FIXME: These string-parsing substr() lines of code should be replaced by a single
+		// call to pathinfo().
         $source_path = $this->get['source'];
         $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
 		$tmp = explode('/', trim($source_path, '/'));
@@ -373,34 +347,34 @@ class LocalFilemanager extends BaseFilemanager
         $target_path = $this->expandPath($target_path, false);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
+		// FIXME: The names $target_fullpath and $new_fullpath here are ambiguous
         $target_fullpath = $this->getFullPath($target_path, true);
 		$new_fullpath = $target_fullpath . $filename . $suffix;
-		Log::info('copying "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
-        if(!$this->hasPermission('copy')) {
-            $this->error('NOT_ALLOWED');
-        }
+		$this->check_read_permission($source_fullpath);
+		$this->check_write_permission($new_fullpath);
+
+		// This function will also copy the thumbnail, if it exists, AND
+		// the destination dir already has a thumbnail dir. Check perms:
+		$old_thumbnail = $this->get_thumbnail_path($source_fullpath);
+		$new_thumbnail = $this->get_thumbnail_path($new_fullpath);
+		if(file_exists($old_thumbnail)) {
+			$this->check_read_permission($old_thumbnail);
+			if (file_exists(dirname($new_thumbnail))) {
+				$this->check_write_permission($new_thumbnail);
+			}
+		}
+
+		Log::info('copying "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
         if(!is_dir($target_fullpath)) {
             $this->error('DIRECTORY_NOT_EXIST', [$target_path]);
         }
 
-		// check system permissions
-		if(!$this->has_system_permission($source_fullpath, ['r']) || !$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
-
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($source_fullpath)) {
 			$this->error('NOT_ALLOWED');
 		}
-
-        // check if the name is not in "excluded" list
-        if (!$this->is_allowed_name($target_fullpath, true) ||
-            !$this->is_allowed_name($source_fullpath, is_dir($source_fullpath))
-        ) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
 
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
@@ -443,6 +417,8 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionMove()
 	{
+		// FIXME: These string-parsing substr() lines of code should be replaced by a single
+		// call to pathinfo().
         $source_path = $this->get['old'];
         $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
 		$tmp = explode('/', trim($source_path, '/'));
@@ -454,33 +430,35 @@ class LocalFilemanager extends BaseFilemanager
 
 		$source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
+		// FIXME: The names $target_fullpath and $new_fullpath here are ambiguous
 		$new_fullpath = $target_fullpath . $filename . $suffix;
-		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
-        if(!$this->hasPermission('move')) {
-            $this->error('NOT_ALLOWED');
-        }
+		$this->check_write_permission($source_fullpath);
+		$this->check_write_permission($new_fullpath);
+
+		// This function will also move the thumbnail, if it exists, AND
+		// the destination dir already has a thumbnail dir. If the destination
+		// dir does not have a thumbnail dir, it just deletes the thumbnail.
+		// Check perms:
+		$old_thumbnail = $this->get_thumbnail_path($source_fullpath);
+		$new_thumbnail = $this->get_thumbnail_path($new_fullpath);
+		if(file_exists($old_thumbnail)) {
+			$this->check_write_permission($old_thumbnail);
+			if (file_exists(dirname($new_thumbnail))) {
+				$this->check_write_permission($new_thumbnail);
+			}
+		}
+
+		Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
 
         if(!is_dir($target_fullpath)) {
             $this->error('DIRECTORY_NOT_EXIST', [$target_path]);
         }
 
-        // check system permissions
-		if(!$this->has_system_permission($source_fullpath, ['r']) || !$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
-
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($source_fullpath)) {
 			$this->error('NOT_ALLOWED');
 		}
-
-        // check if the name is not in "excluded" list
-        if (!$this->is_allowed_name($target_fullpath, true) ||
-            !$this->is_allowed_name($source_fullpath, is_dir($source_fullpath))
-        ) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
 
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
@@ -526,41 +504,33 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionReplace()
 	{
+        // FIXME: $source_path is an ambiguous name here. This var is 
+        // actually the "target" file that will get replaced.
         $source_path = $this->post['path'];
         $source_fullpath = $this->getFullPath($source_path);
-        Log::info('replacing file "' . $source_fullpath . '"');
 
+        // $target_fullpath is the directory holding the file to be replaced.
         $target_path = dirname($source_path) . '/';
         $target_fullpath = $this->getFullPath($target_path, true);
-        Log::info('replacing target path "' . $target_fullpath . '"');
 
-		if(!$this->hasPermission('replace') || !$this->hasPermission('upload')) {
-			$this->error('NOT_ALLOWED');
-		}
+        $this->check_write_permission($source_fullpath);
+        // Since the new replacement file is uploaded into the same dir as
+        // the old file, we must check write perms on that dir as well.
+        // FIXME: It would be safer to upload the file to the system temp
+        // dir, and move it from there.
+        $this->check_write_permission($target_fullpath);
+
+        // This function will also delete the old thumbnail, if it exists. Check perms:
+        $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
+        if(file_exists($old_thumbnail)) {
+            $this->check_write_permission($old_thumbnail);
+        }
+        
+        Log::info('replacing file "' . $source_fullpath . '"');
+        Log::info('replacing target path "' . $target_fullpath . '"');
 
 		if(is_dir($source_fullpath)) {
 			$this->error('NOT_ALLOWED');
-		}
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($source_fullpath, false)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-
-		// check if the given file has the same extension as the old one
-        $source_extension = pathinfo($source_path, PATHINFO_EXTENSION);
-		if(strtolower(pathinfo($_FILES['files']['name'], PATHINFO_EXTENSION)) != strtolower($source_extension)) {
-			$this->error('ERROR_REPLACING_FILE', [$source_extension]);
-		}
-
-		// check if file is writable
-		if(!$this->has_system_permission($source_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
-
-		// check if target path is writable
-		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
 		}
 
         $content = $this->initUploader([
@@ -579,12 +549,13 @@ class LocalFilemanager extends BaseFilemanager
                 $replacement_fullpath = $target_fullpath . $file->name;
                 Log::info('replacing "' . $source_fullpath . '" with "' . $replacement_fullpath . '"');
 
+                // Overwrite the existing $source_fullpath:
                 rename($replacement_fullpath, $source_fullpath);
 
-                $new_thumbnail = $this->get_thumbnail_path($replacement_fullpath);
+                // Delete the old thumbnail, as it is now invalid and incorrect:
                 $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
-                if(file_exists($new_thumbnail)) {
-                    rename($new_thumbnail, $old_thumbnail);
+                if (file_exists($old_thumbnail)) {
+                    unlink($old_thumbnail);
                 }
 
                 $relative_path = $this->cleanPath('/' . $source_path);
@@ -605,21 +576,15 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+
+		$this->check_read_permission($target_fullpath);
+
 		Log::info('opening "' . $target_fullpath . '"');
 
         $item = $this->get_file_info($target_path);
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
-        }
-
-        if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
-            $this->error('NOT_ALLOWED');
-        }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
         }
 
 		$content = file_get_contents($target_fullpath);
@@ -639,27 +604,14 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->post['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
-		Log::info('saving "' . $target_fullpath . '"');
 
-        $item = $this->get_file_info($target_path);
+		$this->check_write_permission($target_fullpath);
+
+		Log::info('saving "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
         }
-
-        if(!$this->hasPermission('edit') || !$this->is_editable($item)) {
-            $this->error('NOT_ALLOWED');
-        }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-
-        // check if file is writable
-		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('ERROR_WRITING_PERM');
-		}
 
 		$result = file_put_contents($target_fullpath, $this->post['content'], LOCK_EX);
 
@@ -682,20 +634,13 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+
+		$this->check_read_permission($target_fullpath);
+
         Log::info('reading file "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
-        }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-
-        // check if file is readable
-        if(!$this->has_system_permission($target_fullpath, ['r'])) {
-            $this->error('NOT_ALLOWED_SYSTEM');
         }
 
 		$filesize = filesize($target_fullpath);
@@ -762,20 +707,30 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+		
+		// Thumbnail creation implies writing. Disable it if this the config says read_only:
+		if ($this->config['read_only']) {
+			$thumbnail = false;
+		}
+
+		$this->check_read_permission($target_fullpath);
+
+        // This function will get the thumbnail, if thumbnails are enabled. Check perms:
+		if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
+			$returned_path = $this->get_thumbnail_path($target_fullpath);
+			if (file_exists($returned_path)) {
+				// Check read perms on the thumbnail:
+				$this->check_read_permission($returned_path);
+			} else {
+				// The thumbnail will get created here, so check write perms of the thumbnail dir:
+				$this->check_write_permission(dirname($returned_path));
+			}
+		}
+
 		Log::info('loading image "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
-        }
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, false)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-
-        // check if file is readable
-        if(!$this->has_system_permission($target_fullpath, ['r'])) {
-            $this->error('NOT_ALLOWED_SYSTEM');
         }
 
 		// if $thumbnail is set to true we return the thumbnail
@@ -802,26 +757,15 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+
+		$this->check_write_permission($target_fullpath);
+
 		Log::info('deleting "' . $target_fullpath . '"');
-
-		if(!$this->hasPermission('delete')) {
-			$this->error('NOT_ALLOWED');
-		}
-
-		// check if file is writable
-		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($target_fullpath)) {
 			$this->error('NOT_ALLOWED');
 		}
-
-		// check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_path, is_dir($target_fullpath))) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
 
         $item = $this->get_file_info($target_path);
         $thumbnail_path = $this->get_thumbnail_path($target_fullpath);
@@ -854,30 +798,15 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
-        $is_dir_target = is_dir($target_fullpath);
+
+		$this->check_read_permission($target_fullpath);
+
 		Log::info('downloading "' . $target_fullpath . '"');
 
-		if(!$this->hasPermission('download')) {
-			$this->error('NOT_ALLOWED');
-		}
-
-		// check if file is writable
-		if(!$this->has_system_permission($target_fullpath, ['w'])) {
-			$this->error('NOT_ALLOWED_SYSTEM');
-		}
-
-        // check if the name is not in "excluded" list
-        if(!$this->is_allowed_name($target_fullpath, $is_dir_target)) {
-            $this->error('INVALID_DIRECTORY_OR_FILE');
-        }
-
+        $is_dir_target = is_dir($target_fullpath);
 		if($is_dir_target) {
-			// check if permission is granted
-			if($this->config['options']['allowFolderDownload'] == false ) {
-                $this->error('NOT_ALLOWED');
-			}
-
 			// check if not requesting main FM userfiles folder
+			// FIXME: This restriction seems arbitration, it could be useful for business clients
 			if($this->is_root_folder($target_fullpath)) {
 				$this->error('NOT_ALLOWED');
 			}
@@ -970,14 +899,8 @@ class LocalFilemanager extends BaseFilemanager
         $source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
 
-        // check if target is writable
-        if(!$this->has_system_permission($target_fullpath, ['w'])) {
-            $this->error('NOT_ALLOWED_SYSTEM');
-        }
-
-        if(is_dir($source_fullpath)) {
-            $this->error('FORBIDDEN_ACTION_DIR');
-        }
+		$this->check_read_permission($source_fullpath);
+		$this->check_write_permission($target_fullpath);
 
         $zip = new ZipArchive();
         if ($zip->open($source_fullpath) !== true) {
@@ -1016,13 +939,11 @@ class LocalFilemanager extends BaseFilemanager
             $file_stat = $zip->statIndex($i);
 
             if ($file_stat['name'][strlen($file_stat['name'])-1] !== "/") {
-                if ($this->is_allowed_file_type($file_name)) {
-                    $dir_name = $target_fullpath . $file_stat['name'];
-                    $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
+                $dir_name = $target_fullpath . $file_stat['name'];
+                $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
 
-                    if($copied && strpos($file_name, '/') === false) {
-                        $root_level_items[] = $file_name;
-                    }
+                if($copied && strpos($file_name, '/') === false) {
+                    $root_level_items[] = $file_name;
                 }
             }
         }
@@ -1087,29 +1008,6 @@ class LocalFilemanager extends BaseFilemanager
 		return $zip->close();
 	}
 
-    /**
-     * Check if system permission is granted
-     * @param string $filepath
-     * @param array $permissions
-     * @return bool
-     */
-    protected function has_system_permission($filepath, $permissions)
-    {
-		if(in_array('r', $permissions)) {
-			if(!is_readable($filepath)) {
-				Log::info('Not readable path "' . $filepath . '"');
-				return false;
-			};
-		}
-		if(in_array('w', $permissions)) {
-			if(!is_writable($filepath)) {
-				Log::info('Not writable path "' . $filepath . '"');
-				return false;
-			}
-		}
-		return true;
-	}
-
 	/**
 	 * Create array with file properties
 	 * @param string $relative_path
@@ -1122,9 +1020,10 @@ class LocalFilemanager extends BaseFilemanager
 		$filemtime = filemtime($fullpath);
 
 		// check if file is readable
-		$is_readable = $this->has_system_permission($fullpath, ['r']);
+		$is_readable = $this->has_read_permission($fullpath);
+
 		// check if file is writable
-        $is_writable = $this->has_system_permission($fullpath, ['w']);
+		$is_writable = $this->has_write_permission($fullpath);
 
 		if(is_dir($fullpath)) {
             $model = $this->folder_model;
@@ -1298,17 +1197,6 @@ class LocalFilemanager extends BaseFilemanager
 		return rtrim($this->path_to_files, '/') == rtrim($path, '/');
 	}
 
-    /**
-     * Check whether the file model could be edited regarding configuration setup
-     * @param string $file_model
-     * @return bool
-     */
-	protected function is_editable($file_model)
-    {
-		$allowed_types = array_map('strtolower', $this->config['security']['editRestrictions']);
-		return in_array(strtolower($file_model['attributes']['extension']), $allowed_types);
-	}
-
 	/**
 	 * Remove "../" from path
 	 * @param string $path Path to be converted
@@ -1367,11 +1255,11 @@ class LocalFilemanager extends BaseFilemanager
 			$path = $dir . $file;
             $is_dir = is_dir($path);
 
-            if ($is_dir && $this->is_allowed_name($file, true)) {
+            if ($is_dir && $this->has_read_permission($path)) {
                 $result['folders']++;
                 $this->getDirSummary($path . '/', $result);
             }
-            if (!$is_dir && $this->is_allowed_name($file, false)) {
+            if (!$is_dir && $this->has_read_permission($path)) {
                 $result['files']++;
                 $result['size'] += filesize($path);
             }
@@ -1434,6 +1322,17 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	protected function createThumbnail($imagePath, $thumbnailPath)
 	{
+		$this->check_read_permission($imagePath);
+
+		if(!file_exists(dirname($thumbnailPath))) {
+			// Check that the thumbnail sub-dir can be created, because it
+			// does not yet exist. So we check the parent dir:
+			$this->check_write_permission( dirname(dirname($thumbnailPath)) );
+		} else {
+			// Check that the thumbnail sub-dir, which exists, is writable:
+			$this->check_write_permission(dirname($thumbnailPath));
+		}
+
 		if($this->config['images']['thumbnail']['enabled'] === true) {
 			Log::info('generating thumbnail "' . $thumbnailPath . '"');
 

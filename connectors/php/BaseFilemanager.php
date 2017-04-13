@@ -2,15 +2,15 @@
 require_once('application/facade/Log.php');
 
 /**
- *	BaseFilemanager PHP class
+ *    BaseFilemanager PHP class
  *
- *	Base abstract class created to define base methods
+ *    Base abstract class created to define base methods
  *
- *	@license	MIT License
- *	@author		Riaan Los <mail (at) riaanlos (dot) nl>
- *	@author		Simon Georget <simon (at) linea21 (dot) com>
- *	@author		Pavel Solomienko <https://github.com/servocoder/>
- *	@copyright	Authors
+ *    @license    MIT License
+ *    @author        Riaan Los <mail (at) riaanlos (dot) nl>
+ *    @author        Simon Georget <simon (at) linea21 (dot) com>
+ *    @author        Pavel Solomienko <https://github.com/servocoder/>
+ *    @copyright    Authors
  */
 
 abstract class BaseFilemanager
@@ -23,7 +23,6 @@ abstract class BaseFilemanager
     protected $get = [];
     protected $post = [];
     protected $fm_path = '';
-    protected $allowed_actions = [];
 
     /**
      * File item model template
@@ -66,12 +65,6 @@ abstract class BaseFilemanager
     ];
 
     /**
-     * List of all possible actions
-     * @var array
-     */
-    protected $actions_list = ["select", "upload", "download", "rename", "copy", "move", "replace", "delete", "edit"];
-
-    /**
      * BaseFilemanager constructor.
      * @param array $config
      */
@@ -89,11 +82,6 @@ abstract class BaseFilemanager
 
         $this->config = $config;
         $this->fm_path = $this->config['fmPath'] ? $this->config['fmPath'] : dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME'])));
-
-        $this->allowed_actions = $this->actions_list;
-        if($this->config['options']['capabilities']) {
-            $this->setAllowedActions($this->config['options']['capabilities']);
-        }
 
         $this->setParams();
     }
@@ -197,18 +185,6 @@ abstract class BaseFilemanager
      * @param bool $mkdir
      */
     abstract function setFileRoot($path, $mkdir);
-
-    /**
-     * Overrides list of allowed actions
-     * @param array $actions
-     */
-    public function setAllowedActions($actions) {
-        $diff = array_diff($actions, $this->actions_list);
-        if($diff) {
-            $this->error('The following actions are not exists: "' . implode('", "', $diff) . '"');
-        }
-        $this->allowed_actions = $actions;
-    }
 
     /**
      * Invokes filemanager action based on request params and returns response
@@ -363,16 +339,6 @@ abstract class BaseFilemanager
             }
         }
         $this->refParams = $params;
-    }
-
-    /**
-     * Checking if permission is set or not for a given action
-     * @param string $action
-     * @return boolean
-     */
-    protected function hasPermission($action)
-    {
-        return in_array($action, $this->allowed_actions);
     }
 
     /**
@@ -566,85 +532,248 @@ abstract class BaseFilemanager
     }
 
     /**
-     * Check if file is allowed to upload regarding the configuration settings
-     * @param string $file
+     * Check the global blacklists for this file path
+     * @param string $filepath
      * @return bool
      */
-    public function is_allowed_file_type($file)
-    {
-        $path_parts = pathinfo($file);
-
-        // if there is no extension
-        if (!isset($path_parts['extension'])) {
-            // we check if no extension file are allowed
-            return (bool)$this->config['security']['allowNoExtension'];
+    public function is_unrestricted($filepath) {
+    
+        // First, check the extension:
+        $extension = pathinfo($filepath, PATHINFO_EXTENSION);
+        $extension_restrictions = $this->config['security']['extensions']['restrictions'];
+        
+        if ($this->config['security']['extensions']['ignorecase']) {
+            $extension = strtolower($extension);
+            $extension_restrictions = array_map('strtolower', $extension_restrictions);
         }
-
-        $extensions = array_map('strtolower', $this->config['upload']['restrictions']);
-
-        if($this->config['upload']['policy'] == 'DISALLOW_ALL') {
-            if(!in_array(strtolower($path_parts['extension']), $extensions)) {
+        
+        if($this->config['security']['extensions']['policy'] == 'ALLOW_LIST') {
+            if(!in_array($extension, $extension_restrictions)) {
+                // Not in the allowed list, so it's restricted.
                 return false;
             }
         }
-        if($this->config['upload']['policy'] == 'ALLOW_ALL') {
-            if(in_array(strtolower($path_parts['extension']), $extensions)) {
+        else if($this->config['security']['extensions']['policy'] == 'DISALLOW_LIST') {
+            if(in_array($extension, $extension_restrictions)) {
+                // It's in the disallowed list, so it's restricted.
                 return false;
             }
         }
+        else {
+            // Invalid config option for 'policy'. Deny everything for safety.
+            return false;
+        }
+        
+        // Next, check the filename against the glob patterns:
+        $basename = pathinfo($filepath, PATHINFO_BASENAME);
+        $basename_restrictions = $this->config['security']['patterns']['restrictions'];
+        
+        if ($this->config['security']['patterns']['ignorecase']) {
+            $basename = strtolower($basename);
+            $basename_restrictions = array_map('strtolower', $basename_restrictions);
+        }
+        
+        // (check for a match before applying the restriction logic)
+        $match_was_found = false;
+        foreach ($basename_restrictions as $pattern) {
+            if (fnmatch($pattern, $basename)) {
+                $match_was_found = true;
+                break;  // Done.
+            }
+        }
 
+        if($this->config['security']['patterns']['policy'] == 'ALLOW_LIST') {
+            if(!$match_was_found) {
+                // The $basename did not match the allowed pattern list, so it's restricted:
+                return false;
+            }
+        }
+        else if($this->config['security']['patterns']['policy'] == 'DISALLOW_LIST') {
+            if($match_was_found) {
+                // The $basename matched the disallowed pattern list, so it's restricted:
+                return false;
+            }
+        }
+        else {
+            // Invalid config option for 'policy'. Deny everything for safety.
+            return false;
+        }
+
+        return true;  // Nothing restricted this $filepath, so it is allowed.
+    }
+    
+
+    /**
+     * Check that this file has read permission
+     * @param string $filepath
+     * @return void -- exits with error response if the permission is not allowed
+     */
+    public function check_read_permission($filepath)
+    {   
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->has_system_read_permission($filepath) == false) { 
+            return $this->error('NOT_ALLOWED_SYSTEM');
+        }
+        
+        // Check the global blacklists:
+        if ($this->is_unrestricted($filepath) == false) { 
+            //return $this->error('FORBIDDEN_NAME', [$filepath]); // FIXME
+            return $this->error($filepath);
+        }
+
+        // Check the user's Auth API callback:
+        if (fm_has_read_permission($filepath) == false) {
+            return $this->error('NOT_ALLOWED');
+        }
+
+        // Nothing is restricting access to this file or dir, so it is readable.
+        return;  // Return without calling exit().
+    }
+
+    /**
+     * Query if this file has read permission, without exiting if not
+     * @param string $filepath
+     * @return bool
+     */
+    public function has_read_permission($filepath)
+    {   
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->has_system_read_permission($filepath) == false) { 
+            return false;
+        }
+        
+        // Check the global blacklists:
+        if ($this->is_unrestricted($filepath) == false) { 
+            return false;
+        }
+
+        // Check the user's Auth API callback:
+        if (fm_has_read_permission($filepath) == false) {
+            return false;
+        }
+
+        // Nothing is restricting access to this file or dir, so it is readable.
         return true;
     }
 
     /**
-     * Check if file or folder name is not in "excluded" list
-     * @param string $name
-     * @param bool $is_dir
-     * @return bool
+     * Check that this filepath can be written to.
+     * If the filepath does not exist, this assumes we want to CREATE a new
+     * dir entry at $filepath (a new file or new subdir), and thus it checks the
+     * parent dir for write permissions.
+     *
+     * @param string $filepath
+     * @return void -- exits with error response if the permission is not allowed
      */
-    public function is_allowed_name($name, $is_dir = false)
+    public function check_write_permission($filepath)
     {
-        $name = basename($name);
-
-        // check if folder name is allowed regarding the security Policy settings
-        if ($is_dir && (
-            in_array($name, $this->config['security']['excluded_dirs']) ||
-            preg_match($this->config['security']['excluded_dirs_REGEXP'], $name))
-        ) {
-            return false;
+        // Does the path already exist?
+        if (!file_exists($filepath)) {
+            // It does not exist (yet). Check to see if we could write to this
+            // path, by seeing if we can write new entries into its parent dir.
+            $parent_dir = pathinfo($filepath, PATHINFO_DIRNAME);
+            return $this->check_write_permission($parent_dir);
+        }
+        
+        //
+        // The filepath (file or dir) does exist, so check its permissions:
+        //
+        
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->has_system_write_permission($filepath) == false) { 
+            return $this->error('NOT_ALLOWED_SYSTEM');
+        }
+        
+        // Check the global blacklists:
+        if ($this->is_unrestricted($filepath) == false) { 
+            return $this->error('FORBIDDEN_NAME', [$filepath]);
         }
 
-        // check if file name is allowed regarding the security Policy settings
-        if (!$is_dir && (
-            in_array($name, $this->config['security']['excluded_files']) ||
-            preg_match($this->config['security']['excluded_files_REGEXP'], $name))
-        ) {
-            return false;
+        // Check the global read_only config flag:
+        if ($this->config['security']['read_only'] != false) {
+            return $this->error('NOT_ALLOWED');
         }
 
-        return true;
+        // Check the user's Auth API callback:
+        if (fm_has_write_permission($filepath) == false) {
+            return $this->error('NOT_ALLOWED');
+        }
+
+        // Nothing is restricting access to this file, so it is writable:
+        return;  // Return without calling exit().
     }
 
     /**
-     * Remove excluded and filtered items from output
-     * @param array $item
+     * Query if this file has write permission, without exiting if not
+     * @param string $filepath
      * @return bool
      */
-    public function filter_output($item)
+    public function has_write_permission($filepath)
     {
-        // filter out item if the name is not in "excluded" list
-        if(!$this->is_allowed_name($item["attributes"]["name"], $item["type"] === self::TYPE_FOLDER)) {
+        // Does the path already exist?
+        if (!file_exists($filepath)) {
+            // It does not exist (yet). Check to see if we could write to this
+            // path, by seeing if we can write new entries into its parent dir.
+            $parent_dir = pathinfo($filepath, PATHINFO_DIRNAME);
+            return $this->has_write_permission($parent_dir);
+        }
+
+        //
+        // The filepath (file or dir) does exist, so check its permissions:
+        //
+
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->has_system_write_permission($filepath) == false) { 
+            return false;
+        }
+        
+        // Check the global blacklists:
+        if ($this->is_unrestricted($filepath) == false) { 
+            return false;
+        }
+        // Check the global read_only config flag:
+        if ($this->config['security']['read_only'] != false) {
             return false;
         }
 
-        // filter out item if any filter is specified and item is matched
-        $filter_name = isset($this->refParams['type']) ? $this->refParams['type'] : null;
-        $allowed_types = isset($this->config['outputFilter'][$filter_name]) ? $this->config['outputFilter'][$filter_name] : null;
-        if($filter_name && is_array($allowed_types) && $item["type"] === self::TYPE_FILE) {
-            return (in_array(strtolower($item["attributes"]["extension"]), $allowed_types));
+        // Check the user's Auth API callback:
+        if (fm_has_write_permission($filepath) == false) {
+            return false;
         }
 
-        return true;
+        // Nothing is restricting access to this file, so it is writable:
+        return true;  // Return true.
+    }
+
+    /**
+     * Check if system permission is granted
+     * @param string $filepath
+     * @param array $permissions
+     * @return bool
+     */
+    protected function has_system_read_permission($filepath)
+    {
+        return is_readable($filepath); 
+    }
+
+    /**
+     * Check if this is running under PHP for Windows.
+     * @return bool
+     */
+    public function php_os_is_windows() {
+        return strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+    }
+
+    protected function has_system_write_permission($filepath)
+    {
+        // In order to create an entry in a POSIX dir, it must have
+        // both `-w-` write and `--x` execute permissions.
+        //
+        // NOTE: Windows PHP doesn't support standard POSIX permissions.
+        if (is_dir($filepath) && !($this->php_os_is_windows())) {
+            return (is_writable($filepath) && is_executable($filepath));
+        }
+        return is_writable($filepath);
     }
 
     /**
