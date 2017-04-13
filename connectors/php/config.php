@@ -66,80 +66,67 @@ $config = [
          * PHP requires INTL extension installed, otherwise all non-latin characters will be stripped.
          */
         "charsLatinOnly" => false,
-        /**
-         * Default value "false".
-         * Means all capabilities handled by the application are available.
-         * You can set only some ot them as array to restrict the allowed actions.
-         * For the full list of capabilities @see BaseFilemanager::actions_list
-         */
-        "capabilities" => false,
-        /**
-         * Default value "false".
-         * Allow users to download a Zip archive of a specific folder and contents (including subfolders).
-         */
-        "allowFolderDownload" => false,
     ],
     /**
      * Security section
      */
     "security" => [
+        /* Set `read_only` to true to disable all modifications to the filesystem, including thumbnail generation. */
+        "read_only" => true,
         /**
-         * Default value "false".
-         * If set to "true", allow users to upload file with no extension.
+         * Restrictions based on file name: "extensions", and "patterns" (glob matching, like shell wildcards).
+         *
+         * Files or directories that match these lists will be filtered from directory listing results, and 
+         * will be restricted from all file operations (both read and write).
+         *
+         * Set 'policy' to "DISALLOW_LIST" to blacklist, or "ALLOW_LIST" to whitelist, the 'restrictions' array.
          */
-        "allowNoExtension" => false,
+        "extensions" => [
+            /* Filename extensions from PATHINFO_EXTENSION are compared against this list, after the right-most dot '.'.
+             * To disallow empty/no extensions like the old `allowNoExtension` option, add the empty string "" to this list. 
+             */
+            "policy" => "DISALLOW_LIST", 
+            "ignorecase" => true, 
+            "restrictions" => [
+                "php",
+                "asp",
+                "pl",
+                "py",
+                "rb",
+                "key",
+                "conf",
+            ],
+        ],
+        
+        "patterns" => [
+            /* These globs are compared against PATHINFO_BASENAME, so they will match in any directory. */
+            "policy" => "DISALLOW_LIST", 
+            "ignorecase" => true, 
+            "restrictions" => [
+                ".htaccess",
+                "web.config",
+                "*config",
+                "*conf",
+                "*cnf",
+                "*passwd",
+                "*pass",
+                "*group",
+                "*groups",
+                "id_*",
+                "*key",
+                "*keys",
+                "*pub",
+                "magic",
+                "*hosts",
+                "_thumbs",  // FIXME: This breaks the current thumb permission code.
+                ".CDN_ACCESS_LOGS",
+            ],
+        ],
         /**
          * Default value "true".
          * Sanitize file/folder name, replaces gaps and some other special chars.
          */
         "normalizeFilename" => true,
-        /**
-         * Array of file names excluded from listing.
-         */
-        "excluded_files" => [
-            ".htaccess",
-            "web.config",
-        ],
-        /**
-         * Array of folder names excluded from listing.
-         */
-        "excluded_dirs" => [
-            "_thumbs",
-            ".CDN_ACCESS_LOGS",
-        ],
-        /**
-         * Files excluded from listing, using REGEX.
-         */
-        "excluded_files_REGEXP" => "/^\\./",
-        /**
-         * Folders excluded from listing, using REGEX.
-         */
-        "excluded_dirs_REGEXP" => "/^\\./",
-        /**
-         * Array of files extensions permitted for editing.
-         */
-        "editRestrictions" => [
-            "txt",
-            "csv",
-            "md",
-        ],
-    ],
-    /**
-     * File types that are filtered out from the output list based on the type of filter ('getfolder' request)
-     */
-    "outputFilter" => [
-        /**
-         * File types to be filtered out for "images" filter
-         */
-        "images" => [
-            "jpg",
-            "jpe",
-            "jpeg",
-            "gif",
-            "png",
-            "svg",
-            "bmp",
-        ],
     ],
     /**
      * Upload section
@@ -156,53 +143,6 @@ $config = [
          * If set to "true" files will be overwritten on uploads if they have same names, otherwise an index will be added.
          */
         "overwrite" => false,
-        /**
-         * Default value "false".
-         * If set to "true", only images are accepted for upload.
-         */
-        "imagesOnly" => false,
-        /**
-         * Default value "DISALLOW_ALL". Takes value "ALLOW_ALL" / "DISALLOW_ALL".
-         * If is set to "DISALLOW_ALL", only files with extensions contained in `restrictions` array will be allowed.
-         * If is set to "ALLOW_ALL", all files will be accepted for upload except for files with extensions contained in `restrictions`.
-         */
-        "policy" => "DISALLOW_ALL",
-        /**
-         * Array of files extensions permitted for uploading/creating
-         */
-        "restrictions" => [
-            "jpg",
-            "jpe",
-            "jpeg",
-            "gif",
-            "png",
-            "svg",
-            "txt",
-            "pdf",
-            "odp",
-            "ods",
-            "odt",
-            "rtf",
-            "doc",
-            "docx",
-            "xls",
-            "xlsx",
-            "ppt",
-            "pptx",
-            "csv",
-            "ogv",
-            "avi",
-            "mkv",
-            "mp4",
-            "webm",
-            "m4v",
-            "ogg",
-            "mp3",
-            "wav",
-            "zip",
-            "rar",
-            "md",
-        ],
     ],
     /**
      * Images section

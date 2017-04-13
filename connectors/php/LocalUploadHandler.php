@@ -28,7 +28,7 @@ class LocalUploadHandler extends BaseUploadHandler
         $this->options['param_name'] = 'files';
         $this->options['readfile_chunk_size'] = 10 * 1024 * 1024;
         $this->options['max_file_size'] = $this->fm->config['upload']['fileSizeLimit'];
-        // BaseFilemanager::is_allowed_file_type() is used instead of this regex check
+        // BaseFilemanager::check_write_permission() is used instead of this regex check
         $this->options['accept_file_types'] = '/.+$/i';
         // no need to override, this list fits for images handling libs
         $this->options['image_file_types'] = '/\.(gif|jpe?g|png)$/i';
@@ -104,11 +104,7 @@ class LocalUploadHandler extends BaseUploadHandler
             $file->error = $this->get_error_message('post_max_size');
             return false;
         }
-        if (!$this->fm->is_allowed_file_type($file->name)) {
-            $file->error = $this->get_error_message('accept_file_types');
-            return false;
-        }
-        if(!$this->fm->is_allowed_name($file->name, false)) {
+        if(!$this->fm->is_unrestricted($file->name, false)) {
             $file->error = ['FORBIDDEN_NAME', [$file->name]];
             return false;
         }

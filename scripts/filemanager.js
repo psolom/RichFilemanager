@@ -269,6 +269,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         config[section][param] = value;
                     });
                 });
+                
+                // If the server is in read_only mode, set the GUI to browseOnly:
+                if (config.security.read_only) {
+                    config.options.browseOnly = true;
+                }
             }
             handleAjaxResponseErrors(response);
         }).fail(function() {
@@ -858,6 +863,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     (isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true)
 				) {
                     viewerObject.type = 'renderer';
+                    viewerObject.options = {
+                        is_writable: resourceObject.attributes.writable
+                    };
                     preview_model.renderer.setRenderer(resourceObject);
                     editorObject.interactive = preview_model.renderer.renderer().interactive;
 				}
@@ -2750,18 +2758,60 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return true;
 	}
 
-	// Test if file is authorized
+    // http://stackoverflow.com/questions/3390930/any-way-to-make-jquery-inarray-case-insensitive
+    (function($){
+        $.extend({
+            // Case insensative $.inArray (http://api.jquery.com/jquery.inarray/)
+            // $.inArrayInsensitive(value, array [, fromIndex])
+            //  value (type: String)
+            //    The value to search for
+            //  array (type: Array)
+            //    An array through which to search.
+            //  fromIndex (type: Number)
+            //    The index of the array at which to begin the search.
+            //    The default is 0, which will search the whole array.
+            inArrayInsensitive: function(elem, arr, i){
+                // not looking for a string anyways, use default method
+                if (typeof elem !== 'string'){
+                    return $.inArray.apply(this, arguments);
+                }
+                // confirm array is populated
+                if (arr){
+                    var len = arr.length;
+                        i = i ? (i < 0 ? Math.max(0, len + i) : i) : 0;
+                    elem = elem.toLowerCase();
+                    for (; i < len; i++){
+                        if (i in arr && arr[i].toLowerCase() == elem){
+                            return i;
+                        }
+                    }
+                }
+                // stick with inArray/indexOf and return -1 on no match
+                return -1;
+            }
+        });
+    })(jQuery);
+    
+	// Test if file is authorized, based on extension only
 	var isAuthorizedFile = function(filename) {
 		var ext = getExtension(filename);
-		// no extension is allowed
-		if(ext === '' && config.security.allowNoExtension === true) return true;
-
-		if(config.upload.policy == 'DISALLOW_ALL') {
-			if($.inArray(ext, config.upload.restrictions) !== -1) return true;
+		
+		if (config.security.extensions.ignorecase) {
+		    if(config.security.extensions.policy == 'ALLOW_LIST') {
+			    if($.inArrayInsensitive(ext, config.security.extensions.restrictions) !== -1) return true;
+		    }
+		    if(config.security.extensions.policy == 'DISALLOW_LIST') {
+			    if($.inArrayInsensitive(ext, config.security.extensions.restrictions) === -1) return true;
+		    }
+		} else {
+		    if(config.security.extensions.policy == 'ALLOW_LIST') {
+			    if($.inArray(ext, config.security.extensions.restrictions) !== -1) return true;
+		    }
+		    if(config.security.extensions.policy == 'DISALLOW_LIST') {
+			    if($.inArray(ext, config.security.extensions.restrictions) === -1) return true;
+		    }
 		}
-		if(config.upload.policy == 'ALLOW_ALL') {
-			if($.inArray(ext, config.upload.restrictions) === -1) return true;
-		}
+		
 		return false;
 	};
 
@@ -3181,11 +3231,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			// File only - Check if file extension is allowed
 			if (isFile(oldPath) && !isAuthorizedFile(givenName)) {
 				var str = '<p>' + lg.INVALID_FILE_TYPE + '</p>';
-				if(config.upload.policy == 'DISALLOW_ALL') {
-					str += '<p>' + lg.ALLOWED_FILE_TYPE.replace('%s', config.upload.restrictions.join(', ')) + '.</p>';
+				if(config.security.extensions.policy == 'ALLOW_LIST') {
+					str += '<p>' + lg.ALLOWED_FILE_TYPE.replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
-				if(config.upload.policy == 'ALLOW_ALL') {
-					str += '<p>' + lg.DISALLOWED_FILE_TYPE.replace('%s', config.upload.restrictions.join(', ')) + '.</p>';
+				if(config.security.extensions.policy == 'DISALLOW_LIST') {
+					str += '<p>' + lg.DISALLOWED_FILE_TYPE.replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
 				$("#filepath").val('');
 				fm.error(str);
@@ -3809,8 +3859,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						lang: lg
 					});
 
-				if(config.upload.policy == 'DISALLOW_ALL') {
-					allowedFileTypes = new RegExp('(\\.|\\/)(' + config.upload.restrictions.join('|') + ')$', 'i');
+				if(config.security.extensions.policy == 'ALLOW_LIST') {
+					allowedFileTypes = new RegExp('(\\.|\\/)(' + config.security.extensions.restrictions.join('|') + ')$', 'i');
 				}
 
 				fm.dialog({
