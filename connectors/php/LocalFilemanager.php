@@ -136,6 +136,7 @@ class LocalFilemanager extends BaseFilemanager
 		$target_fullpath = $this->getFullPath($target_path, true);
 
 		$this->check_read_permission($target_fullpath);
+        $this->check_restrictions($target_path);
 
 		Log::info('opening folder "' . $target_fullpath . '"');
 
@@ -159,8 +160,8 @@ class LocalFilemanager extends BaseFilemanager
                     $file_path .= '/';
                 }
 
-                if($this->has_read_permission($target_fullpath . $file)) {
-                    $item = $this->get_file_info($file_path);
+                $item = $this->get_file_info($file_path);
+                if($this->is_unrestricted($item['id'])) {
                     $response_data[] = $item;
                 }
 			}
@@ -176,10 +177,10 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('opening file "' . $target_fullpath . '"');
 
 		$this->check_read_permission($target_fullpath);
-
-		Log::info('opening file "' . $target_fullpath . '"');
+        $this->check_restrictions($target_path);
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
@@ -195,13 +196,14 @@ class LocalFilemanager extends BaseFilemanager
 	{
 	    $target_path = $this->post['path'];
         $target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('uploading to "' . $target_fullpath . '"');
 
 		$this->check_write_permission($target_fullpath);
-
-		Log::info('uploading to "' . $target_fullpath . '"');
+        $this->check_restrictions($target_path);
 
         $content = $this->initUploader([
 			'upload_dir' => $target_fullpath,
+			'upload_relative_path' => $target_path,
 		])->post(false);
 
         $response_data = [];
@@ -233,12 +235,13 @@ class LocalFilemanager extends BaseFilemanager
         $target_fullpath = $this->getFullPath($target_path, true);
 
         $target_name = $this->get['name'];
-		$folder_name = $this->normalizeString(trim($target_name, '/'));
-		$new_fullpath = $target_fullpath . '/'. $folder_name . '/';
-
-		$this->check_write_permission($new_fullpath);
-
+		$folder_name = $this->normalizeString(trim($target_name, '/')) . '/';
+        $relative_path = $this->cleanPath('/' . $target_path . '/' . $folder_name);
+		$new_fullpath = $target_fullpath . '/'. $folder_name;
 		Log::info('adding folder "' . $new_fullpath . '"');
+
+        $this->check_write_permission($new_fullpath);
+        $this->check_restrictions($relative_path);
 
         if(is_dir($new_fullpath)) {
             $this->error('DIRECTORY_ALREADY_EXISTS', [$target_name]);
@@ -248,7 +251,6 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error('UNABLE_TO_CREATE_DIRECTORY', [$target_name]);
 		}
 
-        $relative_path = $this->cleanPath('/' . $target_path . '/' . $folder_name . '/');
         return $this->get_file_info($relative_path);
 	}
 
@@ -258,21 +260,21 @@ class LocalFilemanager extends BaseFilemanager
 	public function actionRename()
 	{
 		$suffix = '';
+        $old_relative_path = $this->get['old'];
+        $old_trimmed_path = $old_relative_path;
 
-		// FIXME: These string-parsing substr() lines of code should be replaced by a single
-		// call to pathinfo().
-		if(substr($this->get['old'], -1, 1) == '/') {
-			$this->get['old'] = substr($this->get['old'], 0, (strlen($this->get['old'])-1));
+		if(substr($old_trimmed_path, -1, 1) == '/') {
+            $old_trimmed_path = substr($old_trimmed_path, 0, (strlen($old_trimmed_path)-1));
 			$suffix = '/';
 		}
-		$tmp = explode('/', $this->get['old']);
+		$tmp = explode('/', $old_trimmed_path);
 		$filename = $tmp[(sizeof($tmp)-1)];
 
-		$new_path = substr($this->get['old'], 0, strripos($this->get['old'], '/' . $filename));
+		$new_path = substr($old_trimmed_path, 0, strripos($old_trimmed_path, '/' . $filename));
 		$new_name = $this->normalizeString($this->get['new'], ['.', '-']);
         $new_relative_path = $this->cleanPath('/' . $new_path . '/' . $new_name . $suffix);
 
-		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
+		$old_file = $this->getFullPath($old_trimmed_path, true) . $suffix;
 		$new_file = $this->getFullPath($new_path, true) . '/' . $new_name . $suffix;
 
 		$this->check_write_permission($old_file);
@@ -298,6 +300,9 @@ class LocalFilemanager extends BaseFilemanager
 		if($this->is_root_folder($old_file)) {
 			$this->error('NOT_ALLOWED');
 		}
+
+        $this->check_restrictions($old_relative_path);
+        $this->check_restrictions($new_relative_path);
 
 		if(file_exists($new_file)) {
 			if($suffix === '/' && is_dir($new_file)) {
@@ -335,21 +340,18 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionCopy()
 	{
-		// FIXME: These string-parsing substr() lines of code should be replaced by a single
-		// call to pathinfo().
         $source_path = $this->get['source'];
+        $basename = basename($source_path);
         $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
-		$tmp = explode('/', trim($source_path, '/'));
-		$filename = array_pop($tmp); // file name or new dir name
 
         $target_input = $this->get['target'];
         $target_path = $target_input . '/';
         $target_path = $this->expandPath($target_path, false);
+        $target_relative_path = $this->cleanPath('/' . $target_path . '/' . $basename . $suffix);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
-		// FIXME: The names $target_fullpath and $new_fullpath here are ambiguous
         $target_fullpath = $this->getFullPath($target_path, true);
-		$new_fullpath = $target_fullpath . $filename . $suffix;
+		$new_fullpath = $target_fullpath . $basename . $suffix;
 
 		$this->check_read_permission($source_fullpath);
 		$this->check_write_permission($new_fullpath);
@@ -376,9 +378,12 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error('NOT_ALLOWED');
 		}
 
+        $this->check_restrictions($source_path);
+        $this->check_restrictions($target_relative_path);
+
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
-            $item_name = rtrim($target_input, '/') . '/' . $filename;
+            $item_name = rtrim($target_input, '/') . '/' . $basename;
 			if(is_dir($new_fullpath)) {
 				$this->error('DIRECTORY_ALREADY_EXISTS', [$item_name]);
 			} else {
@@ -389,9 +394,9 @@ class LocalFilemanager extends BaseFilemanager
 		// move file or folder
 		if(!FmHelper::copyRecursive($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error('ERROR_COPYING_DIRECTORY', [$filename, $target_input]);
+				$this->error('ERROR_COPYING_DIRECTORY', [$basename, $target_input]);
 			} else {
-				$this->error('ERROR_COPYING_FILE', [$filename, $target_input]);
+				$this->error('ERROR_COPYING_FILE', [$basename, $target_input]);
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
@@ -407,8 +412,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-        $relative_path = $this->cleanPath('/' . $target_path . '/' . $filename . $suffix);
-        return $this->get_file_info($relative_path);
+        return $this->get_file_info($target_relative_path);
 	}
 
 
@@ -417,21 +421,18 @@ class LocalFilemanager extends BaseFilemanager
 	 */
 	public function actionMove()
 	{
-		// FIXME: These string-parsing substr() lines of code should be replaced by a single
-		// call to pathinfo().
         $source_path = $this->get['old'];
+        $basename = basename($source_path);
         $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
-		$tmp = explode('/', trim($source_path, '/'));
-		$filename = array_pop($tmp); // file name or new dir name
 
         $target_input = $this->get['new'];
         $target_path = $target_input . '/';
         $target_path = $this->expandPath($target_path, false);
+        $target_relative_path = $this->cleanPath('/' . $target_path . '/' . $basename . $suffix);
 
 		$source_fullpath = $this->getFullPath($source_path, true);
         $target_fullpath = $this->getFullPath($target_path, true);
-		// FIXME: The names $target_fullpath and $new_fullpath here are ambiguous
-		$new_fullpath = $target_fullpath . $filename . $suffix;
+		$new_fullpath = $target_fullpath . $basename . $suffix;
 
 		$this->check_write_permission($source_fullpath);
 		$this->check_write_permission($new_fullpath);
@@ -460,9 +461,12 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error('NOT_ALLOWED');
 		}
 
+        $this->check_restrictions($source_path);
+        $this->check_restrictions($target_relative_path);
+
 		// check if file already exists
 		if (file_exists($new_fullpath)) {
-            $item_name = rtrim($target_input, '/') . '/' . $filename;
+            $item_name = rtrim($target_input, '/') . '/' . $basename;
 			if(is_dir($new_fullpath)) {
 				$this->error('DIRECTORY_ALREADY_EXISTS', [$item_name]);
 			} else {
@@ -476,9 +480,9 @@ class LocalFilemanager extends BaseFilemanager
 		// move file or folder
 		if(!rename($source_fullpath, $new_fullpath)) {
 			if(is_dir($source_fullpath)) {
-				$this->error('ERROR_MOVING_DIRECTORY', [$filename, $target_input]);
+				$this->error('ERROR_MOVING_DIRECTORY', [$basename, $target_input]);
 			} else {
-				$this->error('ERROR_MOVING_FILE', [$filename, $target_input]);
+				$this->error('ERROR_MOVING_FILE', [$basename, $target_input]);
 			}
 		} else {
 			Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
@@ -495,8 +499,7 @@ class LocalFilemanager extends BaseFilemanager
 			}
 		}
 
-        $relative_path = $this->cleanPath('/' . $target_path . '/' . $filename . $suffix);
-        return $this->get_file_info($relative_path);
+        return $this->get_file_info($target_relative_path);
 	}
 
 	/**
@@ -576,12 +579,10 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('opening "' . $target_fullpath . '"');
 
 		$this->check_read_permission($target_fullpath);
-
-		Log::info('opening "' . $target_fullpath . '"');
-
-        $item = $this->get_file_info($target_path);
+        $this->check_restrictions($target_path);
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
@@ -593,6 +594,7 @@ class LocalFilemanager extends BaseFilemanager
 			$this->error('ERROR_OPENING_FILE');
 		}
 
+        $item = $this->get_file_info($target_path);
         $item['attributes']['content'] = $content;
         return $item;
 	}
@@ -604,10 +606,10 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->post['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('saving "' . $target_fullpath . '"');
 
 		$this->check_write_permission($target_fullpath);
-
-		Log::info('saving "' . $target_fullpath . '"');
+        $this->check_restrictions($target_path);
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
@@ -634,10 +636,10 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('reading file "' . $target_fullpath . '"');
 
 		$this->check_read_permission($target_fullpath);
-
-        Log::info('reading file "' . $target_fullpath . '"');
+        $this->check_restrictions($target_path);
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
@@ -707,27 +709,7 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
-		
-		// Thumbnail creation implies writing. Disable it if this the config says read_only:
-		if ($this->config['read_only']) {
-			$thumbnail = false;
-		}
-
-		$this->check_read_permission($target_fullpath);
-
-        // This function will get the thumbnail, if thumbnails are enabled. Check perms:
-		if($thumbnail === true && $this->config['images']['thumbnail']['enabled'] === true) {
-			$returned_path = $this->get_thumbnail_path($target_fullpath);
-			if (file_exists($returned_path)) {
-				// Check read perms on the thumbnail:
-				$this->check_read_permission($returned_path);
-			} else {
-				// The thumbnail will get created here, so check write perms of the thumbnail dir:
-				$this->check_write_permission(dirname($returned_path));
-			}
-		}
-
-		Log::info('loading image "' . $target_fullpath . '"');
+        Log::info('loading image "' . $target_fullpath . '"');
 
         if(is_dir($target_fullpath)) {
             $this->error('FORBIDDEN_ACTION_DIR');
@@ -740,6 +722,11 @@ class LocalFilemanager extends BaseFilemanager
 		} else {
 			$returned_path = $target_fullpath;
 		}
+
+        $this->check_read_permission($returned_path);
+        $this->check_restrictions($target_path);
+
+        Log::info('loaded image "' . $returned_path . '"');
 
 		header("Content-type: image/octet-stream");
 		header("Content-Transfer-Encoding: binary");
@@ -757,10 +744,10 @@ class LocalFilemanager extends BaseFilemanager
 	{
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('deleting "' . $target_fullpath . '"');
 
 		$this->check_write_permission($target_fullpath);
-
-		Log::info('deleting "' . $target_fullpath . '"');
+        $this->check_restrictions($target_path);
 
 		// check if not requesting main FM userfiles folder
 		if($this->is_root_folder($target_fullpath)) {
@@ -798,15 +785,15 @@ class LocalFilemanager extends BaseFilemanager
     {
         $target_path = $this->get['path'];
 		$target_fullpath = $this->getFullPath($target_path, true);
+        Log::info('downloading "' . $target_fullpath . '"');
 
 		$this->check_read_permission($target_fullpath);
-
-		Log::info('downloading "' . $target_fullpath . '"');
+        $this->check_restrictions($target_path);
 
         $is_dir_target = is_dir($target_fullpath);
 		if($is_dir_target) {
 			// check if not requesting main FM userfiles folder
-			// FIXME: This restriction seems arbitration, it could be useful for business clients
+			// TODO: This restriction seems arbitration, it could be useful for business clients
 			if($this->is_root_folder($target_fullpath)) {
 				$this->error('NOT_ALLOWED');
 			}
@@ -901,57 +888,56 @@ class LocalFilemanager extends BaseFilemanager
 
 		$this->check_read_permission($source_fullpath);
 		$this->check_write_permission($target_fullpath);
+        $this->check_restrictions($source_path);
+
+        if(is_dir($source_fullpath)) {
+            $this->error('FORBIDDEN_ACTION_DIR');
+        }
 
         $zip = new ZipArchive();
         if ($zip->open($source_fullpath) !== true) {
             $this->error('ERROR_EXTRACTING_FILE');
         }
 
-        $folders = [];
         $response_data = [];
+        $root_level_items = [];
 
         // make all the folders
         for($i = 0; $i < $zip->numFiles; $i++) {
-            $file_stat = $zip->statIndex($i);
+            $file_name = $zip->getNameIndex($i);
+            $relative_path = $target_path . $file_name;
 
-            if ($file_stat['name'][strlen($file_stat['name'])-1] === "/") {
-                $dir_name = $target_fullpath . $file_stat['name'];
+            if ($file_name[strlen($file_name)-1] === "/" && $this->is_unrestricted($relative_path)) {
+                $dir_name = $target_fullpath . $file_name;
                 $created = mkdir($dir_name, 0700, true);
 
                 if ($created) {
-                    $folders[] = $file_stat['name'];
+                    // extract root-level folders from archive manually
+                    $root = substr($file_name, 0, strpos($file_name, '/') + 1);
+                    $root_level_items[$root] = $relative_path;
                 }
             }
         }
-
-        // extract root-level folders from archive manually
-        $root_folders = [];
-        foreach($folders as $name) {
-            $name = ltrim($name, '/');
-            $root = substr($name, 0, strpos($name, '/') + 1);
-            $root_folders[$root] = $root;
-        }
-        $root_level_items = array_values($root_folders);
 
         // unzip into the folders
         for($i = 0; $i < $zip->numFiles; $i++) {
             $file_name = $zip->getNameIndex($i);
             $file_stat = $zip->statIndex($i);
+            $relative_path = $target_path . $file_name;
 
-            if ($file_stat['name'][strlen($file_stat['name'])-1] !== "/") {
-                $dir_name = $target_fullpath . $file_stat['name'];
+            if ($file_name[strlen($file_name)-1] !== "/" && $this->is_unrestricted($relative_path)) {
+                $dir_name = $target_fullpath . $file_name;
                 $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
 
                 if($copied && strpos($file_name, '/') === false) {
-                    $root_level_items[] = $file_name;
+                    $root_level_items[] = $relative_path;
                 }
             }
         }
 
         $zip->close();
 
-        foreach ($root_level_items as $file_name) {
-            $relative_path = $this->cleanPath($target_path . '/' . $file_name);
+        foreach ($root_level_items as $relative_path) {
             $item = $this->get_file_info($relative_path);
             $response_data[] = $item;
         }
@@ -1254,12 +1240,14 @@ class LocalFilemanager extends BaseFilemanager
 			}
 			$path = $dir . $file;
             $is_dir = is_dir($path);
+            $relative_path = $this->getRelativePath($path) . ($is_dir ? '/' : '');
+            $is_allowed_path = $this->has_read_permission($path) && $this->is_unrestricted($relative_path);
 
-            if ($is_dir && $this->has_read_permission($path)) {
+            if ($is_dir && $is_allowed_path) {
                 $result['folders']++;
                 $this->getDirSummary($path . '/', $result);
             }
-            if (!$is_dir && $this->has_read_permission($path)) {
+            if (!$is_dir && $is_allowed_path) {
                 $result['files']++;
                 $result['size'] += filesize($path);
             }
@@ -1307,10 +1295,11 @@ class LocalFilemanager extends BaseFilemanager
 	{
 		$thumbnail_fullpath = $this->get_thumbnail_path($path);
 
-		// generate thumbnail if it doesn't exist or caching is disabled
-		if(!file_exists($thumbnail_fullpath) || $this->config['images']['thumbnail']['cache'] === false) {
-			$this->createThumbnail($path, $thumbnail_fullpath);
-		}
+        // generate thumbnail if it doesn't exist or caching is disabledactionMove
+        // thumbnail creation implies writing, so also check "read_only" option
+        if (!file_exists($thumbnail_fullpath) || $this->config['read_only'] || $this->config['images']['thumbnail']['cache'] === false) {
+            $this->createThumbnail($path, $thumbnail_fullpath);
+        }
 
 		return $thumbnail_fullpath;
 	}
@@ -1327,7 +1316,7 @@ class LocalFilemanager extends BaseFilemanager
 		if(!file_exists(dirname($thumbnailPath))) {
 			// Check that the thumbnail sub-dir can be created, because it
 			// does not yet exist. So we check the parent dir:
-			$this->check_write_permission( dirname(dirname($thumbnailPath)) );
+			$this->check_write_permission(dirname(dirname($thumbnailPath)));
 		} else {
 			// Check that the thumbnail sub-dir, which exists, is writable:
 			$this->check_write_permission(dirname($thumbnailPath));
