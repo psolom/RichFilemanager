@@ -1,5 +1,7 @@
 <?php
 
+namespace RFM;
+
 class Logger {
     /**
      * @var string|null

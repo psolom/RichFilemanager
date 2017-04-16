@@ -1,4 +1,7 @@
 <?php
+
+namespace RFM\Storage;
+
 /*
  * jQuery File Upload Plugin PHP Class
  * https://github.com/blueimp/jQuery-File-Upload
@@ -9,7 +12,6 @@
  * Licensed under the MIT license:
  * http://www.opensource.org/licenses/MIT
  */
-
 class BaseUploadHandler
 {
 

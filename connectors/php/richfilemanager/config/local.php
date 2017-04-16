@@ -26,7 +26,7 @@ $config = [
      * Configure Logger class
      */
     "logger" => [
-        "enabled" => false,
+        "enabled" => true,
         /**
          * Default value "null".
          * Full path to log file, e.g. "/var/log/filemanager/logfile".
@@ -72,7 +72,7 @@ $config = [
      */
     "security" => [
         /* Set `read_only` to true to disable all modifications to the filesystem, including thumbnail generation. */
-        "read_only" => true,
+        "read_only" => false,
         /**
          * Restrictions based on file name: "extensions", and "patterns" (glob matching, like shell wildcards).
          *
@@ -82,19 +82,46 @@ $config = [
          * Set 'policy' to "DISALLOW_LIST" to blacklist, or "ALLOW_LIST" to whitelist, the 'restrictions' array.
          */
         "extensions" => [
-            /* Filename extensions from PATHINFO_EXTENSION are compared against this list, after the right-most dot '.'.
-             * To disallow empty/no extensions like the old `allowNoExtension` option, add the empty string "" to this list. 
+            /**
+             * Filename extensions from PATHINFO_EXTENSION are compared against this list, after the right-most dot '.'.
+             * To disallow empty/no extensions like the old `allowNoExtension` option, add the empty string "" to this list
+             *
              */
-            "policy" => "DISALLOW_LIST", 
+            "policy" => "ALLOW_LIST",
             "ignorecase" => true, 
             "restrictions" => [
-                "php",
-                "asp",
-                "pl",
-                "py",
-                "rb",
-                "key",
-                "conf",
+                "",
+                "jpg",
+                "jpe",
+                "jpeg",
+                "gif",
+                "png",
+                "svg",
+                "txt",
+                "pdf",
+                "odp",
+                "ods",
+                "odt",
+                "rtf",
+                "doc",
+                "docx",
+                "xls",
+                "xlsx",
+                "ppt",
+                "pptx",
+                "csv",
+                "ogv",
+                "avi",
+                "mkv",
+                "mp4",
+                "webm",
+                "m4v",
+                "ogg",
+                "mp3",
+                "wav",
+                "zip",
+                "rar",
+                "md",
             ],
         ],
         

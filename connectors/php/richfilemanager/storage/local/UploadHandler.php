@@ -1,12 +1,14 @@
 <?php
 
-require_once('BaseUploadHandler.php');
+namespace RFM\Storage\Local;
 
-class LocalUploadHandler extends BaseUploadHandler
+use RFM\Storage\BaseUploadHandler;
+
+class UploadHandler extends BaseUploadHandler
 {
     /**
      * Filemanager class instance
-     * @var LocalFilemanager
+     * @var Filemanager
      */
     protected $fm;
 

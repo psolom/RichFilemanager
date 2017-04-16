@@ -4,8 +4,6 @@
  *  Initial class, put your customizations here
  *
  *	@license	MIT License
- *	@author		Riaan Los <mail (at) riaanlos (dot) nl>
- *  @author		Simon Georget <simon (at) linea21 (dot) com>
  *  @author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
@@ -14,8 +12,7 @@
 // error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 // ini_set('display_errors', '1');
 
-require_once('application/Fm.php');
-require_once('application/FmHelper.php');
+require 'vendor/autoload.php';
 
 
 // This function is called for every server connection. It must return true.
@@ -74,7 +71,7 @@ function fm_has_read_permission($filepath) {
 }
 
 
-$config = array();
+$config = [];
 
 // example to override the default config
 //$config = array(
@@ -86,7 +83,22 @@ $config = array();
 //    ),
 //);
 
-$fm = Fm::app()->getInstance($config);
+//$fm = Fm::app()->getInstance($config);
+
+$app = new \RFM\Application(
+    realpath(__DIR__ . DIRECTORY_SEPARATOR . 'richfilemanager')
+);
+
+$local = new \RFM\Storage\Local\Storage($config);
+// example to setup files root folder
+//$local->setRoot('C:\xampp\htdocs\fm_latest\userfiles\gook', true);
+$app->setStorage($local);
+
+
+// set application API
+$app->api = new RFM\Storage\Local\Api();
+
+$app->run();
 
 // example to setup files root folder
 //$fm->setFileRoot('userfiles', true);
@@ -94,4 +106,4 @@ $fm = Fm::app()->getInstance($config);
 // example to set list of allowed actions
 //$fm->setAllowedActions(["select", "move"]);
 
-$fm->handleRequest();
+//$fm->handleRequest();

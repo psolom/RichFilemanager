@@ -1,55 +1,17 @@
 <?php
+
+namespace RFM;
+
 /**
- *	FmHelper PHP class
+ *	Helper PHP class
  *
  *	@license	MIT License
  *	@author		Pavel Solomienko <https://github.com/servocoder/>
  *	@copyright	Authors
  */
 
-class FmHelper
+class Helper
 {
-    /**
-     * Merges two or more arrays into one recursively.
-     * If each array has an element with the same string key value, the latter will overwrite the former.
-     * Recursive merging will be conducted if both arrays have an element of array type and are having the same key.
-     * For array elements which are entirely integer-keyed, latter will straight overwrite the former.
-     * For integer-keyed elements, the elements from the latter array will be appended to the former array.
-     *
-     * @param array $a array to be merged to
-     * @param array $b array to be merged from. You can specify additional
-     * arrays via third argument, fourth argument etc.
-     * @return array the merged array (the original arrays are not changed.)
-     */
-    public static function mergeConfigs($a, $b)
-    {
-        $args = func_get_args();
-        $res = array_shift($args);
-        while (!empty($args)) {
-            $next = array_shift($args);
-            foreach ($next as $k => $v) {
-                if (is_int($k)) {
-                    if (isset($res[$k])) {
-                        $res[] = $v;
-                    } else {
-                        $res[$k] = $v;
-                    }
-                } elseif (is_array($v) && isset($res[$k]) && is_array($res[$k])) {
-                    // check if array keys is sequential to consider its as indexed array
-                    // http://stackoverflow.com/questions/173400/how-to-check-if-php-array-is-associative-or-sequential
-                    if (array_keys($res[$k]) === range(0, count($res[$k]) - 1)) {
-                        $res[$k] = $v;
-                    } else {
-                        $res[$k] = self::mergeConfigs($res[$k], $v);
-                    }
-                } else {
-                    $res[$k] = $v;
-                }
-            }
-        }
-        return $res;
-    }
-
     /**
      * Copies a single file, symlink or a whole directory.
      * In case of directory it will be copied recursively.

@@ -1,5 +1,6 @@
 <?php
-require_once(FM_APP_PATH . '/Logger.php');
+
+namespace RFM\Facade;
 
 class Log
 {
@@ -9,6 +10,6 @@ class Log
      */
     public static function info($message)
     {
-        Fm::app()->logger->log($message);
+        logger()->log($message);
     }
 }
