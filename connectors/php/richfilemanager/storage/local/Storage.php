@@ -5,6 +5,7 @@ namespace RFM\Storage\Local;
 use RFM\Facade\Log;
 use RFM\Storage\BaseStorage;
 use RFM\Storage\StorageInterface;
+use RFM\Storage\StorageTrait;
 
 /**
  *	Local storage class.
@@ -16,7 +17,9 @@ use RFM\Storage\StorageInterface;
 
 class Storage extends BaseStorage implements StorageInterface
 {
-    protected $name = 'local';
+    use IdentityTrait;
+    use StorageTrait;
+
 	protected $doc_root;
 	protected $path_to_files;
 	protected $dynamic_fileroot;
@@ -25,10 +28,10 @@ class Storage extends BaseStorage implements StorageInterface
     {
 		parent::__construct($config);
 
-		$fileRoot = $this->getConfig('options.fileRoot');
+		$fileRoot = $this->config('options.fileRoot');
 		if ($fileRoot !== false) {
 			// takes $_SERVER['DOCUMENT_ROOT'] as files root; "fileRoot" is a suffix
-			if($this->getConfig('options.serverRoot') === true) {
+			if($this->config('options.serverRoot') === true) {
 				$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
 				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
 			}
@@ -58,7 +61,7 @@ class Storage extends BaseStorage implements StorageInterface
      */
 	public function setRoot($path, $mkdir = false)
     {
-		if($this->getConfig('options.serverRoot') === true) {
+		if($this->config('options.serverRoot') === true) {
 			$this->dynamic_fileroot = $path;
 			$this->path_to_files = $this->cleanPath($this->doc_root . '/' . $path);
 		} else {
@@ -100,7 +103,7 @@ class Storage extends BaseStorage implements StorageInterface
 	public function initUploader($settings = [])
 	{
 		$data = [
-			'images_only' => $this->getConfig('upload.imagesOnly') || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images'),
+			'images_only' => $this->config('upload.imagesOnly') || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images'),
 		] + $settings;
 
 		if(isset($data['upload_dir'])) {
@@ -201,7 +204,7 @@ class Storage extends BaseStorage implements StorageInterface
 	 */
 	public function formatDate($timestamp)
 	{
-		return date($this->getConfig('options.dateFormat'), $timestamp);
+		return date($this->config('options.dateFormat'), $timestamp);
 	}
 
 	/**
@@ -261,7 +264,7 @@ class Storage extends BaseStorage implements StorageInterface
 	 */
     public function createThumbnail($imagePath, $thumbnailPath)
 	{
-        $valid = !$this->getConfig('read_only');
+        $valid = !$this->config('read_only');
         $valid = $valid && $this->has_read_permission($imagePath);
 
         if (!file_exists(dirname($thumbnailPath))) {
@@ -273,7 +276,7 @@ class Storage extends BaseStorage implements StorageInterface
             $valid = $valid && $this->has_write_permission(dirname($thumbnailPath));
         }
 
-        if ($valid && $this->getConfig('images.thumbnail.enabled') === true) {
+        if ($valid && $this->config('images.thumbnail.enabled') === true) {
             Log::info('generating thumbnail "' . $thumbnailPath . '"');
 
             // create folder if it does not exist
@@ -407,20 +410,20 @@ class Storage extends BaseStorage implements StorageInterface
     {
         // check the extension (for files):
         $extension = pathinfo($path, PATHINFO_EXTENSION);
-        $extension_restrictions = config('local.security.extensions.restrictions');
+        $extension_restrictions = $this->config('security.extensions.restrictions');
 
-        if (config('local.security.extensions.ignorecase')) {
+        if ($this->config('security.extensions.ignorecase')) {
             $extension = strtolower($extension);
             $extension_restrictions = array_map('strtolower', $extension_restrictions);
         }
 
-        if(config('local.security.extensions.policy') === 'ALLOW_LIST') {
+        if($this->config('security.extensions.policy') === 'ALLOW_LIST') {
             if(!in_array($extension, $extension_restrictions)) {
                 // Not in the allowed list, so it's restricted.
                 return false;
             }
         }
-        else if(config('local.security.extensions.policy') === 'DISALLOW_LIST') {
+        else if($this->config('security.extensions.policy') === 'DISALLOW_LIST') {
             if(in_array($extension, $extension_restrictions)) {
                 // It's in the disallowed list, so it's restricted.
                 return false;
@@ -445,9 +448,9 @@ class Storage extends BaseStorage implements StorageInterface
     {
         // check the relative path against the glob patterns:
         $basename = pathinfo($path, PATHINFO_BASENAME);
-        $basename_restrictions = config('local.security.patterns.restrictions');
+        $basename_restrictions = $this->config('security.patterns.restrictions');
 
-        if (config('local.security.patterns.ignorecase')) {
+        if ($this->config('security.patterns.ignorecase')) {
             $basename = strtolower($basename);
             $basename_restrictions = array_map('strtolower', $basename_restrictions);
         }
@@ -461,13 +464,13 @@ class Storage extends BaseStorage implements StorageInterface
             }
         }
 
-        if(config('local.security.patterns.policy') === 'ALLOW_LIST') {
+        if($this->config('security.patterns.policy') === 'ALLOW_LIST') {
             if(!$match_was_found) {
                 // The $basename did not match the allowed pattern list, so it's restricted:
                 return false;
             }
         }
-        else if(config('local.security.patterns.policy') === 'DISALLOW_LIST') {
+        else if($this->config('security.patterns.policy') === 'DISALLOW_LIST') {
             if($match_was_found) {
                 // The $basename matched the disallowed pattern list, so it's restricted:
                 return false;
@@ -530,7 +533,7 @@ class Storage extends BaseStorage implements StorageInterface
         }
 
         // Check the global read_only config flag:
-        if (config('local.security.read_only') !== false) {
+        if ($this->config('security.read_only') !== false) {
             return false;
         }
 

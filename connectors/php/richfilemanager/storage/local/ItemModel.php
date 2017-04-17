@@ -2,15 +2,15 @@
 
 namespace RFM\Storage\Local;
 
+use RFM\Storage\StorageTrait;
+
 class ItemModel
 {
+    use IdentityTrait;
+    use StorageTrait;
+
     const TYPE_FILE = 'file';
     const TYPE_FOLDER = 'folder';
-
-    /**
-     * @var \RFM\Storage\Local\Storage
-     */
-    protected $storage;
 
     /**
      * File item model template
@@ -64,9 +64,8 @@ class ItemModel
      */
     public function __construct($path)
     {
-        $this->storage = app()->getStorage('local');
         $this->pathRelative = $path;
-        $this->pathAbsolute = $this->storage->getFullPath($path);
+        $this->pathAbsolute = $this->storage()->getFullPath($path);
         $this->isExists = $this->getIsExists();
         $this->isDir = $this->getIsDirectory();
     }
@@ -82,10 +81,10 @@ class ItemModel
         $filemtime = filemtime($this->pathAbsolute);
 
         // check if file is readable
-        $is_readable = $this->storage->has_read_permission($this->pathAbsolute);
+        $is_readable = $this->storage()->has_read_permission($this->pathAbsolute);
 
         // check if file is writable
-        $is_writable = $this->storage->has_write_permission($this->pathAbsolute);
+        $is_writable = $this->storage()->has_write_permission($this->pathAbsolute);
 
         if($this->isDir) {
             $model = $this->folder_model;
@@ -94,9 +93,9 @@ class ItemModel
             $model['attributes']['extension'] = isset($pathInfo['extension']) ? $pathInfo['extension'] : '';
 
             if ($is_readable) {
-                $model['attributes']['size'] = $this->storage->get_real_filesize($this->pathAbsolute);
+                $model['attributes']['size'] = $this->storage()->get_real_filesize($this->pathAbsolute);
 
-                if($this->storage->is_image_file($this->pathAbsolute)) {
+                if($this->storage()->is_image_file($this->pathAbsolute)) {
                     if($model['attributes']['size']) {
                         list($width, $height, $type, $attr) = getimagesize($this->pathAbsolute);
                     } else {
@@ -111,11 +110,11 @@ class ItemModel
 
         $model['id'] = $this->pathRelative;
         $model['attributes']['name'] = $pathInfo['basename'];
-        $model['attributes']['path'] = $this->storage->getDynamicPath($this->pathAbsolute);
+        $model['attributes']['path'] = $this->storage()->getDynamicPath($this->pathAbsolute);
         $model['attributes']['readable'] = (int) $is_readable;
         $model['attributes']['writable'] = (int) $is_writable;
         $model['attributes']['timestamp'] = $filemtime;
-        $model['attributes']['modified'] = $this->storage->formatDate($filemtime);
+        $model['attributes']['modified'] = $this->storage()->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
         return $model;
     }
@@ -154,9 +153,9 @@ class ItemModel
      */
     public function getThumbnailPath()
     {
-        $path =  '/' . config('local.images.thumbnail.dir') . '/' . $this->pathRelative;
+        $path =  '/' . $this->config('images.thumbnail.dir') . '/' . $this->pathRelative;
 
-        return $this->storage->cleanPath($path);
+        return $this->storage()->cleanPath($path);
     }
 
 
@@ -167,7 +166,7 @@ class ItemModel
      */
     public function check_path()
     {
-        if(!$this->isExists || !$this->storage->is_valid_path($this->pathAbsolute)) {
+        if(!$this->isExists || !$this->storage()->is_valid_path($this->pathAbsolute)) {
             $langKey = $this->isDir ? 'DIRECTORY_NOT_EXIST' : 'FILE_DOES_NOT_EXIST';
             app()->error($langKey, [$this->pathAbsolute]);
         }
@@ -182,12 +181,12 @@ class ItemModel
     {
         $path = $this->pathRelative;
         if (!$this->isDir) {
-            if ($this->storage->is_allowed_extension($path) === false) {
+            if ($this->storage()->is_allowed_extension($path) === false) {
                 app()->error('FORBIDDEN_NAME', [$path]);
             }
         }
 
-        if ($this->storage->is_allowed_extension($path) === false) {
+        if ($this->storage()->is_allowed_extension($path) === false) {
             app()->error('INVALID_FILE_TYPE');
         }
 
@@ -205,10 +204,10 @@ class ItemModel
         $valid = true;
 
         if (!$this->isDir) {
-            $valid = $valid && $this->storage->is_allowed_extension($this->pathRelative);
+            $valid = $valid && $this->storage()->is_allowed_extension($this->pathRelative);
         }
 
-        return $valid && $this->storage->is_allowed_path($this->pathRelative);
+        return $valid && $this->storage()->is_allowed_path($this->pathRelative);
     }
 
     /**
@@ -219,7 +218,7 @@ class ItemModel
     public function check_read_permission()
     {
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage->has_system_read_permission($this->pathAbsolute) === false) {
+        if ($this->storage()->has_system_read_permission($this->pathAbsolute) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 
@@ -256,7 +255,7 @@ class ItemModel
         //
 
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage->has_system_write_permission($filepath) === false) {
+        if ($this->storage()->has_system_write_permission($filepath) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 
@@ -266,7 +265,7 @@ class ItemModel
 //        }
 
         // Check the global read_only config flag:
-        if (config('local.security.read_only') !== false) {
+        if ($this->config('security.read_only') !== false) {
             app()->error('NOT_ALLOWED');
         }
 

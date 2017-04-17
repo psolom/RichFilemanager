@@ -2,7 +2,7 @@
 
 namespace RFM\Storage;
 
-use RFM\Helper;
+use RFM\Storage\StorageTrait;
 
 /**
  *    BaseStorage PHP class
@@ -16,11 +16,11 @@ use RFM\Helper;
 
 abstract class BaseStorage
 {
+    use StorageTrait;
+
     const TYPE_FILE = 'file';
     const TYPE_FOLDER = 'folder';
 
-    protected $name = '';
-    protected $config = [];
     protected $refParams = [];
 
     /**
@@ -47,38 +47,17 @@ abstract class BaseStorage
     /**
      * @inheritdoc
      */
-    public function getName()
-    {
-        if (empty($this->name)) {
-            throw new \Exception("Storage name isn't set.");
-        }
-
-        return $this->name;
-    }
-
-    /**
-     * @inheritdoc
-     */
     public function setConfig($options)
     {
-        $name = $this->getName();
-        app()->configure($this->getName(), $options);
+        app()->configure('storage.' . $this->getName(), $options);
 
         // update logger configuration
-        if (config($name . '.logger.enabled') === true) {
+        if ($this->config('logger.enabled') === true) {
             logger()->enabled = true;
         }
-        if (is_string(config($name . '.logger.file'))) {
-            logger()->file = config($name . '.logger.file');
+        if (is_string($this->config('logger.file'))) {
+            logger()->file = $this->config('logger.file');
         }
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getConfig($key)
-    {
-        return config($this->getName() . '.' . $key);
     }
 
     protected function setParams()

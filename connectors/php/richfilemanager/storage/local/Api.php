@@ -4,22 +4,13 @@ namespace RFM\Storage\Local;
 
 use RFM\Facade\Input;
 use RFM\Storage\ApiInterface;
+use RFM\Storage\StorageTrait;
 use RFM\Facade\Log;
 
 class Api implements ApiInterface
 {
-    /**
-     * @var \RFM\Storage\Local\Storage
-     */
-    protected $storage;
-
-    /**
-     * Api constructor.
-     */
-    public function __construct()
-    {
-        $this->storage = app()->getStorage('local');
-    }
+    use IdentityTrait;
+    use StorageTrait;
 
     /**
      * @inheritdoc
@@ -29,15 +20,15 @@ class Api implements ApiInterface
         // config options that affect the client-side
         $shared_config = [
             'security' => [
-                'read_only' => config('local.security.read_only'),
+                'read_only' => $this->config('security.read_only'),
                 'extensions' => [
-                    'policy' => config('local.security.extensions.policy'),
-                    'ignorecase' => config('local.security.extensions.ignorecase'),
-                    'restrictions' => config('local.security.extensions.restrictions'),
+                    'policy' => $this->config('security.extensions.policy'),
+                    'ignorecase' => $this->config('security.extensions.ignorecase'),
+                    'restrictions' => $this->config('security.extensions.restrictions'),
                 ],
             ],
             'upload' => [
-                'fileSizeLimit' => config('local.upload.fileSizeLimit'),
+                'fileSizeLimit' => $this->config('upload.fileSizeLimit'),
             ],
         ];
 
@@ -128,7 +119,7 @@ class Api implements ApiInterface
         $this->check_write_permission($target_fullpath);
         $this->check_restrictions($target_path);
 
-        $content = $this->storage->initUploader([
+        $content = $this->storage()->initUploader([
             'upload_dir' => $target_fullpath,
             'upload_relative_path' => $target_path,
         ])->post(false);
@@ -198,7 +189,7 @@ class Api implements ApiInterface
         $filename = $tmp[(sizeof($tmp)-1)];
 
         $new_path = substr($old_trimmed_path, 0, strripos($old_trimmed_path, '/' . $filename));
-        $new_name = $this->storage->normalizeString($this->get['new'], ['.', '-']);
+        $new_name = $this->storage()->normalizeString($this->get['new'], ['.', '-']);
         $new_model = new ItemModel(Input::get('path'));
         $new_relative_path = $this->cleanPath('/' . $new_path . '/' . $new_name . $suffix);
 
@@ -464,7 +455,7 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
-        $content = $this->storage->initUploader([
+        $content = $this->storage()->initUploader([
             'upload_dir' => $target_fullpath,
         ])->post(false);
 
@@ -643,13 +634,13 @@ class Api implements ApiInterface
         }
 
         // if $thumbnail is set to true we return the thumbnail
-        if($thumbnail === true && config('local.images.thumbnail.enabled')) {
+        if($thumbnail === true && $this->config('images.thumbnail.enabled')) {
             // create thumbnail model
             $model = new ItemModel($modelImage->getThumbnailPath());
 
             // generate thumbnail if it doesn't exist or caching is disabled
-            if (!$model->isExists || config('local.images.thumbnail.cache') === false) {
-                $this->storage->createThumbnail($modelImage->pathAbsolute, $model->pathAbsolute);
+            if (!$model->isExists || $this->config('images.thumbnail.cache') === false) {
+                $this->storage()->createThumbnail($modelImage->pathAbsolute, $model->pathAbsolute);
             }
         } else {
             $model = $modelImage;
@@ -662,7 +653,7 @@ class Api implements ApiInterface
 
         header("Content-type: image/octet-stream");
         header("Content-Transfer-Encoding: binary");
-        header("Content-length: " . $this->storage->get_real_filesize($model->pathAbsolute));
+        header("Content-length: " . $this->storage()->get_real_filesize($model->pathAbsolute));
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
         readfile($model->pathAbsolute);
@@ -738,13 +729,13 @@ class Api implements ApiInterface
                 $destination_path = sys_get_temp_dir().'/fm_'.uniqid().'.zip';
 
                 // if Zip archive is created
-                if($this->storage->zipFile($target_fullpath, $destination_path, true)) {
+                if($this->storage()->zipFile($target_fullpath, $destination_path, true)) {
                     $target_fullpath = $destination_path;
                 } else {
                     app()->error('ERROR_CREATING_ZIP');
                 }
             }
-            $file_size = $this->storage->get_real_filesize($target_fullpath);
+            $file_size = $this->storage()->get_real_filesize($target_fullpath);
 
             header('Content-Description: File Transfer');
             header('Content-Type: ' . mime_content_type($target_fullpath));
@@ -787,7 +778,7 @@ class Api implements ApiInterface
             'size' => 0,
             'files' => 0,
             'folders' => 0,
-            'sizeLimit' => config('local.options.fileRootSizeLimit'),
+            'sizeLimit' => $this->config('options.fileRootSizeLimit'),
         ];
 
         $path = rtrim($this->path_to_files, '/') . '/';
