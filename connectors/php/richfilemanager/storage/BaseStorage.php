@@ -94,7 +94,7 @@ abstract class BaseStorage
             }
         }
 
-        if($this->config['security']['normalizeFilename'] === true) {
+        if($this->config('security.normalizeFilename') === true) {
             // Remove path information and dots around the filename, to prevent uploading
             // into different directories or replacing hidden system files.
             // Also remove control characters and spaces (\x00..\x20) around the filename:
@@ -105,7 +105,7 @@ abstract class BaseStorage
             $string = strtr($string, $replacements);
         }
 
-        if($this->config['options']['charsLatinOnly'] === true) {
+        if($this->config('options.charsLatinOnly') === true) {
             // transliterate if extension is loaded
             if(extension_loaded('intl') === true && function_exists('transliterator_transliterate')) {
                 $options = 'Any-Latin; Latin-ASCII; NFD; [:Nonspacing Mark:] Remove; NFC;';

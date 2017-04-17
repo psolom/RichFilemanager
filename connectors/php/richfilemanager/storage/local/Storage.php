@@ -97,24 +97,15 @@ class Storage extends BaseStorage implements StorageInterface
 	/**
      * Initiate uploader instance and handle uploads.
      *
-	 * @param array $settings
+	 * @param ItemModel $model
 	 * @return UploadHandler
 	 */
-	public function initUploader($settings = [])
+	public function initUploader($model)
 	{
-		$data = [
-			'images_only' => $this->config('upload.imagesOnly') || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images'),
-		] + $settings;
-
-		if(isset($data['upload_dir'])) {
-			$data['thumbnails_dir'] = rtrim($this->get_thumbnail_path($data['upload_dir']), '/');
-		}
+        //'images_only' => $this->config('upload.imagesOnly') || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images'),
 
 		return new UploadHandler([
-			'fm' => [
-				'instance' => $this,
-				'data' => $data,
-			],
+			'model' => $model,
 		]);
 	}
 
@@ -259,36 +250,38 @@ class Storage extends BaseStorage implements StorageInterface
 	/**
 	 * Create thumbnail from the original image.
      *
-	 * @param $imagePath
-	 * @param $thumbnailPath
+	 * @param ItemModel $modelImage
+	 * @param ItemModel $modelThumb
 	 */
-    public function createThumbnail($imagePath, $thumbnailPath)
-	{
+    public function createThumbnail($modelImage, $modelThumb)
+    {
         $valid = !$this->config('read_only');
-        $valid = $valid && $this->has_read_permission($imagePath);
+        $valid = $valid && $this->has_read_permission($modelImage->pathAbsolute);
 
-        if (!file_exists(dirname($thumbnailPath))) {
+        // parent
+        $modelTarget = $modelThumb->parent();
+
+        if (!$modelTarget->isExists) {
             // Check that the thumbnail sub-dir can be created, because it
             // does not yet exist. So we check the parent dir:
-            $valid = $valid && $this->has_write_permission(dirname(dirname($thumbnailPath)));
+            $valid = $valid && $this->has_write_permission(dirname($modelTarget->pathAbsolute));
         } else {
             // Check that the thumbnail sub-dir, which exists, is writable:
-            $valid = $valid && $this->has_write_permission(dirname($thumbnailPath));
+            $valid = $valid && $this->has_write_permission($modelTarget->pathAbsolute);
         }
 
         if ($valid && $this->config('images.thumbnail.enabled') === true) {
-            Log::info('generating thumbnail "' . $thumbnailPath . '"');
+            Log::info('generating thumbnail "' . $modelThumb->pathAbsolute . '"');
 
             // create folder if it does not exist
-            if (!file_exists(dirname($thumbnailPath))) {
-                mkdir(dirname($thumbnailPath), 0755, true);
+            if (!file_exists($modelTarget->pathAbsolute)) {
+                mkdir($modelTarget->pathAbsolute, 0755, true);
             }
 
-            $this->initUploader([
-                'upload_dir' => dirname($imagePath) . '/',
-            ])->create_thumbnail_image($imagePath);
+            $this->initUploader($modelImage->parent())
+                ->create_thumbnail_image(basename($modelImage->pathAbsolute));
         }
-	}
+    }
 
     /**
      * Return full path to item.
