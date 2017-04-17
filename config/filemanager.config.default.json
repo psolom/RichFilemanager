@@ -15,6 +15,7 @@
         "folderPosition": "bottom",
         "quickSelect": false,
         "logger": false,
+        "allowFolderDownload": true,
         "allowChangeExtensions": false,
         "capabilities": [
             "select",
