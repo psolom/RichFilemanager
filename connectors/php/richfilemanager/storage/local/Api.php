@@ -77,7 +77,7 @@ class Api implements ApiInterface
 
                 $item = new ItemModel($file_path);
                 if($item->is_unrestricted()) {
-                    $response_data[] = $item->get_file_info();
+                    $response_data[] = $item->getInfo();
                 }
             }
         }
@@ -101,7 +101,7 @@ class Api implements ApiInterface
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        return $model->get_file_info();
+        return $model->getInfo();
     }
 
     /**
@@ -109,20 +109,13 @@ class Api implements ApiInterface
      */
     public function actionUpload()
     {
-        $target_path = $this->post['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
-
         $model = new ItemModel(Input::get('path'));
         Log::info('uploading to "' . $model->pathAbsolute . '"');
 
         $model->check_path();
-        $this->check_write_permission($target_fullpath);
-        $this->check_restrictions($target_path);
+        $model->check_write_permission();
 
-        $content = $this->storage()->initUploader([
-            'upload_dir' => $target_fullpath,
-            'upload_relative_path' => $target_path,
-        ])->post(false);
+        $content = $this->storage()->initUploader($model)->post(false);
 
         $response_data = [];
         $files = isset($content['files']) ? $content['files'] : null;
@@ -133,9 +126,9 @@ class Api implements ApiInterface
                 $error = is_array($file->error) ? $file->error : [$file->error];
                 app()->error($error[0], isset($error[1]) ? $error[1] : []);
             } else {
-                $relative_path = $this->cleanPath('/' . $target_path . '/' . $file->name);
-                $item = $this->get_file_info($relative_path);
-                $response_data[] = $item;
+                $uploadedPath = $this->storage()->cleanPath('/' . $model->pathRelative . '/' . $file->name);
+                $modelUploaded = new ItemModel($uploadedPath);
+                $response_data[] = $modelUploaded->getInfo();
             }
         } else {
             app()->error('ERROR_UPLOADING_FILE');
@@ -149,27 +142,30 @@ class Api implements ApiInterface
      */
     public function actionAddFolder()
     {
-        $target_path = $this->get['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
+        $targetPath = Input::get('path');
+        $targetName = Input::get('name');
 
-        $target_name = $this->get['name'];
-        $folder_name = $this->normalizeString(trim($target_name, '/')) . '/';
-        $relative_path = $this->cleanPath('/' . $target_path . '/' . $folder_name);
-        $new_fullpath = $target_fullpath . '/'. $folder_name;
-        Log::info('adding folder "' . $new_fullpath . '"');
+        $modelTarget = new ItemModel($targetPath);
+        $modelTarget->check_path();
+        $modelTarget->check_write_permission();
 
-        $this->check_write_permission($new_fullpath);
-        $this->check_restrictions($relative_path);
+        $dirName = $this->storage()->normalizeString(trim($targetName, '/')) . '/';
+        $relativePath = $this->storage()->cleanPath('/' . $targetPath . '/' . $dirName);
 
-        if(is_dir($new_fullpath)) {
-            app()->error('DIRECTORY_ALREADY_EXISTS', [$target_name]);
+        $model = new ItemModel($relativePath);
+        Log::info('adding folder "' . $model->pathAbsolute . '"');
+
+        $model->check_restrictions();
+
+        if($model->isExists && $model->isDir) {
+            app()->error('DIRECTORY_ALREADY_EXISTS', [$targetName]);
         }
 
-        if(!mkdir($new_fullpath, 0755)) {
-            app()->error('UNABLE_TO_CREATE_DIRECTORY', [$target_name]);
+        if(!mkdir($model->pathAbsolute, 0755)) {
+            app()->error('UNABLE_TO_CREATE_DIRECTORY', [$targetName]);
         }
 
-        return $this->get_file_info($relative_path);
+        return $model->getInfo();
     }
 
     /**
@@ -665,40 +661,40 @@ class Api implements ApiInterface
      */
     public function actionDelete()
     {
-        $target_path = $this->get['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
-        Log::info('deleting "' . $target_fullpath . '"');
+        $model = new ItemModel(Input::get('path'));
+        Log::info('deleting "' . $model->pathAbsolute . '"');
 
-        $this->check_write_permission($target_fullpath);
-        $this->check_restrictions($target_path);
+        $model->check_path();
+        $model->check_write_permission();
+        $model->check_restrictions();
 
         // check if not requesting main FM userfiles folder
-        if($this->is_root_folder($target_fullpath)) {
+        if($this->storage()->is_root_folder($model->pathAbsolute)) {
             app()->error('NOT_ALLOWED');
         }
 
-        $item = $this->get_file_info($target_path);
-        $thumbnail_path = $this->get_thumbnail_path($target_fullpath);
+        $info = $model->getInfo();
+        $modelThumb = new ItemModel($model->getThumbnailPath());
 
-        if(is_dir($target_fullpath)) {
-            $this->unlinkRecursive($target_fullpath);
-            Log::info('deleted "' . $target_fullpath . '"');
+        if($model->isDir) {
+            $this->storage()->unlinkRecursive($model->pathAbsolute);
+            Log::info('deleted "' . $model->pathAbsolute . '"');
 
-            // delete thumbnails if exists
-            if(file_exists($thumbnail_path)) {
-                $this->unlinkRecursive($thumbnail_path);
+            // delete thumbnail if exists
+            if($modelThumb->isExists) {
+                $this->storage()->unlinkRecursive($modelThumb->pathAbsolute);
             }
         } else {
-            unlink($target_fullpath);
-            Log::info('deleted "' . $target_fullpath . '"');
+            unlink($model->pathAbsolute);
+            Log::info('deleted "' . $model->pathAbsolute . '"');
 
             // delete thumbnails if exists
-            if(file_exists($thumbnail_path)) {
-                unlink($thumbnail_path);
+            if($modelThumb->isExists) {
+                unlink($modelThumb->pathAbsolute);
             }
         }
 
-        return $item;
+        return $info;
     }
 
     /**
@@ -706,40 +702,48 @@ class Api implements ApiInterface
      */
     public function actionDownload()
     {
-        $target_path = $this->get['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
-        Log::info('downloading "' . $target_fullpath . '"');
+        //$target_path = $this->get['path'];
+        //$target_fullpath = $this->getFullPath($target_path, true);
+        //Log::info('downloading "' . $target_fullpath . '"');
 
-        $this->check_read_permission($target_fullpath);
-        $this->check_restrictions($target_path);
+        //$this->check_read_permission($target_fullpath);
+        //$this->check_restrictions($target_path);
 
-        $is_dir_target = is_dir($target_fullpath);
-        if($is_dir_target) {
+        $model = new ItemModel(Input::get('path'));
+        Log::info('downloading "' . $model->pathAbsolute . '"');
+
+        $model->check_path();
+        $model->check_read_permission();
+        $model->check_restrictions();
+
+        if($model->isDir) {
             // check if not requesting main FM userfiles folder
             // TODO: This restriction seems arbitration, it could be useful for business clients
-            if($this->is_root_folder($target_fullpath)) {
+            if($this->storage()->is_root_folder($model->pathAbsolute)) {
                 app()->error('NOT_ALLOWED');
             }
         }
 
         if(request()->isXmlHttpRequest()) {
-            return $this->get_file_info($target_path);
+            return $model->getInfo();
         } else {
-            if($is_dir_target) {
-                $destination_path = sys_get_temp_dir().'/fm_'.uniqid().'.zip';
+            $targetPath = $model->pathAbsolute;
+
+            if($model->isDir) {
+                $destinationPath = sys_get_temp_dir().'/rfm_'.uniqid().'.zip';
 
                 // if Zip archive is created
-                if($this->storage()->zipFile($target_fullpath, $destination_path, true)) {
-                    $target_fullpath = $destination_path;
+                if($this->storage()->zipFile($targetPath, $destinationPath, true)) {
+                    $targetPath = $destinationPath;
                 } else {
                     app()->error('ERROR_CREATING_ZIP');
                 }
             }
-            $file_size = $this->storage()->get_real_filesize($target_fullpath);
+            $file_size = $this->storage()->get_real_filesize($targetPath);
 
             header('Content-Description: File Transfer');
-            header('Content-Type: ' . mime_content_type($target_fullpath));
-            header('Content-Disposition: attachment; filename="' . basename($target_fullpath) . '"');
+            header('Content-Type: ' . mime_content_type($targetPath));
+            header('Content-Disposition: attachment; filename="' . basename($targetPath) . '"');
             header('Content-Transfer-Encoding: binary');
             header('Content-Length: ' . $file_size);
             // handle caching
@@ -753,7 +757,7 @@ class Api implements ApiInterface
 
             $chunk_size = 5 * 1024 * 1024;
             if ($chunk_size && $file_size > $chunk_size) {
-                $handle = fopen($target_fullpath, 'rb');
+                $handle = fopen($targetPath, 'rb');
                 while (!feof($handle)) {
                     echo fread($handle, $chunk_size);
                     @ob_flush();
@@ -761,10 +765,10 @@ class Api implements ApiInterface
                 }
                 fclose($handle);
             } else {
-                readfile($target_fullpath);
+                readfile($targetPath);
             }
 
-            Log::info('downloaded "' . $target_fullpath . '"');
+            Log::info('downloaded "' . $targetPath . '"');
             exit;
         }
     }

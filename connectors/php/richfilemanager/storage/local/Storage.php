@@ -326,7 +326,7 @@ class Storage extends BaseStorage implements StorageInterface
     /**
      * Check whether the folder is root.
      *
-     * @param string $path
+     * @param string $path - absolute path
      * @return bool
      */
     public function is_root_folder($path)
