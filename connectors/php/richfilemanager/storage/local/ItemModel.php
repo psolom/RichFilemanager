@@ -237,17 +237,17 @@ class ItemModel
      * dir entry at $filepath (a new file or new subdir), and thus it checks the
      * parent dir for write permissions.
      *
-     * @param string $filepath
      * @return void -- exits with error response if the permission is not allowed
      */
-    public function check_write_permission($filepath)
+    public function check_write_permission()
     {
-        // Does the path already exist?
-        if (!file_exists($filepath)) {
+        // path to check
+        $path = $this->pathAbsolute;
+
+        if (!$this->isExists) {
             // It does not exist (yet). Check to see if we could write to this
             // path, by seeing if we can write new entries into its parent dir.
-            $parent_dir = pathinfo($filepath, PATHINFO_DIRNAME);
-            $this->check_write_permission($parent_dir);
+            $path = pathinfo($this->pathAbsolute, PATHINFO_DIRNAME);
         }
 
         //
@@ -255,7 +255,7 @@ class ItemModel
         //
 
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->has_system_write_permission($filepath) === false) {
+        if ($this->storage()->has_system_write_permission($path) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 
@@ -270,7 +270,7 @@ class ItemModel
         }
 
         // Check the user's Auth API callback:
-        if (fm_has_write_permission($filepath) === false) {
+        if (fm_has_write_permission($path) === false) {
             app()->error('NOT_ALLOWED');
         }
 
