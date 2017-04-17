@@ -71,11 +71,11 @@ class ItemModel
     }
 
     /**
-     * Create array with file properties
+     * Build and return item details info.
      *
      * @return array
      */
-    public function get_file_info()
+    public function getInfo()
     {
         $pathInfo = pathinfo($this->pathAbsolute);
         $filemtime = filemtime($this->pathAbsolute);
@@ -120,6 +120,26 @@ class ItemModel
     }
 
     /**
+     * Create new model based on the parent path.
+     *
+     * @return self|null
+     */
+    public function parent()
+    {
+        $path = dirname($this->pathRelative);
+        // dirname() trims trailing slash
+        if ($path !== '/') {
+            $path .= '/';
+        }
+        // can't get parent
+        if ($path === $this->pathRelative) {
+            return null;
+        }
+
+        return new self($path);
+    }
+
+    /**
      * Define whether item is file or folder.
      * In case item doesn't exists we check the trailing slash.
      * That is why it's important to add slashes to the wnd of folders path.
@@ -146,7 +166,7 @@ class ItemModel
     }
 
     /**
-     * Return thumbnail path from given path.
+     * Return thumbnail relative path from given path.
      * Work for both files and dirs paths.
      *
      * @return string
