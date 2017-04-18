@@ -44,7 +44,9 @@ interface ApiInterface
     public function actionCopy();
 
     /**
-     * Move file or folder
+     * Move file or folder.
+     * Also move file thumbnail, if it exists, and the destination dir already has a thumbnail dir.
+     * If the destination dir does not have a thumbnail dir, it just deletes the thumbnail.
      */
     public function actionMove();
 

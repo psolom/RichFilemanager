@@ -211,7 +211,7 @@ class Api implements ApiInterface
             app()->error('FORBIDDEN_CHAR_SLASH');
         }
 
-        // check if not requesting main FM userfiles folder
+        // check if not requesting main RFM storage folder
         if($this->is_root_folder($old_file)) {
             app()->error('NOT_ALLOWED');
         }
@@ -288,7 +288,7 @@ class Api implements ApiInterface
             app()->error('DIRECTORY_NOT_EXIST', [$target_path]);
         }
 
-        // check if not requesting main FM userfiles folder
+        // check if not requesting main RFM storage folder
         if($this->is_root_folder($source_fullpath)) {
             app()->error('NOT_ALLOWED');
         }
@@ -330,91 +330,81 @@ class Api implements ApiInterface
         return $this->get_file_info($target_relative_path);
     }
 
-
     /**
      * @inheritdoc
      */
     public function actionMove()
     {
-        $source_path = $this->get['old'];
-        $basename = basename($source_path);
-        $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
+        $modelSource = new ItemModel(Input::get('old'));
+        $modelTarget = new ItemModel(Input::get('new'));
 
-        $target_input = $this->get['new'];
-        $target_path = $target_input . '/';
-        $target_path = $this->expandPath($target_path, false);
-        $target_relative_path = $this->cleanPath('/' . $target_path . '/' . $basename . $suffix);
+        $suffix = $modelSource->isDir ? '/' : '';
+        $basename = basename($modelSource->pathAbsolute);
+        $modelNew = new ItemModel($modelTarget->pathRelative . $basename . $suffix);
+        Log::info('moving "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-        $source_fullpath = $this->getFullPath($source_path, true);
-        $target_fullpath = $this->getFullPath($target_path, true);
-        $new_fullpath = $target_fullpath . $basename . $suffix;
-
-        $this->check_write_permission($source_fullpath);
-        $this->check_write_permission($new_fullpath);
-
-        // This function will also move the thumbnail, if it exists, AND
-        // the destination dir already has a thumbnail dir. If the destination
-        // dir does not have a thumbnail dir, it just deletes the thumbnail.
-        // Check perms:
-        $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
-        $new_thumbnail = $this->get_thumbnail_path($new_fullpath);
-        if(file_exists($old_thumbnail)) {
-            $this->check_write_permission($old_thumbnail);
-            if (file_exists(dirname($new_thumbnail))) {
-                $this->check_write_permission($new_thumbnail);
-            }
+        if (!$modelTarget->isDir) {
+            app()->error('DIRECTORY_NOT_EXIST', [$modelTarget->pathRelative]);
         }
 
-        Log::info('moving "' . $source_fullpath . '" to "' . $new_fullpath . '"');
-
-        if(!is_dir($target_fullpath)) {
-            app()->error('DIRECTORY_NOT_EXIST', [$target_path]);
-        }
-
-        // check if not requesting main FM userfiles folder
-        if($this->is_root_folder($source_fullpath)) {
+        // check if not requesting main RFM storage folder
+        if ($modelSource->isDir && $this->storage()->is_root_folder($modelSource->pathAbsolute)) {
             app()->error('NOT_ALLOWED');
         }
 
-        $this->check_restrictions($source_path);
-        $this->check_restrictions($target_relative_path);
+        // check items permissions
+        $modelSource->check_path();
+        $modelSource->check_write_permission();
+        $modelSource->check_restrictions();
+        $modelTarget->check_path();
+        $modelTarget->check_write_permission();
+        $modelNew->check_write_permission();
+        $modelNew->check_restrictions();
 
         // check if file already exists
-        if (file_exists($new_fullpath)) {
-            $item_name = rtrim($target_input, '/') . '/' . $basename;
-            if(is_dir($new_fullpath)) {
-                app()->error('DIRECTORY_ALREADY_EXISTS', [$item_name]);
+        if ($modelNew->isExists) {
+            if ($modelNew->isDir) {
+                app()->error('DIRECTORY_ALREADY_EXISTS', [$modelNew->pathRelative]);
             } else {
-                app()->error('FILE_ALREADY_EXISTS', [$item_name]);
+                app()->error('FILE_ALREADY_EXISTS', [$modelNew->pathRelative]);
             }
         }
 
-        // should be retrieved before rename operation
-        $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
+        // should be defined before rename operation
+        $modelThumbOld = $modelSource->thumbnail();
+        $modelThumbNew = $modelNew->thumbnail();
+        $modelThumbNewParent = $modelThumbNew->parent();
+
+        // check thumbnail file or thumbnails folder permissions
+        if ($modelThumbOld->isExists) {
+            $modelThumbOld->check_write_permission();
+            if ($modelThumbNewParent->isExists) {
+                $modelThumbNewParent->check_write_permission();
+            }
+        }
 
         // move file or folder
-        if(!rename($source_fullpath, $new_fullpath)) {
-            if(is_dir($source_fullpath)) {
-                app()->error('ERROR_MOVING_DIRECTORY', [$basename, $target_input]);
-            } else {
-                app()->error('ERROR_MOVING_FILE', [$basename, $target_input]);
-            }
-        } else {
-            Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
+        if (rename($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+            Log::info('moved "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
             // move thumbnail file or thumbnails folder if exists
-            if(file_exists($old_thumbnail)) {
-                $new_thumbnail = $this->get_thumbnail_path($new_fullpath);
+            if ($modelThumbOld->isExists) {
                 // delete old thumbnail(s) if destination folder does not exist
-                if(file_exists(dirname($new_thumbnail))) {
-                    rename($old_thumbnail, $new_thumbnail);
+                if ($modelThumbNewParent->isExists) {
+                    rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 } else {
-                    is_dir($old_thumbnail) ? $this->unlinkRecursive($old_thumbnail) : unlink($old_thumbnail);
+                    $modelThumbOld->isDir ? $this->storage()->unlinkRecursive($modelThumbOld->pathAbsolute) : unlink($modelThumbOld->pathAbsolute);
                 }
+            }
+        } else {
+            if ($modelSource->isDir) {
+                app()->error('ERROR_MOVING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
+            } else {
+                app()->error('ERROR_MOVING_FILE', [$basename, $modelTarget->pathRelative]);
             }
         }
 
-        return $this->get_file_info($target_relative_path);
+        return $modelNew->getInfo();
     }
 
     /**
@@ -632,11 +622,11 @@ class Api implements ApiInterface
         // if $thumbnail is set to true we return the thumbnail
         if($thumbnail === true && $this->config('images.thumbnail.enabled')) {
             // create thumbnail model
-            $model = new ItemModel($modelImage->getThumbnailPath());
+            $model = $modelImage->thumbnail();
 
             // generate thumbnail if it doesn't exist or caching is disabled
             if (!$model->isExists || $this->config('images.thumbnail.cache') === false) {
-                $this->storage()->createThumbnail($modelImage->pathAbsolute, $model->pathAbsolute);
+                $this->storage()->createThumbnail($modelImage, $model);
             }
         } else {
             $model = $modelImage;
@@ -668,13 +658,13 @@ class Api implements ApiInterface
         $model->check_write_permission();
         $model->check_restrictions();
 
-        // check if not requesting main FM userfiles folder
+        // check if not requesting main RFM storage folder
         if($this->storage()->is_root_folder($model->pathAbsolute)) {
             app()->error('NOT_ALLOWED');
         }
 
         $info = $model->getInfo();
-        $modelThumb = new ItemModel($model->getThumbnailPath());
+        $modelThumb = $model->thumbnail();
 
         if($model->isDir) {
             $this->storage()->unlinkRecursive($model->pathAbsolute);
@@ -717,7 +707,7 @@ class Api implements ApiInterface
         $model->check_restrictions();
 
         if($model->isDir) {
-            // check if not requesting main FM userfiles folder
+            // check if not requesting main RFM storage folder
             // TODO: This restriction seems arbitration, it could be useful for business clients
             if($this->storage()->is_root_folder($model->pathAbsolute)) {
                 app()->error('NOT_ALLOWED');
