@@ -140,6 +140,16 @@ class ItemModel
     }
 
     /**
+     * Create model for thumbnail of the current item.
+     *
+     * @return self|null
+     */
+    public function thumbnail()
+    {
+        return new self($this->getThumbnailPath());
+    }
+
+    /**
      * Define whether item is file or folder.
      * In case item doesn't exists we check the trailing slash.
      * That is why it's important to add slashes to the wnd of folders path.
