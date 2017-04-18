@@ -55,7 +55,7 @@ class UploadHandler extends BaseUploadHandler
         // image thumbnail settings
         if($this->config('images.thumbnail.enabled') === true) {
             $this->options['image_versions']['thumbnail'] = array(
-                'upload_dir' => rtrim($this->model->getThumbnailPath(), '/'),
+                'upload_dir' => rtrim($this->model->thumbnail()->pathAbsolute, '/'),
                 'crop' => $this->config('images.thumbnail.crop'),
                 'max_width' => $this->config('images.thumbnail.maxWidth'),
                 'max_height' => $this->config('images.thumbnail.maxHeight'),
@@ -107,10 +107,10 @@ class UploadHandler extends BaseUploadHandler
             $file->error = $this->get_error_message('post_max_size');
             return false;
         }
-        if(!$this->fm->is_unrestricted($file->name, false)) {
-            $file->error = ['FORBIDDEN_NAME', [$file->name]];
-            return false;
-        }
+//        if(!$this->fm->is_unrestricted($file->name, false)) {
+//            $file->error = ['FORBIDDEN_NAME', [$file->name]];
+//            return false;
+//        }
         if ($uploaded_file && is_uploaded_file($uploaded_file)) {
             $file_size = $this->get_file_size($uploaded_file);
         } else {
