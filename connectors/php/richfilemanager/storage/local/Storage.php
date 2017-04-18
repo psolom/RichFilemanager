@@ -274,7 +274,7 @@ class Storage extends BaseStorage implements StorageInterface
             Log::info('generating thumbnail "' . $modelThumb->pathAbsolute . '"');
 
             // create folder if it does not exist
-            if (!file_exists($modelTarget->pathAbsolute)) {
+            if ($modelTarget->isExists) {
                 mkdir($modelTarget->pathAbsolute, 0755, true);
             }
 
@@ -608,32 +608,5 @@ class Storage extends BaseStorage implements StorageInterface
         }
 
         return filesize($path);
-    }
-
-    /**
-     * Remove "../" from path
-     * @param string $path Path to be converted
-     * @param bool $clean If dir names should be cleaned
-     * @return string or false in case of error (as exception are not used here)
-     */
-    public function expandPath($path, $clean = false)
-    {
-        $todo = explode('/', $path);
-        $fullPath = [];
-
-        foreach ($todo as $dir) {
-            if ($dir == '..') {
-                $element = array_pop($fullPath);
-                if (is_null($element)) {
-                    return false;
-                }
-            } else {
-                if ($clean) {
-                    $dir = $this->normalizeString($dir);
-                }
-                array_push($fullPath, $dir);
-            }
-        }
-        return implode('/', $fullPath);
     }
 }
