@@ -2,6 +2,7 @@
 
 namespace RFM\Storage\Local;
 
+use RFM\Facade\Log;
 use RFM\Storage\StorageTrait;
 
 class ItemModel
@@ -85,6 +86,14 @@ class ItemModel
     public $isDir;
 
     /**
+     * Define whether item is thumbnail file or thumbnails folder.
+     * Set up in constructor upon initialization and can't be modified.
+     *
+     * @var bool
+     */
+    private $isThumbnail;
+
+    /**
      * Model for parent folder of the current item.
      * Return NULL if there is no parent folder (user storage root folder).
      *
@@ -103,11 +112,13 @@ class ItemModel
      * ItemModel constructor.
      *
      * @param string $path
+     * @param bool $isThumbnail
      */
-    public function __construct($path)
+    public function __construct($path, $isThumbnail = false)
     {
         $this->pathRelative = $path;
-        $this->pathAbsolute = $this->getAbsolutePath($path);
+        $this->isThumbnail = $isThumbnail;
+        $this->pathAbsolute = $this->getAbsolutePath();
         $this->isExists = $this->getIsExists();
         $this->isDir = $this->getIsDirectory();
     }
@@ -170,17 +181,16 @@ class ItemModel
     public function closest()
     {
         if (is_null($this->parent)) {
-            $path = dirname($this->pathRelative);
-            $path = $this->storage()->cleanPath($path);
             // dirname() trims trailing slash
-            if ($path !== '/') {
-                $path .= '/';
-            }
+            $path = dirname($this->pathRelative) . '/';
+            // root folder returned as backslash for Windows
+            $path = $this->storage()->cleanPath($path);
+
             // can't get parent
-            if ($path === $this->pathRelative) {
+            if ($this->isRoot()) {
                 return null;
             }
-            $this->parent = new self($path);
+            $this->parent = new self($path, $this->isThumbnail);
         }
 
         return $this->parent;
@@ -195,7 +205,7 @@ class ItemModel
     public function thumbnail()
     {
         if (is_null($this->thumbnail)) {
-            $this->thumbnail = new self($this->getThumbnailPath());
+            $this->thumbnail = new self($this->getThumbnailPath(), true);
         }
 
         return $this->thumbnail;
@@ -234,7 +244,7 @@ class ItemModel
      */
     public function getAbsolutePath()
     {
-        return rtrim($this->storage()->getRoot(), '/') . '/' . $this->pathRelative;
+        return $this->storage()->cleanPath($this->storage()->getRoot() . '/' . $this->pathRelative);
     }
 
     /**
@@ -257,7 +267,14 @@ class ItemModel
      */
     public function isRoot()
     {
-        return rtrim($this->storage()->getRoot(), '/') === rtrim($this->pathAbsolute, '/');
+        $rootPath = $this->storage()->getRoot();
+
+        // root for thumbnails is defined in config file
+        if ($this->isThumbnail) {
+            $rootPath = $this->storage()->cleanPath($rootPath . '/' . $this->config('images.thumbnail.dir'));
+        }
+
+        return rtrim($rootPath, '/') === rtrim($this->pathAbsolute, '/');
     }
 
     /**
@@ -270,6 +287,48 @@ class ItemModel
         } else {
             unlink($this->pathAbsolute);
         }
+    }
+
+    /**
+     * Create thumbnail from the original image.
+     *
+     * @return void
+     */
+    public function createThumbnail()
+    {
+        // check is readable current item
+        if (!$this->storage()->has_read_permission($this->pathAbsolute)) {
+            return;
+        }
+
+        // check that thumbnail creation is allowed in config file
+        if (!$this->config('images.thumbnail.enabled')) {
+            return;
+        }
+
+        $modelThumb = $this->thumbnail();
+        $modelTarget = $modelThumb->closest();
+        $modelExistent = $modelTarget;
+
+        // look for closest existent folder
+        while ($modelExistent !== null && !$modelExistent->isExists) {
+            $modelExistent = $modelExistent->closest();
+        }
+
+        // check that the closest existent folder is writable
+        if (is_null($modelExistent) || !$this->storage()->has_write_permission($modelExistent->pathAbsolute)) {
+            return;
+        }
+
+        Log::info('generating thumbnail "' . $modelThumb->pathAbsolute . '"');
+
+        // create folder if it does not exist
+        if (!$modelThumb->closest()->isExists) {
+            mkdir($modelTarget->pathAbsolute, 0755, true);
+        }
+
+        $this->storage()->initUploader($this->closest())
+            ->create_thumbnail_image(basename($this->pathAbsolute));
     }
 
     /**
