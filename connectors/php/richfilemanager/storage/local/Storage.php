@@ -247,53 +247,6 @@ class Storage extends BaseStorage implements StorageInterface
 		return $result['size'];
 	}
 
-	/**
-	 * Create thumbnail from the original image.
-     *
-	 * @param ItemModel $modelImage
-	 * @param ItemModel $modelThumb
-	 */
-    public function createThumbnail($modelImage, $modelThumb)
-    {
-        $valid = !$this->config('read_only');
-        $valid = $valid && $this->has_read_permission($modelImage->pathAbsolute);
-
-        // parent
-        $modelTarget = $modelThumb->parent();
-
-        if (!$modelTarget->isExists) {
-            // Check that the thumbnail sub-dir can be created, because it
-            // does not yet exist. So we check the parent dir:
-            $valid = $valid && $this->has_write_permission(dirname($modelTarget->pathAbsolute));
-        } else {
-            // Check that the thumbnail sub-dir, which exists, is writable:
-            $valid = $valid && $this->has_write_permission($modelTarget->pathAbsolute);
-        }
-
-        if ($valid && $this->config('images.thumbnail.enabled') === true) {
-            Log::info('generating thumbnail "' . $modelThumb->pathAbsolute . '"');
-
-            // create folder if it does not exist
-            if ($modelTarget->isExists) {
-                mkdir($modelTarget->pathAbsolute, 0755, true);
-            }
-
-            $this->initUploader($modelImage->parent())
-                ->create_thumbnail_image(basename($modelImage->pathAbsolute));
-        }
-    }
-
-    /**
-     * Return full path to item.
-     *
-     * @param string $path - relative path
-     * @return string
-     */
-    public function getFullPath($path)
-    {
-        return $this->cleanPath($this->path_to_files . '/' . $path);
-    }
-
     /**
      * Return path without document root.
      *
@@ -321,17 +274,6 @@ class Storage extends BaseStorage implements StorageInterface
     public function getRelativePath($path)
     {
         return $this->subtractPath($path, $this->path_to_files);
-    }
-
-    /**
-     * Check whether the folder is root.
-     *
-     * @param string $path - absolute path
-     * @return bool
-     */
-    public function is_root_folder($path)
-    {
-        return rtrim($this->path_to_files, '/') == rtrim($path, '/');
     }
 
     /**

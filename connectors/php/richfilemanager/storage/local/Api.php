@@ -55,28 +55,28 @@ class Api implements ApiInterface
         $model->check_read_permission();
         $model->check_restrictions();
 
-        if(!$model->isDir) {
+        if (!$model->isDir) {
             app()->error('DIRECTORY_NOT_EXIST', [$model->pathRelative]);
         }
 
-        if(!$handle = @opendir($model->pathAbsolute)) {
+        if (!$handle = @opendir($model->pathAbsolute)) {
             app()->error('UNABLE_TO_OPEN_DIRECTORY', [$model->pathRelative]);
         } else {
             while (false !== ($file = readdir($handle))) {
-                if($file != "." && $file != "..") {
+                if ($file != "." && $file != "..") {
                     array_push($files_list, $file);
                 }
             }
             closedir($handle);
 
-            foreach($files_list as $file) {
+            foreach ($files_list as $file) {
                 $file_path = $model->pathRelative . $file;
-                if(is_dir($model->pathAbsolute . $file)) {
+                if (is_dir($model->pathAbsolute . $file)) {
                     $file_path .= '/';
                 }
 
                 $item = new ItemModel($file_path);
-                if($item->is_unrestricted()) {
+                if ($item->is_unrestricted()) {
                     $response_data[] = $item->getInfo();
                 }
             }
@@ -97,7 +97,7 @@ class Api implements ApiInterface
         $model->check_read_permission();
         $model->check_restrictions();
 
-        if($model->isDir) {
+        if ($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
@@ -122,7 +122,7 @@ class Api implements ApiInterface
         // there is only one file in the array as long as "singleFileUploads" is set to "true"
         if ($files && is_array($files) && is_object($files[0])) {
             $file = $files[0];
-            if(isset($file->error)) {
+            if (isset($file->error)) {
                 $error = is_array($file->error) ? $file->error : [$file->error];
                 app()->error($error[0], isset($error[1]) ? $error[1] : []);
             } else {
@@ -157,11 +157,11 @@ class Api implements ApiInterface
 
         $model->check_restrictions();
 
-        if($model->isExists && $model->isDir) {
+        if ($model->isExists && $model->isDir) {
             app()->error('DIRECTORY_ALREADY_EXISTS', [$targetName]);
         }
 
-        if(!mkdir($model->pathAbsolute, 0755)) {
+        if (!mkdir($model->pathAbsolute, 0755)) {
             app()->error('UNABLE_TO_CREATE_DIRECTORY', [$targetName]);
         }
 
@@ -178,12 +178,12 @@ class Api implements ApiInterface
         $filename = Input::get('new');
 
         // forbid to change path during rename
-        if(strrpos($filename, '/') !== false) {
+        if (strrpos($filename, '/') !== false) {
             app()->error('FORBIDDEN_CHAR_SLASH');
         }
 
         // check if not requesting root storage folder
-        if($modelOld->isDir && $modelOld->isRoot()) {
+        if ($modelOld->isDir && $modelOld->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
@@ -205,8 +205,8 @@ class Api implements ApiInterface
             $modelThumbNew->check_write_permission();
         }
 
-        if($modelNew->isExists) {
-            if($modelNew->isDir) {
+        if ($modelNew->isExists) {
+            if ($modelNew->isDir) {
                 app()->error('DIRECTORY_ALREADY_EXISTS', [$modelNew->pathRelative]);
             } else {
                 app()->error('FILE_ALREADY_EXISTS', [$modelNew->pathRelative]);
@@ -218,11 +218,11 @@ class Api implements ApiInterface
             Log::info('renamed "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
             // rename thumbnail file or thumbnails folder if exists (images only)
-            if($modelThumbOld->isExists) {
+            if ($modelThumbOld->isExists) {
                 rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
             }
         } else {
-            if($modelOld->isDir) {
+            if ($modelOld->isDir) {
                 app()->error('ERROR_RENAMING_DIRECTORY', [$modelOld->pathRelative, $modelNew->pathRelative]);
             } else {
                 app()->error('ERROR_RENAMING_FILE', [$modelOld->pathRelative, $modelNew->pathRelative]);
@@ -596,18 +596,18 @@ class Api implements ApiInterface
         $modelImage = new ItemModel(Input::get('path'));
         Log::info('loading image "' . $modelImage->pathAbsolute . '"');
 
-        if($modelImage->isDir) {
+        if ($modelImage->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
         // if $thumbnail is set to true we return the thumbnail
-        if($thumbnail === true && $this->config('images.thumbnail.enabled')) {
+        if ($thumbnail === true && $this->config('images.thumbnail.enabled')) {
             // create thumbnail model
             $model = $modelImage->thumbnail();
 
             // generate thumbnail if it doesn't exist or caching is disabled
             if (!$model->isExists || $this->config('images.thumbnail.cache') === false) {
-                $this->storage()->createThumbnail($modelImage, $model);
+                $modelImage->createThumbnail();
             }
         } else {
             $model = $modelImage;
@@ -640,19 +640,19 @@ class Api implements ApiInterface
         $model->check_restrictions();
 
         // check if not requesting root storage folder
-        if($model->isDir && $model->isRoot()) {
+        if ($model->isDir && $model->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
         $info = $model->getInfo();
         $modelThumb = $model->thumbnail();
 
-        if($model->isDir) {
+        if ($model->isDir) {
             $this->storage()->unlinkRecursive($model->pathAbsolute);
             Log::info('deleted "' . $model->pathAbsolute . '"');
 
             // delete thumbnail if exists
-            if($modelThumb->isExists) {
+            if ($modelThumb->isExists) {
                 $this->storage()->unlinkRecursive($modelThumb->pathAbsolute);
             }
         } else {
@@ -660,7 +660,7 @@ class Api implements ApiInterface
             Log::info('deleted "' . $model->pathAbsolute . '"');
 
             // delete thumbnails if exists
-            if($modelThumb->isExists) {
+            if ($modelThumb->isExists) {
                 unlink($modelThumb->pathAbsolute);
             }
         }
@@ -673,13 +673,6 @@ class Api implements ApiInterface
      */
     public function actionDownload()
     {
-        //$target_path = $this->get['path'];
-        //$target_fullpath = $this->getFullPath($target_path, true);
-        //Log::info('downloading "' . $target_fullpath . '"');
-
-        //$this->check_read_permission($target_fullpath);
-        //$this->check_restrictions($target_path);
-
         $model = new ItemModel(Input::get('path'));
         Log::info('downloading "' . $model->pathAbsolute . '"');
 
@@ -689,20 +682,20 @@ class Api implements ApiInterface
 
         // check if not requesting root storage folder
         // TODO: This restriction seems arbitration, it could be useful for business clients
-        if($model->isDir && $model->isRoot()) {
+        if ($model->isDir && $model->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
-        if(request()->isXmlHttpRequest()) {
+        if (request()->isXmlHttpRequest()) {
             return $model->getInfo();
         } else {
             $targetPath = $model->pathAbsolute;
 
-            if($model->isDir) {
-                $destinationPath = sys_get_temp_dir().'/rfm_'.uniqid().'.zip';
+            if ($model->isDir) {
+                $destinationPath = sys_get_temp_dir() . '/rfm_' . uniqid() . '.zip';
 
                 // if Zip archive is created
-                if($this->storage()->zipFile($targetPath, $destinationPath, true)) {
+                if ($this->storage()->zipFile($targetPath, $destinationPath, true)) {
                     $targetPath = $destinationPath;
                 } else {
                     app()->error('ERROR_CREATING_ZIP');
