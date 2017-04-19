@@ -14,6 +14,7 @@ class ItemModel
 
     /**
      * File item model template
+     *
      * @var array
      */
     protected $file_model = [
@@ -36,6 +37,7 @@ class ItemModel
 
     /**
      * Folder item model template
+     *
      * @var array
      */
     protected $folder_model = [
@@ -52,10 +54,50 @@ class ItemModel
         ]
     ];
 
+    /**
+     * Absolute path for item model, based on relative path.
+     *
+     * @var string
+     */
     public $pathAbsolute;
+
+    /**
+     * Relative path for item model, the only value required to create item model.
+     *
+     * @var string
+     */
     public $pathRelative;
+
+    /**
+     * Whether item exists in file system on any other storage.
+     * Defined and cached upon creating new item instance.
+     *
+     * @var bool
+     */
     public $isExists;
+
+    /**
+     * Whether item is folder.
+     * Defined and cached upon creating new item instance.
+     *
+     * @var bool
+     */
     public $isDir;
+
+    /**
+     * Model for parent folder of the current item.
+     * Return NULL if there is no parent folder (user storage root folder).
+     *
+     * @var null|ItemModel
+     */
+    private $parent;
+
+    /**
+     * Model for thumbnail file or folder of the current item.
+     *
+     * @var null|ItemModel
+     */
+    private $thumbnail;
 
     /**
      * ItemModel constructor.
@@ -65,7 +107,7 @@ class ItemModel
     public function __construct($path)
     {
         $this->pathRelative = $path;
-        $this->pathAbsolute = $this->storage()->getFullPath($path);
+        $this->pathAbsolute = $this->getAbsolutePath($path);
         $this->isExists = $this->getIsExists();
         $this->isDir = $this->getIsDirectory();
     }
@@ -120,33 +162,43 @@ class ItemModel
     }
 
     /**
-     * Create new model based on the parent path.
+     * Return model for parent folder on the current item.
+     * Create and cache if not existing yet.
      *
-     * @return self|null
+     * @return null|ItemModel
      */
-    public function parent()
+    public function closest()
     {
-        $path = dirname($this->pathRelative);
-        // dirname() trims trailing slash
-        if ($path !== '/') {
-            $path .= '/';
-        }
-        // can't get parent
-        if ($path === $this->pathRelative) {
-            return null;
+        if (is_null($this->parent)) {
+            $path = dirname($this->pathRelative);
+            $path = $this->storage()->cleanPath($path);
+            // dirname() trims trailing slash
+            if ($path !== '/') {
+                $path .= '/';
+            }
+            // can't get parent
+            if ($path === $this->pathRelative) {
+                return null;
+            }
+            $this->parent = new self($path);
         }
 
-        return new self($path);
+        return $this->parent;
     }
 
     /**
-     * Create model for thumbnail of the current item.
+     * Return model for thumbnail of the current item.
+     * Create and cache if not existing yet.
      *
-     * @return self|null
+     * @return null|ItemModel
      */
     public function thumbnail()
     {
-        return new self($this->getThumbnailPath());
+        if (is_null($this->thumbnail)) {
+            $this->thumbnail = new self($this->getThumbnailPath());
+        }
+
+        return $this->thumbnail;
     }
 
     /**
@@ -176,6 +228,16 @@ class ItemModel
     }
 
     /**
+     * Return absolute path to item.
+     *
+     * @return string
+     */
+    public function getAbsolutePath()
+    {
+        return rtrim($this->storage()->getRoot(), '/') . '/' . $this->pathRelative;
+    }
+
+    /**
      * Return thumbnail relative path from given path.
      * Work for both files and dirs paths.
      *
@@ -188,6 +250,27 @@ class ItemModel
         return $this->storage()->cleanPath($path);
     }
 
+    /**
+     * Check whether the item is root folder.
+     *
+     * @return bool
+     */
+    public function isRoot()
+    {
+        return rtrim($this->storage()->getRoot(), '/') === rtrim($this->pathAbsolute, '/');
+    }
+
+    /**
+     * Remove current file or folder.
+     */
+    public function remove()
+    {
+        if ($this->isDir) {
+            $this->storage()->unlinkRecursive($this->pathAbsolute);
+        } else {
+            unlink($this->pathAbsolute);
+        }
+    }
 
     /**
      * Check that item exists and path is valid.
@@ -198,7 +281,7 @@ class ItemModel
     {
         if(!$this->isExists || !$this->storage()->is_valid_path($this->pathAbsolute)) {
             $langKey = $this->isDir ? 'DIRECTORY_NOT_EXIST' : 'FILE_DOES_NOT_EXIST';
-            app()->error($langKey, [$this->pathAbsolute]);
+            app()->error($langKey, [$this->pathRelative]);
         }
     }
 
