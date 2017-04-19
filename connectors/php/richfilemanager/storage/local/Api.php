@@ -173,81 +173,63 @@ class Api implements ApiInterface
      */
     public function actionRename()
     {
-        $suffix = '';
-        $old_relative_path = $this->get['old'];
-        $old_trimmed_path = $old_relative_path;
-
-        if(substr($old_trimmed_path, -1, 1) == '/') {
-            $old_trimmed_path = substr($old_trimmed_path, 0, (strlen($old_trimmed_path)-1));
-            $suffix = '/';
-        }
-        $tmp = explode('/', $old_trimmed_path);
-        $filename = $tmp[(sizeof($tmp)-1)];
-
-        $new_path = substr($old_trimmed_path, 0, strripos($old_trimmed_path, '/' . $filename));
-        $new_name = $this->storage()->normalizeString($this->get['new'], ['.', '-']);
-        $new_model = new ItemModel(Input::get('path'));
-        $new_relative_path = $this->cleanPath('/' . $new_path . '/' . $new_name . $suffix);
-
-        $old_file = $this->getFullPath($old_trimmed_path, true) . $suffix;
-        $new_file = $this->getFullPath($new_path, true) . '/' . $new_name . $suffix;
-
-        $this->check_write_permission($old_file);
-        $this->check_write_permission($new_file);
-
-        // This function will also move the thumbnail, if it exists. Check perms:
-        $old_thumbnail = $this->get_thumbnail_path($old_file);
-        $new_thumbnail = $this->get_thumbnail_path($new_file);
-        if(file_exists($old_thumbnail)) {
-            $this->check_write_permission($old_thumbnail);
-            $this->check_write_permission($new_thumbnail);
-        }
-
-        Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
+        $modelOld = new ItemModel(Input::get('old'));
+        $suffix = $modelOld->isDir ? '/' : '';
+        $filename = Input::get('new');
 
         // forbid to change path during rename
-        // FIXME: Move/rename actions should be the same action, and without this arbitrary restriction
-        if(strrpos($this->get['new'], '/') !== false) {
+        if(strrpos($filename, '/') !== false) {
             app()->error('FORBIDDEN_CHAR_SLASH');
         }
 
-        // check if not requesting main RFM storage folder
-        if($this->is_root_folder($old_file)) {
+        // check if not requesting root storage folder
+        if($modelOld->isDir && $modelOld->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
-        $this->check_restrictions($old_relative_path);
-        $this->check_restrictions($new_relative_path);
+        $modelNew = new ItemModel($modelOld->closest()->pathRelative . $filename . $suffix);
+        Log::info('moving "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-        if(file_exists($new_file)) {
-            if($suffix === '/' && is_dir($new_file)) {
-                app()->error('DIRECTORY_ALREADY_EXISTS', [$new_name]);
-            }
-            if($suffix === '' && is_file($new_file)) {
-                app()->error('FILE_ALREADY_EXISTS', [$new_name]);
+        $modelOld->check_path();
+        $modelOld->check_write_permission();
+        $modelOld->check_restrictions();
+        $modelNew->check_restrictions();
+
+        // should be defined before renaming
+        $modelThumbOld = $modelOld->thumbnail();
+        $modelThumbNew = $modelNew->thumbnail();
+
+        // check thumbnail file or thumbnails folder permissions
+        if ($modelThumbOld->isExists) {
+            $modelThumbOld->check_write_permission();
+            $modelThumbNew->check_write_permission();
+        }
+
+        if($modelNew->isExists) {
+            if($modelNew->isDir) {
+                app()->error('DIRECTORY_ALREADY_EXISTS', [$modelNew->pathRelative]);
+            } else {
+                app()->error('FILE_ALREADY_EXISTS', [$modelNew->pathRelative]);
             }
         }
 
-        if(!rename($old_file, $new_file)) {
-            if(is_dir($old_file)) {
-                app()->error('ERROR_RENAMING_DIRECTORY', [$filename, $new_name]);
-            } else {
-                app()->error('ERROR_RENAMING_FILE', [$filename, $new_name]);
+        // rename file or folder
+        if (rename($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
+            Log::info('renamed "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
+
+            // rename thumbnail file or thumbnails folder if exists (images only)
+            if($modelThumbOld->isExists) {
+                rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
             }
         } else {
-            Log::info('renamed "' . $old_file . '" to "' . $new_file . '"');
-
-            // for image only - rename thumbnail if original image was successfully renamed
-            if(!is_dir($new_file)) {
-                $new_thumbnail = $this->get_thumbnail_path($new_file);
-                $old_thumbnail = $this->get_thumbnail_path($old_file);
-                if(file_exists($old_thumbnail)) {
-                    rename($old_thumbnail, $new_thumbnail);
-                }
+            if($modelOld->isDir) {
+                app()->error('ERROR_RENAMING_DIRECTORY', [$modelOld->pathRelative, $modelNew->pathRelative]);
+            } else {
+                app()->error('ERROR_RENAMING_FILE', [$modelOld->pathRelative, $modelNew->pathRelative]);
             }
         }
 
-        return $this->get_file_info($new_relative_path);
+        return $modelNew->getInfo();
     }
 
     /**
@@ -288,7 +270,7 @@ class Api implements ApiInterface
             app()->error('DIRECTORY_NOT_EXIST', [$target_path]);
         }
 
-        // check if not requesting main RFM storage folder
+        // check if not requesting root storage folder
         if($this->is_root_folder($source_fullpath)) {
             app()->error('NOT_ALLOWED');
         }
@@ -347,8 +329,8 @@ class Api implements ApiInterface
             app()->error('DIRECTORY_NOT_EXIST', [$modelTarget->pathRelative]);
         }
 
-        // check if not requesting main RFM storage folder
-        if ($modelSource->isDir && $this->storage()->is_root_folder($modelSource->pathAbsolute)) {
+        // check if not requesting root storage folder
+        if ($modelSource->isDir && $modelSource->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
@@ -370,16 +352,15 @@ class Api implements ApiInterface
             }
         }
 
-        // should be defined before rename operation
+        // should be defined before moving
         $modelThumbOld = $modelSource->thumbnail();
         $modelThumbNew = $modelNew->thumbnail();
-        $modelThumbNewParent = $modelThumbNew->parent();
 
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
             $modelThumbOld->check_write_permission();
-            if ($modelThumbNewParent->isExists) {
-                $modelThumbNewParent->check_write_permission();
+            if ($modelThumbNew->closest()->isExists) {
+                $modelThumbNew->closest()->check_write_permission();
             }
         }
 
@@ -387,13 +368,13 @@ class Api implements ApiInterface
         if (rename($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('moved "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // move thumbnail file or thumbnails folder if exists
+            // move thumbnail file or thumbnails folder if exists (images only)
             if ($modelThumbOld->isExists) {
                 // delete old thumbnail(s) if destination folder does not exist
-                if ($modelThumbNewParent->isExists) {
+                if ($modelThumbNew->closest()->isExists) {
                     rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 } else {
-                    $modelThumbOld->isDir ? $this->storage()->unlinkRecursive($modelThumbOld->pathAbsolute) : unlink($modelThumbOld->pathAbsolute);
+                    $modelThumbOld->remove();
                 }
             }
         } else {
@@ -658,8 +639,8 @@ class Api implements ApiInterface
         $model->check_write_permission();
         $model->check_restrictions();
 
-        // check if not requesting main RFM storage folder
-        if($this->storage()->is_root_folder($model->pathAbsolute)) {
+        // check if not requesting root storage folder
+        if($model->isDir && $model->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
@@ -706,12 +687,10 @@ class Api implements ApiInterface
         $model->check_read_permission();
         $model->check_restrictions();
 
-        if($model->isDir) {
-            // check if not requesting main RFM storage folder
-            // TODO: This restriction seems arbitration, it could be useful for business clients
-            if($this->storage()->is_root_folder($model->pathAbsolute)) {
-                app()->error('NOT_ALLOWED');
-            }
+        // check if not requesting root storage folder
+        // TODO: This restriction seems arbitration, it could be useful for business clients
+        if($model->isDir && $model->isRoot()) {
+            app()->error('NOT_ALLOWED');
         }
 
         if(request()->isXmlHttpRequest()) {
