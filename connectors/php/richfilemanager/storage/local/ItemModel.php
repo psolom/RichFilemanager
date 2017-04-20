@@ -259,6 +259,29 @@ class ItemModel
     }
 
     /**
+     * Return original relative path for thumbnail model.
+     * Work for both files and dirs paths.
+     *
+     * @return string
+     */
+    public function getOriginalPath()
+    {
+        $path = $this->pathRelative;
+
+        if (!$this->isThumbnail) {
+            return $path;
+        }
+
+        $thumbRoot = '/' . trim($this->config('images.thumbnail.dir'), '/');
+        if (strpos($path, $thumbRoot) === 0) {
+            // remove thumbnails root folder
+            $path = substr($path, strlen($thumbRoot));
+        }
+
+        return $path;
+    }
+
+    /**
      * Check whether the item is root folder.
      *
      * @return bool
@@ -372,7 +395,7 @@ class ItemModel
     public function is_allowed_pattern()
     {
         // check the relative path against the glob patterns:
-        $pathRelative = $this->pathRelative;
+        $pathRelative = $this->getOriginalPath();
         $patternRestrictions = $this->config('security.patterns.restrictions');
 
         if ($this->config('security.patterns.ignorecase')) {

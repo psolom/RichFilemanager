@@ -142,7 +142,6 @@ $config = [
                 // folders
                 "*/_thumbs/*",
                 "*/.CDN_ACCESS_LOGS/*",
-                "*/shared/geek2*",
             ],
         ],
         /**
