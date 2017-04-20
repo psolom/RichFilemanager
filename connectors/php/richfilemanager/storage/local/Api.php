@@ -740,6 +740,7 @@ class Api implements ApiInterface
      */
     public function actionSummarize()
     {
+        $path = '/';
         $attributes = [
             'size' => 0,
             'files' => 0,
@@ -747,15 +748,14 @@ class Api implements ApiInterface
             'sizeLimit' => $this->config('options.fileRootSizeLimit'),
         ];
 
-        $path = rtrim($this->path_to_files, '/') . '/';
         try {
-            $this->getDirSummary($path, $attributes);
+            $this->storage()->getDirSummary($path, $attributes);
         } catch (\Exception $e) {
             app()->error('ERROR_SERVER');
         }
 
         return [
-            'id' => '/',
+            'id' => $path,
             'type' => 'summary',
             'attributes' => $attributes,
         ];
