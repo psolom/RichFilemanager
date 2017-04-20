@@ -48,7 +48,7 @@ class Storage extends BaseStorage implements StorageInterface
 
 		// normalize slashes in paths
         $this->doc_root = $this->cleanPath($this->doc_root);
-		$this->path_to_files = $this->cleanPath($this->path_to_files);
+		$this->path_to_files = $this->cleanPath($this->path_to_files . '/');
         $this->dynamic_fileroot = $this->subtractPath($this->path_to_files, $this->doc_root);
 
 		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
@@ -63,9 +63,9 @@ class Storage extends BaseStorage implements StorageInterface
     {
 		if($this->config('options.serverRoot') === true) {
 			$this->dynamic_fileroot = $path;
-			$this->path_to_files = $this->cleanPath($this->doc_root . '/' . $path);
+			$this->path_to_files = $this->cleanPath($this->doc_root . '/' . $path . '/');
 		} else {
-			$this->path_to_files = $this->cleanPath($path);
+			$this->path_to_files = $this->cleanPath($path . '/');
 		}
 
 		Log::info('Overwritten with setRoot() method:');
@@ -201,14 +201,16 @@ class Storage extends BaseStorage implements StorageInterface
 	/**
 	 * Return summary info for specified folder.
      *
-	 * @param string $dir
+	 * @param string $dir - relative path
 	 * @param array $result
 	 * @return array
 	 */
 	public function getDirSummary($dir, &$result = ['size' => 0, 'files' => 0, 'folders' => 0])
 	{
+	    $modelDir = new ItemModel($dir);
+
 		// suppress permission denied and other errors
-		$files = @scandir($dir);
+		$files = @scandir($modelDir->pathAbsolute);
 		if($files === false) {
 			return $result;
 		}
@@ -217,18 +219,20 @@ class Storage extends BaseStorage implements StorageInterface
 			if($file == "." || $file == "..") {
 				continue;
 			}
-			$path = $dir . $file;
-            $is_dir = is_dir($path);
-            $relative_path = $this->getRelativePath($path) . ($is_dir ? '/' : '');
-            $is_allowed_path = $this->has_read_permission($path) && $this->is_unrestricted($relative_path);
-
-            if ($is_dir && $is_allowed_path) {
-                $result['folders']++;
-                $this->getDirSummary($path . '/', $result);
+            if (is_dir($modelDir->pathAbsolute . $file)) {
+                $file .= '/';
             }
-            if (!$is_dir && $is_allowed_path) {
-                $result['files']++;
-                $result['size'] += filesize($path);
+
+            $model = new ItemModel($modelDir->pathRelative . $file);
+
+            if ($model->has_read_permission() && $model->is_unrestricted()) {
+                if ($model->isDir) {
+                    $result['folders']++;
+                    $this->getDirSummary($model->pathRelative, $result);
+                } else {
+                    $result['files']++;
+                    $result['size'] += filesize($model->pathAbsolute);
+                }
             }
 		}
 
@@ -417,67 +421,6 @@ class Storage extends BaseStorage implements StorageInterface
         }
 
         // Nothing is restricting access to this item, so it is allowed.
-        return true;
-    }
-
-    /**
-     * Verify if item has read permission, without exiting if not.
-     *
-     * @param string $path - absolute path
-     * @return bool
-     */
-    public function has_read_permission($path)
-    {
-        // Check system permission (O.S./filesystem/NAS)
-        if ($this->has_system_read_permission($path) === false) {
-            return false;
-        }
-
-        // Check the user's Auth API callback:
-        if (fm_has_read_permission($path) === false) {
-            return false;
-        }
-
-        // Nothing is restricting access to this item, so it is readable
-        return true;
-    }
-
-    /**
-     * Verify if item has write permission, without exiting if not.
-     *
-     * @param string $path - absolute path
-     * @return bool
-     */
-    public function has_write_permission($path)
-    {
-        // Does the path already exist?
-        if (!file_exists($path)) {
-            // It does not exist (yet). Check to see if we could write to this
-            // path, by seeing if we can write new entries into its parent dir.
-            $parent_dir = pathinfo($path, PATHINFO_DIRNAME);
-            return $this->has_write_permission($parent_dir);
-        }
-
-        //
-        // The item (file or dir) does exist, so check its permissions:
-        //
-
-        // Check system permission (O.S./filesystem/NAS)
-        if ($this->has_system_write_permission($path) === false) {
-            return false;
-        }
-
-        // Check the global read_only config flag:
-        if ($this->config('security.read_only') !== false) {
-            return false;
-        }
-
-        // Check the user's Auth API callback:
-        if (fm_has_write_permission($path) === false) {
-            return false;
-        }
-
-        // Nothing is restricting access to this item, so it is writable
         return true;
     }
 

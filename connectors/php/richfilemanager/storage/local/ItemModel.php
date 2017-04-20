@@ -133,11 +133,9 @@ class ItemModel
         $pathInfo = pathinfo($this->pathAbsolute);
         $filemtime = filemtime($this->pathAbsolute);
 
-        // check if file is readable
-        $is_readable = $this->storage()->has_read_permission($this->pathAbsolute);
-
-        // check if file is writable
-        $is_writable = $this->storage()->has_write_permission($this->pathAbsolute);
+        // check file permissions
+        $is_readable = $this->has_read_permission();
+        $is_writable = $this->has_write_permission();
 
         if($this->isDir) {
             $model = $this->folder_model;
@@ -297,7 +295,7 @@ class ItemModel
     public function createThumbnail()
     {
         // check is readable current item
-        if (!$this->storage()->has_read_permission($this->pathAbsolute)) {
+        if (!$this->has_read_permission()) {
             return;
         }
 
@@ -316,7 +314,7 @@ class ItemModel
         }
 
         // check that the closest existent folder is writable
-        if (is_null($modelExistent) || !$this->storage()->has_write_permission($modelExistent->pathAbsolute)) {
+        if (is_null($modelExistent) || !$modelExistent->has_write_permission()) {
             return;
         }
 
@@ -329,6 +327,69 @@ class ItemModel
 
         $this->storage()->initUploader($this->closest())
             ->create_thumbnail_image(basename($this->pathAbsolute));
+    }
+
+    /**
+     * Check the global blacklists for this file path.
+     *
+     * @return bool
+     */
+    public function is_unrestricted()
+    {
+        $valid = true;
+
+        if (!$this->isDir) {
+            $valid = $valid && $this->storage()->is_allowed_extension($this->pathRelative);
+        }
+
+        return $valid && $this->storage()->is_allowed_path($this->pathRelative);
+    }
+
+    /**
+     * Verify if item has read permission.
+     *
+     * @return bool
+     */
+    public function has_read_permission()
+    {
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->storage()->has_system_read_permission($this->pathAbsolute) === false) {
+            return false;
+        }
+
+        // Check the user's Auth API callback:
+        if (fm_has_read_permission($this->pathAbsolute) === false) {
+            return false;
+        }
+
+        // Nothing is restricting access to this item, so it is readable
+        return true;
+    }
+
+    /**
+     * Verify if item has write permission.
+     *
+     * @return bool
+     */
+    public function has_write_permission()
+    {
+        // Check the global read_only config flag:
+        if ($this->config('security.read_only') !== false) {
+            return false;
+        }
+
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->storage()->has_system_write_permission($this->pathAbsolute) === false) {
+            return false;
+        }
+
+        // Check the user's Auth API callback:
+        if (fm_has_write_permission($this->pathAbsolute) === false) {
+            return false;
+        }
+
+        // Nothing is restricting access to this item, so it is writable
+        return true;
     }
 
     /**
@@ -367,22 +428,6 @@ class ItemModel
     }
 
     /**
-     * Check the global blacklists for this file path.
-     *
-     * @return bool
-     */
-    public function is_unrestricted()
-    {
-        $valid = true;
-
-        if (!$this->isDir) {
-            $valid = $valid && $this->storage()->is_allowed_extension($this->pathRelative);
-        }
-
-        return $valid && $this->storage()->is_allowed_path($this->pathRelative);
-    }
-
-    /**
      * Check that item has read permission.
      *
      * @return void -- exits with error response if the permission is not allowed
@@ -405,44 +450,23 @@ class ItemModel
 
     /**
      * Check that item can be written to.
-     * If the filepath does not exist, this assumes we want to CREATE a new
-     * dir entry at $filepath (a new file or new subdir), and thus it checks the
-     * parent dir for write permissions.
      *
      * @return void -- exits with error response if the permission is not allowed
      */
     public function check_write_permission()
     {
-        // path to check
-        $path = $this->pathAbsolute;
-
-        if (!$this->isExists) {
-            // It does not exist (yet). Check to see if we could write to this
-            // path, by seeing if we can write new entries into its parent dir.
-            $path = pathinfo($this->pathAbsolute, PATHINFO_DIRNAME);
-        }
-
-        //
-        // The filepath (file or dir) does exist, so check its permissions:
-        //
-
-        // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->has_system_write_permission($path) === false) {
-            app()->error('NOT_ALLOWED_SYSTEM');
-        }
-
-//        // Check the global blacklists:
-//        if ($this->is_unrestricted($filepath) === false) {
-//            app()->error('FORBIDDEN_NAME', [$filepath]);
-//        }
-
         // Check the global read_only config flag:
         if ($this->config('security.read_only') !== false) {
             app()->error('NOT_ALLOWED');
         }
 
+        // Check system permission (O.S./filesystem/NAS)
+        if ($this->storage()->has_system_write_permission($this->pathAbsolute) === false) {
+            app()->error('NOT_ALLOWED_SYSTEM');
+        }
+
         // Check the user's Auth API callback:
-        if (fm_has_write_permission($path) === false) {
+        if (fm_has_write_permission($this->pathAbsolute) === false) {
             app()->error('NOT_ALLOWED');
         }
 
