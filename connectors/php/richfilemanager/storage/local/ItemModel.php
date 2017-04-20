@@ -358,7 +358,7 @@ class ItemModel
             }
         }
 
-        if ($this->storage()->is_allowed_extension($path) === false) {
+        if ($this->storage()->is_allowed_path($path) === false) {
             app()->error('INVALID_FILE_TYPE');
         }
 

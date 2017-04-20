@@ -770,67 +770,71 @@ class Api implements ApiInterface
             app()->error('NOT_FOUND_SYSTEM_MODULE', ['zip']);
         }
 
-        $source_path = $this->post['source'];
-        $target_path = $this->post['target'];
-        $source_fullpath = $this->getFullPath($source_path, true);
-        $target_fullpath = $this->getFullPath($target_path, true);
+        $modelSource = new ItemModel(Input::get('source'));
+        $modelTarget = new ItemModel(Input::get('target'));
+        Log::info('extracting "' . $modelSource->pathAbsolute . '" to "' . $modelTarget->pathAbsolute . '"');
 
-        $this->check_read_permission($source_fullpath);
-        $this->check_write_permission($target_fullpath);
-        $this->check_restrictions($source_path);
+        $modelSource->check_path();
+        $modelTarget->check_path();
+        $modelSource->check_read_permission();
+        $modelTarget->check_write_permission();
+        $modelSource->check_restrictions();
+        $modelTarget->check_restrictions();
 
-        if(is_dir($source_fullpath)) {
+        if ($modelSource->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
         $zip = new \ZipArchive();
-        if ($zip->open($source_fullpath) !== true) {
+        if ($zip->open($modelSource->pathAbsolute) !== true) {
             app()->error('ERROR_EXTRACTING_FILE');
         }
 
-        $response_data = [];
-        $root_level_items = [];
+        /**
+         * @var $rootLevelItems ItemModel[]
+         */
+        $rootLevelItems = [];
+        $responseData = [];
 
         // make all the folders
-        for($i = 0; $i < $zip->numFiles; $i++) {
-            $file_name = $zip->getNameIndex($i);
-            $relative_path = $target_path . $file_name;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+            $model = new ItemModel($modelTarget->pathRelative . $filename);
 
-            if ($file_name[strlen($file_name)-1] === "/" && $this->is_unrestricted($relative_path)) {
-                $dir_name = $target_fullpath . $file_name;
-                $created = mkdir($dir_name, 0700, true);
+            if ($filename[strlen($filename) - 1] === "/" && $model->is_unrestricted()) {
+                $created = mkdir($model->pathAbsolute, 0700, true);
 
                 if ($created) {
                     // extract root-level folders from archive manually
-                    $root = substr($file_name, 0, strpos($file_name, '/') + 1);
-                    $root_level_items[$root] = $relative_path;
+                    $rootName = substr($filename, 0, strpos($filename, '/') + 1);
+                    if (!array_key_exists($rootName, $rootLevelItems)) {
+                        $rootModel = ($rootName === $filename) ? $model : new ItemModel($modelTarget->pathRelative . $rootName);
+                        $rootLevelItems[$rootName] = $rootModel;
+                    }
                 }
             }
         }
 
         // unzip into the folders
-        for($i = 0; $i < $zip->numFiles; $i++) {
-            $file_name = $zip->getNameIndex($i);
-            $file_stat = $zip->statIndex($i);
-            $relative_path = $target_path . $file_name;
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+            $model = new ItemModel($modelTarget->pathRelative . $filename);
 
-            if ($file_name[strlen($file_name)-1] !== "/" && $this->is_unrestricted($relative_path)) {
-                $dir_name = $target_fullpath . $file_name;
-                $copied = copy('zip://'. $source_fullpath .'#'. $file_name, $dir_name);
+            if ($filename[strlen($filename) - 1] !== "/" && $model->is_unrestricted()) {
+                $copied = copy('zip://' . $modelSource->pathAbsolute . '#' . $filename, $model->pathAbsolute);
 
-                if($copied && strpos($file_name, '/') === false) {
-                    $root_level_items[] = $relative_path;
+                if ($copied && strpos($filename, '/') === false) {
+                    $rootLevelItems[] = $model;
                 }
             }
         }
 
         $zip->close();
 
-        foreach ($root_level_items as $relative_path) {
-            $item = $this->get_file_info($relative_path);
-            $response_data[] = $item;
+        foreach ($rootLevelItems as $model) {
+            $responseData[] = $model->getInfo();
         }
 
-        return $response_data;
+        return $responseData;
     }
 }
