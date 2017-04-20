@@ -2,8 +2,6 @@
 
 namespace RFM\Storage;
 
-use RFM\Storage\StorageTrait;
-
 /**
  *    BaseStorage PHP class
  *
@@ -123,7 +121,7 @@ abstract class BaseStorage
 
     /**
      * Check whether file is image by its mime type.
-     * For S3 plugin it may cost extra request for each file.
+     * For S3 storage it may cost extra request for each file.
      *
      * @param string $path
      * @return bool

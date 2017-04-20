@@ -137,7 +137,7 @@ class ItemModel
         $is_readable = $this->has_read_permission();
         $is_writable = $this->has_write_permission();
 
-        if($this->isDir) {
+        if ($this->isDir) {
             $model = $this->folder_model;
         } else {
             $model = $this->file_model;
@@ -146,8 +146,8 @@ class ItemModel
             if ($is_readable) {
                 $model['attributes']['size'] = $this->storage()->get_real_filesize($this->pathAbsolute);
 
-                if($this->storage()->is_image_file($this->pathAbsolute)) {
-                    if($model['attributes']['size']) {
+                if ($this->storage()->is_image_file($this->pathAbsolute)) {
+                    if ($model['attributes']['size']) {
                         list($width, $height, $type, $attr) = getimagesize($this->pathAbsolute);
                     } else {
                         list($width, $height) = [0, 0];
@@ -162,8 +162,8 @@ class ItemModel
         $model['id'] = $this->pathRelative;
         $model['attributes']['name'] = $pathInfo['basename'];
         $model['attributes']['path'] = $this->storage()->getDynamicPath($this->pathAbsolute);
-        $model['attributes']['readable'] = (int) $is_readable;
-        $model['attributes']['writable'] = (int) $is_writable;
+        $model['attributes']['readable'] = (int)$is_readable;
+        $model['attributes']['writable'] = (int)$is_writable;
         $model['attributes']['timestamp'] = $filemtime;
         $model['attributes']['modified'] = $this->storage()->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
@@ -253,7 +253,7 @@ class ItemModel
      */
     public function getThumbnailPath()
     {
-        $path =  '/' . $this->config('images.thumbnail.dir') . '/' . $this->pathRelative;
+        $path = '/' . $this->config('images.thumbnail.dir') . '/' . $this->pathRelative;
 
         return $this->storage()->cleanPath($path);
     }
@@ -330,6 +330,85 @@ class ItemModel
     }
 
     /**
+     * Check the extensions blacklist for item.
+     *
+     * @return bool
+     */
+    public function is_allowed_extension()
+    {
+        // check the extension (for files):
+        $extension = pathinfo($this->pathRelative, PATHINFO_EXTENSION);
+        $extensionRestrictions = $this->config('security.extensions.restrictions');
+
+        if ($this->config('security.extensions.ignorecase')) {
+            $extension = strtolower($extension);
+            $extensionRestrictions = array_map('strtolower', $extensionRestrictions);
+        }
+
+        if ($this->config('security.extensions.policy') === 'ALLOW_LIST') {
+            if (!in_array($extension, $extensionRestrictions)) {
+                // Not in the allowed list, so it's restricted.
+                return false;
+            }
+        } else if ($this->config('security.extensions.policy') === 'DISALLOW_LIST') {
+            if (in_array($extension, $extensionRestrictions)) {
+                // It's in the disallowed list, so it's restricted.
+                return false;
+            }
+        } else {
+            // Invalid config option for 'policy'. Deny everything for safety.
+            return false;
+        }
+
+        // Nothing restricted this path, so it is allowed.
+        return true;
+    }
+
+    /**
+     * Check the patterns blacklist for path.
+     *
+     * @return bool
+     */
+    public function is_allowed_pattern()
+    {
+        // check the relative path against the glob patterns:
+        $pathRelative = $this->pathRelative;
+        $patternRestrictions = $this->config('security.patterns.restrictions');
+
+        if ($this->config('security.patterns.ignorecase')) {
+            $pathRelative = strtolower($pathRelative);
+            $patternRestrictions = array_map('strtolower', $patternRestrictions);
+        }
+
+        // (check for a match before applying the restriction logic)
+        $match_was_found = false;
+        foreach ($patternRestrictions as $pattern) {
+            if (fnmatch($pattern, $pathRelative)) {
+                $match_was_found = true;
+                break;  // Done.
+            }
+        }
+
+        if ($this->config('security.patterns.policy') === 'ALLOW_LIST') {
+            if (!$match_was_found) {
+                // relative path did not match the allowed pattern list, so it's restricted:
+                return false;
+            }
+        } else if ($this->config('security.patterns.policy') === 'DISALLOW_LIST') {
+            if ($match_was_found) {
+                // relative path matched the disallowed pattern list, so it's restricted:
+                return false;
+            }
+        } else {
+            // Invalid config option for 'policy'. Deny everything for safety.
+            return false;
+        }
+
+        // Nothing is restricting access to this item, so it is allowed.
+        return true;
+    }
+
+    /**
      * Check the global blacklists for this file path.
      *
      * @return bool
@@ -339,10 +418,10 @@ class ItemModel
         $valid = true;
 
         if (!$this->isDir) {
-            $valid = $valid && $this->storage()->is_allowed_extension($this->pathRelative);
+            $valid = $valid && $this->is_allowed_extension();
         }
 
-        return $valid && $this->storage()->is_allowed_path($this->pathRelative);
+        return $valid && $this->is_allowed_pattern();
     }
 
     /**
@@ -393,13 +472,39 @@ class ItemModel
     }
 
     /**
+     * Check whether item path is valid by comparing paths.
+     *
+     * @return bool
+     */
+    public function isValidPath()
+    {
+        $rootPath = $this->storage()->getRoot();
+        $rpSubstr = substr(realpath($this->pathAbsolute) . DS, 0, strlen(realpath($rootPath))) . DS;
+        $rpFiles = realpath($rootPath) . DS;
+
+        // handle better symlinks & network path
+        $pattern = ['/\\\\+/', '/\/+/'];
+        $replacement = ['\\\\', '/'];
+        $rpSubstr = preg_replace($pattern, $replacement, $rpSubstr);
+        $rpFiles = preg_replace($pattern, $replacement, $rpFiles);
+        $match = ($rpSubstr === $rpFiles);
+
+        if (!$match) {
+            Log::info('Invalid path "' . $this->pathAbsolute . '"');
+            Log::info('real path: "' . $rpSubstr . '"');
+            Log::info('path to files: "' . $rpFiles . '"');
+        }
+        return $match;
+    }
+
+    /**
      * Check that item exists and path is valid.
      *
      * @return void
      */
     public function check_path()
     {
-        if(!$this->isExists || !$this->storage()->is_valid_path($this->pathAbsolute)) {
+        if (!$this->isExists || !$this->isValidPath()) {
             $langKey = $this->isDir ? 'DIRECTORY_NOT_EXIST' : 'FILE_DOES_NOT_EXIST';
             app()->error($langKey, [$this->pathRelative]);
         }
@@ -412,14 +517,13 @@ class ItemModel
      */
     public function check_restrictions()
     {
-        $path = $this->pathRelative;
         if (!$this->isDir) {
-            if ($this->storage()->is_allowed_extension($path) === false) {
-                app()->error('FORBIDDEN_NAME', [$path]);
+            if ($this->is_allowed_extension() === false) {
+                app()->error('FORBIDDEN_NAME', [$this->pathRelative]);
             }
         }
 
-        if ($this->storage()->is_allowed_path($path) === false) {
+        if ($this->is_allowed_pattern() === false) {
             app()->error('INVALID_FILE_TYPE');
         }
 

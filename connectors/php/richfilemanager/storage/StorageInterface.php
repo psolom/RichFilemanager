@@ -21,6 +21,13 @@ interface StorageInterface
     public function setRoot($path, $mkdir);
 
     /**
+     * Get storage name.
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
      * Get user storage folder.
      *
      * @return string

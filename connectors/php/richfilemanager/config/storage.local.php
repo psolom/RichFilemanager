@@ -9,20 +9,6 @@
 
 $config = [
     /**
-     * Path to the Filemanager folder.
-     * Set path in case the PHP connector class was moved or extended.
-     * If you use the default Filemanager files structure it will be defined automatically as ancestor of the PHP connector class.
-     * @var string|null
-     */
-    "fmPath" => null,
-    /**
-     * Filemanager plugin to use.
-     * Currently available plugins:
-     *
-     * "s3" - AWS S3 storage plugin (PHP SDK v.3)
-     */
-    "plugin" => null,
-    /**
      * Configure Logger class
      */
     "logger" => [
@@ -71,24 +57,31 @@ $config = [
      * Security section
      */
     "security" => [
-        /* Set `read_only` to true to disable all modifications to the filesystem, including thumbnail generation. */
+        /**
+         * Default value "false". Allow write operations.
+         * Set value to "true" to disable all modifications to the filesystem, including thumbnail generation.
+         */
         "read_only" => false,
         /**
-         * Restrictions based on file name: "extensions", and "patterns" (glob matching, like shell wildcards).
-         *
-         * Files or directories that match these lists will be filtered from directory listing results, and 
-         * will be restricted from all file operations (both read and write).
-         *
-         * Set 'policy' to "DISALLOW_LIST" to blacklist, or "ALLOW_LIST" to whitelist, the 'restrictions' array.
+         * Filename extensions are compared against this list, after the right-most dot '.'
+         * Matched files will be filtered from listing results, and will be restricted from all file operations (both read and write).
          */
         "extensions" => [
             /**
-             * Filename extensions from PATHINFO_EXTENSION are compared against this list, after the right-most dot '.'.
-             * To disallow empty/no extensions like the old `allowNoExtension` option, add the empty string "" to this list
-             *
+             * Default value "ALLOW_LIST". Takes value "ALLOW_LIST" / "DISALLOW_LIST".
+             * If is set to "ALLOW_LIST", only files with extensions that match `restrictions` list will be allowed, all other files are forbidden.
+             * If is set to "DISALLOW_LIST", all files are allowed except of files with extensions that match `restrictions` list.
              */
             "policy" => "ALLOW_LIST",
-            "ignorecase" => true, 
+            /**
+             * Default value "true".
+             * Whether extension comparison should be case sensitive.
+             */
+            "ignorecase" => true,
+            /**
+             * List of allowed / disallowed extensions, depending on the `policy` value.
+             * To allow / disallow files without extension, add / remove the empty string "" to / from this list.
+             */
             "restrictions" => [
                 "",
                 "jpg",
@@ -120,33 +113,36 @@ $config = [
                 "mp3",
                 "wav",
                 "zip",
-                "rar",
                 "md",
             ],
         ],
-        
+        /**
+         * Files and folders paths relative to the user storage folder (see `fileRoot`) are compared against this list.
+         * Matched items will be filtered from listing results, and will be restricted from all file operations (both read and write).
+         */
         "patterns" => [
-            /* These globs are compared against PATHINFO_BASENAME, so they will match in any directory. */
-            "policy" => "DISALLOW_LIST", 
-            "ignorecase" => true, 
+            /**
+             * Default value "ALLOW_LIST". Takes value "ALLOW_LIST" / "DISALLOW_LIST".
+             * If is set to "ALLOW_LIST", only files and folders that match `restrictions` list will be allowed, all other files are forbidden.
+             * If is set to "DISALLOW_LIST", all files and folders are allowed except of ones that match `restrictions` list.
+             */
+            "policy" => "DISALLOW_LIST",
+            /**
+             * Default value "true".
+             * Whether patterns comparison should be case sensitive.
+             */
+            "ignorecase" => true,
+            /**
+             * List of allowed / disallowed patterns, depending on the `policy` value.
+             */
             "restrictions" => [
-                ".htaccess",
-                "web.config",
-                "*config",
-                "*conf",
-                "*cnf",
-                "*passwd",
-                "*pass",
-                "*group",
-                "*groups",
-                "id_*",
-                "*key",
-                "*keys",
-                "*pub",
-                "magic",
-                "*hosts",
-                "_thumbs",  // FIXME: This breaks the current thumb permission code.
-                ".CDN_ACCESS_LOGS",
+                // files
+                "*/.htaccess",
+                "*/web.config",
+                // folders
+                "*/_thumbs/*",
+                "*/.CDN_ACCESS_LOGS/*",
+                "*/shared/geek2*",
             ],
         ],
         /**
@@ -166,7 +162,7 @@ $config = [
          */
         "fileSizeLimit" => 16000000,
         /**
-         * Default value "files".
+         * Default value "false".
          * If set to "true" files will be overwritten on uploads if they have same names, otherwise an index will be added.
          */
         "overwrite" => false,
