@@ -160,6 +160,52 @@ class Storage extends BaseStorage implements StorageInterface
 	}
 
     /**
+     * Copies a single file, symlink or a whole directory.
+     * In case of directory it will be copied recursively.
+     *
+     * @param $source
+     * @param $target
+     * @return bool
+     */
+    public function copyRecursive($source, $target)
+    {
+        // handle symlinks
+        if (is_link($source)) {
+            return symlink(readlink($source), $target);
+        }
+
+        // copy a single file
+        if (is_file($source)) {
+            return copy($source, $target);
+        }
+
+        // make target directory
+        if (!is_dir($target)) {
+            mkdir($target, 0755);
+        }
+
+        $handle = opendir($source);
+        // loop through the directory
+        while (($file = readdir($handle)) !== false) {
+            if ($file === '.' || $file === '..') {
+                continue;
+            }
+            $from = $source . DIRECTORY_SEPARATOR . $file;
+            $to = $target . DIRECTORY_SEPARATOR . $file;
+
+            if (is_file($from)) {
+                copy($from, $to);
+            } else {
+                // recursive copy
+                $this->copyRecursive($from, $to);
+            }
+        }
+        closedir($handle);
+
+        return true;
+    }
+
+    /**
      * Delete folder recursive.
      *
      * @param string $dir

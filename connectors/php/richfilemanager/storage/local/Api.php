@@ -195,7 +195,7 @@ class Api implements ApiInterface
         $modelOld->checkRestrictions();
         $modelNew->checkRestrictions();
 
-        // should be defined before renaming
+        // define thumbnails models
         $modelThumbOld = $modelOld->thumbnail();
         $modelThumbNew = $modelNew->thumbnail();
 
@@ -237,79 +237,71 @@ class Api implements ApiInterface
      */
     public function actionCopy()
     {
-        $source_path = $this->get['source'];
-        $basename = basename($source_path);
-        $suffix = (substr($source_path, -1, 1) == '/') ? '/' : '';
+        $modelSource = new ItemModel(Input::get('source'));
+        $modelTarget = new ItemModel(Input::get('target'));
 
-        $target_input = $this->get['target'];
-        $target_path = $target_input . '/';
-        $target_path = $this->expandPath($target_path, false);
-        $target_relative_path = $this->cleanPath('/' . $target_path . '/' . $basename . $suffix);
+        $suffix = $modelSource->isDir ? '/' : '';
+        $basename = basename($modelSource->pathAbsolute);
+        $modelNew = new ItemModel($modelTarget->pathRelative . $basename . $suffix);
+        Log::info('copying "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-        $source_fullpath = $this->getFullPath($source_path, true);
-        $target_fullpath = $this->getFullPath($target_path, true);
-        $new_fullpath = $target_fullpath . $basename . $suffix;
-
-        $this->checkReadPermission($source_fullpath);
-        $this->checkWritePermission($new_fullpath);
-
-        // This function will also copy the thumbnail, if it exists, AND
-        // the destination dir already has a thumbnail dir. Check perms:
-        $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
-        $new_thumbnail = $this->get_thumbnail_path($new_fullpath);
-        if(file_exists($old_thumbnail)) {
-            $this->checkReadPermission($old_thumbnail);
-            if (file_exists(dirname($new_thumbnail))) {
-                $this->checkWritePermission($new_thumbnail);
-            }
-        }
-
-        Log::info('copying "' . $source_fullpath . '" to "' . $new_fullpath . '"');
-
-        if(!is_dir($target_fullpath)) {
-            app()->error('DIRECTORY_NOT_EXIST', [$target_path]);
+        if (!$modelTarget->isDir) {
+            app()->error('DIRECTORY_NOT_EXIST', [$modelTarget->pathRelative]);
         }
 
         // check if not requesting root storage folder
-        if($this->is_root_folder($source_fullpath)) {
+        if ($modelSource->isDir && $modelSource->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
-        $this->checkRestrictions($source_path);
-        $this->checkRestrictions($target_relative_path);
+        // check items permissions
+        $modelSource->checkPath();
+        $modelSource->checkReadPermission();
+        $modelSource->checkRestrictions();
+        $modelTarget->checkPath();
+        $modelTarget->checkWritePermission();
+        $modelNew->checkRestrictions();
 
         // check if file already exists
-        if (file_exists($new_fullpath)) {
-            $item_name = rtrim($target_input, '/') . '/' . $basename;
-            if(is_dir($new_fullpath)) {
-                app()->error('DIRECTORY_ALREADY_EXISTS', [$item_name]);
+        if ($modelNew->isExists) {
+            if ($modelNew->isDir) {
+                app()->error('DIRECTORY_ALREADY_EXISTS', [$modelNew->pathRelative]);
             } else {
-                app()->error('FILE_ALREADY_EXISTS', [$item_name]);
+                app()->error('FILE_ALREADY_EXISTS', [$modelNew->pathRelative]);
             }
         }
 
-        // move file or folder
-        if(!Helper::copyRecursive($source_fullpath, $new_fullpath)) {
-            if(is_dir($source_fullpath)) {
-                app()->error('ERROR_COPYING_DIRECTORY', [$basename, $target_input]);
-            } else {
-                app()->error('ERROR_COPYING_FILE', [$basename, $target_input]);
-            }
-        } else {
-            Log::info('moved "' . $source_fullpath . '" to "' . $new_fullpath . '"');
-            $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
+        // define thumbnails models
+        $modelThumbOld = $modelSource->thumbnail();
+        $modelThumbNew = $modelNew->thumbnail();
 
-            // move thumbnail file or thumbnails folder if exists
-            if(file_exists($old_thumbnail)) {
-                $new_thumbnail = $this->get_thumbnail_path($new_fullpath);
-                // delete old thumbnail(s) if destination folder does not exist
-                if(file_exists(dirname($new_thumbnail))) {
-                    Helper::copyRecursive($old_thumbnail, $new_thumbnail);
+        // check thumbnail file or thumbnails folder permissions
+        if ($modelThumbOld->isExists) {
+            $modelThumbOld->checkReadPermission();
+            if ($modelThumbNew->closest()->isExists) {
+                $modelThumbNew->closest()->checkWritePermission();
+            }
+        }
+
+        // copy file or folder
+        if($this->storage()->copyRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+            Log::info('copied "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
+
+            // copy thumbnail file or thumbnails folder (images only)
+            if ($modelThumbOld->isExists) {
+                if ($modelThumbNew->closest()->isExists) {
+                    $this->storage()->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 }
             }
+        } else {
+            if ($modelSource->isDir) {
+                app()->error('ERROR_COPYING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
+            } else {
+                app()->error('ERROR_COPYING_FILE', [$basename, $modelTarget->pathRelative]);
+            }
         }
 
-        return $this->get_file_info($target_relative_path);
+        return $modelNew->getInfo();
     }
 
     /**
@@ -340,7 +332,6 @@ class Api implements ApiInterface
         $modelSource->checkRestrictions();
         $modelTarget->checkPath();
         $modelTarget->checkWritePermission();
-        $modelNew->checkWritePermission();
         $modelNew->checkRestrictions();
 
         // check if file already exists
@@ -352,7 +343,7 @@ class Api implements ApiInterface
             }
         }
 
-        // should be defined before moving
+        // define thumbnails models
         $modelThumbOld = $modelSource->thumbnail();
         $modelThumbNew = $modelNew->thumbnail();
 
@@ -370,7 +361,7 @@ class Api implements ApiInterface
 
             // move thumbnail file or thumbnails folder if exists (images only)
             if ($modelThumbOld->isExists) {
-                // delete old thumbnail(s) if destination folder does not exist
+                // do if target paths exists, otherwise remove old thumbnail(s)
                 if ($modelThumbNew->closest()->isExists) {
                     rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 } else {
