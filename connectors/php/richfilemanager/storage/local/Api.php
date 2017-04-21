@@ -463,24 +463,24 @@ class Api implements ApiInterface
      */
     public function actionEditFile()
     {
-        $target_path = $this->get['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
-        Log::info('opening "' . $target_fullpath . '"');
+        $model = new ItemModel(Input::get('path'));
+        Log::info('opening file "' . $model->pathAbsolute . '"');
 
-        $this->check_read_permission($target_fullpath);
-        $this->check_restrictions($target_path);
+        $model->check_path();
+        $model->check_read_permission();
+        $model->check_restrictions();
 
-        if(is_dir($target_fullpath)) {
+        if($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        $content = file_get_contents($target_fullpath);
+        $content = file_get_contents($model->pathAbsolute);
 
         if($content === false) {
             app()->error('ERROR_OPENING_FILE');
         }
 
-        $item = $this->get_file_info($target_path);
+        $item = $model->getInfo();
         $item['attributes']['content'] = $content;
         return $item;
     }
@@ -490,28 +490,28 @@ class Api implements ApiInterface
      */
     public function actionSaveFile()
     {
-        $target_path = $this->post['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
-        Log::info('saving "' . $target_fullpath . '"');
+        $model = new ItemModel(Input::get('path'));
+        Log::info('saving file "' . $model->pathAbsolute . '"');
 
-        $this->check_write_permission($target_fullpath);
-        $this->check_restrictions($target_path);
+        $model->check_path();
+        $model->check_write_permission();
+        $model->check_restrictions();
 
-        if(is_dir($target_fullpath)) {
+        if($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        $result = file_put_contents($target_fullpath, $this->post['content'], LOCK_EX);
+        $result = file_put_contents($model->pathAbsolute, Input::get('content'), LOCK_EX);
 
         if(!is_numeric($result)) {
             app()->error('ERROR_SAVING_FILE');
         }
 
-        Log::info('saved "' . $target_fullpath . '"');
+        Log::info('saved "' . $model->pathAbsolute . '"');
 
         // get updated file info after save
         clearstatcache();
-        return $this->get_file_info($target_path);
+        return $model->getInfo();
     }
 
     /**
@@ -520,18 +520,18 @@ class Api implements ApiInterface
      */
     public function actionReadFile()
     {
-        $target_path = $this->get['path'];
-        $target_fullpath = $this->getFullPath($target_path, true);
-        Log::info('reading file "' . $target_fullpath . '"');
+        $model = new ItemModel(Input::get('path'));
+        Log::info('reading file "' . $model->pathAbsolute . '"');
 
-        $this->check_read_permission($target_fullpath);
-        $this->check_restrictions($target_path);
+        $model->check_path();
+        $model->check_read_permission();
+        $model->check_restrictions();
 
-        if(is_dir($target_fullpath)) {
+        if($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        $filesize = filesize($target_fullpath);
+        $filesize = filesize($model->pathAbsolute);
         $length = $filesize;
         $offset = 0;
 
@@ -567,12 +567,12 @@ class Api implements ApiInterface
             header('Accept-Ranges: bytes');
         }
 
-        header('Content-Type: ' . mime_content_type($target_fullpath));
+        header('Content-Type: ' . mime_content_type($model->pathAbsolute));
         header("Content-Transfer-Encoding: binary");
         header("Content-Length: " . $length);
-        header('Content-Disposition: inline; filename="' . basename($target_fullpath) . '"');
+        header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
-        $fp = fopen($target_fullpath, 'r');
+        $fp = fopen($model->pathAbsolute, 'r');
         fseek($fp, $offset);
         $position = 0;
 
