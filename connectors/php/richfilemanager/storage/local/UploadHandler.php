@@ -107,18 +107,15 @@ class UploadHandler extends BaseUploadHandler
             $file->error = $this->get_error_message('post_max_size');
             return false;
         }
-//        if(!$this->fm->isUnrestricted($file->name, false)) {
-//            $file->error = ['FORBIDDEN_NAME', [$file->name]];
-//            return false;
-//        }
-//        if (!$this->fm->is_allowed_file_type($file->name)) {
-//            $file->error = $this->get_error_message('accept_file_types');
-//            return false;
-//        }
-//        if(!$this->fm->is_allowed_relative_path($this->options['upload_relative_path'] . $file->name, false)) {
-//            $file->error = ['FORBIDDEN_NAME', [$this->options['upload_relative_path'] . $file->name]];
-//            return false;
-//        }
+        $model = new ItemModel($this->model->pathRelative . $file->name);
+        if (!$model->isAllowedExtension()) {
+            $file->error = $this->get_error_message('accept_file_types');
+            return false;
+        }
+        if (!$model->isAllowedPattern()) {
+            $file->error = ['FORBIDDEN_NAME', [$model->pathRelative]];
+            return false;
+        }
         if ($uploaded_file && is_uploaded_file($uploaded_file)) {
             $file_size = $this->get_file_size($uploaded_file);
         } else {
