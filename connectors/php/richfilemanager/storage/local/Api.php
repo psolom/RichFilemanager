@@ -20,10 +20,10 @@ class Api implements ApiInterface
         // config options that affect the client-side
         $shared_config = [
             'security' => [
-                'read_only' => $this->config('security.read_only'),
+                'readOnly' => $this->config('security.readOnly'),
                 'extensions' => [
                     'policy' => $this->config('security.extensions.policy'),
-                    'ignorecase' => $this->config('security.extensions.ignorecase'),
+                    'ignoreCase' => $this->config('security.extensions.ignoreCase'),
                     'restrictions' => $this->config('security.extensions.restrictions'),
                 ],
             ],
@@ -51,9 +51,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('opening folder "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_read_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkReadPermission();
+        $model->checkRestrictions();
 
         if (!$model->isDir) {
             app()->error('DIRECTORY_NOT_EXIST', [$model->pathRelative]);
@@ -76,7 +76,7 @@ class Api implements ApiInterface
                 }
 
                 $item = new ItemModel($file_path);
-                if ($item->is_unrestricted()) {
+                if ($item->isUnrestricted()) {
                     $response_data[] = $item->getInfo();
                 }
             }
@@ -93,9 +93,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('opening file "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_read_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkReadPermission();
+        $model->checkRestrictions();
 
         if ($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
@@ -112,8 +112,8 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('uploading to "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_write_permission();
+        $model->checkPath();
+        $model->checkWritePermission();
 
         $content = $this->storage()->initUploader($model)->post(false);
 
@@ -146,8 +146,8 @@ class Api implements ApiInterface
         $targetName = Input::get('name');
 
         $modelTarget = new ItemModel($targetPath);
-        $modelTarget->check_path();
-        $modelTarget->check_write_permission();
+        $modelTarget->checkPath();
+        $modelTarget->checkWritePermission();
 
         $dirName = $this->storage()->normalizeString(trim($targetName, '/')) . '/';
         $relativePath = $this->storage()->cleanPath('/' . $targetPath . '/' . $dirName);
@@ -155,7 +155,7 @@ class Api implements ApiInterface
         $model = new ItemModel($relativePath);
         Log::info('adding folder "' . $model->pathAbsolute . '"');
 
-        $model->check_restrictions();
+        $model->checkRestrictions();
 
         if ($model->isExists && $model->isDir) {
             app()->error('DIRECTORY_ALREADY_EXISTS', [$targetName]);
@@ -190,10 +190,10 @@ class Api implements ApiInterface
         $modelNew = new ItemModel($modelOld->closest()->pathRelative . $filename . $suffix);
         Log::info('moving "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-        $modelOld->check_path();
-        $modelOld->check_write_permission();
-        $modelOld->check_restrictions();
-        $modelNew->check_restrictions();
+        $modelOld->checkPath();
+        $modelOld->checkWritePermission();
+        $modelOld->checkRestrictions();
+        $modelNew->checkRestrictions();
 
         // should be defined before renaming
         $modelThumbOld = $modelOld->thumbnail();
@@ -201,8 +201,8 @@ class Api implements ApiInterface
 
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
-            $modelThumbOld->check_write_permission();
-            $modelThumbNew->check_write_permission();
+            $modelThumbOld->checkWritePermission();
+            $modelThumbNew->checkWritePermission();
         }
 
         if ($modelNew->isExists) {
@@ -250,17 +250,17 @@ class Api implements ApiInterface
         $target_fullpath = $this->getFullPath($target_path, true);
         $new_fullpath = $target_fullpath . $basename . $suffix;
 
-        $this->check_read_permission($source_fullpath);
-        $this->check_write_permission($new_fullpath);
+        $this->checkReadPermission($source_fullpath);
+        $this->checkWritePermission($new_fullpath);
 
         // This function will also copy the thumbnail, if it exists, AND
         // the destination dir already has a thumbnail dir. Check perms:
         $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
         $new_thumbnail = $this->get_thumbnail_path($new_fullpath);
         if(file_exists($old_thumbnail)) {
-            $this->check_read_permission($old_thumbnail);
+            $this->checkReadPermission($old_thumbnail);
             if (file_exists(dirname($new_thumbnail))) {
-                $this->check_write_permission($new_thumbnail);
+                $this->checkWritePermission($new_thumbnail);
             }
         }
 
@@ -275,8 +275,8 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
-        $this->check_restrictions($source_path);
-        $this->check_restrictions($target_relative_path);
+        $this->checkRestrictions($source_path);
+        $this->checkRestrictions($target_relative_path);
 
         // check if file already exists
         if (file_exists($new_fullpath)) {
@@ -335,13 +335,13 @@ class Api implements ApiInterface
         }
 
         // check items permissions
-        $modelSource->check_path();
-        $modelSource->check_write_permission();
-        $modelSource->check_restrictions();
-        $modelTarget->check_path();
-        $modelTarget->check_write_permission();
-        $modelNew->check_write_permission();
-        $modelNew->check_restrictions();
+        $modelSource->checkPath();
+        $modelSource->checkWritePermission();
+        $modelSource->checkRestrictions();
+        $modelTarget->checkPath();
+        $modelTarget->checkWritePermission();
+        $modelNew->checkWritePermission();
+        $modelNew->checkRestrictions();
 
         // check if file already exists
         if ($modelNew->isExists) {
@@ -358,9 +358,9 @@ class Api implements ApiInterface
 
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
-            $modelThumbOld->check_write_permission();
+            $modelThumbOld->checkWritePermission();
             if ($modelThumbNew->closest()->isExists) {
-                $modelThumbNew->closest()->check_write_permission();
+                $modelThumbNew->closest()->checkWritePermission();
             }
         }
 
@@ -402,17 +402,17 @@ class Api implements ApiInterface
         $target_path = dirname($source_path) . '/';
         $target_fullpath = $this->getFullPath($target_path, true);
 
-        $this->check_write_permission($source_fullpath);
+        $this->checkWritePermission($source_fullpath);
         // Since the new replacement file is uploaded into the same dir as
         // the old file, we must check write perms on that dir as well.
         // FIXME: It would be safer to upload the file to the system temp
         // dir, and move it from there.
-        $this->check_write_permission($target_fullpath);
+        $this->checkWritePermission($target_fullpath);
 
         // This function will also delete the old thumbnail, if it exists. Check perms:
         $old_thumbnail = $this->get_thumbnail_path($source_fullpath);
         if(file_exists($old_thumbnail)) {
-            $this->check_write_permission($old_thumbnail);
+            $this->checkWritePermission($old_thumbnail);
         }
 
         Log::info('replacing file "' . $source_fullpath . '"');
@@ -466,9 +466,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('opening file "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_read_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkReadPermission();
+        $model->checkRestrictions();
 
         if($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
@@ -493,9 +493,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('saving file "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_write_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkWritePermission();
+        $model->checkRestrictions();
 
         if($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
@@ -523,9 +523,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('reading file "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_read_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkReadPermission();
+        $model->checkRestrictions();
 
         if($model->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
@@ -613,14 +613,14 @@ class Api implements ApiInterface
             $model = $modelImage;
         }
 
-        $model->check_read_permission();
-        $model->check_restrictions();
+        $model->checkReadPermission();
+        $model->checkRestrictions();
 
         Log::info('loaded image "' . $model->pathAbsolute . '"');
 
         header("Content-type: image/octet-stream");
         header("Content-Transfer-Encoding: binary");
-        header("Content-length: " . $this->storage()->get_real_filesize($model->pathAbsolute));
+        header("Content-length: " . $this->storage()->getRealFileSize($model->pathAbsolute));
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
         readfile($model->pathAbsolute);
@@ -635,9 +635,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('deleting "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_write_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkWritePermission();
+        $model->checkRestrictions();
 
         // check if not requesting root storage folder
         if ($model->isDir && $model->isRoot()) {
@@ -676,9 +676,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('downloading "' . $model->pathAbsolute . '"');
 
-        $model->check_path();
-        $model->check_read_permission();
-        $model->check_restrictions();
+        $model->checkPath();
+        $model->checkReadPermission();
+        $model->checkRestrictions();
 
         // check if not requesting root storage folder
         // TODO: This restriction seems arbitration, it could be useful for business clients
@@ -701,13 +701,13 @@ class Api implements ApiInterface
                     app()->error('ERROR_CREATING_ZIP');
                 }
             }
-            $file_size = $this->storage()->get_real_filesize($targetPath);
+            $fileSize = $this->storage()->getRealFileSize($targetPath);
 
             header('Content-Description: File Transfer');
             header('Content-Type: ' . mime_content_type($targetPath));
             header('Content-Disposition: attachment; filename="' . basename($targetPath) . '"');
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . $file_size);
+            header('Content-Length: ' . $fileSize);
             // handle caching
             header('Pragma: public');
             header('Expires: 0');
@@ -717,11 +717,11 @@ class Api implements ApiInterface
             // if you face an issue while downloading large files yet, try the following solution:
             // https://github.com/servocoder/RichFilemanager/issues/78
 
-            $chunk_size = 5 * 1024 * 1024;
-            if ($chunk_size && $file_size > $chunk_size) {
+            $chunkSize = 5 * 1024 * 1024;
+            if ($chunkSize && $fileSize > $chunkSize) {
                 $handle = fopen($targetPath, 'rb');
                 while (!feof($handle)) {
-                    echo fread($handle, $chunk_size);
+                    echo fread($handle, $chunkSize);
                     @ob_flush();
                     @flush();
                 }
@@ -774,12 +774,12 @@ class Api implements ApiInterface
         $modelTarget = new ItemModel(Input::get('target'));
         Log::info('extracting "' . $modelSource->pathAbsolute . '" to "' . $modelTarget->pathAbsolute . '"');
 
-        $modelSource->check_path();
-        $modelTarget->check_path();
-        $modelSource->check_read_permission();
-        $modelTarget->check_write_permission();
-        $modelSource->check_restrictions();
-        $modelTarget->check_restrictions();
+        $modelSource->checkPath();
+        $modelTarget->checkPath();
+        $modelSource->checkReadPermission();
+        $modelTarget->checkWritePermission();
+        $modelSource->checkRestrictions();
+        $modelTarget->checkRestrictions();
 
         if ($modelSource->isDir) {
             app()->error('FORBIDDEN_ACTION_DIR');
@@ -801,7 +801,7 @@ class Api implements ApiInterface
             $filename = $zip->getNameIndex($i);
             $model = new ItemModel($modelTarget->pathRelative . $filename);
 
-            if ($filename[strlen($filename) - 1] === "/" && $model->is_unrestricted()) {
+            if ($filename[strlen($filename) - 1] === "/" && $model->isUnrestricted()) {
                 $created = mkdir($model->pathAbsolute, 0700, true);
 
                 if ($created) {
@@ -820,7 +820,7 @@ class Api implements ApiInterface
             $filename = $zip->getNameIndex($i);
             $model = new ItemModel($modelTarget->pathRelative . $filename);
 
-            if ($filename[strlen($filename) - 1] !== "/" && $model->is_unrestricted()) {
+            if ($filename[strlen($filename) - 1] !== "/" && $model->isUnrestricted()) {
                 $copied = copy('zip://' . $modelSource->pathAbsolute . '#' . $filename, $model->pathAbsolute);
 
                 if ($copied && strpos($filename, '/') === false) {

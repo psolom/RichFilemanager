@@ -270,8 +270,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     });
                 });
                 
-                // If the server is in read_only mode, set the GUI to browseOnly:
-                if (config.security.read_only) {
+                // If the server is in read only mode, set the GUI to browseOnly:
+                if (config.security.readOnly) {
                     config.options.browseOnly = true;
                 }
             }
@@ -2796,7 +2796,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var isAuthorizedFile = function(filename) {
 		var ext = getExtension(filename);
 		
-		if (config.security.extensions.ignorecase) {
+		if (config.security.extensions.ignoreCase) {
 		    if(config.security.extensions.policy == 'ALLOW_LIST') {
 			    if($.inArrayInsensitive(ext, config.security.extensions.restrictions) !== -1) return true;
 		    }

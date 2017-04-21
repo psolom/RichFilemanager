@@ -126,7 +126,7 @@ abstract class BaseStorage
      * @param string $path
      * @return bool
      */
-    public function is_image_file($path)
+    public function isImageFile($path)
     {
         $mime = mime_content_type($path);
         $imagesMime = [

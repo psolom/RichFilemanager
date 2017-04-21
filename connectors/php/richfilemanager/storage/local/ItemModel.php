@@ -18,7 +18,7 @@ class ItemModel
      *
      * @var array
      */
-    protected $file_model = [
+    protected $fileModel = [
         "id"    => '',
         "type"  => self::TYPE_FILE,
         "attributes" => [
@@ -41,7 +41,7 @@ class ItemModel
      *
      * @var array
      */
-    protected $folder_model = [
+    protected $folderModel = [
         "id"    => '',
         "type"  => self::TYPE_FOLDER,
         "attributes" => [
@@ -134,19 +134,19 @@ class ItemModel
         $filemtime = filemtime($this->pathAbsolute);
 
         // check file permissions
-        $is_readable = $this->has_read_permission();
-        $is_writable = $this->has_write_permission();
+        $isReadable = $this->hasReadPermission();
+        $isWritable = $this->hasWritePermission();
 
         if ($this->isDir) {
-            $model = $this->folder_model;
+            $model = $this->folderModel;
         } else {
-            $model = $this->file_model;
+            $model = $this->fileModel;
             $model['attributes']['extension'] = isset($pathInfo['extension']) ? $pathInfo['extension'] : '';
 
-            if ($is_readable) {
-                $model['attributes']['size'] = $this->storage()->get_real_filesize($this->pathAbsolute);
+            if ($isReadable) {
+                $model['attributes']['size'] = $this->storage()->getRealFileSize($this->pathAbsolute);
 
-                if ($this->storage()->is_image_file($this->pathAbsolute)) {
+                if ($this->storage()->isImageFile($this->pathAbsolute)) {
                     if ($model['attributes']['size']) {
                         list($width, $height, $type, $attr) = getimagesize($this->pathAbsolute);
                     } else {
@@ -162,8 +162,8 @@ class ItemModel
         $model['id'] = $this->pathRelative;
         $model['attributes']['name'] = $pathInfo['basename'];
         $model['attributes']['path'] = $this->storage()->getDynamicPath($this->pathAbsolute);
-        $model['attributes']['readable'] = (int)$is_readable;
-        $model['attributes']['writable'] = (int)$is_writable;
+        $model['attributes']['readable'] = (int)$isReadable;
+        $model['attributes']['writable'] = (int)$isWritable;
         $model['attributes']['timestamp'] = $filemtime;
         $model['attributes']['modified'] = $this->storage()->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
@@ -318,7 +318,7 @@ class ItemModel
     public function createThumbnail()
     {
         // check is readable current item
-        if (!$this->has_read_permission()) {
+        if (!$this->hasReadPermission()) {
             return;
         }
 
@@ -337,7 +337,7 @@ class ItemModel
         }
 
         // check that the closest existent folder is writable
-        if (is_null($modelExistent) || !$modelExistent->has_write_permission()) {
+        if (is_null($modelExistent) || !$modelExistent->hasWritePermission()) {
             return;
         }
 
@@ -357,13 +357,13 @@ class ItemModel
      *
      * @return bool
      */
-    public function is_allowed_extension()
+    public function isAllowedExtension()
     {
         // check the extension (for files):
         $extension = pathinfo($this->pathRelative, PATHINFO_EXTENSION);
         $extensionRestrictions = $this->config('security.extensions.restrictions');
 
-        if ($this->config('security.extensions.ignorecase')) {
+        if ($this->config('security.extensions.ignoreCase')) {
             $extension = strtolower($extension);
             $extensionRestrictions = array_map('strtolower', $extensionRestrictions);
         }
@@ -392,33 +392,33 @@ class ItemModel
      *
      * @return bool
      */
-    public function is_allowed_pattern()
+    public function isAllowedPattern()
     {
         // check the relative path against the glob patterns:
         $pathRelative = $this->getOriginalPath();
         $patternRestrictions = $this->config('security.patterns.restrictions');
 
-        if ($this->config('security.patterns.ignorecase')) {
+        if ($this->config('security.patterns.ignoreCase')) {
             $pathRelative = strtolower($pathRelative);
             $patternRestrictions = array_map('strtolower', $patternRestrictions);
         }
 
         // (check for a match before applying the restriction logic)
-        $match_was_found = false;
+        $matchFound = false;
         foreach ($patternRestrictions as $pattern) {
             if (fnmatch($pattern, $pathRelative)) {
-                $match_was_found = true;
+                $matchFound = true;
                 break;  // Done.
             }
         }
 
         if ($this->config('security.patterns.policy') === 'ALLOW_LIST') {
-            if (!$match_was_found) {
+            if (!$matchFound) {
                 // relative path did not match the allowed pattern list, so it's restricted:
                 return false;
             }
         } else if ($this->config('security.patterns.policy') === 'DISALLOW_LIST') {
-            if ($match_was_found) {
+            if ($matchFound) {
                 // relative path matched the disallowed pattern list, so it's restricted:
                 return false;
             }
@@ -436,15 +436,15 @@ class ItemModel
      *
      * @return bool
      */
-    public function is_unrestricted()
+    public function isUnrestricted()
     {
         $valid = true;
 
         if (!$this->isDir) {
-            $valid = $valid && $this->is_allowed_extension();
+            $valid = $valid && $this->isAllowedExtension();
         }
 
-        return $valid && $this->is_allowed_pattern();
+        return $valid && $this->isAllowedPattern();
     }
 
     /**
@@ -452,10 +452,10 @@ class ItemModel
      *
      * @return bool
      */
-    public function has_read_permission()
+    public function hasReadPermission()
     {
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->has_system_read_permission($this->pathAbsolute) === false) {
+        if ($this->storage()->hasSystemReadPermission($this->pathAbsolute) === false) {
             return false;
         }
 
@@ -473,15 +473,15 @@ class ItemModel
      *
      * @return bool
      */
-    public function has_write_permission()
+    public function hasWritePermission()
     {
-        // Check the global read_only config flag:
-        if ($this->config('security.read_only') !== false) {
+        // Check the global `readOnly` config flag:
+        if ($this->config('security.readOnly') !== false) {
             return false;
         }
 
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->has_system_write_permission($this->pathAbsolute) === false) {
+        if ($this->storage()->hasSystemWritePermission($this->pathAbsolute) === false) {
             return false;
         }
 
@@ -525,7 +525,7 @@ class ItemModel
      *
      * @return void
      */
-    public function check_path()
+    public function checkPath()
     {
         if (!$this->isExists || !$this->isValidPath()) {
             $langKey = $this->isDir ? 'DIRECTORY_NOT_EXIST' : 'FILE_DOES_NOT_EXIST';
@@ -538,15 +538,15 @@ class ItemModel
      *
      * @return void
      */
-    public function check_restrictions()
+    public function checkRestrictions()
     {
         if (!$this->isDir) {
-            if ($this->is_allowed_extension() === false) {
+            if ($this->isAllowedExtension() === false) {
                 app()->error('FORBIDDEN_NAME', [$this->pathRelative]);
             }
         }
 
-        if ($this->is_allowed_pattern() === false) {
+        if ($this->isAllowedPattern() === false) {
             app()->error('INVALID_FILE_TYPE');
         }
 
@@ -559,10 +559,10 @@ class ItemModel
      *
      * @return void -- exits with error response if the permission is not allowed
      */
-    public function check_read_permission()
+    public function checkReadPermission()
     {
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->has_system_read_permission($this->pathAbsolute) === false) {
+        if ($this->storage()->hasSystemReadPermission($this->pathAbsolute) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 
@@ -580,15 +580,15 @@ class ItemModel
      *
      * @return void -- exits with error response if the permission is not allowed
      */
-    public function check_write_permission()
+    public function checkWritePermission()
     {
-        // Check the global read_only config flag:
-        if ($this->config('security.read_only') !== false) {
+        // Check the global `readOnly` config flag:
+        if ($this->config('security.readOnly') !== false) {
             app()->error('NOT_ALLOWED');
         }
 
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->has_system_write_permission($this->pathAbsolute) === false) {
+        if ($this->storage()->hasSystemWritePermission($this->pathAbsolute) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 

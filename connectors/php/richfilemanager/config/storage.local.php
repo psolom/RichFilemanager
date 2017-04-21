@@ -61,7 +61,7 @@ $config = [
          * Default value "false". Allow write operations.
          * Set value to "true" to disable all modifications to the filesystem, including thumbnail generation.
          */
-        "read_only" => false,
+        "readOnly" => false,
         /**
          * Filename extensions are compared against this list, after the right-most dot '.'
          * Matched files will be filtered from listing results, and will be restricted from all file operations (both read and write).
@@ -77,7 +77,7 @@ $config = [
              * Default value "true".
              * Whether extension comparison should be case sensitive.
              */
-            "ignorecase" => true,
+            "ignoreCase" => true,
             /**
              * List of allowed / disallowed extensions, depending on the `policy` value.
              * To allow / disallow files without extension, add / remove the empty string "" to / from this list.
@@ -131,7 +131,7 @@ $config = [
              * Default value "true".
              * Whether patterns comparison should be case sensitive.
              */
-            "ignorecase" => true,
+            "ignoreCase" => true,
             /**
              * List of allowed / disallowed patterns, depending on the `policy` value.
              */

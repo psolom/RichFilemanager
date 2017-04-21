@@ -225,7 +225,7 @@ class Storage extends BaseStorage implements StorageInterface
 
             $model = new ItemModel($modelDir->pathRelative . $file);
 
-            if ($model->has_read_permission() && $model->is_unrestricted()) {
+            if ($model->hasReadPermission() && $model->isUnrestricted()) {
                 if ($model->isDir) {
                     $result['folders']++;
                     $this->getDirSummary($model->pathRelative, $result);
@@ -319,7 +319,7 @@ class Storage extends BaseStorage implements StorageInterface
      * @param string $path - absolute path
      * @return bool
      */
-    public function has_system_read_permission($path)
+    public function hasSystemReadPermission($path)
     {
         return is_readable($path);
     }
@@ -330,7 +330,7 @@ class Storage extends BaseStorage implements StorageInterface
      * @param string $path - absolute path
      * @return bool
      */
-    public function has_system_write_permission($path)
+    public function hasSystemWritePermission($path)
     {
         // In order to create an entry in a POSIX dir, it must have
         // both `-w-` write and `--x` execute permissions.
@@ -351,7 +351,7 @@ class Storage extends BaseStorage implements StorageInterface
      * @return int|string
      * @throws \Exception
      */
-    public function get_real_filesize($path)
+    public function getRealFileSize($path)
     {
         // This should work for large files on 64bit platforms and for small files everywhere
         $fp = fopen($path, "rb");
