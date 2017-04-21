@@ -393,7 +393,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	var initialize = function () {
 		// reads capabilities from config files if exists else apply default settings
-		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract', 'replace'];
+		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract'];
 
 		// defines sort params
 		var chunks = [];
@@ -970,8 +970,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					case 'move':
 					case 'rename':
 					case 'delete':
-					case 'replace':
-						return (has_capability(preview_model.rdo(), action) && config.options.browseOnly !== true);
 					case 'download':
 						return (has_capability(preview_model.rdo(), action));
 				}
@@ -2740,11 +2738,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	// Test if item has the 'cap' capability
-	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'replace', 'copy', 'move'
+	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'copy', 'move'
 	function has_capability(resourceObject, cap) {
 		if(capabilities.indexOf(cap) === -1) return false;
         if (cap === 'select' && resourceObject.type === 'folder') return false;
-		if (cap === 'replace' && resourceObject.type === 'folder') return false;
         if (cap === 'extract') {
             var extension = getExtension(resourceObject.attributes.name);
             return (resourceObject.type === 'file' && extension === 'zip');
@@ -3317,85 +3314,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// Replace the current file and keep the same name.
-	// Called by clicking the "Replace" button in detail views
-	// or choosing the "Replace" contextual menu option in list views.
-	var replaceItem = function(resourceObject) {
-		var $toolbar = $('#fm-js-preview-toolbar');
-		var $button = $toolbar.find(':file');
-
-		if(typeof $toolbar.data('blueimpFileupload') === 'undefined') {
-			$toolbar
-				.fileupload({
-					autoUpload: true,
-					dataType: 'json',
-					url: buildConnectorUrl(),
-					paramName: 'files'
-				})
-
-				.on('fileuploadadd', function(e, data) {
-					var file = data.files[0];
-					// Check if file extension is matching with the original
-					if(getExtension(file.name) != resourceObject.attributes.extension) {
-						fm.error(lg.ERROR_REPLACING_FILE.replace('%s', '.' + resourceObject.attributes.extension));
-						return false;
-					}
-					data.submit();
-				})
-
-				.on('fileuploadsubmit', function(e, data) {
-					data.formData = {
-						mode: 'replace',
-						path: resourceObject.id
-					};
-					$uploadButton.addClass('loading').prop('disabled', true);
-					$uploadButton.children('span').text(lg.loading_data);
-				})
-
-				.on('fileuploadalways', function(e, data) {
-					$uploadButton.removeData().removeClass('loading').prop('disabled', false);
-					$uploadButton.children('span').text(lg.action_upload);
-					var response = data.result;
-
-					// handle server-side errors
-					if(response && response.errors) {
-						fm.error(lg.upload_failed + "<br>" + formatServerError(response.errors[0]));
-					}
-					if(response && response.data) {
-						var resourceObject = response.data[0];
-						fmModel.removeItem(resourceObject);
-						fmModel.addItem(resourceObject, fmModel.currentPath());
-
-						// set new file for preview
-                        if(fmModel.previewFile()) {
-                            fmModel.previewModel.applyObject(resourceObject);
-						}
-
-						if(config.options.showConfirmation) {
-							fm.success(lg.successful_replace);
-						}
-					}
-				})
-
-				.on('fileuploadchunkdone', function (e, data) {
-					var response = data.result;
-					if(response.data && response.data[0]) {
-						var resourceObject = response.data[0];
-						fmModel.removeItem(resourceObject);
-						fmModel.addItem(resourceObject, fmModel.currentPath());
-					}
-				})
-
-				.on('fileuploadfail', function(e, data) {
-					// server error 500, etc.
-					fm.error(lg.upload_failed);
-				});
-		}
-
-		// open the input file dialog window
-		$button.click();
-	};
-
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in de tail views
 	// or choosing the "Move" contextual menu option in list views.
@@ -3756,7 +3674,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 download: {name: lg.action_download, className: 'download'},
                 rename: {name: lg.action_rename, className: 'rename'},
                 move: {name: lg.action_move, className: 'move'},
-                replace: {name: lg.action_replace, className: 'replace'},
                 separator1: "-----",
                 copy: {name: lg.clipboard_copy, className: 'copy'},
                 cut: {name: lg.clipboard_cut, className: 'cut'},
@@ -3774,8 +3691,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             delete contextMenuItems.cut;
             delete contextMenuItems.move;
 		}
-		// remove 'replace' since it is implemented on toolbar panel in preview mode only
-		delete contextMenuItems.replace;
 
 		return contextMenuItems
 	}
@@ -3798,10 +3713,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			case 'rename':
 				renameItem(targetObject);
-				break;
-
-			case 'replace':
-				replaceItem(targetObject);
 				break;
 
 			case 'move':

@@ -56,11 +56,6 @@ interface ApiInterface
     public function actionDelete();
 
     /**
-     * Replace existed file
-     */
-    public function actionReplace();
-
-    /**
      * Upload new file
      */
     public function actionUpload();

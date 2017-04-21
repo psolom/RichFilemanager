@@ -24,7 +24,6 @@
             "rename",
             "copy",
             "move",
-            "replace",
             "delete",
             "extract"
         ]

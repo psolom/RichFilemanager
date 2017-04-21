@@ -298,12 +298,6 @@ class Application extends Container {
                     }
                     break;
 
-                case 'replace':
-                    if(request()->get('path')) {
-                        $response = $this->api->actionReplace();
-                    }
-                    break;
-
                 case 'savefile':
                     if(request()->get('path') && request()->get('content')) {
                         $response = $this->api->actionSaveFile();

@@ -226,11 +226,6 @@
 									<span data-bind="text: $root.lg().action_delete"></span>
 								</button>
 								<!-- /ko -->
-								<!-- ko if: buttonVisibility('replace') -->
-								<button class="btn-file-replace" type="button" data-bind="event: {click: function(data, event) {bindToolbar('replace')}}">
-									<span data-bind="text: $root.lg().action_replace"></span>
-								</button>
-								<!-- /ko -->
 								<!-- ko if: viewer.isEditable() && !editor.enabled() -->
 								<button class="btn-file-edit" type="button" data-bind="click: editFile">
 									<span data-bind="text: $root.lg().editor_edit"></span>
@@ -415,7 +410,7 @@
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->
