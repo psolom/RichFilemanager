@@ -180,7 +180,8 @@ class S3UploadHandler extends LocalUploadHandler
                             // it's possible to define mime type only for the first chunk of a file, but each consecutive
                             // chunk that appended overrides object's ContentType to the S3 default "binary/octet-stream".
                             // The only solutions is to define mime type based on file extension
-                            'ContentType' => mime_type_by_extension($name)
+                            'ContentType' => mime_type_by_extension($name),
+                            'ACL' => $this->fm->s3->defaultAcl,
                         )
                     ))
                 );
