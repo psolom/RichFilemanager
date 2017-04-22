@@ -20,9 +20,9 @@ class Storage extends BaseStorage implements StorageInterface
     use IdentityTrait;
     use StorageTrait;
 
-	protected $doc_root;
-	protected $path_to_files;
-	protected $dynamic_fileroot;
+	protected $documentRoot;
+	protected $storageRoot;
+	protected $dynamicRoot;
 
 	public function __construct($config = [])
     {
@@ -32,49 +32,52 @@ class Storage extends BaseStorage implements StorageInterface
 		if ($fileRoot !== false) {
 			// takes $_SERVER['DOCUMENT_ROOT'] as files root; "fileRoot" is a suffix
 			if($this->config('options.serverRoot') === true) {
-				$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
-				$this->path_to_files = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
+				$this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
+				$this->storageRoot = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
 			}
 			// takes "fileRoot" as files root; "fileRoot" is a full server path
 			else {
-				$this->doc_root = $fileRoot;
-				$this->path_to_files = $fileRoot;
+				$this->documentRoot = $fileRoot;
+				$this->storageRoot = $fileRoot;
 			}
 		} else {
             // default storage folder in case of default RFM structure
-			$this->doc_root = $_SERVER['DOCUMENT_ROOT'];
-			$this->path_to_files = dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME']))) . '/userfiles';
+			$this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
+			$this->storageRoot = dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME']))) . '/userfiles';
 		}
 
 		// normalize slashes in paths
-        $this->doc_root = $this->cleanPath($this->doc_root);
-		$this->path_to_files = $this->cleanPath($this->path_to_files . '/');
-        $this->dynamic_fileroot = $this->subtractPath($this->path_to_files, $this->doc_root);
+        $this->documentRoot = $this->cleanPath($this->documentRoot);
+		$this->storageRoot = $this->cleanPath($this->storageRoot . '/');
+        $this->dynamicRoot = $this->subtractPath($this->storageRoot, $this->documentRoot);
 
-		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
-		Log::info('$this->doc_root: "' . $this->doc_root . '"');
-		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
+		Log::info('$this->storageRoot: "' . $this->storageRoot . '"');
+		Log::info('$this->documentRoot: "' . $this->documentRoot . '"');
+		Log::info('$this->dynamicRoot: "' . $this->dynamicRoot . '"');
 	}
 
     /**
      * @inheritdoc
      */
-	public function setRoot($path, $mkdir = false)
+	public function setRoot($path, $mkdir = false, $relativeToDocumentRoot = false)
     {
-		if($this->config('options.serverRoot') === true) {
-			$this->dynamic_fileroot = $path;
-			$this->path_to_files = $this->cleanPath($this->doc_root . '/' . $path . '/');
-		} else {
-			$this->path_to_files = $this->cleanPath($path . '/');
-		}
+        $this->storageRoot = $path . '/';
+
+        if($relativeToDocumentRoot) {
+            $this->storageRoot = $this->documentRoot . '/' . $this->storageRoot;
+        }
+
+        // normalize slashes in paths
+        $this->storageRoot = $this->cleanPath($this->storageRoot);
+        $this->dynamicRoot = $this->subtractPath($this->storageRoot, $this->documentRoot);
 
 		Log::info('Overwritten with setRoot() method:');
-		Log::info('$this->path_to_files: "' . $this->path_to_files . '"');
-		Log::info('$this->dynamic_fileroot: "' . $this->dynamic_fileroot . '"');
+		Log::info('$this->storageRoot: "' . $this->storageRoot . '"');
+		Log::info('$this->dynamicRoot: "' . $this->dynamicRoot . '"');
 
-		if($mkdir && !file_exists($this->path_to_files)) {
-			mkdir($this->path_to_files, 0755, true);
-			Log::info('creating "' . $this->path_to_files . '" folder through mkdir()');
+		if($mkdir && !file_exists($this->storageRoot)) {
+			mkdir($this->storageRoot, 0755, true);
+			Log::info('creating "' . $this->storageRoot . '" folder through mkdir()');
 		}
 	}
 
@@ -83,7 +86,7 @@ class Storage extends BaseStorage implements StorageInterface
      */
     public function getRoot()
     {
-        return $this->path_to_files;
+        return $this->storageRoot;
     }
 
     /**
@@ -91,7 +94,7 @@ class Storage extends BaseStorage implements StorageInterface
      */
     public function getDynamicRoot()
     {
-        return $this->dynamic_fileroot;
+        return $this->dynamicRoot;
     }
 
 	/**
@@ -290,7 +293,7 @@ class Storage extends BaseStorage implements StorageInterface
 	 */
 	public function getRootTotalSize()
 	{
-		$path = rtrim($this->path_to_files, '/') . '/';
+		$path = rtrim($this->storageRoot, '/') . '/';
 		$result = $this->getDirSummary($path);
 		return $result['size'];
 	}
@@ -306,22 +309,22 @@ class Storage extends BaseStorage implements StorageInterface
         // empty string makes FM to use connector path for preview instead of absolute path
         // COMMENTED: due to it prevents to build absolute URL when "serverRoot" is "false" and "fileRoot" is provided
         // as well as "previewUrl" value in the JSON configuration file is set to the correct URL
-//        if(empty($this->dynamic_fileroot)) {
+//        if(empty($this->dynamicRoot)) {
 //            return '';
 //        }
-        $path = $this->dynamic_fileroot . '/' . $this->getRelativePath($path);
+        $path = $this->dynamicRoot . '/' . $this->getRelativePath($path);
         return $this->cleanPath($path);
     }
 
     /**
-     * Return path without "path_to_files"
+     * Return path without "storageRoot"
      *
      * @param string $path - absolute path
      * @return mixed
      */
     public function getRelativePath($path)
     {
-        return $this->subtractPath($path, $this->path_to_files);
+        return $this->subtractPath($path, $this->storageRoot);
     }
 
     /**

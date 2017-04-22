@@ -332,12 +332,12 @@ class ItemModel
         $modelExistent = $modelTarget;
 
         // look for closest existent folder
-        while ($modelExistent !== null && !$modelExistent->isExists) {
+        while (!$modelExistent->isRoot() && !$modelExistent->isExists) {
             $modelExistent = $modelExistent->closest();
         }
 
         // check that the closest existent folder is writable
-        if (is_null($modelExistent) || !$modelExistent->hasWritePermission()) {
+        if ($modelExistent->isExists && !$modelExistent->hasWritePermission()) {
             return;
         }
 

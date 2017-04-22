@@ -91,7 +91,7 @@ $app = new \RFM\Application(
 
 $local = new \RFM\Storage\Local\Storage($config);
 // example to setup files root folder
-//$local->setRoot('C:\xampp\htdocs\fm_latest\userfiles\gook', true);
+//$local->setRoot('C:\xampp\htdocs\fm_latest\userfiles\doc', false);
 $app->setStorage($local);
 
 

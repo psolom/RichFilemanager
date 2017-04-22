@@ -17,8 +17,9 @@ interface StorageInterface
      *
      * @param string $path
      * @param bool $mkdir
+     * @param bool $relativeToDocumentRoot
      */
-    public function setRoot($path, $mkdir);
+    public function setRoot($path, $mkdir, $relativeToDocumentRoot);
 
     /**
      * Get storage name.
