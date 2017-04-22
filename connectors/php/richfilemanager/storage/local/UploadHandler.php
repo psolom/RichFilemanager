@@ -145,10 +145,6 @@ class UploadHandler extends BaseUploadHandler
             $file->error = $this->get_error_message('max_number_of_files');
             return false;
         }
-        if($this->config('upload.imagesOnly') && !$this->is_valid_image_name($file->name)) {
-            $file->error = 'UPLOAD_IMAGES_ONLY';
-            return false;
-        }
         $max_width = @$this->options['max_width'];
         $max_height = @$this->options['max_height'];
         $min_width = @$this->options['min_width'];

@@ -16,11 +16,6 @@ abstract class BaseStorage
 {
     use StorageTrait;
 
-    const TYPE_FILE = 'file';
-    const TYPE_FOLDER = 'folder';
-
-    protected $refParams = [];
-
     /**
      * BaseStorage constructor.
      *
@@ -39,7 +34,6 @@ abstract class BaseStorage
         }
 
         $this->setConfig($config);
-        $this->setParams();
     }
 
     /**
@@ -56,25 +50,6 @@ abstract class BaseStorage
         if (is_string($this->config('logger.file'))) {
             logger()->file = $this->config('logger.file');
         }
-    }
-
-    protected function setParams()
-    {
-        $tmp = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '/';
-        $tmp = explode('?',$tmp);
-        $params = [];
-        if(isset($tmp[1]) && $tmp[1]!='') {
-            $params_tmp = explode('&',$tmp[1]);
-            if(is_array($params_tmp)) {
-                foreach($params_tmp as $value) {
-                    $tmp = explode('=',$value);
-                    if(isset($tmp[0]) && $tmp[0]!='' && isset($tmp[1]) && $tmp[1]!='') {
-                        $params[$tmp[0]] = $tmp[1];
-                    }
-                }
-            }
-        }
-        $this->refParams = $params;
     }
 
     /**

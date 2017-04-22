@@ -102,8 +102,6 @@ class Storage extends BaseStorage implements StorageInterface
 	 */
 	public function initUploader($model)
 	{
-        //'images_only' => $this->config('upload.imagesOnly') || (isset($this->refParams['type']) && strtolower($this->refParams['type']) === 'images'),
-
 		return new UploadHandler([
 			'model' => $model,
 		]);
