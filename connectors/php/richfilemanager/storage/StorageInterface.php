@@ -16,10 +16,9 @@ interface StorageInterface
      * Set user storage folder.
      *
      * @param string $path
-     * @param bool $mkdir
-     * @param bool $relativeToDocumentRoot
+     * @param bool $makeDir
      */
-    public function setRoot($path, $mkdir, $relativeToDocumentRoot);
+    public function setRoot($path, $makeDir);
 
     /**
      * Get storage name.

@@ -1,6 +1,6 @@
 <?php
 /**
- *  Filemanager server-side configuration file
+ *  RichFilemanager configuration file for Local storage.
  *
  *  @license     MIT License
  *  @author      Pavel Solomienko <https://github.com/servocoder/>

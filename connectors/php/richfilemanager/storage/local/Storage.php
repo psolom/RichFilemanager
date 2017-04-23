@@ -23,7 +23,13 @@ class Storage extends BaseStorage implements StorageInterface
 	protected $documentRoot;
 	protected $storageRoot;
 	protected $dynamicRoot;
+    protected $defaultDir = 'userfiles';
 
+    /**
+     * Storage constructor.
+     *
+     * @param array $config
+     */
 	public function __construct($config = [])
     {
 		parent::__construct($config);
@@ -43,7 +49,7 @@ class Storage extends BaseStorage implements StorageInterface
 		} else {
             // default storage folder in case of default RFM structure
 			$this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
-			$this->storageRoot = dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME']))) . '/userfiles';
+			$this->storageRoot = dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME']))) . '/' . $this->defaultDir;
 		}
 
 		// normalize slashes in paths
@@ -57,9 +63,13 @@ class Storage extends BaseStorage implements StorageInterface
 	}
 
     /**
-     * @inheritdoc
+     * Set user storage folder.
+     *
+     * @param string $path
+     * @param bool $makeDir
+     * @param bool $relativeToDocumentRoot
      */
-	public function setRoot($path, $mkdir = false, $relativeToDocumentRoot = false)
+	public function setRoot($path, $makeDir = false, $relativeToDocumentRoot = false)
     {
         $this->storageRoot = $path . '/';
 
@@ -75,9 +85,9 @@ class Storage extends BaseStorage implements StorageInterface
 		Log::info('$this->storageRoot: "' . $this->storageRoot . '"');
 		Log::info('$this->dynamicRoot: "' . $this->dynamicRoot . '"');
 
-		if($mkdir && !file_exists($this->storageRoot)) {
+		if($makeDir && !file_exists($this->storageRoot)) {
+            Log::info('creating "' . $this->storageRoot . '" folder through mkdir()');
 			mkdir($this->storageRoot, 0755, true);
-			Log::info('creating "' . $this->storageRoot . '" folder through mkdir()');
 		}
 	}
 
@@ -299,7 +309,7 @@ class Storage extends BaseStorage implements StorageInterface
 	}
 
     /**
-     * Return path without document root.
+     * Return path without storage root.
      *
      * @param string $path - absolute path
      * @return mixed

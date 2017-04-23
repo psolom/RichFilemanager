@@ -22,7 +22,7 @@ trait StorageTrait
     /**
      * Get the storage instance.
      *
-     * @return \RFM\Storage\Local\Storage
+     * @return \RFM\Storage\Local\Storage|\RFM\Storage\S3\Storage
      */
     public function storage()
     {
