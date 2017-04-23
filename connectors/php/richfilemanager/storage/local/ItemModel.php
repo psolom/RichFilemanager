@@ -146,7 +146,7 @@ class ItemModel
             if ($isReadable) {
                 $model['attributes']['size'] = $this->storage()->getRealFileSize($this->pathAbsolute);
 
-                if ($this->storage()->isImageFile($this->pathAbsolute)) {
+                if ($this->isImageFile()) {
                     if ($model['attributes']['size']) {
                         list($width, $height, $type, $attr) = getimagesize($this->pathAbsolute);
                     } else {
@@ -296,6 +296,18 @@ class ItemModel
         }
 
         return rtrim($rootPath, '/') === rtrim($this->pathAbsolute, '/');
+    }
+
+    /**
+     * Check whether file is image, based on its mime type.
+     *
+     * @return string
+     */
+    public function isImageFile()
+    {
+        $mime = mime_content_type($this->pathAbsolute);
+
+        return $this->storage()->isImageMimeType($mime);
     }
 
     /**

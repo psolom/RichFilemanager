@@ -95,15 +95,13 @@ abstract class BaseStorage
     }
 
     /**
-     * Check whether file is image by its mime type.
-     * For S3 storage it may cost extra request for each file.
+     * Check whether given mime type is image.
      *
-     * @param string $path
+     * @param string $mime
      * @return bool
      */
-    public function isImageFile($path)
+    public function isImageMimeType($mime)
     {
-        $mime = mime_content_type($path);
         $imagesMime = [
             "image/jpeg",
             "image/png",
