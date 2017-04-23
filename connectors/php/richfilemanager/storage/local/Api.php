@@ -545,7 +545,7 @@ class Api implements ApiInterface
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
         readfile($model->pathAbsolute);
-        exit();
+        exit;
     }
 
     /**
