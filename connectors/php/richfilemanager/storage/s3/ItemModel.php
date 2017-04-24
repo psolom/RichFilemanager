@@ -246,8 +246,6 @@ class ItemModel
         return $this->storage()->cleanPath($path);
     }
 
-
-
 //    /**
 //     * @inheritdoc
 //     */
@@ -354,7 +352,12 @@ class ItemModel
     public function remove()
     {
         if ($this->isDir) {
-            $this->storage()->unlinkRecursive($this->pathAbsolute);
+            if ($this->isThumbnail && $this->config('images.thumbnail.useLocalStorage')) {
+                app()->getStorage('local')->unlinkRecursive($this->pathAbsolute);
+            } else {
+                $key = $this->storage()->getDynamicPath($this->pathAbsolute, false);
+                $this->storage()->s3->batchDelete($key);
+            }
         } else {
             unlink($this->pathAbsolute);
         }

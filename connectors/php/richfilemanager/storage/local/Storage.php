@@ -107,6 +107,98 @@ class Storage extends BaseStorage implements StorageInterface
         return $this->dynamicRoot;
     }
 
+    /**
+     * Return path without storage root.
+     *
+     * @param string $path - absolute path
+     * @return mixed
+     */
+    public function getDynamicPath($path)
+    {
+        // empty string makes FM to use connector path for preview instead of absolute path
+        // COMMENTED: due to it prevents to build absolute URL when "serverRoot" is "false" and "fileRoot" is provided
+        // as well as "previewUrl" value in the JSON configuration file is set to the correct URL
+//        if(empty($this->dynamicRoot)) {
+//            return '';
+//        }
+        $path = $this->dynamicRoot . '/' . $this->getRelativePath($path);
+        return $this->cleanPath($path);
+    }
+
+    /**
+     * Return path without "storageRoot"
+     *
+     * @param string $path - absolute path
+     * @return mixed
+     */
+    public function getRelativePath($path)
+    {
+        return $this->subtractPath($path, $this->storageRoot);
+    }
+
+    /**
+     * Subtracts subpath from the fullpath.
+     *
+     * @param string $fullPath
+     * @param string $subPath
+     * @return string
+     */
+    public function subtractPath($fullPath, $subPath)
+    {
+        $position = strrpos($fullPath, $subPath);
+        if($position === 0) {
+            $path = substr($fullPath, strlen($subPath));
+            return $path ? $this->cleanPath('/' . $path) : '';
+        }
+        return '';
+    }
+
+    /**
+     * Clean path string to remove multiple slashes, etc.
+     *
+     * @param string $string
+     * @return string
+     */
+    public function cleanPath($string)
+    {
+        // replace backslashes (windows separators)
+        $string = str_replace("\\", "/", $string);
+        // remove multiple slashes
+        $string = preg_replace('#/+#', '/', $string);
+
+        return $string;
+    }
+
+    /**
+     * Verify if system read permission is granted.
+     *
+     * @param string $path - absolute path
+     * @return bool
+     */
+    public function hasSystemReadPermission($path)
+    {
+        return is_readable($path);
+    }
+
+    /**
+     * Verify if system write permission is granted.
+     *
+     * @param string $path - absolute path
+     * @return bool
+     */
+    public function hasSystemWritePermission($path)
+    {
+        // In order to create an entry in a POSIX dir, it must have
+        // both `-w-` write and `--x` execute permissions.
+        //
+        // NOTE: Windows PHP doesn't support standard POSIX permissions.
+        if (is_dir($path) && !(app()->php_os_is_windows())) {
+            return (is_writable($path) && is_executable($path));
+        }
+
+        return is_writable($path);
+    }
+
 	/**
      * Initiate uploader instance and handle uploads.
      *
@@ -119,6 +211,28 @@ class Storage extends BaseStorage implements StorageInterface
 			'model' => $model,
 		]);
 	}
+
+    /**
+     * Format timestamp string
+     * @param string $timestamp
+     * @return string
+     */
+    public function formatDate($timestamp)
+    {
+        return date($this->config('options.dateFormat'), $timestamp);
+    }
+
+    /**
+     * Calculate total size of all files.
+     *
+     * @return mixed
+     */
+    public function getRootTotalSize()
+    {
+        $path = rtrim($this->storageRoot, '/') . '/';
+        $result = $this->getDirSummary($path);
+        return $result['size'];
+    }
 
 	/**
 	 * Create a zip file from source to destination.
@@ -246,16 +360,6 @@ class Storage extends BaseStorage implements StorageInterface
 	}
 
 	/**
-	 * Format timestamp string
-	 * @param string $timestamp
-	 * @return string
-	 */
-	public function formatDate($timestamp)
-	{
-		return date($this->config('options.dateFormat'), $timestamp);
-	}
-
-	/**
 	 * Return summary info for specified folder.
      *
 	 * @param string $dir - relative path
@@ -295,110 +399,6 @@ class Storage extends BaseStorage implements StorageInterface
 
 		return $result;
 	}
-
-	/**
-	 * Calculate total size of all files.
-     *
-	 * @return mixed
-	 */
-	public function getRootTotalSize()
-	{
-		$path = rtrim($this->storageRoot, '/') . '/';
-		$result = $this->getDirSummary($path);
-		return $result['size'];
-	}
-
-    /**
-     * Return path without storage root.
-     *
-     * @param string $path - absolute path
-     * @return mixed
-     */
-    public function getDynamicPath($path)
-    {
-        // empty string makes FM to use connector path for preview instead of absolute path
-        // COMMENTED: due to it prevents to build absolute URL when "serverRoot" is "false" and "fileRoot" is provided
-        // as well as "previewUrl" value in the JSON configuration file is set to the correct URL
-//        if(empty($this->dynamicRoot)) {
-//            return '';
-//        }
-        $path = $this->dynamicRoot . '/' . $this->getRelativePath($path);
-        return $this->cleanPath($path);
-    }
-
-    /**
-     * Return path without "storageRoot"
-     *
-     * @param string $path - absolute path
-     * @return mixed
-     */
-    public function getRelativePath($path)
-    {
-        return $this->subtractPath($path, $this->storageRoot);
-    }
-
-    /**
-     * Subtracts subpath from the fullpath.
-     *
-     * @param string $fullPath
-     * @param string $subPath
-     * @return string
-     */
-    public function subtractPath($fullPath, $subPath)
-    {
-        $position = strrpos($fullPath, $subPath);
-        if($position === 0) {
-            $path = substr($fullPath, strlen($subPath));
-            return $path ? $this->cleanPath('/' . $path) : '';
-        }
-        return '';
-    }
-
-    /**
-     * Clean path string to remove multiple slashes, etc.
-     *
-     * @param string $string
-     * @return string
-     */
-    public function cleanPath($string)
-    {
-        // replace backslashes (windows separators)
-        $string = str_replace("\\", "/", $string);
-        // remove multiple slashes
-        $string = preg_replace('#/+#', '/', $string);
-
-        return $string;
-    }
-
-    /**
-     * Verify if system read permission is granted.
-     *
-     * @param string $path - absolute path
-     * @return bool
-     */
-    public function hasSystemReadPermission($path)
-    {
-        return is_readable($path);
-    }
-
-    /**
-     * Verify if system write permission is granted.
-     *
-     * @param string $path - absolute path
-     * @return bool
-     */
-    public function hasSystemWritePermission($path)
-    {
-        // In order to create an entry in a POSIX dir, it must have
-        // both `-w-` write and `--x` execute permissions.
-        //
-        // NOTE: Windows PHP doesn't support standard POSIX permissions.
-        if (is_dir($path) && !(app()->php_os_is_windows())) {
-            return (is_writable($path) && is_executable($path));
-        }
-
-        return is_writable($path);
-    }
 
     /**
      * Defines real size of file.
