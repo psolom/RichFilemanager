@@ -217,7 +217,7 @@ class Api implements ApiInterface
         if (rename($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('renamed "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // rename thumbnail file or thumbnails folder if exists (images only)
+            // rename thumbnail file or thumbnails folder if exists
             if ($modelThumbOld->isExists) {
                 rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
             }
@@ -287,7 +287,7 @@ class Api implements ApiInterface
         if($this->storage()->copyRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('copied "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // copy thumbnail file or thumbnails folder (images only)
+            // copy thumbnail file or thumbnails folder
             if ($modelThumbOld->isExists) {
                 if ($modelThumbNew->closest()->isExists) {
                     $this->storage()->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
@@ -359,7 +359,7 @@ class Api implements ApiInterface
         if (rename($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('moved "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // move thumbnail file or thumbnails folder if exists (images only)
+            // move thumbnail file or thumbnails folder if exists
             if ($modelThumbOld->isExists) {
                 // do if target paths exists, otherwise remove old thumbnail(s)
                 if ($modelThumbNew->closest()->isExists) {

@@ -52,6 +52,7 @@ class Api implements ApiInterface
         Log::info('opening folder "' . $model->pathAbsolute . '"');
 
         $model->checkPath();
+        $model->checkReadPermission();
         $model->checkRestrictions();
 
         if (!$model->isDir) {
@@ -90,6 +91,9 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('opening file "' . $model->pathAbsolute . '"');
 
+        // NOTE: S3 doesn't provide a way to check if file doesn't exist or just has a permissions restriction,
+        // therefore it is supposed the file is prohibited by default and the appropriate message is returned.
+        // https://github.com/aws/aws-sdk-php/issues/969
         $model->checkPath();
         $model->checkReadPermission();
         $model->checkRestrictions();
@@ -184,6 +188,11 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
+        // forbid bulk rename of objects
+        if ($modelOld->isDir && !$this->config('allowBulk')) {
+            app()->error('FORBIDDEN_ACTION_DIR');
+        }
+
         $modelNew = new ItemModel($modelOld->closest()->pathRelative . $filename . $suffix);
         Log::info('moving "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
@@ -210,13 +219,22 @@ class Api implements ApiInterface
             }
         }
 
+        $valid = true;
+        if ($valid && $modelOld->isDir) {
+            $files = $this->storage()->getFilesList(rtrim($modelOld->pathAbsolute, '/'));
+            foreach ($files as $path) {
+                $pathNew = str_replace($modelOld->pathAbsolute, $modelNew->pathAbsolute, $path);
+                $valid = rename($path, $pathNew) && $valid;
+            }
+        }
+
         // rename file or folder
-        if (rename($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
+        if ($valid && rename($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('renamed "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // rename thumbnail file or thumbnails folder if exists (images only)
+            // remove thumbnail file or thumbnails folder if exists
             if ($modelThumbOld->isExists) {
-                rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                $modelThumbOld->remove();
             }
         } else {
             if ($modelOld->isDir) {
