@@ -530,7 +530,7 @@ class Api implements ApiInterface
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        $result = file_put_contents($model->pathAbsolute, Input::get('content'), LOCK_EX);
+        $result = file_put_contents($model->pathAbsolute, Input::get('content'));
 
         if(!is_numeric($result)) {
             app()->error('ERROR_SAVING_FILE');
@@ -562,7 +562,7 @@ class Api implements ApiInterface
 
         $filesize = filesize($model->pathAbsolute);
         $length = $filesize;
-        $offset = 0;
+        $context = null;
 
         if(isset($_SERVER['HTTP_RANGE'])) {
             if(!preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches)) {
@@ -587,6 +587,12 @@ class Api implements ApiInterface
 
             $bytes_start = $offset;
             $bytes_end = $offset + $length - 1;
+            $context = stream_context_create([
+                's3' => [
+                    'seekable' => true,
+                    'Range' => "bytes={$bytes_start}-{$bytes_end}",
+                ]
+            ]);
 
             header('HTTP/1.1 206 Partial Content');
             // A full-length file will indeed be "bytes 0-x/x+1", think of 0-indexed array counts
@@ -596,24 +602,12 @@ class Api implements ApiInterface
             header('Accept-Ranges: bytes');
         }
 
-        header('Content-Type: ' . mime_content_type($model->pathAbsolute));
+        header('Content-Type: ' . $model->getMimeType());
         header("Content-Transfer-Encoding: binary");
         header("Content-Length: " . $length);
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
-        $fp = fopen($model->pathAbsolute, 'r');
-        fseek($fp, $offset);
-        $position = 0;
-
-        while($position < $length) {
-            $chunk = min($length - $position, 1024 * 8);
-
-            echo fread($fp, $chunk);
-            flush();
-            ob_flush();
-
-            $position += $chunk;
-        }
+        readfile($model->pathAbsolute, null, $context);
         exit;
     }
 
