@@ -200,8 +200,8 @@ class Storage extends BaseStorage implements StorageInterface
      */
     public function getRootTotalSize()
     {
-        $path = rtrim($this->storageRoot, '/') . '/';
-        $result = $this->getDirSummary($path);
+        $result = $this->getDirSummary('/');
+
         return $result['size'];
     }
 
@@ -306,11 +306,12 @@ class Storage extends BaseStorage implements StorageInterface
      *
      * @param string $dir
      * @param bool $deleteRootToo
+     * @return bool
      */
     public function unlinkRecursive($dir, $deleteRootToo = true)
     {
 		if(!$dh = @opendir($dir)) {
-			return;
+			return false;
 		}
 		while (false !== ($obj = readdir($dh))) {
 			if($obj == '.' || $obj == '..') {
@@ -327,7 +328,7 @@ class Storage extends BaseStorage implements StorageInterface
 			@rmdir($dir);
 		}
 
-		return;
+		return true;
 	}
 
 	/**

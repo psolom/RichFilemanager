@@ -539,9 +539,9 @@ class Api implements ApiInterface
 
         Log::info('loaded image "' . $model->pathAbsolute . '"');
 
-        header("Content-type: image/octet-stream");
+        header("Content-Type: image/octet-stream");
         header("Content-Transfer-Encoding: binary");
-        header("Content-length: " . $this->storage()->getRealFileSize($model->pathAbsolute));
+        header("Content-Length: " . $this->storage()->getRealFileSize($model->pathAbsolute));
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
         readfile($model->pathAbsolute);
