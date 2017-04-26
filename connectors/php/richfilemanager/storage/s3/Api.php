@@ -670,21 +670,16 @@ class Api implements ApiInterface
         $info = $model->getInfo();
         $modelThumb = $model->thumbnail();
 
-        if ($model->isDir) {
-            $this->storage()->unlinkRecursive($model->pathAbsolute);
+        // check thumbnail file or thumbnails folder permissions
+        if ($modelThumb->isExists) {
+            $modelThumb->checkWritePermission();
+        }
+
+        if ($model->remove()) {
             Log::info('deleted "' . $model->pathAbsolute . '"');
 
-            // delete thumbnail if exists
             if ($modelThumb->isExists) {
-                $this->storage()->unlinkRecursive($modelThumb->pathAbsolute);
-            }
-        } else {
-            unlink($model->pathAbsolute);
-            Log::info('deleted "' . $model->pathAbsolute . '"');
-
-            // delete thumbnails if exists
-            if ($modelThumb->isExists) {
-                unlink($modelThumb->pathAbsolute);
+                $modelThumb->remove();
             }
         }
 

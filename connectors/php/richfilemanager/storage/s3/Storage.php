@@ -186,17 +186,28 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
-     * Retrieve metadata of an object
+     * Retrieve metadata of an S3 object.
      *
-     * @param string $path - relative path
+     * @param string $key
      * @return array
      */
-    public function metadata($path)
+    public function getMetaData($key)
     {
-        $dynamicPath = $this->cleanPath($this->dynamicRoot . '/' . $path);
-        $head = $this->s3->head($dynamicPath, true);
+        $head = $this->s3->head($key, true);
 
         return $head ? $head['@metadata']['headers'] : $head;
+    }
+
+    /**
+     * Check whether S3 object exists.
+     * Could be used to check real state of cached object.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public function isObjectExists($key)
+    {
+        return $this->s3->exist($key);
     }
 
 

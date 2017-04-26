@@ -274,53 +274,6 @@ class ItemModel
         return $this->storage()->cleanPath($path);
     }
 
-//    /**
-//     * @inheritdoc
-//     */
-//    protected function get_thumbnail_path($path)
-//    {
-//        $dynamic_path = $this->getDynamicPath($path);
-//        $thumbnail_path = $this->rootDirectory . '/' . $this->config['images']['thumbnail']['dir'] . '/' . $dynamic_path;
-//        $thumbnail_path = $this->cleanPath($thumbnail_path);
-//
-//        if($this->config['s3']['localThumbsPath']) {
-//            return $this->getLocalPath($thumbnail_path);
-//        } else {
-//            return $this->getS3WrapperPath($thumbnail_path);
-//        }
-//    }
-//
-//    /**
-//     * @inheritdoc
-//     */
-//    protected function get_thumbnail($path)
-//    {
-//        $thumbnail_fullpath = $this->get_thumbnail_path($path);
-//
-//        // generate thumbnail if it doesn't exist or caching is disabled
-//        if(!file_exists($thumbnail_fullpath) || $this->config['images']['thumbnail']['cache'] === false) {
-//            $this->createThumbnail($path, $thumbnail_fullpath);
-//        }
-//
-//        return $thumbnail_fullpath;
-//    }
-//
-//    /**
-//     * @inheritdoc
-//     */
-//    protected function createThumbnail($imagePath, $thumbnailPath)
-//    {
-//        if($this->config['images']['thumbnail']['enabled'] === true) {
-//            Log::info('generating thumbnail "' . $thumbnailPath . '"');
-//
-//            $this->initUploader([
-//                'upload_dir' => dirname($imagePath) . '/',
-//            ])->create_thumbnail_image($imagePath);
-//        }
-//    }
-
-
-
     /**
      * Return original relative path for thumbnail model.
      * Work for both files and dirs paths.
@@ -381,7 +334,7 @@ class ItemModel
      */
     public function getMimeType()
     {
-        $meta = $this->storage()->metadata($this->pathRelative);
+        $meta = $this->storage()->getMetaData($this->getDynamicPath());
         $mime_type = $meta['content-type'];
 
         // try to define mime type based on file extension if default "octet-stream" is obtained
@@ -393,18 +346,21 @@ class ItemModel
 
     /**
      * Remove current file or folder.
+     *
+     * @return bool
      */
     public function remove()
     {
         if ($this->isDir) {
             if ($this->isThumbnail && $this->config('images.thumbnail.useLocalStorage')) {
-                app()->getStorage('local')->unlinkRecursive($this->pathAbsolute);
+                return app()->getStorage('local')->unlinkRecursive($this->pathAbsolute);
             } else {
-                $key = $this->storage()->getDynamicPath($this->pathAbsolute, false);
+                $key = $this->getDynamicPath();
                 $this->storage()->s3->batchDelete($key);
+                return !$this->storage()->isObjectExists($key);
             }
         } else {
-            unlink($this->pathAbsolute);
+            return unlink($this->pathAbsolute);
         }
     }
 
