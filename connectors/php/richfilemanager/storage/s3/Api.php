@@ -188,7 +188,7 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
-        // forbid bulk rename of objects
+        // forbid bulk operations on objects
         if ($modelOld->isDir && !$this->config('allowBulk')) {
             app()->error('FORBIDDEN_ACTION_DIR');
         }
@@ -269,6 +269,11 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
+        // forbid bulk operations on objects
+        if ($modelSource->isDir && !$this->config('allowBulk')) {
+            app()->error('FORBIDDEN_ACTION_DIR');
+        }
+
         // check items permissions
         $modelSource->checkPath();
         $modelSource->checkReadPermission();
@@ -298,14 +303,57 @@ class Api implements ApiInterface
             }
         }
 
-        // copy file or folder
-        if($this->storage()->copyRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+        $copied = [];
+        if ($modelSource->isDir) {
+            $files = $this->storage()->getFilesList(rtrim($modelSource->pathAbsolute, '/'));
+            $files = array_reverse($files);
+            foreach ($files as $k => $path) {
+                if (is_dir($path)) {
+                    $path .= '/';
+                };
+
+                $pathNew = str_replace($modelSource->pathAbsolute, $modelNew->pathAbsolute, $path);
+                if (@copy($path, $pathNew)) {
+                    $copied[] = [
+                        'old' => new ItemModel($path),
+                        'new' => new ItemModel($pathNew),
+                    ];
+                }
+            }
+        }
+
+        if (@copy($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+            $copied[] = [
+                'old' => $modelSource,
+                'new' => $modelNew,
+            ];
+        }
+
+        if (sizeof($copied) > 0) {
             Log::info('copied "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // copy thumbnail file or thumbnails folder (images only)
+            // copy thumbnail file or thumbnails folder
             if ($modelThumbOld->isExists) {
-                if ($modelThumbNew->closest()->isExists) {
-                    $this->storage()->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                // TODO: copy recursive???
+                if ($this->config('images.thumbnail.useLocalStorage')) {
+                    // remove destination file/folder if exists
+                    if ($modelThumbNew->isExists) {
+                        $modelThumbNew->remove();
+                    }
+                    // create folder to move into
+                    if (!$modelThumbNew->closest()->isExists) {
+                        mkdir($modelThumbNew->closest()->pathAbsolute, 0755, true);
+                    }
+                    @copy($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                } else {
+                    // to cache result of S3 objects
+                    $this->storage()->getFilesList(rtrim($modelThumbOld->pathAbsolute, '/'));
+                    foreach ($copied as $item) {
+                        /* @var $item ItemModel[] */
+                        if ($item['old']->thumbnail()->isExists) {
+                            @copy($item['old']->thumbnail()->pathAbsolute, $item['new']->thumbnail()->pathAbsolute);
+                        }
+                    }
                 }
             }
         } else {
