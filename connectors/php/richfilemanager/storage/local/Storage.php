@@ -108,35 +108,6 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
-     * Return path without storage root.
-     *
-     * @param string $path - absolute path
-     * @return mixed
-     */
-    public function getDynamicPath($path)
-    {
-        // empty string makes FM to use connector path for preview instead of absolute path
-        // COMMENTED: due to it prevents to build absolute URL when "serverRoot" is "false" and "fileRoot" is provided
-        // as well as "previewUrl" value in the JSON configuration file is set to the correct URL
-//        if(empty($this->dynamicRoot)) {
-//            return '';
-//        }
-        $path = $this->dynamicRoot . '/' . $this->getRelativePath($path);
-        return $this->cleanPath($path);
-    }
-
-    /**
-     * Return path without "storageRoot"
-     *
-     * @param string $path - absolute path
-     * @return mixed
-     */
-    public function getRelativePath($path)
-    {
-        return $this->subtractPath($path, $this->storageRoot);
-    }
-
-    /**
      * Subtracts subpath from the fullpath.
      *
      * @param string $fullPath

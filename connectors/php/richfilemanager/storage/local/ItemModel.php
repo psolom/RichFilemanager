@@ -161,7 +161,7 @@ class ItemModel
 
         $model['id'] = $this->pathRelative;
         $model['attributes']['name'] = $pathInfo['basename'];
-        $model['attributes']['path'] = $this->storage()->getDynamicPath($this->pathAbsolute);
+        $model['attributes']['path'] = $this->getDynamicPath();
         $model['attributes']['readable'] = (int)$isReadable;
         $model['attributes']['writable'] = (int)$isWritable;
         $model['attributes']['timestamp'] = $filemtime;
@@ -237,12 +237,37 @@ class ItemModel
 
     /**
      * Return absolute path to item.
+     * Based on relative item path.
      *
      * @return string
      */
     public function getAbsolutePath()
     {
         return $this->storage()->cleanPath($this->storage()->getRoot() . '/' . $this->pathRelative);
+    }
+
+    /**
+     * Return path without storage root path, prepended with dynamic folder.
+     * Based on relative item path.
+     *
+     * @return mixed
+     */
+    public function getDynamicPath()
+    {
+        $path = $this->storage()->getDynamicRoot() . '/' . $this->pathRelative;
+
+        return $this->storage()->cleanPath($path);
+    }
+
+    /**
+     * Return path without storage root path.
+     * Based on absolute item path.
+     *
+     * @return mixed
+     */
+    public function getRelativePath()
+    {
+        return $this->storage()->subtractPath($this->pathAbsolute, $this->storage()->getRoot());
     }
 
     /**
