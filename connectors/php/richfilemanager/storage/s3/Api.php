@@ -334,7 +334,7 @@ class Api implements ApiInterface
 
             // copy thumbnail file or thumbnails folder
             if ($modelThumbOld->isExists) {
-                // TODO: copy recursive???
+                // TODO: copy recursive instead of deletion???
                 if ($this->config('images.thumbnail.useLocalStorage')) {
                     // remove destination file/folder if exists
                     if ($modelThumbNew->isExists) {
@@ -389,9 +389,14 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
+        // forbid bulk operations on objects
+        if ($modelSource->isDir && !$this->config('allowBulk')) {
+            app()->error('FORBIDDEN_ACTION_DIR');
+        }
+
         // check items permissions
         $modelSource->checkPath();
-        $modelSource->checkWritePermission();
+        $modelSource->checkReadPermission();
         $modelSource->checkRestrictions();
         $modelTarget->checkPath();
         $modelTarget->checkWritePermission();
@@ -412,30 +417,70 @@ class Api implements ApiInterface
 
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
-            $modelThumbOld->checkWritePermission();
+            $modelThumbOld->checkReadPermission();
             if ($modelThumbNew->closest()->isExists) {
                 $modelThumbNew->closest()->checkWritePermission();
             }
         }
 
-        // move file or folder
-        if (rename($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+        $copied = [];
+        if ($modelSource->isDir) {
+            $files = $this->storage()->getFilesList(rtrim($modelSource->pathAbsolute, '/'));
+            $files = array_reverse($files);
+            foreach ($files as $k => $path) {
+                if (is_dir($path)) {
+                    $path .= '/';
+                };
+
+                $pathNew = str_replace($modelSource->pathAbsolute, $modelNew->pathAbsolute, $path);
+                if (@rename($path, $pathNew)) {
+                    $copied[] = [
+                        'old' => new ItemModel($path),
+                        'new' => new ItemModel($pathNew),
+                    ];
+                }
+            }
+        }
+
+        if (@rename($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+            $copied[] = [
+                'old' => $modelSource,
+                'new' => $modelNew,
+            ];
+        }
+
+        if (sizeof($copied) > 0) {
             Log::info('moved "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // move thumbnail file or thumbnails folder if exists (images only)
+            // move thumbnail file or thumbnails folder
             if ($modelThumbOld->isExists) {
-                // do if target paths exists, otherwise remove old thumbnail(s)
-                if ($modelThumbNew->closest()->isExists) {
-                    rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                // TODO: move recursive instead of deletion???
+                if ($this->config('images.thumbnail.useLocalStorage')) {
+                    // remove destination file/folder if exists
+                    if ($modelThumbNew->isExists) {
+                        $modelThumbNew->remove();
+                    }
+                    // create folder to move into
+                    if (!$modelThumbNew->closest()->isExists) {
+                        mkdir($modelThumbNew->closest()->pathAbsolute, 0755, true);
+                    }
+                    @rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 } else {
-                    $modelThumbOld->remove();
+                    // to cache result of S3 objects
+                    $this->storage()->getFilesList(rtrim($modelThumbOld->pathAbsolute, '/'));
+                    foreach ($copied as $item) {
+                        /* @var $item ItemModel[] */
+                        if ($item['old']->thumbnail()->isExists) {
+                            @rename($item['old']->thumbnail()->pathAbsolute, $item['new']->thumbnail()->pathAbsolute);
+                        }
+                    }
                 }
             }
         } else {
             if ($modelSource->isDir) {
                 app()->error('ERROR_MOVING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
             } else {
-                app()->error('ERROR_MOVING_FILE', [$basename, $modelTarget->pathRelative]);
+                app()->error('ERROR_MOVING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
             }
         }
 
