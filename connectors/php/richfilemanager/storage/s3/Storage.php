@@ -119,23 +119,6 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
-     * Return path without storage root.
-     *
-     * @param string $path - absolute path
-     * @param bool $stripDynamicFolder
-     * @return mixed
-     */
-    public function getDynamicPath($path, $stripDynamicFolder = true)
-    {
-        $prefix = 's3://' . $this->s3->bucket . '/';
-        if($stripDynamicFolder) {
-            $prefix .= rtrim($this->dynamicRoot, '/');
-        }
-        $path = str_replace($prefix, '', $path);
-        return $this->cleanPath($path);
-    }
-
-    /**
      * Returns full path to S3 object to use via PHP S3 wrapper stream
      * @param string $path
      * @return mixed
@@ -145,17 +128,6 @@ class Storage extends BaseStorage implements StorageInterface
         $path = $this->cleanPath($this->s3->bucket . '/' . $path);
 
         return 's3://' . $path;
-    }
-
-    /**
-     * Return path without "storageRoot"
-     *
-     * @param string $path - absolute path
-     * @return mixed
-     */
-    public function getRelativePath($path)
-    {
-        return $this->subtractPath($path, $this->storageRoot);
     }
 
     /**
@@ -213,7 +185,19 @@ class Storage extends BaseStorage implements StorageInterface
         return is_writable($path);
     }
 
+    /**
+     * Retrieve metadata of an object
+     *
+     * @param string $path - relative path
+     * @return array
+     */
+    public function metadata($path)
+    {
+        $dynamicPath = $this->cleanPath($this->dynamicRoot . '/' . $path);
+        $head = $this->s3->head($dynamicPath, true);
 
+        return $head ? $head['@metadata']['headers'] : $head;
+    }
 
 
 

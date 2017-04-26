@@ -143,7 +143,7 @@ class ItemModel
 
         $model['id'] = $this->pathRelative;
         $model['attributes']['name'] = $pathInfo['basename'];
-        $model['attributes']['path'] = $this->storage()->getDynamicPath($this->pathAbsolute);
+        $model['attributes']['path'] = $this->getDynamicPath();
         $model['attributes']['readable'] = 1;
         $model['attributes']['writable'] = 1;
         $model['attributes']['timestamp'] = $filemtime;
@@ -196,6 +196,9 @@ class ItemModel
      * In case item doesn't exists we check the trailing slash.
      * That is why it's important to add slashes to the wnd of folders path.
      *
+     * S3 differs directory by slash (/) in the end of path. Could be used to check non-existent or cached object.
+     * @link http://stackoverflow.com/questions/22312833/how-can-you-tell-if-an-object-is-a-folder-on-aws-s3
+     *
      * @return bool
      */
     public function getIsDirectory()
@@ -219,6 +222,7 @@ class ItemModel
 
     /**
      * Return absolute path to item.
+     * Based on relative item path.
      *
      * @return string
      */
@@ -231,6 +235,30 @@ class ItemModel
         }
 
         return rtrim($pathRoot, '/') . $this->pathRelative;
+    }
+
+    /**
+     * Return path without storage root path, prepended with dynamic folder.
+     * Based on relative item path.
+     *
+     * @return mixed
+     */
+    public function getDynamicPath()
+    {
+        $path = $this->storage()->getDynamicRoot() . '/' . $this->pathRelative;
+
+        return $this->storage()->cleanPath($path);
+    }
+
+    /**
+     * Return path without storage root path.
+     * Based on absolute item path.
+     *
+     * @return mixed
+     */
+    public function getRelativePath()
+    {
+        return $this->storage()->subtractPath($this->pathAbsolute, $this->storage()->getRoot());
     }
 
     /**
@@ -344,6 +372,23 @@ class ItemModel
         $mime = mime_type_by_extension($this->pathAbsolute);
 
         return $this->storage()->isImageMimeType($mime);
+    }
+
+    /**
+     * Retrieve mime type of S3 object.
+     *
+     * @return string
+     */
+    public function getMimeType()
+    {
+        $meta = $this->storage()->metadata($this->pathRelative);
+        $mime_type = $meta['content-type'];
+
+        // try to define mime type based on file extension if default "octet-stream" is obtained
+        if((end(explode('/', $mime_type)) === 'octet-stream')) {
+            $mime_type = mime_type_by_extension($this->pathRelative);
+        }
+        return $mime_type;
     }
 
     /**
