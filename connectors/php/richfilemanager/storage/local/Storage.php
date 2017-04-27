@@ -108,6 +108,17 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
+     * Return path without storage root path.
+     *
+     * @param string $path - absolute path
+     * @return mixed
+     */
+    public function getRelativePath($path)
+    {
+        return $this->subtractPath($path, $this->storageRoot);
+    }
+
+    /**
      * Subtracts subpath from the fullpath.
      *
      * @param string $fullPath
@@ -259,8 +270,8 @@ class Storage extends BaseStorage implements StorageInterface
      * Copies a single file, symlink or a whole directory.
      * In case of directory it will be copied recursively.
      *
-     * @param $source
-     * @param $target
+     * @param string $source - absolute path
+     * @param string $target - absolute path
      * @return bool
      */
     public function copyRecursive($source, $target)
@@ -277,7 +288,7 @@ class Storage extends BaseStorage implements StorageInterface
 
         // make target directory
         if (!is_dir($target)) {
-            mkdir($target, 0755);
+            mkdir($target, 0755, true);
         }
 
         $handle = opendir($source);
@@ -286,8 +297,8 @@ class Storage extends BaseStorage implements StorageInterface
             if ($file === '.' || $file === '..') {
                 continue;
             }
-            $from = $source . DIRECTORY_SEPARATOR . $file;
-            $to = $target . DIRECTORY_SEPARATOR . $file;
+            $from = $this->cleanPath($source . DIRECTORY_SEPARATOR . $file);
+            $to = $this->cleanPath($target . DIRECTORY_SEPARATOR . $file);
 
             if (is_file($from)) {
                 copy($from, $to);

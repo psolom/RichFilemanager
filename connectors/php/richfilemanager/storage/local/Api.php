@@ -202,7 +202,6 @@ class Api implements ApiInterface
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
             $modelThumbOld->checkWritePermission();
-            $modelThumbNew->checkWritePermission();
         }
 
         if ($modelNew->isExists) {
