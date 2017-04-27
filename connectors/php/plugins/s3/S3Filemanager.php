@@ -295,8 +295,8 @@ class S3Filemanager extends LocalFilemanager
 		$new_name = $this->normalizeString($this->get['new'], ['.', '-']);
         $new_relative_path = $this->cleanPath('/' . $new_path . '/' . $new_name . $suffix);
 
-		$old_file = $this->getFullPath($this->get['old'], true) . $suffix;
-		$new_file = $this->getFullPath($new_path, true) . '/' . $new_name . $suffix;
+		$old_file = rtrim($this->getFullPath($this->get['old'], true), '/') . $suffix;
+		$new_file = rtrim($this->getFullPath($new_path, true), '/') . '/' . $new_name . $suffix;
 		Log::info('renaming "' . $old_file . '" to "' . $new_file . '"');
 
 		if(!$this->hasPermission('rename')) {
@@ -342,17 +342,35 @@ class S3Filemanager extends LocalFilemanager
 			}
 		}
 
-		$valid = true;
-		if($valid && is_dir($old_file)) {
+        $renamed = [];
+		if(is_dir($old_file)) {
 			$files = $this->getFilesList(rtrim($old_file, '/'));
+            $files = array_reverse($files);
 			foreach($files as $path) {
-				$new_path = str_replace($old_file, $new_file, $path);
-				$valid = rename($path, $new_path) && $valid;
+                if(is_dir($path)) {
+                    $path .= '/';
+                }
+                $new_path = str_replace($old_file, $new_file, $path);
+                if(is_dir($path)) {
+                    mkdir($new_path, 0755, true);
+                }
+                if(@rename($path, $new_path)) {
+                    $renamed[] = [
+                        'old' => $path,
+                        'new' => $new_path,
+                    ];
+                }
 			}
 		}
-		$valid = rename($old_file, $new_file);
 
-		if($valid) {
+        if(@rename($old_file, $new_file)) {
+            $renamed[] = [
+                'old' => $old_file,
+                'new' => $new_file,
+            ];
+        }
+
+        if(sizeof($renamed) > 0) {
             Log::info('renamed "' . $old_file . '" to "' . $new_file . '"');
 			$thumbnail_path = $this->get_thumbnail_path($old_file);
 			$this->deleteThumbnail($thumbnail_path);
