@@ -208,7 +208,6 @@ class Api implements ApiInterface
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
             $modelThumbOld->checkWritePermission();
-            $modelThumbNew->checkWritePermission();
         }
 
         if ($modelNew->isExists) {
@@ -219,22 +218,16 @@ class Api implements ApiInterface
             }
         }
 
-        $valid = true;
-        if ($valid && $modelOld->isDir) {
-            $files = $this->storage()->getFilesList(rtrim($modelOld->pathAbsolute, '/'));
-            foreach ($files as $path) {
-                $pathNew = str_replace($modelOld->pathAbsolute, $modelNew->pathAbsolute, $path);
-                $valid = rename($path, $pathNew) && $valid;
-            }
-        }
-
-        // rename file or folder
-        if ($valid && rename($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
+        if ($this->storage()->renameRecursive($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('renamed "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // remove thumbnail file or thumbnails folder if exists
             if ($modelThumbOld->isExists) {
-                $modelThumbOld->remove();
+                if ($this->config('images.thumbnail.useLocalStorage')) {
+                    //app()->getStorage('local')->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                    rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                } else {
+                    $this->storage()->renameRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                }
             }
         } else {
             if ($modelOld->isDir) {
@@ -298,69 +291,23 @@ class Api implements ApiInterface
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
             $modelThumbOld->checkReadPermission();
-            if ($modelThumbNew->closest()->isExists) {
-                $modelThumbNew->closest()->checkWritePermission();
-            }
         }
 
-        $copied = [];
-        if ($modelSource->isDir) {
-            $files = $this->storage()->getFilesList(rtrim($modelSource->pathAbsolute, '/'));
-            $files = array_reverse($files);
-            foreach ($files as $k => $path) {
-                if (is_dir($path)) {
-                    $path .= '/';
-                };
-
-                $pathNew = str_replace($modelSource->pathAbsolute, $modelNew->pathAbsolute, $path);
-                if (@copy($path, $pathNew)) {
-                    $copied[] = [
-                        'old' => new ItemModel($path),
-                        'new' => new ItemModel($pathNew),
-                    ];
-                }
-            }
-        }
-
-        if (@copy($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
-            $copied[] = [
-                'old' => $modelSource,
-                'new' => $modelNew,
-            ];
-        }
-
-        if (sizeof($copied) > 0) {
+        if ($this->storage()->copyRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('copied "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
-            // copy thumbnail file or thumbnails folder
             if ($modelThumbOld->isExists) {
-                // TODO: copy recursive instead of deletion???
                 if ($this->config('images.thumbnail.useLocalStorage')) {
-                    // remove destination file/folder if exists
-                    if ($modelThumbNew->isExists) {
-                        $modelThumbNew->remove();
-                    }
-                    // create folder to move into
-                    if (!$modelThumbNew->closest()->isExists) {
-                        mkdir($modelThumbNew->closest()->pathAbsolute, 0755, true);
-                    }
-                    @copy($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                    app()->getStorage('local')->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 } else {
-                    // to cache result of S3 objects
-                    $this->storage()->getFilesList(rtrim($modelThumbOld->pathAbsolute, '/'));
-                    foreach ($copied as $item) {
-                        /* @var $item ItemModel[] */
-                        if ($item['old']->thumbnail()->isExists) {
-                            @copy($item['old']->thumbnail()->pathAbsolute, $item['new']->thumbnail()->pathAbsolute);
-                        }
-                    }
+                    $this->storage()->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 }
             }
         } else {
             if ($modelSource->isDir) {
-                app()->error('ERROR_COPYING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
+                app()->error('ERROR_COPYING_DIRECTORY', [$modelSource->pathRelative, $modelNew->pathRelative]);
             } else {
-                app()->error('ERROR_COPYING_FILE', [$basename, $modelTarget->pathRelative]);
+                app()->error('ERROR_COPYING_FILE', [$modelSource->pathRelative, $modelNew->pathRelative]);
             }
         }
 
@@ -396,7 +343,7 @@ class Api implements ApiInterface
 
         // check items permissions
         $modelSource->checkPath();
-        $modelSource->checkReadPermission();
+        $modelSource->checkWritePermission();
         $modelSource->checkRestrictions();
         $modelTarget->checkPath();
         $modelTarget->checkWritePermission();
@@ -417,10 +364,7 @@ class Api implements ApiInterface
 
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
-            $modelThumbOld->checkReadPermission();
-            if ($modelThumbNew->closest()->isExists) {
-                $modelThumbNew->closest()->checkWritePermission();
-            }
+            $modelThumbOld->checkWritePermission();
         }
 
         $copied = [];

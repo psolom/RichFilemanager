@@ -119,6 +119,17 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
+     * Return path without storage root path.
+     *
+     * @param string $path - absolute path
+     * @return mixed
+     */
+    public function getRelativePath($path)
+    {
+        return $this->subtractPath($path, $this->storageRoot);
+    }
+
+    /**
      * Returns full path to S3 object to use via PHP S3 wrapper stream
      * @param string $path
      * @return mixed
@@ -259,6 +270,72 @@ class Storage extends BaseStorage implements StorageInterface
         $result = $this->getDirSummary('/');
 
         return $result['size'];
+    }
+
+    /**
+     * Copies a single file or a whole directory.
+     * In case of directory it will be copied recursively.
+     *
+     * @param string $source - absolute path
+     * @param string $target - absolute path
+     * @return bool
+     */
+    public function copyRecursive($source, $target)
+    {
+        $flag = true;
+        if (is_dir($source)) {
+            $files = $this->getFilesList(rtrim($source, '/'));
+            $files = array_reverse($files);
+            $flag = $flag && mkdir($target, 0755);
+
+            foreach ($files as $path) {
+                $pathNew = str_replace($source, $target, $path);
+
+                if (is_dir($path)) {
+                    $flag = $flag && mkdir($pathNew, 0755);
+                } else {
+                    $flag = $flag && copy($path, $pathNew);
+                }
+            }
+        } else {
+            $flag = $flag && copy($source, $target);
+        }
+
+        return $flag;
+    }
+
+    /**
+     * Copies a single file or a whole directory.
+     * In case of directory it will be copied recursively.
+     *
+     * @param string $source - absolute path
+     * @param string $target - absolute path
+     * @return bool
+     */
+    public function renameRecursive($source, $target)
+    {
+        $flag = true;
+        if (is_dir($source)) {
+            $files = $this->getFilesList(rtrim($source, '/'));
+            $files = array_reverse($files);
+            $flag = $flag && mkdir($target, 0755);
+
+            foreach ($files as $path) {
+                $pathNew = str_replace($source, $target, $path);
+
+                if (is_dir($path)) {
+                    $flag = $flag && mkdir($pathNew, 0755);
+                    rmdir($path);
+                } else {
+                    $flag = $flag && rename($path, $pathNew);
+                }
+            }
+            rmdir($source);
+        } else {
+            $flag = $flag && rename($source, $target);
+        }
+
+        return $flag;
     }
 
 	/**

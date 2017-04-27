@@ -251,17 +251,6 @@ class ItemModel
     }
 
     /**
-     * Return path without storage root path.
-     * Based on absolute item path.
-     *
-     * @return mixed
-     */
-    public function getRelativePath()
-    {
-        return $this->storage()->subtractPath($this->pathAbsolute, $this->storage()->getRoot());
-    }
-
-    /**
      * Return thumbnail relative path from given path.
      * Work for both files and dirs paths.
      *
