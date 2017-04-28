@@ -324,13 +324,14 @@ class ItemModel
     public function getMimeType()
     {
         $meta = $this->storage()->getMetaData($this->getDynamicPath());
-        $mime_type = $meta['content-type'];
+        $type = $meta['content-type'];
+        $parts = explode('/', $type);
 
         // try to define mime type based on file extension if default "octet-stream" is obtained
-        if((end(explode('/', $mime_type)) === 'octet-stream')) {
-            $mime_type = mime_type_by_extension($this->pathRelative);
+        if((end($parts) === 'octet-stream')) {
+            $type = mime_type_by_extension($this->pathRelative);
         }
-        return $mime_type;
+        return $type;
     }
 
     /**
