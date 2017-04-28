@@ -273,7 +273,7 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
-     * Copies a single file or a whole directory.
+     * Copy a single file or a whole directory.
      * In case of directory it will be copied recursively.
      *
      * @param string $source - absolute path
@@ -305,7 +305,7 @@ class Storage extends BaseStorage implements StorageInterface
     }
 
     /**
-     * Copies a single file or a whole directory.
+     * Rename/move a single file or a whole directory.
      * In case of directory it will be copied recursively.
      *
      * @param string $source - absolute path
