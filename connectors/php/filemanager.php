@@ -21,8 +21,13 @@ function auth()
 {
     // IMPORTANT : by default Read and Write access is granted to everyone.
     // You can insert your own code over here to check if the user is authorized.
+    // You can also redirect the user somewhere if the authorization fails.
     // If you use a session variable, you've got to start the session first (session_start())
-    return true;
+
+    return [
+        "authorized" => true, // is authorized
+        "redirect" => null // String - redirect to a link | null - no redirect
+    ];
 }
 
 $config = array();

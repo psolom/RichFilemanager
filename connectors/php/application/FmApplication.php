@@ -38,8 +38,10 @@ class FmApplication {
             $fm = new LocalFilemanager($configuration);
         }
 
-        if(!auth()) {
-            $fm->error('AUTHORIZATION_REQUIRED');
+        $authInfo = auth();
+
+        if (!$authInfo["authorized"]) {
+            $fm->error('AUTHORIZATION_REQUIRED', ["redirect" => $authInfo["redirect"]]);
         }
 
         return $fm;

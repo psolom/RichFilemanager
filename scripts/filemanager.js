@@ -203,11 +203,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			.then(function() {
 				return configure();
 			})
-			.then(function(conf_d, conf_u) {
-				return performInitialRequest();
-			})
 			.then(function() {
 				return localize();
+			})
+			.then(function(conf_d, conf_u) {
+				return performInitialRequest();
 			})
 			.then(function() {
 				return includeTemplates();
@@ -2727,6 +2727,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
+				if (errorObject.arguments.redirect)
+					window.location.href = errorObject.arguments.redirect;
 			});
 		}
 	};
