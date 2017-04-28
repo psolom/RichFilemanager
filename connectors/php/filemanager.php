@@ -45,4 +45,4 @@ $fm = Fm::app()->getInstance($config);
 // example to set list of allowed actions
 //$fm->setAllowedActions(["select", "move"]);
 
-$fm->handleRequest();
+echo $fm->handleRequest();
