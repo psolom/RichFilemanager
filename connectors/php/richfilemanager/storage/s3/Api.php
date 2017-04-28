@@ -632,7 +632,6 @@ class Api implements ApiInterface
         $attributes = [
             'size' => 0,
             'files' => 0,
-            'folders' => 0,
             'sizeLimit' => $this->config('options.fileRootSizeLimit'),
         ];
 
@@ -673,8 +672,15 @@ class Api implements ApiInterface
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
+        // copy archive from S3 storage to local system temporary folder
+        $pathTemp = sys_get_temp_dir() . '/' . uniqid();
+        if (!copy($modelSource->pathAbsolute, $pathTemp)) {
+            app()->error('ERROR_COPYING_FILE', [$modelSource->pathRelative, $pathTemp]);
+            app()->error('ERROR_SERVER');
+        }
+
         $zip = new \ZipArchive();
-        if ($zip->open($modelSource->pathAbsolute) !== true) {
+        if ($zip->open($pathTemp) !== true) {
             app()->error('ERROR_EXTRACTING_FILE');
         }
 
@@ -709,7 +715,7 @@ class Api implements ApiInterface
             $model = new ItemModel($modelTarget->pathRelative . $filename);
 
             if ($filename[strlen($filename) - 1] !== "/" && $model->isUnrestricted()) {
-                $copied = copy('zip://' . $modelSource->pathAbsolute . '#' . $filename, $model->pathAbsolute);
+                $copied = copy('zip://' . $pathTemp . '#' . $filename, $model->pathAbsolute);
 
                 if ($copied && strpos($filename, '/') === false) {
                     $rootLevelItems[] = $model;
@@ -722,6 +728,8 @@ class Api implements ApiInterface
         foreach ($rootLevelItems as $model) {
             $responseData[] = $model->getInfo();
         }
+
+        unlink($pathTemp);
 
         return $responseData;
     }

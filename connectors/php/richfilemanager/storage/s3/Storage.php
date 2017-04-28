@@ -20,18 +20,23 @@ class Storage extends BaseStorage implements StorageInterface
     use IdentityTrait;
     use StorageTrait;
 
-    const RETRIEVE_MODE_BROWSER = 'S3_To_Internet';
-    const RETRIEVE_MODE_SERVER = 'S3_To_AWS';
-
+    /**
+     * Full path to S3 storage bucket including protocol.
+     * Being built automatically at the base of S3 credentials.
+     * Example: "s3://bucket_name/"
+     *
+     * @var mixed
+     */
 	protected $storageRoot;
 
     /**
-     * Root directory on S3 storage for storing files.
+     * Directory inside bucket for storing files.
+     * Can be changed via "setRoot()" method.
      * Example: "user1" or "users/john"
      *
      * @var string
      */
-    public $dynamicRoot = 'userfiles';
+    protected $dynamicRoot = 'userfiles';
 
     /**
      * S3 client wrapper class.
