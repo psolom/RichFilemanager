@@ -598,9 +598,8 @@ class Api implements ApiInterface
         $model->checkReadPermission();
         $model->checkRestrictions();
 
-        // check if not requesting root storage folder
-        // TODO: This restriction seems arbitration, it could be useful for business clients
-        if ($model->isDir && $model->isRoot()) {
+        // no direct way to download S3 folders
+        if($model->isDir) {
             app()->error('NOT_ALLOWED');
         }
 
@@ -608,46 +607,17 @@ class Api implements ApiInterface
             return $model->getInfo();
         } else {
             $targetPath = $model->pathAbsolute;
-
-            if ($model->isDir) {
-                $destinationPath = sys_get_temp_dir() . '/rfm_' . uniqid() . '.zip';
-
-                // if Zip archive is created
-                if ($this->storage()->zipFile($targetPath, $destinationPath, true)) {
-                    $targetPath = $destinationPath;
-                } else {
-                    app()->error('ERROR_CREATING_ZIP');
-                }
-            }
-            $fileSize = $this->storage()->getRealFileSize($targetPath);
-
             header('Content-Description: File Transfer');
-            header('Content-Type: ' . mime_content_type($targetPath));
+            header('Content-Type: ' . $model->getMimeType());
             header('Content-Disposition: attachment; filename="' . basename($targetPath) . '"');
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . $fileSize);
+            header('Content-Length: ' . filesize($targetPath));
             // handle caching
             header('Pragma: public');
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-            // read file by chunks to handle large files
-            // if you face an issue while downloading large files yet, try the following solution:
-            // https://github.com/servocoder/RichFilemanager/issues/78
-
-            $chunkSize = 5 * 1024 * 1024;
-            if ($chunkSize && $fileSize > $chunkSize) {
-                $handle = fopen($targetPath, 'rb');
-                while (!feof($handle)) {
-                    echo fread($handle, $chunkSize);
-                    @ob_flush();
-                    @flush();
-                }
-                fclose($handle);
-            } else {
-                readfile($targetPath);
-            }
-
+            readfile($targetPath);
             Log::info('downloaded "' . $targetPath . '"');
             exit;
         }
