@@ -6,7 +6,7 @@ use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
 use Symfony\Component\HttpFoundation\Request;
 use RFM\Storage\StorageInterface;
-use RFM\Storage\ApiInterface;
+use RFM\API\ApiInterface;
 
 // path to "application" folder
 defined('FM_APP_PATH') or define('FM_APP_PATH', dirname(__FILE__));
@@ -83,7 +83,7 @@ class Application extends Container {
     public function getStorage($name)
     {
         if(!isset($this->storageRegistry[$name])) {
-            throw new \Exception("Storage with name \"{$name}\" is not found.");
+            throw new \Exception("Storage with name \"{$name}\" is not set.");
         }
 
         return $this->storageRegistry[$name];
@@ -158,6 +158,14 @@ class Application extends Container {
         if ($path) {
             $config = $this->mergeConfigs(require $path, $options);
             $this->make('config')->set($name, $config);
+
+            // update logger configuration
+            if (config("{$name}.logger.enabled") === true) {
+                logger()->enabled = true;
+            }
+            if (is_string(config("{$name}.logger.file"))) {
+                logger()->file = config("{$name}.logger.file");
+            }
         }
     }
 
@@ -169,7 +177,7 @@ class Application extends Container {
      */
     public function getConfigurationPath($name)
     {
-        return $this->basePath() . DS . 'config' . DS . $name.'.php';
+        return $this->basePath() . DS . 'config' . DS . "config.{$name}.php";
     }
 
     /**

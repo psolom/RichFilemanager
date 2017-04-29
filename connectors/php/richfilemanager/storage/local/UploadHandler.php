@@ -3,19 +3,22 @@
 namespace RFM\Storage\Local;
 
 use RFM\Storage\BaseUploadHandler;
-use RFM\Storage\StorageTrait;
 
 class UploadHandler extends BaseUploadHandler
 {
-    use IdentityTrait;
-    use StorageTrait;
-
     /**
      * Upload path (target folder) model.
      *
      * @var ItemModel
      */
     protected $model;
+
+    /**
+     * Storage instance.
+     *
+     * @var Storage
+     */
+    protected $storage;
 
     /**
      * UploadHandler constructor.
@@ -29,10 +32,12 @@ class UploadHandler extends BaseUploadHandler
         parent::__construct($options, $initialize, $error_messages);
 
         $this->model = $this->options['model'];
+        $this->storage = $this->options['storage'];
+
         $this->options['upload_dir'] = $this->model->pathAbsolute;
         $this->options['param_name'] = 'files';
         $this->options['readfile_chunk_size'] = 10 * 1024 * 1024;
-        $this->options['max_file_size'] = $this->config('upload.fileSizeLimit');
+        $this->options['max_file_size'] = $this->storage->config('upload.fileSizeLimit');
         // ItemModel::checkWritePermission() is used instead of this regex check
         $this->options['accept_file_types'] = '/.+$/i';
         // no need to override, this list fits for images handling libs
@@ -47,47 +52,52 @@ class UploadHandler extends BaseUploadHandler
         // original image settings
         $this->options['image_versions'] = array(
             '' => array(
-                'auto_orient' => $this->config('images.main.autoOrient'),
-                'max_width' => $this->config('images.main.maxWidth'),
-                'max_height' => $this->config('images.main.maxHeight'),
+                'auto_orient' => $this->storage->config('images.main.autoOrient'),
+                'max_width' => $this->storage->config('images.main.maxWidth'),
+                'max_height' => $this->storage->config('images.main.maxHeight'),
             ),
         );
         // image thumbnail settings
-        if($this->config('images.thumbnail.enabled') === true) {
+        if($this->storage->config('images.thumbnail.enabled') === true) {
             $this->options['image_versions']['thumbnail'] = array(
                 'upload_dir' => rtrim($this->model->thumbnail()->pathAbsolute, '/'),
-                'crop' => $this->config('images.thumbnail.crop'),
-                'max_width' => $this->config('images.thumbnail.maxWidth'),
-                'max_height' => $this->config('images.thumbnail.maxHeight'),
+                'crop' => $this->storage->config('images.thumbnail.crop'),
+                'max_width' => $this->storage->config('images.thumbnail.maxWidth'),
+                'max_height' => $this->storage->config('images.thumbnail.maxHeight'),
             );
         }
 
         $this->error_messages['accept_file_types'] = 'INVALID_FILE_TYPE';
-        $this->error_messages['max_file_size'] = ['UPLOAD_FILES_SMALLER_THAN', [round($this->config('upload.fileSizeLimit') / 1000 / 1000, 2) . ' Mb']];
-        $this->error_messages['max_storage_size'] = ['STORAGE_SIZE_EXCEED', [round($this->config('options.fileRootSizeLimit') / 1000 / 1000, 2) . ' Mb']];
+        $this->error_messages['max_file_size'] = ['UPLOAD_FILES_SMALLER_THAN', [round($this->storage->config('upload.fileSizeLimit') / 1000 / 1000, 2) . ' Mb']];
+        $this->error_messages['max_storage_size'] = ['STORAGE_SIZE_EXCEED', [round($this->storage->config('options.fileRootSizeLimit') / 1000 / 1000, 2) . ' Mb']];
     }
 
     public function create_thumbnail_image($file_name)
     {
-        $file_path = $this->get_upload_path($file_name);
-        if ($this->is_valid_image_file($file_path)) {
+        $file = new \stdClass();
+        $file->name = $file_name;
+        $file->path = $this->get_upload_path($file->name);
+        $file->size = $this->get_file_size($file->path);
+
+        if ($this->is_valid_image_file($file)) {
             $version = 'thumbnail';
             if (isset($this->options['image_versions'][$version])) {
                 $thumbnail_options = $this->options['image_versions'][$version];
-                $this->create_scaled_image($file_name, $version, $thumbnail_options);
+                $this->create_scaled_image($file, $version, $thumbnail_options);
                 // Free memory:
-                $this->destroy_image_object($file_path);
+                $this->destroy_image_object($file->path);
             }
         }
     }
 
     protected function trim_file_name($file_path, $name, $size, $type, $error, $index, $content_range)
     {
-        return $this->storage()->normalizeString($name, array('.', '-'));
+        return $this->storage->normalizeString($name, array('.', '-'));
     }
 
-    protected function get_unique_filename($file_path, $name, $size, $type, $error, $index, $content_range) {
-        if ($this->config('upload.overwrite')) {
+    protected function get_unique_filename($file_path, $name, $size, $type, $error, $index, $content_range)
+    {
+        if ($this->storage->config('upload.overwrite')) {
             return $name;
         }
         return parent::get_unique_filename($file_path, $name, $size, $type, $error, $index, $content_range);
@@ -121,8 +131,8 @@ class UploadHandler extends BaseUploadHandler
         } else {
             $file_size = $content_length;
         }
-        if ($this->config('options.fileRootSizeLimit') > 0 &&
-            ($file_size + $this->storage()->getRootTotalSize()) > $this->config('options.fileRootSizeLimit')) {
+        if ($this->storage->config('options.fileRootSizeLimit') > 0 &&
+            ($file_size + $this->storage->getRootTotalSize()) > $this->storage->config('options.fileRootSizeLimit')) {
             $file->error = $this->get_error_message('max_storage_size');
             return false;
         }

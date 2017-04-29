@@ -10,7 +10,7 @@
  *  @copyright	Authors
  */
 
-$config = require 'storage.local.php';
+$config = require 'config.local.php';
 
 /**
  * Default value "true".

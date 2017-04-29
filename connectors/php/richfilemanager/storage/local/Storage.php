@@ -5,7 +5,6 @@ namespace RFM\Storage\Local;
 use RFM\Facade\Log;
 use RFM\Storage\BaseStorage;
 use RFM\Storage\StorageInterface;
-use RFM\Storage\StorageTrait;
 
 /**
  *	Local storage class.
@@ -17,10 +16,7 @@ use RFM\Storage\StorageTrait;
 
 class Storage extends BaseStorage implements StorageInterface
 {
-    use IdentityTrait;
-    use StorageTrait;
-
-	protected $documentRoot;
+    protected $documentRoot;
 	protected $storageRoot;
 	protected $dynamicRoot;
     protected $defaultDir = 'userfiles';
@@ -32,35 +28,43 @@ class Storage extends BaseStorage implements StorageInterface
      */
 	public function __construct($config = [])
     {
-		parent::__construct($config);
+		$this->setName('local');
+		$this->setConfig($config);
+        $this->setDefaults();
+	}
 
-		$fileRoot = $this->config('options.fileRoot');
-		if ($fileRoot !== false) {
-			// takes $_SERVER['DOCUMENT_ROOT'] as files root; "fileRoot" is a suffix
-			if($this->config('options.serverRoot') === true) {
-				$this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
-				$this->storageRoot = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
-			}
-			// takes "fileRoot" as files root; "fileRoot" is a full server path
-			else {
-				$this->documentRoot = $fileRoot;
-				$this->storageRoot = $fileRoot;
-			}
-		} else {
+    /**
+     * Set paths and other initial data.
+     */
+    protected function setDefaults()
+    {
+        $fileRoot = $this->config('options.fileRoot');
+        if ($fileRoot !== false) {
+            // takes $_SERVER['DOCUMENT_ROOT'] as files root; "fileRoot" is a suffix
+            if($this->config('options.serverRoot') === true) {
+                $this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
+                $this->storageRoot = $_SERVER['DOCUMENT_ROOT'] . '/' . $fileRoot;
+            }
+            // takes "fileRoot" as files root; "fileRoot" is a full server path
+            else {
+                $this->documentRoot = $fileRoot;
+                $this->storageRoot = $fileRoot;
+            }
+        } else {
             // default storage folder in case of default RFM structure
-			$this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
-			$this->storageRoot = dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME']))) . '/' . $this->defaultDir;
-		}
+            $this->documentRoot = $_SERVER['DOCUMENT_ROOT'];
+            $this->storageRoot = dirname(dirname(dirname($_SERVER['SCRIPT_FILENAME']))) . '/' . $this->defaultDir;
+        }
 
-		// normalize slashes in paths
+        // normalize slashes in paths
         $this->documentRoot = $this->cleanPath($this->documentRoot);
-		$this->storageRoot = $this->cleanPath($this->storageRoot . '/');
+        $this->storageRoot = $this->cleanPath($this->storageRoot . '/');
         $this->dynamicRoot = $this->subtractPath($this->storageRoot, $this->documentRoot);
 
-		Log::info('$this->storageRoot: "' . $this->storageRoot . '"');
-		Log::info('$this->documentRoot: "' . $this->documentRoot . '"');
-		Log::info('$this->dynamicRoot: "' . $this->dynamicRoot . '"');
-	}
+        Log::info('$this->storageRoot: "' . $this->storageRoot . '"');
+        Log::info('$this->documentRoot: "' . $this->documentRoot . '"');
+        Log::info('$this->dynamicRoot: "' . $this->dynamicRoot . '"');
+    }
 
     /**
      * Set user storage folder.
@@ -191,18 +195,9 @@ class Storage extends BaseStorage implements StorageInterface
 	{
 		return new UploadHandler([
 			'model' => $model,
+			'storage' => $this,
 		]);
 	}
-
-    /**
-     * Format timestamp string
-     * @param string $timestamp
-     * @return string
-     */
-    public function formatDate($timestamp)
-    {
-        return date($this->config('options.dateFormat'), $timestamp);
-    }
 
     /**
      * Calculate total size of all files.

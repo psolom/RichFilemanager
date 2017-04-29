@@ -1,16 +1,25 @@
 <?php
 
-namespace RFM\Storage\S3;
+namespace RFM\Api;
 
 use RFM\Facade\Input;
-use RFM\Storage\ApiInterface;
-use RFM\Storage\StorageTrait;
 use RFM\Facade\Log;
+use RFM\Storage\Local\ItemModel;
 
-class Api implements ApiInterface
+class LocalApi implements ApiInterface
 {
-    use IdentityTrait;
-    use StorageTrait;
+    /**
+     * @var \RFM\Storage\Local\Storage
+     */
+    protected $storage;
+
+    /**
+     * Api constructor.
+     */
+    public function __construct()
+    {
+        $this->storage = app()->getStorage('local');
+    }
 
     /**
      * @inheritdoc
@@ -20,15 +29,15 @@ class Api implements ApiInterface
         // config options that affect the client-side
         $shared_config = [
             'security' => [
-                'readOnly' => $this->config('security.readOnly'),
+                'readOnly' => $this->storage->config('security.readOnly'),
                 'extensions' => [
-                    'policy' => $this->config('security.extensions.policy'),
-                    'ignoreCase' => $this->config('security.extensions.ignoreCase'),
-                    'restrictions' => $this->config('security.extensions.restrictions'),
+                    'policy' => $this->storage->config('security.extensions.policy'),
+                    'ignoreCase' => $this->storage->config('security.extensions.ignoreCase'),
+                    'restrictions' => $this->storage->config('security.extensions.restrictions'),
                 ],
             ],
             'upload' => [
-                'fileSizeLimit' => $this->config('upload.fileSizeLimit'),
+                'fileSizeLimit' => $this->storage->config('upload.fileSizeLimit'),
             ],
         ];
 
@@ -63,7 +72,9 @@ class Api implements ApiInterface
             app()->error('UNABLE_TO_OPEN_DIRECTORY', [$model->pathRelative]);
         } else {
             while (false !== ($file = readdir($handle))) {
-                array_push($files_list, $file);
+                if ($file != "." && $file != "..") {
+                    array_push($files_list, $file);
+                }
             }
             closedir($handle);
 
@@ -91,9 +102,6 @@ class Api implements ApiInterface
         $model = new ItemModel(Input::get('path'));
         Log::info('opening file "' . $model->pathAbsolute . '"');
 
-        // NOTE: S3 doesn't provide a way to check if file doesn't exist or just has a permissions restriction,
-        // therefore it is supposed the file is prohibited by default and the appropriate message is returned.
-        // https://github.com/aws/aws-sdk-php/issues/969
         $model->checkPath();
         $model->checkReadPermission();
         $model->checkRestrictions();
@@ -116,7 +124,7 @@ class Api implements ApiInterface
         $model->checkPath();
         $model->checkWritePermission();
 
-        $content = $this->storage()->initUploader($model)->post(false);
+        $content = $this->storage->initUploader($model)->post(false);
 
         $response_data = [];
         $files = isset($content['files']) ? $content['files'] : null;
@@ -127,7 +135,7 @@ class Api implements ApiInterface
                 $error = is_array($file->error) ? $file->error : [$file->error];
                 app()->error($error[0], isset($error[1]) ? $error[1] : []);
             } else {
-                $uploadedPath = $this->storage()->cleanPath('/' . $model->pathRelative . '/' . $file->name);
+                $uploadedPath = $this->storage->cleanPath('/' . $model->pathRelative . '/' . $file->name);
                 $modelUploaded = new ItemModel($uploadedPath);
                 $response_data[] = $modelUploaded->getInfo();
             }
@@ -150,8 +158,8 @@ class Api implements ApiInterface
         $modelTarget->checkPath();
         $modelTarget->checkWritePermission();
 
-        $dirName = $this->storage()->normalizeString(trim($targetName, '/')) . '/';
-        $relativePath = $this->storage()->cleanPath('/' . $targetPath . '/' . $dirName);
+        $dirName = $this->storage->normalizeString(trim($targetName, '/')) . '/';
+        $relativePath = $this->storage->cleanPath('/' . $targetPath . '/' . $dirName);
 
         $model = new ItemModel($relativePath);
         Log::info('adding folder "' . $model->pathAbsolute . '"');
@@ -188,11 +196,6 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
-        // forbid bulk operations on objects
-        if ($modelOld->isDir && !$this->config('allowBulk')) {
-            app()->error('FORBIDDEN_ACTION_DIR');
-        }
-
         $modelNew = new ItemModel($modelOld->closest()->pathRelative . $filename . $suffix);
         Log::info('moving "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
@@ -218,15 +221,13 @@ class Api implements ApiInterface
             }
         }
 
-        if ($this->storage()->renameRecursive($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
+        // rename file or folder
+        if (rename($modelOld->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('renamed "' . $modelOld->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
+            // rename thumbnail file or thumbnails folder if exists
             if ($modelThumbOld->isExists) {
-                if ($this->config('images.thumbnail.useLocalStorage')) {
-                    rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
-                } else {
-                    $this->storage()->renameRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
-                }
+                rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
             }
         } else {
             if ($modelOld->isDir) {
@@ -261,11 +262,6 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
-        // forbid bulk operations on objects
-        if ($modelSource->isDir && !$this->config('allowBulk')) {
-            app()->error('FORBIDDEN_ACTION_DIR');
-        }
-
         // check items permissions
         $modelSource->checkPath();
         $modelSource->checkReadPermission();
@@ -290,23 +286,26 @@ class Api implements ApiInterface
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
             $modelThumbOld->checkReadPermission();
+            if ($modelThumbNew->closest()->isExists) {
+                $modelThumbNew->closest()->checkWritePermission();
+            }
         }
 
-        if ($this->storage()->copyRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+        // copy file or folder
+        if($this->storage->copyRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('copied "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
+            // copy thumbnail file or thumbnails folder
             if ($modelThumbOld->isExists) {
-                if ($this->config('images.thumbnail.useLocalStorage')) {
-                    app()->getStorage('local')->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
-                } else {
-                    $this->storage()->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                if ($modelThumbNew->closest()->isExists) {
+                    $this->storage->copyRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 }
             }
         } else {
             if ($modelSource->isDir) {
-                app()->error('ERROR_COPYING_DIRECTORY', [$modelSource->pathRelative, $modelNew->pathRelative]);
+                app()->error('ERROR_COPYING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
             } else {
-                app()->error('ERROR_COPYING_FILE', [$modelSource->pathRelative, $modelNew->pathRelative]);
+                app()->error('ERROR_COPYING_FILE', [$basename, $modelTarget->pathRelative]);
             }
         }
 
@@ -335,11 +334,6 @@ class Api implements ApiInterface
             app()->error('NOT_ALLOWED');
         }
 
-        // forbid bulk operations on objects
-        if ($modelSource->isDir && !$this->config('allowBulk')) {
-            app()->error('FORBIDDEN_ACTION_DIR');
-        }
-
         // check items permissions
         $modelSource->checkPath();
         $modelSource->checkWritePermission();
@@ -364,23 +358,29 @@ class Api implements ApiInterface
         // check thumbnail file or thumbnails folder permissions
         if ($modelThumbOld->isExists) {
             $modelThumbOld->checkWritePermission();
+            if ($modelThumbNew->closest()->isExists) {
+                $modelThumbNew->closest()->checkWritePermission();
+            }
         }
 
-        if ($this->storage()->renameRecursive($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
+        // move file or folder
+        if (rename($modelSource->pathAbsolute, $modelNew->pathAbsolute)) {
             Log::info('moved "' . $modelSource->pathAbsolute . '" to "' . $modelNew->pathAbsolute . '"');
 
+            // move thumbnail file or thumbnails folder if exists
             if ($modelThumbOld->isExists) {
-                if ($this->config('images.thumbnail.useLocalStorage')) {
+                // do if target paths exists, otherwise remove old thumbnail(s)
+                if ($modelThumbNew->closest()->isExists) {
                     rename($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
                 } else {
-                    $this->storage()->renameRecursive($modelThumbOld->pathAbsolute, $modelThumbNew->pathAbsolute);
+                    $modelThumbOld->remove();
                 }
             }
         } else {
             if ($modelSource->isDir) {
-                app()->error('ERROR_MOVING_DIRECTORY', [$modelSource->pathRelative, $modelNew->pathRelative]);
+                app()->error('ERROR_MOVING_DIRECTORY', [$basename, $modelTarget->pathRelative]);
             } else {
-                app()->error('ERROR_MOVING_FILE', [$modelSource->pathRelative, $modelNew->pathRelative]);
+                app()->error('ERROR_MOVING_FILE', [$basename, $modelTarget->pathRelative]);
             }
         }
 
@@ -430,7 +430,7 @@ class Api implements ApiInterface
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        $result = file_put_contents($model->pathAbsolute, Input::get('content'));
+        $result = file_put_contents($model->pathAbsolute, Input::get('content'), LOCK_EX);
 
         if(!is_numeric($result)) {
             app()->error('ERROR_SAVING_FILE');
@@ -462,7 +462,7 @@ class Api implements ApiInterface
 
         $filesize = filesize($model->pathAbsolute);
         $length = $filesize;
-        $context = null;
+        $offset = 0;
 
         if(isset($_SERVER['HTTP_RANGE'])) {
             if(!preg_match('/bytes=(\d+)-(\d+)?/', $_SERVER['HTTP_RANGE'], $matches)) {
@@ -487,12 +487,6 @@ class Api implements ApiInterface
 
             $bytes_start = $offset;
             $bytes_end = $offset + $length - 1;
-            $context = stream_context_create([
-                's3' => [
-                    'seekable' => true,
-                    'Range' => "bytes={$bytes_start}-{$bytes_end}",
-                ]
-            ]);
 
             header('HTTP/1.1 206 Partial Content');
             // A full-length file will indeed be "bytes 0-x/x+1", think of 0-indexed array counts
@@ -502,12 +496,24 @@ class Api implements ApiInterface
             header('Accept-Ranges: bytes');
         }
 
-        header('Content-Type: ' . $model->getMimeType());
+        header('Content-Type: ' . mime_content_type($model->pathAbsolute));
         header("Content-Transfer-Encoding: binary");
         header("Content-Length: " . $length);
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
-        readfile($model->pathAbsolute, null, $context);
+        $fp = fopen($model->pathAbsolute, 'r');
+        fseek($fp, $offset);
+        $position = 0;
+
+        while($position < $length) {
+            $chunk = min($length - $position, 1024 * 8);
+
+            echo fread($fp, $chunk);
+            flush();
+            ob_flush();
+
+            $position += $chunk;
+        }
         exit;
     }
 
@@ -524,12 +530,12 @@ class Api implements ApiInterface
         }
 
         // if $thumbnail is set to true we return the thumbnail
-        if ($thumbnail === true && $this->config('images.thumbnail.enabled')) {
+        if ($thumbnail === true && $this->storage->config('images.thumbnail.enabled')) {
             // create thumbnail model
             $model = $modelImage->thumbnail();
 
             // generate thumbnail if it doesn't exist or caching is disabled
-            if (!$model->isExists || $this->config('images.thumbnail.cache') === false) {
+            if (!$model->isExists || $this->storage->config('images.thumbnail.cache') === false) {
                 $modelImage->createThumbnail();
             }
         } else {
@@ -543,7 +549,7 @@ class Api implements ApiInterface
 
         header("Content-Type: image/octet-stream");
         header("Content-Transfer-Encoding: binary");
-        header("Content-Length: " . filesize($model->pathAbsolute), true);
+        header("Content-Length: " . $this->storage->getRealFileSize($model->pathAbsolute));
         header('Content-Disposition: inline; filename="' . basename($model->pathAbsolute) . '"');
 
         readfile($model->pathAbsolute);
@@ -570,16 +576,21 @@ class Api implements ApiInterface
         $info = $model->getInfo();
         $modelThumb = $model->thumbnail();
 
-        // check thumbnail file or thumbnails folder permissions
-        if ($modelThumb->isExists) {
-            $modelThumb->checkWritePermission();
-        }
-
-        if ($model->remove()) {
+        if ($model->isDir) {
+            $this->storage->unlinkRecursive($model->pathAbsolute);
             Log::info('deleted "' . $model->pathAbsolute . '"');
 
+            // delete thumbnail if exists
             if ($modelThumb->isExists) {
-                $modelThumb->remove();
+                $this->storage->unlinkRecursive($modelThumb->pathAbsolute);
+            }
+        } else {
+            unlink($model->pathAbsolute);
+            Log::info('deleted "' . $model->pathAbsolute . '"');
+
+            // delete thumbnails if exists
+            if ($modelThumb->isExists) {
+                unlink($modelThumb->pathAbsolute);
             }
         }
 
@@ -598,8 +609,9 @@ class Api implements ApiInterface
         $model->checkReadPermission();
         $model->checkRestrictions();
 
-        // no direct way to download S3 folders
-        if($model->isDir) {
+        // check if not requesting root storage folder
+        // TODO: This restriction seems arbitration, it could be useful for business clients
+        if ($model->isDir && $model->isRoot()) {
             app()->error('NOT_ALLOWED');
         }
 
@@ -607,17 +619,46 @@ class Api implements ApiInterface
             return $model->getInfo();
         } else {
             $targetPath = $model->pathAbsolute;
+
+            if ($model->isDir) {
+                $destinationPath = sys_get_temp_dir() . '/rfm_' . uniqid() . '.zip';
+
+                // if Zip archive is created
+                if ($this->storage->zipFile($targetPath, $destinationPath, true)) {
+                    $targetPath = $destinationPath;
+                } else {
+                    app()->error('ERROR_CREATING_ZIP');
+                }
+            }
+            $fileSize = $this->storage->getRealFileSize($targetPath);
+
             header('Content-Description: File Transfer');
-            header('Content-Type: ' . $model->getMimeType());
+            header('Content-Type: ' . mime_content_type($targetPath));
             header('Content-Disposition: attachment; filename="' . basename($targetPath) . '"');
             header('Content-Transfer-Encoding: binary');
-            header('Content-Length: ' . filesize($targetPath));
+            header('Content-Length: ' . $fileSize);
             // handle caching
             header('Pragma: public');
             header('Expires: 0');
             header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
 
-            readfile($targetPath);
+            // read file by chunks to handle large files
+            // if you face an issue while downloading large files yet, try the following solution:
+            // https://github.com/servocoder/RichFilemanager/issues/78
+
+            $chunkSize = 5 * 1024 * 1024;
+            if ($chunkSize && $fileSize > $chunkSize) {
+                $handle = fopen($targetPath, 'rb');
+                while (!feof($handle)) {
+                    echo fread($handle, $chunkSize);
+                    @ob_flush();
+                    @flush();
+                }
+                fclose($handle);
+            } else {
+                readfile($targetPath);
+            }
+
             Log::info('downloaded "' . $targetPath . '"');
             exit;
         }
@@ -632,11 +673,12 @@ class Api implements ApiInterface
         $attributes = [
             'size' => 0,
             'files' => 0,
-            'sizeLimit' => $this->config('options.fileRootSizeLimit'),
+            'folders' => 0,
+            'sizeLimit' => $this->storage->config('options.fileRootSizeLimit'),
         ];
 
         try {
-            $this->storage()->getDirSummary($path, $attributes);
+            $this->storage->getDirSummary($path, $attributes);
         } catch (\Exception $e) {
             app()->error('ERROR_SERVER');
         }
@@ -672,15 +714,8 @@ class Api implements ApiInterface
             app()->error('FORBIDDEN_ACTION_DIR');
         }
 
-        // copy archive from S3 storage to local system temporary folder
-        $pathTemp = sys_get_temp_dir() . '/' . uniqid();
-        if (!copy($modelSource->pathAbsolute, $pathTemp)) {
-            app()->error('ERROR_COPYING_FILE', [$modelSource->pathRelative, $pathTemp]);
-            app()->error('ERROR_SERVER');
-        }
-
         $zip = new \ZipArchive();
-        if ($zip->open($pathTemp) !== true) {
+        if ($zip->open($modelSource->pathAbsolute) !== true) {
             app()->error('ERROR_EXTRACTING_FILE');
         }
 
@@ -715,7 +750,7 @@ class Api implements ApiInterface
             $model = new ItemModel($modelTarget->pathRelative . $filename);
 
             if ($filename[strlen($filename) - 1] !== "/" && $model->isUnrestricted()) {
-                $copied = copy('zip://' . $pathTemp . '#' . $filename, $model->pathAbsolute);
+                $copied = copy('zip://' . $modelSource->pathAbsolute . '#' . $filename, $model->pathAbsolute);
 
                 if ($copied && strpos($filename, '/') === false) {
                     $rootLevelItems[] = $model;
@@ -728,8 +763,6 @@ class Api implements ApiInterface
         foreach ($rootLevelItems as $model) {
             $responseData[] = $model->getInfo();
         }
-
-        unlink($pathTemp);
 
         return $responseData;
     }

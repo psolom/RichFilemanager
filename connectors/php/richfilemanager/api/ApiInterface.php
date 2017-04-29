@@ -1,6 +1,6 @@
 <?php
 
-namespace RFM\Storage;
+namespace RFM\Api;
 
 interface ApiInterface
 {

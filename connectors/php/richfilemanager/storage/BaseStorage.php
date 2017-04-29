@@ -5,51 +5,65 @@ namespace RFM\Storage;
 /**
  *    BaseStorage PHP class
  *
- *    Base abstract class created to define base methods
+ *    Base class created to define base methods
  *
  *    @license    MIT License
  *    @author        Pavel Solomienko <https://github.com/servocoder/>
  *    @copyright    Authors
  */
 
-abstract class BaseStorage
+class BaseStorage
 {
-    use StorageTrait;
+    /**
+     * Storage name string.
+     *
+     * @var string
+     */
+    private $storageName;
 
     /**
-     * BaseStorage constructor.
+     * Set unique name for storage.
      *
-     * @param array $config
+     * @param string $name
      */
-    public function __construct($config = [])
+    protected function setName($name)
     {
-        // fix display non-latin chars correctly
-        // https://github.com/servocoder/RichFilemanager/issues/7
-        setlocale(LC_CTYPE, 'en_US.UTF-8');
-
-        // fix for undefined timezone in php.ini
-        // https://github.com/servocoder/RichFilemanager/issues/43
-        if(!ini_get('date.timezone')) {
-            date_default_timezone_set('GMT');
-        }
-
-        $this->setConfig($config);
+        $this->storageName = $name;
     }
 
     /**
      * @inheritdoc
      */
-    public function setConfig($options)
+    public function getName()
     {
-        app()->configure('storage.' . $this->getName(), $options);
+        return $this->storageName;
+    }
 
-        // update logger configuration
-        if ($this->config('logger.enabled') === true) {
-            logger()->enabled = true;
-        }
-        if (is_string($this->config('logger.file'))) {
-            logger()->file = $this->config('logger.file');
-        }
+    /**
+     * @inheritdoc
+     */
+    public function setConfig($config)
+    {
+        app()->configure($this->getName(), $config);
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function config($key = null, $default = null)
+    {
+        return config($this->getName() . ".{$key}", $default);
+    }
+
+    /**
+     * Format timestamp string.
+     *
+     * @param integer $timestamp
+     * @return string
+     */
+    public function formatDate($timestamp)
+    {
+        return date($this->config('options.dateFormat'), $timestamp);
     }
 
     /**

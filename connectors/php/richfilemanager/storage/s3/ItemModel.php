@@ -3,13 +3,9 @@
 namespace RFM\Storage\S3;
 
 use RFM\Facade\Log;
-use RFM\Storage\StorageTrait;
 
 class ItemModel
 {
-    use IdentityTrait;
-    use StorageTrait;
-
     const TYPE_FILE = 'file';
     const TYPE_FOLDER = 'folder';
 
@@ -54,6 +50,11 @@ class ItemModel
             'timestamp' => '',
         ]
     ];
+
+    /**
+     * @var Storage
+     */
+    protected $storage;
 
     /**
      * Absolute path for item model, based on relative path.
@@ -116,6 +117,7 @@ class ItemModel
      */
     public function __construct($path, $isThumbnail = false)
     {
+        $this->storage = app()->getStorage('s3');
         $this->pathRelative = $path;
         $this->isThumbnail = $isThumbnail;
         $this->pathAbsolute = $this->getAbsolutePath();
@@ -147,7 +149,7 @@ class ItemModel
         $model['attributes']['readable'] = 1;
         $model['attributes']['writable'] = 1;
         $model['attributes']['timestamp'] = $filemtime;
-        $model['attributes']['modified'] = $this->storage()->formatDate($filemtime);
+        $model['attributes']['modified'] = $this->storage->formatDate($filemtime);
         //$model['attributes']['created'] = $model['attributes']['modified']; // PHP cannot get create timestamp
         return $model;
     }
@@ -164,7 +166,7 @@ class ItemModel
             // dirname() trims trailing slash
             $path = dirname($this->pathRelative) . '/';
             // root folder returned as backslash for Windows
-            $path = $this->storage()->cleanPath($path);
+            $path = $this->storage->cleanPath($path);
 
             // can't get parent
             if ($this->isRoot()) {
@@ -228,10 +230,10 @@ class ItemModel
      */
     public function getAbsolutePath()
     {
-        if ($this->isThumbnail && $this->config('images.thumbnail.useLocalStorage')) {
+        if ($this->isThumbnail && $this->storage->config('images.thumbnail.useLocalStorage')) {
             $pathRoot = app()->getStorage('local')->getRoot();
         } else {
-            $pathRoot = $this->storage()->getRoot();
+            $pathRoot = $this->storage->getRoot();
         }
 
         return rtrim($pathRoot, '/') . $this->pathRelative;
@@ -245,9 +247,9 @@ class ItemModel
      */
     public function getDynamicPath()
     {
-        $path = $this->storage()->getDynamicRoot() . '/' . $this->pathRelative;
+        $path = $this->storage->getDynamicRoot() . '/' . $this->pathRelative;
 
-        return $this->storage()->cleanPath($path);
+        return $this->storage->cleanPath($path);
     }
 
     /**
@@ -258,9 +260,9 @@ class ItemModel
      */
     public function getThumbnailPath()
     {
-        $path = '/' . $this->config('images.thumbnail.dir') . '/' . $this->pathRelative;
+        $path = '/' . $this->storage->config('images.thumbnail.dir') . '/' . $this->pathRelative;
 
-        return $this->storage()->cleanPath($path);
+        return $this->storage->cleanPath($path);
     }
 
     /**
@@ -277,7 +279,7 @@ class ItemModel
             return $path;
         }
 
-        $thumbRoot = '/' . trim($this->config('images.thumbnail.dir'), '/');
+        $thumbRoot = '/' . trim($this->storage->config('images.thumbnail.dir'), '/');
         if (strpos($path, $thumbRoot) === 0) {
             // remove thumbnails root folder
             $path = substr($path, strlen($thumbRoot));
@@ -293,11 +295,11 @@ class ItemModel
      */
     public function isRoot()
     {
-        $rootPath = $this->storage()->getRoot();
+        $rootPath = $this->storage->getRoot();
 
         // root for thumbnails is defined in config file
         if ($this->isThumbnail) {
-            $rootPath = $this->storage()->cleanPath($rootPath . '/' . $this->config('images.thumbnail.dir'));
+            $rootPath = $this->storage->cleanPath($rootPath . '/' . $this->storage->config('images.thumbnail.dir'));
         }
 
         return rtrim($rootPath, '/') === rtrim($this->pathAbsolute, '/');
@@ -313,7 +315,7 @@ class ItemModel
     {
         $mime = mime_type_by_extension($this->pathAbsolute);
 
-        return $this->storage()->isImageMimeType($mime);
+        return $this->storage->isImageMimeType($mime);
     }
 
     /**
@@ -323,7 +325,7 @@ class ItemModel
      */
     public function getMimeType()
     {
-        $meta = $this->storage()->getMetaData($this->getDynamicPath());
+        $meta = $this->storage->getMetaData($this->getDynamicPath());
         $type = $meta['content-type'];
         $parts = explode('/', $type);
 
@@ -342,12 +344,12 @@ class ItemModel
     public function remove()
     {
         if ($this->isDir) {
-            if ($this->isThumbnail && $this->config('images.thumbnail.useLocalStorage')) {
+            if ($this->isThumbnail && $this->storage->config('images.thumbnail.useLocalStorage')) {
                 return app()->getStorage('local')->unlinkRecursive($this->pathAbsolute);
             } else {
                 $key = $this->getDynamicPath();
-                $this->storage()->s3->batchDelete($key);
-                return !$this->storage()->isObjectExists($key);
+                $this->storage->s3->batchDelete($key);
+                return !$this->storage->isObjectExists($key);
             }
         } else {
             return unlink($this->pathAbsolute);
@@ -367,7 +369,7 @@ class ItemModel
         }
 
         // check that thumbnail creation is allowed in config file
-        if (!$this->config('images.thumbnail.enabled')) {
+        if (!$this->storage->config('images.thumbnail.enabled')) {
             return;
         }
 
@@ -392,7 +394,7 @@ class ItemModel
             mkdir($modelTarget->pathAbsolute, 0755, true);
         }
 
-        $this->storage()->initUploader($this->closest())
+        $this->storage->initUploader($this->closest())
             ->create_thumbnail_image(basename($this->pathAbsolute));
     }
 
@@ -405,19 +407,19 @@ class ItemModel
     {
         // check the extension (for files):
         $extension = pathinfo($this->pathRelative, PATHINFO_EXTENSION);
-        $extensionRestrictions = $this->config('security.extensions.restrictions');
+        $extensionRestrictions = $this->storage->config('security.extensions.restrictions');
 
-        if ($this->config('security.extensions.ignoreCase')) {
+        if ($this->storage->config('security.extensions.ignoreCase')) {
             $extension = strtolower($extension);
             $extensionRestrictions = array_map('strtolower', $extensionRestrictions);
         }
 
-        if ($this->config('security.extensions.policy') === 'ALLOW_LIST') {
+        if ($this->storage->config('security.extensions.policy') === 'ALLOW_LIST') {
             if (!in_array($extension, $extensionRestrictions)) {
                 // Not in the allowed list, so it's restricted.
                 return false;
             }
-        } else if ($this->config('security.extensions.policy') === 'DISALLOW_LIST') {
+        } else if ($this->storage->config('security.extensions.policy') === 'DISALLOW_LIST') {
             if (in_array($extension, $extensionRestrictions)) {
                 // It's in the disallowed list, so it's restricted.
                 return false;
@@ -440,9 +442,9 @@ class ItemModel
     {
         // check the relative path against the glob patterns:
         $pathRelative = $this->getOriginalPath();
-        $patternRestrictions = $this->config('security.patterns.restrictions');
+        $patternRestrictions = $this->storage->config('security.patterns.restrictions');
 
-        if ($this->config('security.patterns.ignoreCase')) {
+        if ($this->storage->config('security.patterns.ignoreCase')) {
             $pathRelative = strtolower($pathRelative);
             $patternRestrictions = array_map('strtolower', $patternRestrictions);
         }
@@ -456,12 +458,12 @@ class ItemModel
             }
         }
 
-        if ($this->config('security.patterns.policy') === 'ALLOW_LIST') {
+        if ($this->storage->config('security.patterns.policy') === 'ALLOW_LIST') {
             if (!$matchFound) {
                 // relative path did not match the allowed pattern list, so it's restricted:
                 return false;
             }
-        } else if ($this->config('security.patterns.policy') === 'DISALLOW_LIST') {
+        } else if ($this->storage->config('security.patterns.policy') === 'DISALLOW_LIST') {
             if ($matchFound) {
                 // relative path matched the disallowed pattern list, so it's restricted:
                 return false;
@@ -499,7 +501,7 @@ class ItemModel
     public function hasReadPermission()
     {
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->hasSystemReadPermission($this->pathAbsolute) === false) {
+        if ($this->storage->hasSystemReadPermission($this->pathAbsolute) === false) {
             return false;
         }
 
@@ -520,12 +522,12 @@ class ItemModel
     public function hasWritePermission()
     {
         // Check the global `readOnly` config flag:
-        if ($this->config('security.readOnly') !== false) {
+        if ($this->storage->config('security.readOnly') !== false) {
             return false;
         }
 
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->hasSystemWritePermission($this->pathAbsolute) === false) {
+        if ($this->storage->hasSystemWritePermission($this->pathAbsolute) === false) {
             return false;
         }
 
@@ -546,7 +548,7 @@ class ItemModel
     public function isValidPath()
     {
         $valid = true;
-        if(strpos($this->pathAbsolute, $this->storage()->getRoot()) !== 0) {
+        if(strpos($this->pathAbsolute, $this->storage->getRoot()) !== 0) {
             $valid = false;
         }
 
@@ -606,7 +608,7 @@ class ItemModel
     public function checkReadPermission()
     {
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->hasSystemReadPermission($this->pathAbsolute) === false) {
+        if ($this->storage->hasSystemReadPermission($this->pathAbsolute) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 
@@ -627,12 +629,12 @@ class ItemModel
     public function checkWritePermission()
     {
         // Check the global `readOnly` config flag:
-        if ($this->config('security.readOnly') !== false) {
+        if ($this->storage->config('security.readOnly') !== false) {
             app()->error('NOT_ALLOWED');
         }
 
         // Check system permission (O.S./filesystem/NAS)
-        if ($this->storage()->hasSystemWritePermission($this->pathAbsolute) === false) {
+        if ($this->storage->hasSystemWritePermission($this->pathAbsolute) === false) {
             app()->error('NOT_ALLOWED_SYSTEM');
         }
 

@@ -5,7 +5,6 @@ namespace RFM\Storage\S3;
 use RFM\Facade\Log;
 use RFM\Storage\BaseStorage;
 use RFM\Storage\StorageInterface;
-use RFM\Storage\StorageTrait;
 
 /**
  *	AWS S3 storage class.
@@ -17,9 +16,6 @@ use RFM\Storage\StorageTrait;
 
 class Storage extends BaseStorage implements StorageInterface
 {
-    use IdentityTrait;
-    use StorageTrait;
-
     /**
      * Full path to S3 storage bucket including protocol.
      * Being built automatically at the base of S3 credentials.
@@ -41,7 +37,7 @@ class Storage extends BaseStorage implements StorageInterface
     /**
      * S3 client wrapper class.
      *
-     * @var \Aws\S3\S3Client
+     * @var StorageHelper
      */
     public $s3 = null;
 
@@ -49,17 +45,12 @@ class Storage extends BaseStorage implements StorageInterface
      * Storage constructor.
      *
      * @param array $config
-     * @throws \Exception
      */
     public function __construct($config = [])
     {
-        parent::__construct($config);
-
-        if (!$this->config('credentials')) {
-            throw new \Exception("S3 credentials isn't set");
-        }
-
-        $this->s3 = $this->setS3Client($this->config('credentials'));
+        $this->setName('s3');
+        $this->setConfig($config);
+        $this->setS3Client();
 
         $this->dynamicRoot = $this->cleanPath($this->dynamicRoot . '/');
         $this->storageRoot = $this->getS3WrapperPath($this->dynamicRoot);
@@ -67,30 +58,24 @@ class Storage extends BaseStorage implements StorageInterface
 
     /**
      * Set S3 client wrapper.
-     *
-     * @param array $settings
-     * @return StorageHelper
      */
-    public function setS3Client($settings)
+    public function setS3Client()
     {
-        $storage = new StorageHelper;
-        $storage->region = $settings['region'];
-        $storage->bucket = $settings['bucket'];
-        $storage->credentials = $settings['credentials'];
-        $storage->defaultAcl = $settings['defaultAcl'];
+        if (!$this->config('credentials')) {
+            throw new \Exception("S3 storage credentials isn't set");
+        }
 
-        if (isset($settings['cdnHostname'])) {
-            $storage->cdnHostname = $settings['cdnHostname'];
-        }
-        if (isset($settings['debug'])) {
-            $storage->debug = $settings['debug'];
-        }
-        if (isset($settings['options'])) {
-            $storage->options = $settings['options'];
-        }
+        $storage = new StorageHelper;
+        $storage->region = $this->config('credentials.region');
+        $storage->bucket = $this->config('credentials.bucket');
+        $storage->credentials = $this->config('credentials.credentials');
+        $storage->defaultAcl = $this->config('credentials.defaultAcl');
+        $storage->cdnHostname = $this->config('credentials.cdnHostname');
+        $storage->debug = $this->config('credentials.debug', false);
+        $storage->options = $this->config('credentials.options', []);
         $storage->init();
 
-        return $storage;
+        $this->s3 = $storage;
     }
 
     /**
@@ -227,7 +212,7 @@ class Storage extends BaseStorage implements StorageInterface
     {
         $head = $this->s3->head($key, true);
 
-        return $head ? $head['@metadata']['headers'] : $head;
+        return $head ? $head['@metadata']['headers'] : (array) $head;
     }
 
     /**
@@ -252,18 +237,9 @@ class Storage extends BaseStorage implements StorageInterface
 	{
 		return new UploadHandler([
 			'model' => $model,
+            'storage' => $this,
 		]);
 	}
-
-    /**
-     * Format timestamp string
-     * @param string $timestamp
-     * @return string
-     */
-    public function formatDate($timestamp)
-    {
-        return date($this->config('options.dateFormat'), $timestamp);
-    }
 
     /**
      * Calculate total size of all files.
