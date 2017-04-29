@@ -21,7 +21,11 @@
       "role": "Developer"
     }
   ],
+  "config": {
+    "vendor-dir": "connectors/php/vendor"
+  },
   "require": {
-    "php": ">= 5.4.0"
+    "servocoder/richfilemanager-php": "*",
+    "aws/aws-sdk-php": "3.*"
   }
 }
