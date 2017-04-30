@@ -1294,9 +1294,10 @@ class S3Filemanager extends LocalFilemanager
 		$dynamicPath = $this->getDynamicPath($fullPath, false);
 		$meta = $this->metadata($dynamicPath);
 		$mime_type = $meta['content-type'];
+		$type_parts = explode('/', $mime_type);
 
 		// try to define mime type based on file extension if default "octet-stream" is obtained
-		if((end(explode('/', $mime_type)) === 'octet-stream')) {
+		if((end($type_parts) === 'octet-stream')) {
 			$mime_type = mime_type_by_extension($this->get['path']);
 		}
 		return $mime_type;
