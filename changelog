@@ -1,3 +1,12 @@
+Version 2.3.3
+---------------------------
+- bugfix: incorrect displaying of items extracted from archive;
+- bugfix: (S3 storage) configured ACL doesn't apply #152;
+- bugfix: (S3 storage) error upon renaming folders which includes subfolders #168;
+- bugfix: (S3 storage) video doesn't playback on preview #169;
+- bugfix: clipboard copy / cut doesn't work on filetree items #170;
+
+
 Version 2.3.2
 ---------------------------
 - implement "extract" action to unzip archives #22;
