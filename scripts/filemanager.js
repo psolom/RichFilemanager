@@ -759,7 +759,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			// handle view objects
 			if(fmModel.currentPath() === targetPath) {
-				fmModel.itemsModel.addNew(resourceObject);
+				model.itemsModel.addNew(resourceObject);
 			}
 		};
 
@@ -771,11 +771,46 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 
 			// handle view objects
-			var viewItem = fmModel.itemsModel.findByParam('id', resourceObject.id);
+			var viewItem = model.itemsModel.findByParam('id', resourceObject.id);
 			if(viewItem) {
 				viewItem.remove();
 			}
 		};
+
+        // fetch selected view items OR tree nodes
+        this.fetchSelectedItems = function(item) {
+            if (item instanceof TreeNodeModel) {
+                return model.treeModel.getSelected();
+            }
+            if (item instanceof ItemObject) {
+                return model.itemsModel.getSelected();
+            }
+            throw new Error('Unknown item type.');
+        };
+
+        // fetch resource objects out of the selected items
+        this.fetchSelectedObjects = function(item) {
+            var objects = [];
+            $.each(model.fetchSelectedItems(item), function(i, itemObject) {
+                objects.push(itemObject.rdo);
+            });
+            return objects;
+        };
+
+        // check whether view item can be opened based on the event and configuration options
+        function isItemOpenable(event) {
+            // selecting with Ctrl key
+            if(config.manager.selection.enabled && config.manager.selection.useCtrlKey && event.ctrlKey === true) {
+                return false;
+            }
+
+            // single clicked while expected dblclick
+            if(config.manager.dblClickOpen && event.type === 'click') {
+                return false;
+            }
+
+            return true;
+        }
 
 		var PreviewModel = function() {
 			var preview_model = this;
@@ -1053,6 +1088,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return null;
 			};
 
+            this.getSelected = function() {
+                var selectedItems = [];
+                if (tree_model.selectedNode()) {
+                    selectedItems.push(tree_model.selectedNode());
+				}
+                return selectedItems;
+            };
+
 			this.loadNodes = function(targetNode, refresh) {
 				var path = targetNode ? targetNode.id : tree_model.treeData.id;
 				if(targetNode) {
@@ -1165,7 +1208,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							appendTo: '.fm-container',
 							items: getContextMenuItems(node.rdo),
 							callback: function(itemKey, options) {
-								performAction(itemKey, node.rdo);
+								performAction(itemKey, node.rdo, model.fetchSelectedObjects(node));
 							}
 						}
 					}
@@ -1186,187 +1229,186 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					});
 				}
 			};
-
-            var TreeNodeModel = function(resourceObject) {
-				var tree_node = this;
-                this.ancestor = tree_model;
-				this.id = resourceObject.id;
-				this.rdo = resourceObject;
-				this.cdo = { // computed data object
-					isFolder: (resourceObject.type === 'folder'),
-					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
-					cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file'
-				};
-
-				this.nodeTitle = ko.observable(resourceObject.attributes.name);
-				this.children = ko.observableArray([]);
-				this.parentNode = ko.observable(null);
-				this.isSliding = ko.observable(false);
-				this.isLoading = ko.observable(false);
-				this.isLoaded = ko.observable(false);
-				this.isExpanded = ko.observable(false);
-				this.selected = ko.observable(false);
-				this.dragHovered = ko.observable(false);
-				// arrangable properties
-				this.level = ko.observable(0);
-				this.isFirstNode = ko.observable(false);
-				this.isLastNode = ko.observable(false);
-
-				this.nodeTitle.subscribe(function (value) {
-					tree_node.rdo.attributes.name = value;
-				});
-
-				this.children.subscribe(function (value) {
-					tree_model.arrangeNode(tree_node);
-				});
-
-				this.isLoaded.subscribe(function (value) {
-					tree_node.isLoading(!value);
-				});
-
-                this.selected.subscribe(function (value) {
-                    if (value) {
-                        if (tree_model.selectedNode() !== null) {
-                            tree_model.selectedNode().selected(false);
-                        }
-                        tree_model.selectedNode(tree_node);
-                        model.itemsModel.unselectItems();
-                    } else {
-                        tree_model.selectedNode(null);
-					}
-                });
-
-				this.switchNode = function(node) {
-					if(!node.cdo.isFolder) {
-						return false;
-					}
-					if(!node.rdo.attributes.readable) {
-						fm.error(lg.NOT_ALLOWED_SYSTEM);
-						return false;
-					}
-					if(!node.isLoaded()) {
-                        tree_node.openNode(node);
-					} else {
-						tree_model.toggleNode(node);
-					}
-				};
-
-                this.mouseDown = function(node, e) {
-                    node.selected(true);
-                };
-
-                this.nodeClick = function(node, e) {
-					if(!config.manager.dblClickOpen) {
-						tree_node.openNode(node);
-					}
-				};
-
-				this.nodeDblClick = function(node, e) {
-					if(config.manager.dblClickOpen) {
-						tree_node.openNode(node);
-					}
-				};
-
-				this.openNode = function(node, e) {
-					if(node.rdo.type === 'file') {
-						getDetailView(node.rdo);
-					}
-                    if(node.rdo.type === 'folder') {
-                        if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
-                            tree_model.loadNodes(node, true);
-                            getDetailView(node.rdo);
-                        } else {
-                            tree_model.toggleNode(node);
-
-                            fmModel.currentPath(node.id);
-                            fmModel.breadcrumbsModel.splitCurrent();
-                            var dataObjects = [];
-                            $.each(node.children(), function(i, cnode) {
-                                dataObjects.push(cnode.rdo);
-							});
-                            fmModel.itemsModel.setList(dataObjects);
-                        }
-                    }
-				};
-
-				this.remove = function() {
-					tree_node.parentNode().children.remove(tree_node);
-				};
-
-				this.isRoot = function() {
-					return tree_node.level() === tree_model.treeData.id;
-				};
-
-				this.title = ko.pureComputed(function() {
-					return (config.options.showTitleAttr) ? this.rdo.id : null;
-				}, this);
-
-                this.itemClass = ko.pureComputed(function() {
-                    var cssClass = [];
-                    if (this.selected() && config.manager.selection.enabled) {
-                        cssClass.push('ui-selected');
-                    }
-                    if (this.dragHovered()) {
-                        cssClass.push(model.ddModel.hoveredCssClass);
-                    }
-                    return cssClass.join(' ');
-                }, this);
-
-				this.iconClass = ko.pureComputed(function() {
-					var cssClass,
-						extraClass = ['ico'];
-					if(this.cdo.isFolder === true) {
-						cssClass = 'ico_folder';
-						if(this.isLoading() === true) {
-							extraClass.push('loading');
-						} else {
-							extraClass.push('folder');
-							if(!this.rdo.attributes.readable) {
-								extraClass.push('lock');
-							} else if(this.isExpanded() || !this.isExpanded() && this.isSliding()) {
-								extraClass.push('open');
-							}
-						}
-					} else {
-						cssClass = 'ico_file';
-						if(this.rdo.attributes.readable) {
-                            extraClass.push('ext', this.rdo.attributes.extension);
-						} else {
-                            extraClass.push('file', 'lock');
-						}
-					}
-					return cssClass + ' ' + extraClass.join('_');
-				}, this);
-
-				this.switcherClass = ko.pureComputed(function() {
-					var cssClass = [];
-					if (config.filetree.showLine) {
-						if (this.level() === 0 && this.isFirstNode() && this.isLastNode()) {
-							cssClass.push('root');
-						} else if (this.level() == 0 && this.isFirstNode()) {
-							cssClass.push('roots');
-						} else if (this.isLastNode()) {
-							cssClass.push('bottom');
-						} else {
-							cssClass.push('center');
-						}
-					} else {
-						cssClass.push('noline');
-					}
-					if (this.cdo.isFolder) {
-						var isOpen = (this.isExpanded() || !this.isExpanded() && this.isSliding());
-						cssClass.push(isOpen ? 'open' : 'close');
-					} else {
-						cssClass.push('docu');
-					}
-					return cssClass.join('_');
-				}, this);
-
-				this.clusterClass = ko.pureComputed(function() {
-					return (config.filetree.showLine && !this.isLastNode()) ? 'line' : '';
-				}, this);
-			};
 		};
+		
+        var TreeNodeModel = function(resourceObject) {
+            var tree_node = this;
+            this.id = resourceObject.id;
+            this.rdo = resourceObject;
+            this.cdo = { // computed data object
+                isFolder: (resourceObject.type === 'folder'),
+                dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
+                cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file'
+            };
+
+            this.nodeTitle = ko.observable(resourceObject.attributes.name);
+            this.children = ko.observableArray([]);
+            this.parentNode = ko.observable(null);
+            this.isSliding = ko.observable(false);
+            this.isLoading = ko.observable(false);
+            this.isLoaded = ko.observable(false);
+            this.isExpanded = ko.observable(false);
+            this.selected = ko.observable(false);
+            this.dragHovered = ko.observable(false);
+            // arrangable properties
+            this.level = ko.observable(0);
+            this.isFirstNode = ko.observable(false);
+            this.isLastNode = ko.observable(false);
+
+            this.nodeTitle.subscribe(function (value) {
+                tree_node.rdo.attributes.name = value;
+            });
+
+            this.children.subscribe(function (value) {
+                model.treeModel.arrangeNode(tree_node);
+            });
+
+            this.isLoaded.subscribe(function (value) {
+                tree_node.isLoading(!value);
+            });
+
+            this.selected.subscribe(function (value) {
+                if (value) {
+                    if (model.treeModel.selectedNode() !== null) {
+                        model.treeModel.selectedNode().selected(false);
+                    }
+                    model.treeModel.selectedNode(tree_node);
+                    model.itemsModel.unselectItems();
+                } else {
+                    model.treeModel.selectedNode(null);
+                }
+            });
+
+            this.switchNode = function(node) {
+                if(!node.cdo.isFolder) {
+                    return false;
+                }
+                if(!node.rdo.attributes.readable) {
+                    fm.error(lg.NOT_ALLOWED_SYSTEM);
+                    return false;
+                }
+                if(!node.isLoaded()) {
+                    tree_node.openNode(node);
+                } else {
+                    model.treeModel.toggleNode(node);
+                }
+            };
+
+            this.mouseDown = function(node, e) {
+                node.selected(true);
+            };
+
+            this.nodeClick = function(node, e) {
+                if(!config.manager.dblClickOpen) {
+                    tree_node.openNode(node);
+                }
+            };
+
+            this.nodeDblClick = function(node, e) {
+                if(config.manager.dblClickOpen) {
+                    tree_node.openNode(node);
+                }
+            };
+
+            this.openNode = function(node, e) {
+                if(node.rdo.type === 'file') {
+                    getDetailView(node.rdo);
+                }
+                if(node.rdo.type === 'folder') {
+                    if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
+                        model.treeModel.loadNodes(node, true);
+                        getDetailView(node.rdo);
+                    } else {
+                        model.treeModel.toggleNode(node);
+
+                        fmModel.currentPath(node.id);
+                        fmModel.breadcrumbsModel.splitCurrent();
+                        var dataObjects = [];
+                        $.each(node.children(), function(i, cnode) {
+                            dataObjects.push(cnode.rdo);
+                        });
+                        model.itemsModel.setList(dataObjects);
+                    }
+                }
+            };
+
+            this.remove = function() {
+                tree_node.parentNode().children.remove(tree_node);
+            };
+
+            this.isRoot = function() {
+                return tree_node.level() === model.treeModel.treeData.id;
+            };
+
+            this.title = ko.pureComputed(function() {
+                return (config.options.showTitleAttr) ? this.rdo.id : null;
+            }, this);
+
+            this.itemClass = ko.pureComputed(function() {
+                var cssClass = [];
+                if (this.selected() && config.manager.selection.enabled) {
+                    cssClass.push('ui-selected');
+                }
+                if (this.dragHovered()) {
+                    cssClass.push(model.ddModel.hoveredCssClass);
+                }
+                return cssClass.join(' ');
+            }, this);
+
+            this.iconClass = ko.pureComputed(function() {
+                var cssClass,
+                    extraClass = ['ico'];
+                if(this.cdo.isFolder === true) {
+                    cssClass = 'ico_folder';
+                    if(this.isLoading() === true) {
+                        extraClass.push('loading');
+                    } else {
+                        extraClass.push('folder');
+                        if(!this.rdo.attributes.readable) {
+                            extraClass.push('lock');
+                        } else if(this.isExpanded() || !this.isExpanded() && this.isSliding()) {
+                            extraClass.push('open');
+                        }
+                    }
+                } else {
+                    cssClass = 'ico_file';
+                    if(this.rdo.attributes.readable) {
+                        extraClass.push('ext', this.rdo.attributes.extension);
+                    } else {
+                        extraClass.push('file', 'lock');
+                    }
+                }
+                return cssClass + ' ' + extraClass.join('_');
+            }, this);
+
+            this.switcherClass = ko.pureComputed(function() {
+                var cssClass = [];
+                if (config.filetree.showLine) {
+                    if (this.level() === 0 && this.isFirstNode() && this.isLastNode()) {
+                        cssClass.push('root');
+                    } else if (this.level() === 0 && this.isFirstNode()) {
+                        cssClass.push('roots');
+                    } else if (this.isLastNode()) {
+                        cssClass.push('bottom');
+                    } else {
+                        cssClass.push('center');
+                    }
+                } else {
+                    cssClass.push('noline');
+                }
+                if (this.cdo.isFolder) {
+                    var isOpen = (this.isExpanded() || !this.isExpanded() && this.isSliding());
+                    cssClass.push(isOpen ? 'open' : 'close');
+                } else {
+                    cssClass.push('docu');
+                }
+                return cssClass.join('_');
+            }, this);
+
+            this.clusterClass = ko.pureComputed(function() {
+                return (config.filetree.showLine && !this.isLastNode()) ? 'line' : '';
+            }, this);
+        };
 
 		var ItemsModel = function() {
 			var items_model = this;
@@ -1566,7 +1608,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					build: function ($triggerElement, e) {
 						var koItem = ko.dataFor($triggerElement[0]);
 						if(!koItem.selected()) {
-							fmModel.itemsModel.unselectItems(false);
+							model.itemsModel.unselectItems(false);
 							koItem.selected(true);
 						}
 
@@ -1574,155 +1616,136 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							appendTo: '.fm-container',
 							items: getContextMenuItems(koItem.rdo),
 							callback: function(itemKey, options) {
-								var selectedObjects = [];
-								$.each(fmModel.itemsModel.getSelected(), function(i, itemObject) {
-									selectedObjects.push(itemObject.rdo);
-								});
-								performAction(itemKey, koItem.rdo, selectedObjects);
+								performAction(itemKey, koItem.rdo, model.fetchSelectedObjects(koItem));
 							}
 						}
 					}
 				});
 			});
+		};
 
-			var ItemObject = function(resourceObject) {
-				var previewWidth = config.viewer.image.thumbMaxWidth;
-				if(resourceObject.attributes.width && resourceObject.attributes.width < previewWidth) {
-					previewWidth = resourceObject.attributes.width;
-				}
+        var ItemObject = function(resourceObject) {
+            var previewWidth = config.viewer.image.thumbMaxWidth;
+            if(resourceObject.attributes.width && resourceObject.attributes.width < previewWidth) {
+                previewWidth = resourceObject.attributes.width;
+            }
 
-                this.ancestor = items_model;
-				this.id = resourceObject.id; // for search purpose
-				this.rdo = resourceObject; // original resource data object
-				this.cdo = { // computed data object
-					isFolder: (resourceObject.type === 'folder'),
-					sizeFormatted: formatBytes(resourceObject.attributes.size),
-					dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
-					cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
-					imageUrl: createImageUrl(resourceObject, true, true),
-					previewWidth: previewWidth
-				};
-				this.visible = ko.observable(true);
-				this.selected = ko.observable(false);
-                this.dragHovered = ko.observable(false);
+            this.id = resourceObject.id; // for search purpose
+            this.rdo = resourceObject; // original resource data object
+            this.cdo = { // computed data object
+                isFolder: (resourceObject.type === 'folder'),
+                sizeFormatted: formatBytes(resourceObject.attributes.size),
+                dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
+                cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
+                imageUrl: createImageUrl(resourceObject, true, true),
+                previewWidth: previewWidth
+            };
+            this.visible = ko.observable(true);
+            this.selected = ko.observable(false);
+            this.dragHovered = ko.observable(false);
 
-                this.selected.subscribe(function (value) {
-                    if (value && model.treeModel.selectedNode() !== null) {
-                        model.treeModel.selectedNode().selected(false);
+            this.selected.subscribe(function (value) {
+                if (value && model.treeModel.selectedNode() !== null) {
+                    model.treeModel.selectedNode().selected(false);
+                }
+            });
+
+            this.title = ko.pureComputed(function() {
+                return (config.options.showTitleAttr) ? this.rdo.id : null;
+            }, this);
+
+            this.itemClass = ko.pureComputed(function() {
+                var cssClass = [];
+                if (this.selected() && config.manager.selection.enabled) {
+                    cssClass.push('ui-selected');
+                }
+                if (this.dragHovered()) {
+                    cssClass.push(model.ddModel.hoveredCssClass);
+                }
+                return this.cdo.cssItemClass + ' ' + cssClass.join(' ');
+            }, this);
+
+            this.listIconClass = ko.pureComputed(function() {
+                var cssClass,
+                    extraClass = ['ico'];
+                if (this.cdo.isFolder === true) {
+                    cssClass = 'ico_folder';
+                    extraClass.push('folder');
+                    if (!this.rdo.attributes.readable) {
+                        extraClass.push('lock');
                     }
-                });
-
-				this.title = ko.pureComputed(function() {
-					return (config.options.showTitleAttr) ? this.rdo.id : null;
-				}, this);
-
-				this.itemClass = ko.pureComputed(function() {
-					var cssClass = [];
-					if (this.selected() && config.manager.selection.enabled) {
-						cssClass.push('ui-selected');
-					}
-                    if (this.dragHovered()) {
-                        cssClass.push(model.ddModel.hoveredCssClass);
+                } else {
+                    cssClass = 'ico_file';
+                    if (this.rdo.attributes.readable) {
+                        extraClass.push('ext', this.rdo.attributes.extension);
+                    } else {
+                        extraClass.push('file', 'lock');
                     }
-					return this.cdo.cssItemClass + ' ' + cssClass.join(' ');
-				}, this);
+                }
+                return cssClass + ' ' + extraClass.join('_');
+            }, this);
 
-				this.listIconClass = ko.pureComputed(function() {
-                    var cssClass,
-                        extraClass = ['ico'];
+            this.gridIconClass = ko.pureComputed(function() {
+                var cssClass = [],
+                    extraClass = ['ico'];
+                if (!this.cdo.imageUrl) {
+                    cssClass.push('grid-icon');
                     if (this.cdo.isFolder === true) {
-                        cssClass = 'ico_folder';
+                        cssClass.push('ico_folder');
                         extraClass.push('folder');
                         if (!this.rdo.attributes.readable) {
                             extraClass.push('lock');
                         }
                     } else {
-                        cssClass = 'ico_file';
+                        cssClass.push('ico_file');
                         if (this.rdo.attributes.readable) {
                             extraClass.push('ext', this.rdo.attributes.extension);
                         } else {
                             extraClass.push('file', 'lock');
                         }
                     }
-                    return cssClass + ' ' + extraClass.join('_');
-				}, this);
+                    cssClass.push(extraClass.join('_'));
+                }
+                return cssClass.join(' ');
+            }, this);
 
-				this.gridIconClass = ko.pureComputed(function() {
-                    var cssClass = [],
-                        extraClass = ['ico'];
-                    if (!this.cdo.imageUrl) {
-                        cssClass.push('grid-icon');
-                        if (this.cdo.isFolder === true) {
-                            cssClass.push('ico_folder');
-                            extraClass.push('folder');
-                            if (!this.rdo.attributes.readable) {
-                                extraClass.push('lock');
-                            }
-                        } else {
-                            cssClass.push('ico_file');
-                            if (this.rdo.attributes.readable) {
-                                extraClass.push('ext', this.rdo.attributes.extension);
-                            } else {
-                                extraClass.push('file', 'lock');
-                            }
-                        }
-                        cssClass.push(extraClass.join('_'));
+            this.mouseDown = function(item, e) {
+                // case: previously selected items are dragged instead of a newly one
+                // unselect if currently clicked item is not the one of selected items
+                if (!item.selected()) {
+                    model.itemsModel.unselectItems(e.ctrlKey);
+                }
+
+                model.selectionModel.unselect = item.selected();
+                item.selected(true);
+            };
+
+            this.open = function(item, e) {
+                if (model.selectionModel.unselect) {
+                    // case: click + ctrlKey on selected item
+                    if (e.ctrlKey) {
+                        item.selected(false);
                     }
-					return cssClass.join(' ');
-				}, this);
-
-                this.mouseDown = function(item, e) {
-                    // case: previously selected items are dragged instead of a newly one
-                    // unselect if currently clicked item is not the one of selected items
-                    if (!item.selected()) {
-                        fmModel.itemsModel.unselectItems(e.ctrlKey);
+                    // drop selection
+                    if (!e.ctrlKey && config.manager.dblClickOpen) {
+                        model.itemsModel.unselectItems(e.ctrlKey);
+                        item.selected(true);
                     }
+                }
 
-                    model.selectionModel.unselect = item.selected();
-                    item.selected(true);
-                };
+                if(isItemOpenable(e)) {
+                    if(config.options.quickSelect && item.rdo.type === 'file' && has_capability(item.rdo, 'select')) {
+                        selectItem(item.rdo);
+                    } else {
+                        getDetailView(item.rdo);
+                    }
+                }
+            };
 
-				this.open = function(item, e) {
-                    if (model.selectionModel.unselect) {
-                        // case: click + ctrlKey on selected item
-                    	if (e.ctrlKey) {
-                            item.selected(false);
-						}
-						// drop selection
-                        if (!e.ctrlKey && config.manager.dblClickOpen) {
-                            fmModel.itemsModel.unselectItems(e.ctrlKey);
-                            item.selected(true);
-						}
-					}
-
-					if(isItemOpenable(e)) {
-						if(config.options.quickSelect && item.rdo.type === 'file' && has_capability(item.rdo, 'select')) {
-							selectItem(item.rdo);
-						} else {
-							getDetailView(item.rdo);
-						}
-					}
-				};
-
-				this.remove = function() {
-					items_model.objects.remove(this);
-				};
-			};
-
-			function isItemOpenable(event) {
-				// selecting with Ctrl key
-				if(config.manager.selection.enabled && config.manager.selection.useCtrlKey && event.ctrlKey === true) {
-                    return false;
-				}
-
-				// single clicked while expected dblclick
-				if(config.manager.dblClickOpen && event.type === 'click') {
-					return false;
-				}
-
-				return true;
-			}
-		};
+            this.remove = function() {
+                model.itemsModel.objects.remove(this);
+            };
+        };
 
 		var TableViewModel = function() {
 			var SortableHeader = function(name) {
@@ -1884,41 +1907,41 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         };
 
 		var ClipboardModel = function() {
-			var cbItems = [],
-				cbMode = null,
+			var cbMode = null,
+                cbObjects = [],
             	clipboard_model = this,
 				active = capabilities.indexOf('copy') > -1 || capabilities.indexOf('move') > -1;
 
             this.enabled = ko.observable(model.config().options.clipboard && active);
 
-			this.copy = function() {
+			this.copy = function(selected) {
 				if (!clipboard_model.hasCapability('copy')) {
 					return;
 				}
                 cbMode = 'copy';
-                cbItems = model.itemsModel.getSelected();
+                cbObjects = selected;
 			};
 
-			this.cut = function() {
+			this.cut = function(selected) {
                 if (!clipboard_model.hasCapability('cut')) {
                     return;
                 }
                 cbMode = 'cut';
-                cbItems = model.itemsModel.getSelected();
+                cbObjects = selected;
 			};
 
 			this.paste = function() {
                 if (!clipboard_model.hasCapability('paste')) {
                     return;
                 }
-                if (cbMode === null || cbItems.length === 0) {
+                if (cbMode === null || cbObjects.length === 0) {
                     fm.warning(lg.clipboard_empty);
                     return;
                 }
 
                 var	targetPath = model.currentPath();
 
-                processMultipleActions(cbItems, function (i, itemObject) {
+                processMultipleActions(cbObjects, function (i, itemObject) {
                     if (cbMode === 'cut') {
                         return moveItem(itemObject, targetPath);
                     }
@@ -1937,7 +1960,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
             this.isEmpty = function() {
-            	return cbItems.length === 0;
+            	return cbObjects.length === 0;
 			};
 
             this.hasCapability = function(capability) {
@@ -1956,7 +1979,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			function clearClipboard() {
-                cbItems = [];
+                cbObjects = [];
                 cbMode = null;
 			}
 		};
@@ -2340,7 +2363,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             var $cloned,
                                 iconClass;
 
-                            if (getSelected(item).length > 1) {
+                            if (model.fetchSelectedItems(item).length > 1) {
                                 iconClass = 'ico_multiple';
                             } else {
                                 iconClass = (item.rdo.type === "folder")
@@ -2355,7 +2378,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             return $cloned;
                         },
                         start: function(event, ui) {
-                            drag_model.items = getSelected(item);
+                            drag_model.items = model.fetchSelectedItems(item);
                         },
                         drag: function(event, ui) {
                             $(this).draggable('option', 'refreshPositions', drag_model.isScrolling || drag_model.isScrolled);
@@ -2373,7 +2396,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 if(targetItem.rdo.type === "folder" || targetItem.rdo.type === "parent") {
                     $(element).droppable({
                         tolerance: "pointer",
-                        enableExtendedEvents: targetItem.ancestor === model.itemsModel,
+                        enableExtendedEvents: targetItem instanceof ItemObject,
                         accept: function ($draggable) {
                             var dragItem = ko.dataFor($draggable[0]),
                                 type = dragItem ? dragItem.rdo.type : null;
@@ -2430,17 +2453,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 });
                 // prevent on moving (to) protect folder or to the one of selected items
                 return (targetItem.rdo.attributes.writable && matches.length === 0);
-            }
-
-            // fetch selected view items OR tree nodes
-            function getSelected(item) {
-                if (item.ancestor === model.treeModel) {
-                    return [fmModel.treeModel.selectedNode()];
-                }
-                if (item.ancestor === model.itemsModel) {
-                    return fmModel.itemsModel.getSelected();
-                }
-                throw new Error('Unknown item type.');
             }
 
             // mark item as hovered if it accepts draggable item
@@ -3736,11 +3748,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				break;
 
 			case 'copy':
-                fmModel.clipboardModel.copy();
+                fmModel.clipboardModel.copy(objects);
 				break;
 
 			case 'cut':
-                fmModel.clipboardModel.cut();
+                fmModel.clipboardModel.cut(objects);
 				break;
 		}
 	};
