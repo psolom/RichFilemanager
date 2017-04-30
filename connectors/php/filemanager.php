@@ -1,11 +1,10 @@
 <?php
 /**
- *	Filemanager PHP connector
- *  Initial class, put your customizations here
+ * Entry point for PHP connector, put your customizations here.
  *
- *	@license	MIT License
- *  @author		Pavel Solomienko <https://github.com/servocoder/>
- *	@copyright	Authors
+ * @license     MIT License
+ * @author      Pavel Solomienko <https://github.com/servocoder/>
+ * @copyright   Authors
  */
 
 // only for debug
@@ -14,16 +13,26 @@
 
 require 'vendor/autoload.php';
 
+// fix display non-latin chars correctly
+// https://github.com/servocoder/RichFilemanager/issues/7
+setlocale(LC_CTYPE, 'en_US.UTF-8');
+
+// fix for undefined timezone in php.ini
+// https://github.com/servocoder/RichFilemanager/issues/43
+if(!ini_get('date.timezone')) {
+    date_default_timezone_set('GMT');
+}
+
 
 // This function is called for every server connection. It must return true.
 //
-// Implement this function to authenticate the user, for example to check a 
+// Implement this function to authenticate the user, for example to check a
 // password login, or restrict client IP address.
-// 
-// This function only authorizes the user to connect and/or load the initial page. 
+//
+// This function only authorizes the user to connect and/or load the initial page.
 // Authorization for individual files or dirs is provided by the two functions below.
-// 
-// NOTE: If this function returns false, the user will simply see an error. It 
+//
+// NOTE: If this function returns false, the user will simply see an error. It
 // probably makes more sense to redirect the user to a login page instead.
 //
 // NOTE: If using session variables, the session must be started first (session_start()).
@@ -34,7 +43,7 @@ function fm_authenticate()
 }
 
 
-// This function is called before any filesystem read operation, where 
+// This function is called before any filesystem read operation, where
 // $filepath is the file or directory being read. It must return true,
 // otherwise the read operation will be denied.
 //
@@ -52,7 +61,7 @@ function fm_has_write_permission($filepath) {
 }
 
 
-// This function is called before any filesystem write operation, where 
+// This function is called before any filesystem write operation, where
 // $filepath is the file or directory being written to. It must return true,
 // otherwise the write operation will be denied.
 //
@@ -74,36 +83,32 @@ function fm_has_read_permission($filepath) {
 $config = [];
 
 // example to override the default config
-//$config = array(
-//    'upload' => array(
-//        'policy' => 'DISALLOW_ALL',
-//        'restrictions' => array(
-//            'pdf',
-//        ),
-//    ),
-//);
+//$config = [
+//    'security' => [
+//        'readOnly' => true,
+//        'extensions' => [
+//            'policy' => 'ALLOW_LIST',
+//            'restrictions' => [
+//                'jpg',
+//                'jpe',
+//                'jpeg',
+//                'gif',
+//                'png',
+//            ],
+//        ],
+//    ],
+//];
 
-//$fm = Fm::app()->getInstance($config);
+$app = new \RFM\Application();
 
-$app = new \RFM\Application(
-    realpath(__DIR__ . DIRECTORY_SEPARATOR . 'richfilemanager')
-);
+$local = new \RFM\Repository\Local\Storage($config);
 
-$local = new \RFM\Storage\Local\Storage($config);
 // example to setup files root folder
-//$local->setRoot('C:\xampp\htdocs\fm_latest\userfiles\doc', false);
+//$local->setRoot('userfiles', true);
+
 $app->setStorage($local);
 
-
 // set application API
-$app->api = new RFM\Storage\Local\Api();
+$app->api = new RFM\Api\LocalApi();
 
 $app->run();
-
-// example to setup files root folder
-//$fm->setFileRoot('userfiles', true);
-
-// example to set list of allowed actions
-//$fm->setAllowedActions(["select", "move"]);
-
-//$fm->handleRequest();
