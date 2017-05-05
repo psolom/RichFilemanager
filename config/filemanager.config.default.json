@@ -96,6 +96,15 @@
                 "wav"
             ]
         },
+        "iframe": {
+            "enabled": true,
+            "extensions": [
+                "htm",
+                "html"
+            ],
+            "readerWidth": "95%",
+            "readerHeight": "600"
+        },
         "opendoc": {
             "enabled": true,
             "extensions": [
@@ -132,20 +141,21 @@
             "extensions": [
                 "md"
             ]
-        },
-        "editable": {
-            "enabled": true,
-            "theme": "default",
-            "lineNumbers": true,
-            "lineWrapping": true,
-            "codeHighlight": true,
-            "matchBrackets": true,
-            "extensions": [
-                "txt",
-                "csv",
-                "md"
-            ]
         }
+    },
+    "editor": {
+        "enabled": true,
+        "theme": "default",
+        "lineNumbers": true,
+        "lineWrapping": true,
+        "codeHighlight": true,
+        "matchBrackets": true,
+        "extensions": [
+            "html",
+            "txt",
+            "csv",
+            "md"
+        ]
     },
     "customScrollbar": {
     	"enabled": true,
