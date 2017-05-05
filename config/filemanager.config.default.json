@@ -96,6 +96,15 @@
                 "wav"
             ]
         },
+        "iframe": {
+            "enabled": false,
+            "extensions": [
+                "htm",
+                "html"
+            ],
+            "readerWidth": "95%",
+            "readerHeight": "600"
+        },
         "opendoc": {
             "enabled": true,
             "extensions": [

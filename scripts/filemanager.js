@@ -889,6 +889,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         height: config.viewer.google.readerHeight
                     };
                 }
+                if (isIFrameFile(filename) && config.viewer.iframe.enabled === true) {
+                    viewerObject.type = 'iframe';
+                    viewerObject.url = createPreviewUrl(resourceObject, true);
+                    viewerObject.options = {
+                        width: config.viewer.iframe.readerWidth,
+                        height: config.viewer.iframe.readerHeight
+                    };
+				}
                 if ((isCodeMirrorFile(filename) && config.viewer.codeMirrorRenderer.enabled === true) ||
                     (isMarkdownFile(filename) && config.viewer.markdownRenderer.enabled === true)
 				) {
@@ -2878,6 +2886,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Test if file is supported web audio file
 	var isAudioFile = function(filename) {
 		return ($.inArray(getExtension(filename), config.viewer.audio.extensions) !== -1);
+	};
+
+	// Test if file is openable in iframe
+	var isIFrameFile = function(filename) {
+		return ($.inArray(getExtension(filename), config.viewer.iframe.extensions) !== -1);
 	};
 
 	// Test if file is opendoc file
