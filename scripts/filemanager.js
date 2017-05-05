@@ -343,8 +343,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         loadAssets(primary);
 
 		// Loading CodeMirror if enabled for online edition
-		if(config.viewer.editable.enabled) {
-			var editorTheme = config.viewer.editable.theme;
+		if(config.editor.enabled) {
+			var editorTheme = config.editor.theme;
             if (editorTheme && editorTheme !== 'default') {
                 secondary.push('/scripts/CodeMirror/theme/' + editorTheme + '.css');
             }
@@ -912,7 +912,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     createImageUrl(resourceObject, false, false) :
                     createPreviewUrl(resourceObject, false)
                 );
-                preview_model.viewer.isEditable(isEditableFile(filename) && config.viewer.editable.enabled === true);
+                preview_model.viewer.isEditable(isEditableFile(filename) && config.editor.enabled === true);
                 preview_model.editor.isInteractive(editorObject.interactive);
 
                 if (viewerObject.type === 'renderer' || preview_model.viewer.isEditable()) {
@@ -2224,10 +2224,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         readOnly: 'nocursor',
                         styleActiveLine: false,
                         viewportMargin: Infinity,
-                        lineNumbers: config.viewer.editable.lineNumbers,
-                        lineWrapping: config.viewer.editable.lineWrapping,
-                        theme: config.viewer.editable.theme,
-                        matchBrackets: config.viewer.editable.matchBrackets,
+                        lineNumbers: config.editor.lineNumbers,
+                        lineWrapping: config.editor.lineWrapping,
+                        theme: config.editor.theme,
+                        matchBrackets: config.editor.matchBrackets,
                         extraKeys: {
                             "F11": function (cm) {
                                 cm.setOption("fullScreen", !cm.getOption("fullScreen"));
@@ -2263,7 +2263,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 	currentMode = 'default';
 
                 // highlight code according to extension file
-                if (config.viewer.editable.codeHighlight) {
+                if (config.editor.codeHighlight) {
                     if (extension === 'js') {
                         assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
                         currentMode = 'javascript';
@@ -2870,7 +2870,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Test if is editable file
 	var isEditableFile = function(filename) {
-		return ($.inArray(getExtension(filename), config.viewer.editable.extensions) !== -1);
+		return ($.inArray(getExtension(filename), config.editor.extensions) !== -1);
 	};
 
 	// Test if is image file

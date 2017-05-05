@@ -122,6 +122,7 @@ $config = [
             "txt",
             "csv",
             "md",
+            "html",
         ],
     ],
     /**
@@ -202,6 +203,7 @@ $config = [
             "zip",
             "rar",
             "md",
+            "html",
         ],
     ],
     /**

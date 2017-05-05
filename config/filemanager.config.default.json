@@ -97,7 +97,7 @@
             ]
         },
         "iframe": {
-            "enabled": false,
+            "enabled": true,
             "extensions": [
                 "htm",
                 "html"
@@ -141,20 +141,21 @@
             "extensions": [
                 "md"
             ]
-        },
-        "editable": {
-            "enabled": true,
-            "theme": "default",
-            "lineNumbers": true,
-            "lineWrapping": true,
-            "codeHighlight": true,
-            "matchBrackets": true,
-            "extensions": [
-                "txt",
-                "csv",
-                "md"
-            ]
         }
+    },
+    "editor": {
+        "enabled": true,
+        "theme": "default",
+        "lineNumbers": true,
+        "lineWrapping": true,
+        "codeHighlight": true,
+        "matchBrackets": true,
+        "extensions": [
+            "html",
+            "txt",
+            "csv",
+            "md"
+        ]
     },
     "customScrollbar": {
     	"enabled": true,
