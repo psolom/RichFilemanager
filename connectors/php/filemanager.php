@@ -51,11 +51,12 @@ function fm_authenticate()
 // user/group authorization from a database, or session variables, or any other custom logic.
 //
 // Note that this is not the only permissions check that must pass. The read operation
-// must also pass
+// must also pass:
 //   * Filesystem permissions (if any), e.g. POSIX `rwx` permissions on Linux
-//   * The filepath must be allowed according to config['patterns'] and config['extensions']
+//   * The $filepath must be allowed according to config['patterns'] and config['extensions']
 //
-function fm_has_write_permission($filepath) {
+function fm_has_read_permission($filepath)
+{
     // Customize this code as desired.
     return true;
 }
@@ -69,12 +70,13 @@ function fm_has_write_permission($filepath) {
 // user/group authorization from a database, or session variables, or any other custom logic.
 //
 // Note that this is not the only permissions check that must pass. The write operation
-// must also pass
+// must also pass:
 //   * Filesystem permissions (if any), e.g. POSIX `rwx` permissions on Linux
-//   * The filepath must be allowed according to config['patterns'] and config['extensions']
+//   * The $filepath must be allowed according to config['patterns'] and config['extensions']
 //   * config['read_only'] must be set to false, otherwise all writes are disabled
 //
-function fm_has_read_permission($filepath) {
+function fm_has_write_permission($filepath)
+{
     // Customize this code as desired.
     return true;
 }
