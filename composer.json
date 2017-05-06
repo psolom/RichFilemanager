@@ -25,7 +25,6 @@
     "vendor-dir": "connectors/php/vendor"
   },
   "require": {
-    "servocoder/richfilemanager-php": "*",
-    "aws/aws-sdk-php": "3.*"
+    "servocoder/richfilemanager-php": "*"
   }
 }
