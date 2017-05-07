@@ -836,6 +836,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preview_model.cdo({
                     isFolder: (resourceObject.type === 'folder'),
                     sizeFormatted: formatBytes(resourceObject.attributes.size),
+                    extension: (resourceObject.type === 'file') ? getExtension(resourceObject.id) : null,
                     dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
                 });
             });
@@ -953,7 +954,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.initiateEditor = function(elements) {
             	var textarea = $previewWrapper.find('.fm-cm-editor-content')[0];
-                preview_model.editor.createInstance(preview_model.rdo().attributes.extension, textarea, {
+                preview_model.editor.createInstance(preview_model.cdo().extension, textarea, {
                     readOnly: false,
                     styleActiveLine: true
                 });
@@ -980,7 +981,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     } else {
                         cssClass.push('ico_file');
                         if(this.rdo().attributes.readable) {
-                            extraClass.push('ext', this.rdo().attributes.extension);
+                            extraClass.push('ext', this.cdo().extension);
                         } else {
                             extraClass.push('file', 'lock');
                         }
@@ -1245,6 +1246,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.rdo = resourceObject;
             this.cdo = { // computed data object
                 isFolder: (resourceObject.type === 'folder'),
+                extension: (resourceObject.type === 'file') ? getExtension(resourceObject.id) : null,
                 dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
                 cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file'
             };
@@ -1381,7 +1383,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 } else {
                     cssClass = 'ico_file';
                     if(this.rdo.attributes.readable) {
-                        extraClass.push('ext', this.rdo.attributes.extension);
+                        extraClass.push('ext', this.cdo.extension);
                     } else {
                         extraClass.push('file', 'lock');
                     }
@@ -1643,6 +1645,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.cdo = { // computed data object
                 isFolder: (resourceObject.type === 'folder'),
                 sizeFormatted: formatBytes(resourceObject.attributes.size),
+                extension: (resourceObject.type === 'file') ? getExtension(resourceObject.id) : null,
                 dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
                 cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
                 imageUrl: createImageUrl(resourceObject, true, true),
@@ -1685,7 +1688,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 } else {
                     cssClass = 'ico_file';
                     if (this.rdo.attributes.readable) {
-                        extraClass.push('ext', this.rdo.attributes.extension);
+                        extraClass.push('ext', this.cdo.extension);
                     } else {
                         extraClass.push('file', 'lock');
                     }
@@ -1707,7 +1710,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     } else {
                         cssClass.push('ico_file');
                         if (this.rdo.attributes.readable) {
-                            extraClass.push('ext', this.rdo.attributes.extension);
+                            extraClass.push('ext', this.cdo.extension);
                         } else {
                             extraClass.push('file', 'lock');
                         }
@@ -2096,8 +2099,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 this.processDomElements = function($container) {
                 	if (!instance.instance) {
-                        var textarea = $container.find('.fm-cm-renderer-content')[0];
-                        instance.createInstance(render_model.rdo().attributes.extension, textarea, {
+                        var textarea = $container.find('.fm-cm-renderer-content')[0],
+                            extension = getExtension(render_model.rdo().id);
+
+                        instance.createInstance(extension, textarea, {
                             readOnly: 'nocursor',
                             styleActiveLine: false,
                             lineNumbers: false
@@ -2557,7 +2562,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			switch(sortField) {
 				case 'type':
-					sortBy = item.rdo.attributes.extension || '';
+					sortBy = item.cdo.extension || '';
 					break;
 				case 'size':
 					sortBy = item.rdo.attributes.size;
@@ -3003,7 +3008,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path), disableCache);
 			} else {
 				var queryParams = {path: resourceObject.id};
-				if (resourceObject.attributes.extension === 'svg') {
+				if (getExtension(resourceObject.id) === 'svg') {
 					queryParams.mode = 'readfile';
 				} else {
 					queryParams.mode = 'getimage';
