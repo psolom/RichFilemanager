@@ -1,3 +1,22 @@
+Version 2.4.0
+---------------------------
+- New backend security model #111;
+- PHP connector: general refactoring #90, #109, #111;
+- PHP connector: removed "actions_list" definition, replaced with "readOnly" option #134, #143;
+- API: removed "extension" response attribute, fetched from filename at the client-side now #106;
+- New iframe viewer to preview html files #177;
+- Editor is configured as independent component, compatible with iframe viewer #177;
+- bugfix: (PHP connector) "download" API action requires the folder to be writable #130;
+
+Backward incompatible changes:
+- removed "replace" API action;
+- PHP connector moved to the separate repository - should be installed via composer;
+- removed referrer HTTP parameters parsing ("type" particularly) and "images only" check in the uploader;
+- removed "allowNoExtension" configuration option, now it depends on "extensions" server-side configuration option;
+- `allowFolderDownload` configuration option moved to the client-side JSON file, doesn't depend on server-side anymore;
+- `viewer`.`editable` configuration option is moved out of `viewer` section and renamed to `editor`;
+
+
 Version 2.3.3
 ---------------------------
 - bugfix: incorrect displaying of items extracted from archive;

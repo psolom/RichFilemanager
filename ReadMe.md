@@ -17,6 +17,8 @@ Based on the @simogeo [Filemanager](https://github.com/simogeo/Filemanager), wit
 * Filetree: allow to open and display multiple subfolders at a time
 * Online MS Office documents viewer - based on Google Docs Viewer
 * Extended list of previewed file types via ViewerJS
+* New viewers to preview: "html" files (iframe), "md" files (markdown-it), etc.
+* CodeMirror editor now compatible with most of viewers 
 * Standardized API that follows JSON API best practices to create connectors for any server-side language
 * Independent client and server sides. Can be located on different servers.
 * Independent configuration files for client and server sides.
@@ -55,7 +57,6 @@ Installation and Setup
 
 * [Deploy and setup RichFilemanager on your website](https://github.com/servocoder/RichFilemanager/wiki/Deploy-and-setup)
 * [Discover complete configuration guidelines](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options)
-* [Worry about security of your application](https://github.com/servocoder/RichFilemanager/wiki/Security-concern)
 
 
 Documentation
@@ -71,7 +72,7 @@ Main features
 * [Highly customizable](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options)
 * Can work as standalone application
 * Easy integration with WYSIWYG editors like CKEditor, TinyMCE, Imperavi Redactor and so on.
-* Easy integration with [AWS S3 storage](https://github.com/servocoder/RichFilemanager/wiki/Integration-with-AWS-S3-storage) to manipulate your files on remote S3 server.
+* Easy integration with [AWS S3 storage](https://github.com/servocoder/RichFilemanager-PHP) to manipulate your files on remote S3 server.
 * Easy integration with [colorbox jquery plugin](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-with-colorbox) or [HTML simple textfield](https://github.com/servocoder/RichFilemanager/wiki/How-to-use-the-filemanager-from-a-simple-textfield)
 * 2 view modes: grid and list
 * Drag-and-drop support
@@ -93,14 +94,13 @@ Main features
 * [Opening a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-a-given-folder-different-from-root-folder-when-opening-the-filemanager)
 * [Opening exclusively a given folder](https://github.com/servocoder/RichFilemanager/wiki/How-to-open-%28exclusively%29-a-given-subfolder)
 * [Passing parameters to the FM](https://github.com/servocoder/RichFilemanager/wiki/Passing-parameters-to-the-FM)
-* [File types restriction](https://github.com/servocoder/RichFilemanager/wiki/Set-up-upload-restriction-on-file-type)
+* File types and patterns restrictions
 * Video and audio player relying on web browser capabilities
 * Textbox Search filter
 * Thumbnails generation
 * Image auto-resize
 * File size limit
 * File exclusion based on name and patterns
-* Images files only
 * Prevent files overwriting (or not)
 * Copy direct file URL
 * [CSS Themes](https://github.com/servocoder/RichFilemanager/wiki/Create-your-own-theme) - **Please, share your themes with others !**
