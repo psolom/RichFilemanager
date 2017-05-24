@@ -2758,6 +2758,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
+				if (errorObject.arguments.redirect)
+					window.location.href = errorObject.arguments.redirect;
 			});
 		}
 	};
