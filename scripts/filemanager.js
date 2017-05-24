@@ -203,11 +203,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			.then(function() {
 				return configure();
 			})
-			.then(function(conf_d, conf_u) {
-				return performInitialRequest();
-			})
 			.then(function() {
 				return localize();
+			})
+			.then(function(conf_d, conf_u) {
+				return performInitialRequest();
 			})
 			.then(function() {
 				return includeTemplates();
