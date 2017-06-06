@@ -29,6 +29,9 @@ if(!ini_get('date.timezone')) {
 // Implement this function to authenticate the user, for example to check a
 // password login, or restrict client IP address.
 //
+// If this function returns a string, the authenication will fail and 
+// the user will be redirected to the returned URL.
+//
 // This function only authorizes the user to connect and/or load the initial page.
 // Authorization for individual files or dirs is provided by the two functions below.
 //
