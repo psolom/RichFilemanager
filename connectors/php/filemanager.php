@@ -29,20 +29,18 @@ if(!ini_get('date.timezone')) {
 // Implement this function to authenticate the user, for example to check a
 // password login, or restrict client IP address.
 //
-// If this function returns a string, the authenication will fail and 
-// the user will be redirected to the returned URL.
-//
 // This function only authorizes the user to connect and/or load the initial page.
 // Authorization for individual files or dirs is provided by the two functions below.
-//
-// NOTE: If this function returns false, the user will simply see an error. It
-// probably makes more sense to redirect the user to a login page instead.
 //
 // NOTE: If using session variables, the session must be started first (session_start()).
 function fm_authenticate()
 {
     // Customize this code as desired.
     return true;
+
+    // If this function returns false, the user will just see an error.
+    // If this function returns an array with "redirect" key, the user will be redirected to the specified URL:
+    // return ['redirect' => 'http://domain.my/login'];
 }
 
 
