@@ -1,3 +1,18 @@
+Version 2.5.0
+---------------------------
+- Asp.Net Core connector support, thanks @sinanbozkus #163;
+- Python 3 Flask connector support, thanks @jsooter #164;
+- added redirect functionality if initial authorization fails #183;
+- added possibility to copy URLs without flash (Zeroclipboard replaced with clipboard.js library) #150;
+- added new `clipboard`.`encodeCopyUrl` configuration option #191;
+- fixed "initiate" method of ASHX connector #194;
+- updated Italian translations #183;
+- updated Czech translations;
+
+Backward incompatible changes:
+- `clipboard` configuration option was moved out of `options` section and became a separate section;
+
+
 Version 2.4.0
 ---------------------------
 - New backend security model #111;
