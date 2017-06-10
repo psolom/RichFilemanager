@@ -328,35 +328,28 @@ public class filemanager : IHttpHandler
 		}
 		return size.ToString() +","+ files.ToString() +","+ folders.ToString();
 	}
-    
+
     private string Initiate()
     {
         StringBuilder sb = new StringBuilder();
-		sb.AppendLine("{");
-		sb.AppendLine("\"id\": \"/\",");
-		sb.AppendLine("\"type\": \"initiate\",");
-		sb.AppendLine("\"attributes\": { \"config\": "); //]',
-		
         sb.AppendLine("{");
-			sb.AppendLine("\"options\": {");
-			sb.AppendLine("	\"culture\": \"nl\",");
-			sb.AppendLine("	\"charsLatinOnly\": false,");
-			sb.AppendLine("	\"capabilities\": false");
-			sb.AppendLine("	\"allowFolderDownload\": false,");
-			sb.AppendLine("},");
-			sb.AppendLine("\"security\": {");
-			sb.AppendLine("	\"allowNoExtension\": false,");
-			sb.AppendLine("},");
-			sb.AppendLine("\"upload\": {");
-			sb.AppendLine("	\"fileSizeLimit\": 16000000,");
-			sb.AppendLine("	\"policy\": \"ALLOW_ALL\"");
-			//sb.AppendLine("	\"restrictions\": { \"jpg\" }");
-			sb.AppendLine("}");
-		sb.AppendLine("}");
-		
-		sb.AppendLine("}"); //config
-		sb.AppendLine("}");
-        
+        sb.Append("\"data\": {");
+        sb.AppendLine("\"id\": \"/\",");
+        sb.AppendLine("\"type\": \"initiate\",");
+        sb.AppendLine("\"attributes\": {");
+        sb.Append("\"config\": {");
+        sb.AppendLine("\"security\": {");
+        sb.AppendLine("\"readOnly\": false,");
+        sb.AppendLine("\"extensions\": {");
+        sb.AppendLine("\"policy\": \"ALLOW_LIST\",");
+        sb.AppendLine("\"restrictions\": [\"jpg\",\"jpe\",\"jpeg\",\"gif\",\"png\"]");
+        sb.AppendLine("}");
+        sb.AppendLine("}");
+        sb.AppendLine("}");
+        sb.AppendLine("}");
+        sb.AppendLine("}");
+        sb.AppendLine("}");
+
         return sb.ToString();
     }
 	
