@@ -9,7 +9,6 @@
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
-        "clipboard": true,
         "searchBox": true,
         "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
@@ -57,6 +56,10 @@
         "multiple": true,
         "maxNumberOfFiles": 5,
         "chunkSize": false
+    },
+    "clipboard": {
+        "enabled": true,
+        "encodeCopyUrl": true
     },
     "viewer": {
         "absolutePath": true,

@@ -813,7 +813,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         }
 
 		var PreviewModel = function() {
-			var preview_model = this;
+			var preview_model = this,
+				clipboard = null;
 
             this.rdo = ko.observable({});
             // computed resource data object
@@ -849,6 +850,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             });
 
             this.applyObject = function(resourceObject) {
+            	if (clipboard) {
+                    clipboard.destroy();
+				}
+
                 model.previewFile(false);
 
                 var filename = resourceObject.attributes.name,
@@ -917,10 +922,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preview_model.viewer.type(viewerObject.type);
                 preview_model.viewer.url(viewerObject.url);
                 preview_model.viewer.options(viewerObject.options);
-                preview_model.viewer.pureUrl(isImageFile(filename) ?
-                    createImageUrl(resourceObject, false, false) :
-                    createPreviewUrl(resourceObject, false)
-                );
+                preview_model.viewer.pureUrl(createCopyUrl(resourceObject));
                 preview_model.viewer.isEditable(isEditableFile(filename) && config.editor.enabled === true);
                 preview_model.editor.isInteractive(editorObject.interactive);
 
@@ -937,18 +939,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
             };
 
-            ZeroClipboard.config({swfPath: fm.settings.baseUrl + '/scripts/zeroclipboard/dist/ZeroClipboard.swf'});
-
             this.afterRender = function() {
                 preview_model.renderer.render(preview_model.viewer.content());
 
-                // zeroClipboard code
-                var client = new ZeroClipboard($previewWrapper.find('.btn-copy-url')[0]);
-                client.on("ready", function(readyEvent) {
-                    client.on("aftercopy", function(event) {
-                        fm.success(lg.copied);
-                        // console.log("Copied text to clipboard: " + event.data["text/plain"]);
-                    });
+                var copyBtnEl = $previewWrapper.find('.btn-copy-url')[0];
+                clipboard = new Clipboard(copyBtnEl);
+
+                clipboard.on('success', function(e) {
+                    fm.success(lg.copied);
                 });
             };
 
@@ -963,7 +961,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
 				if (has_capability(preview_model.rdo(), action)) {
-					performAction(action, preview_model.rdo());
+					performAction(action, {}, preview_model.rdo());
 				}
 			};
 
@@ -1217,7 +1215,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							appendTo: '.fm-container',
 							items: getContextMenuItems(node.rdo),
 							callback: function(itemKey, options) {
-								performAction(itemKey, node.rdo, model.fetchSelectedObjects(node));
+								performAction(itemKey, options, node.rdo, model.fetchSelectedObjects(node));
 							}
 						}
 					}
@@ -1626,7 +1624,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							appendTo: '.fm-container',
 							items: getContextMenuItems(koItem.rdo),
 							callback: function(itemKey, options) {
-								performAction(itemKey, koItem.rdo, model.fetchSelectedObjects(koItem));
+								performAction(itemKey, options, koItem.rdo, model.fetchSelectedObjects(koItem));
 							}
 						}
 					}
@@ -1923,7 +1921,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             	clipboard_model = this,
 				active = capabilities.indexOf('copy') > -1 || capabilities.indexOf('move') > -1;
 
-            this.enabled = ko.observable(model.config().options.clipboard && active);
+            this.enabled = ko.observable(model.config().clipboard.enabled && active);
 
 			this.copy = function(selected) {
 				if (!clipboard_model.hasCapability('copy')) {
@@ -2758,8 +2756,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
-				if (errorObject.arguments.redirect)
-					window.location.href = errorObject.arguments.redirect;
+
+				if (errorObject.arguments.redirect) {
+                    window.location.href = errorObject.arguments.redirect;
+                }
 			});
 		}
 	};
@@ -3033,6 +3033,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             url += '?time=' + (new Date().getTime());
 		}
 		return url;
+	};
+
+	var createCopyUrl = function(resourceObject) {
+		function encodeCopyUrl(path) {
+            return (config.clipboard.encodeCopyUrl) ? encodePath(path) : path;
+		}
+
+        if(config.viewer.absolutePath && resourceObject.attributes.path) {
+            var path = encodeCopyUrl(resourceObject.attributes.path);
+            return buildAbsolutePath(path, false);
+        } else {
+            var path = encodeCopyUrl(resourceObject.id),
+				mode = (resourceObject.type === 'folder') ? 'getfolder' : 'readfile';
+            return apiConnector + '?path=' + path + '&mode=' + mode;
+        }
 	};
 
 	// Returns container for filetree or fileinfo section based on scrollbar plugin state
@@ -3710,7 +3725,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 copy: {name: lg.clipboard_copy, className: 'copy'},
                 cut: {name: lg.clipboard_cut, className: 'cut'},
                 delete: {name: lg.action_delete, className: 'delete'},
-                extract: {name: lg.action_extract, className: 'extract'}
+                extract: {name: lg.action_extract, className: 'extract'},
+                copyUrl: {name: lg.copy_to_clipboard, className: 'copy-url'}
             };
 
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
@@ -3728,7 +3744,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	}
 
 	// Binds contextual menu to items in list and grid views.
-	var performAction = function(action, targetObject, selectedObjects) {
+	var performAction = function(action, options, targetObject, selectedObjects) {
 		// suppose that target object is part of selected objects while multiple selection
 		var objects = selectedObjects ? selectedObjects : [targetObject];
 
@@ -3773,6 +3789,19 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			case 'cut':
                 fmModel.clipboardModel.cut(objects);
+				break;
+
+			case 'copyUrl':
+                var clipboard = new Clipboard(options.$selected[0], {
+                    text: function(trigger) {
+                        return createCopyUrl(targetObject);
+                    }
+                });
+
+                clipboard.on('success', function(e) {
+                    fm.success(lg.copied);
+                    clipboard.destroy();
+                });
 				break;
 		}
 	};
