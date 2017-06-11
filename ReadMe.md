@@ -41,7 +41,7 @@ Compatibility
 -------------
 
 Filemanager is designed to interact with a number of programming languages via [connectors](https://github.com/servocoder/RichFilemanager/tree/master/connectors).
-The actual connectors are: **PHP, Java, ASHX, ASP & Python 3 Flask**. Compatibility with other connectors is most likely completely broken, since many changes have been done recently.
+The actual connectors are: **PHP, Java, ASHX, ASP & Python 3 Flask**.
 You are still able you to download unsupported v0.8 from [archive](https://github.com/simogeo/Filemanager/archive/v0.8.zip) (CFM, lasso, PL, JSP and Python WSGI)
 
 Browser compatibility:
