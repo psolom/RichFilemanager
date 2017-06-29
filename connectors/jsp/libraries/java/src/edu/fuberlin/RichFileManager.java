@@ -225,7 +225,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
         File file = getFile(path);
 
         if(file.isDirectory() && !path.endsWith("/")){
-            throw new FMIOException("Error reading the file: " + file.getAbsolutePath());
+            throw new FMIOException("Error reading the file (file as directory not allowed): " + file.getAbsolutePath());
         }
 
         BasicFileAttributes attr;
@@ -327,6 +327,10 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		}
 	}
 	
+	/**
+	 * path: folder 
+	 * files, filename in form-data
+	 */
 	@Override
 	public JSONObject add() throws JSONException {
 		JSONArray array = new JSONArray();
@@ -349,7 +353,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 							if (!mode.equals("upload")  && !mode.equals("add") && !mode.equals("replace")) {
 								//this.error(lang("INVALID_FILE_UPLOAD"));
 							} 
-						} else if (item.getFieldName().equals("currentpath")) {
+						} else if (item.getFieldName().equals("path")) {
 							currentPath = item.getString();
 						} else if (item.getFieldName().equals("newfilepath")){
 							currentPath = item.getString();
@@ -424,6 +428,10 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	}
 	
 	
+	/**
+	 * old: fileName
+	 * new: folder
+	 */
 	@Override
 	public JSONObject moveItem() throws JSONException, FileManagerException {
 	   String itemName = this.get.get("old");
@@ -444,7 +452,11 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	   if (folder.trim().startsWith( "/")) { // absolute path is not allowed, this is then just root folder
 	       folder = folder.trim().replaceFirst( "/", "" );
 	   } 
-	   folder = cleanFileNameDefault(folder);
+	   if (!folder.trim().endsWith( "/")) { // absolute path is not allowed, this is then just root folder
+	       folder = folder.trim() + "/";
+	   }
+	   // allow sub folder slash
+	   folder = cleanFileName(folder, new char[]{ '/', '.', '-' }, null);
 	   Path fileFrom = null;
 
 	   try {
@@ -478,11 +490,15 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	       }
 	   }     
        array = new JSONObject().put("data", new JSONObject(getFileInfo( 
-	    		   folder
+	    		   folder +filename
 	    		   )));;
 	   return array;
 	}
 	
+	/**
+	 * old: old relative file path
+	 * new: new file name without path
+	 */
 	@Override
 	public JSONObject rename() throws JSONException, FileManagerException {
 		String relativePath = this.get.get("old");
@@ -495,6 +511,9 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		String filename = tmp[tmp.length - 1];
 		int pos = relativePath.lastIndexOf("/");
 		String path = relativePath.substring(0, pos + 1);
+		
+		if (!path.endsWith("/")) path = path + "/";
+		
 		Path fileFrom = null;
 		Path fileTo = null;
 		String newFileName = cleanFileNameDefault(this.get.get("new"));
@@ -532,9 +551,12 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 				return getErrorResponse(sprintf(lang("ERROR_RENAMING_FILE"), filename + "#" + this.get.get("new")),e);
 			}
 		}
-		return new JSONObject().put("data", new JSONObject(getFileInfo(newFileName)));
+		return new JSONObject().put("data", new JSONObject(getFileInfo(path + newFileName)));
 	}
 	
+	/**
+	 * path: folder or file to delete
+	 */
 	@Override
 	public JSONObject delete() throws JSONException, FileManagerException {
 		
@@ -558,15 +580,20 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		return result;
 	}
 
+	/**
+	 * path: root folder
+	 * name: new folder name
+	 */
 	@Override
 	public JSONObject addFolder() throws JSONException, FileManagerException {
-		char allowed[] = { '-', ' ' };
+		char allowed[] = { '/', '-', ' ' };
 		String filename = cleanFileName(this.get.get("name"), allowed, "");
 		if (filename.length() == 0) // the name existed of only special
 									// characters
 			return getErrorResponse(sprintf(lang("UNABLE_TO_CREATE_DIRECTORY"), this.get.get("name")));
 		else {
 			String targetPath =  this.get.get("path");
+			if (!targetPath.endsWith("/")) targetPath += "/";
 			File file = this.documentRoot.resolve(targetPath).resolve(filename).toFile();
 			if (file.isDirectory()) {
 				return getErrorResponse(sprintf(lang("DIRECTORY_ALREADY_EXISTS"), filename));
@@ -583,6 +610,10 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		}
 	}
 	
+	/**
+	 * source: source file
+	 * target: target folder
+	 */
     @Override
     public JSONObject copyItem(HttpServletRequest request) throws FileManagerException, JSONException {
         String sourcePath = getPath(request, "source");

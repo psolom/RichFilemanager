@@ -67,6 +67,7 @@ public abstract class AbstractFM  extends AbstractFileManager implements FileMan
 	protected JSONObject error = null;
 	protected List<FileItem> files = null;
 	protected boolean reload = false;
+	
 
 	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws Exception, IOException {
         super();
@@ -402,8 +403,7 @@ public abstract class AbstractFM  extends AbstractFileManager implements FileMan
 		String cleanStr = null;
 		String key = null;
 		for (int i = 0; i < allowed.length; i++) {
-			//allow += "\\" + allowed[i];
-			allow +=  allowed[i];
+			allow += "\\" + allowed[i];
 		}
 	
 		if (strList != null) {
