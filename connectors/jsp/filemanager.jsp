@@ -1,6 +1,8 @@
+<%@page import="org.slf4j.LoggerFactory"%>
+<%@page import="org.slf4j.Logger"%>
+<%@page import="edu.fuberlin.*"%>
 <%@ page pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
 <%@ page language="java" import="java.util.*"%>
-<%@ page import="com.nartex.*"%>
 <%@ page import="org.json.JSONObject"%>
 <%@ page import="java.io.*"%>
 <%@include file="auth.jsp"%>
@@ -16,15 +18,14 @@
  *  - check strictServletCompliance 8/16
  *  - dynamic content type setting  8/16
  */ 
-  //use new rich manager  - or not
-  boolean rich = true;
-  FileManagerI fm = (rich)? new RichFileManager(getServletContext(), request) : new FileManager(getServletContext(), request);
+  FileManagerI fm =  new RichFileManager(getServletContext(), request);
+  final Logger log = LoggerFactory.getLogger("filemanager");
   boolean strictServletCompliance = false; // default value is ISO-8859-1.
   JSONObject responseData = null;
   String mode = "";
     boolean putTextarea = false;
   if(!auth(request)) {
-    fm.error(fm.lang("AUTHORIZATION_REQUIRED"));
+	  responseData = fm.getErrorResponse(fm.lang("AUTHORIZATION_REQUIRED"));
   }
   else { 
     if(request.getMethod().equals("GET")) {
@@ -44,59 +45,73 @@
             }
           }
         }
-        // renamed getinfo to getfile
-        if (mode.equals("getinfo") || mode.equals("getfile")){
-          if(fm.setGetVar("path", (strictServletCompliance)? qpm.get("path"): request.getParameter("path"))) {
-            responseData = fm.getInfo();
-          }
-        }
-        else if (mode.equals("getfolder")){
-          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-            responseData = fm.getFolder(request);
-          }
-        }
-        else if (mode.equals("rename")){
-          if(fm.setGetVar("old",  (strictServletCompliance)? qpm.get("old"):request.getParameter("old")) && 
-              fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new"))) {
-            responseData = fm.rename();
-          }
-        }
-        else if (mode.equals("delete")){
-          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-            responseData = fm.delete();
-          }
-        }
-        else if (mode.equals("addfolder")){
-          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path")) && 
-              fm.setGetVar("name",  (strictServletCompliance)? qpm.get("name"):request.getParameter("name"))) {
-            responseData = fm.addFolder();
-          }
-        }
-        else if (mode.equals("download")){
-          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-        	  responseData = fm.download(request, response);
-          }
-        }
-        else if (mode.equals("getimage")){
-          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-            String paramThumbs  =request.getParameter("thumbnail");
-            fm.preview(request, response);
-          }
-        } 
-        else if (mode.equals("readfile")){
-          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) { 
-            fm.preview(request, response);
-          }
-        }
-        else if (mode.equals("move")){
-            if(fm.setGetVar("old",  (strictServletCompliance)? qpm.get("old"):request.getParameter("old")) && 
-                    fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new")) 
-                    ) {
-                responseData = fm.moveItem();
-                }
-                }
-        else {
-          fm.error(fm.lang("MODE_ERROR"));
+        try {
+	        // renamed getinfo to getfile
+	        if (mode.equals("getinfo") || mode.equals("getfile")){
+	          if(fm.setGetVar("path", (strictServletCompliance)? qpm.get("path"): request.getParameter("path"))) {
+	            responseData = fm.getInfo();
+	          }
+	        }
+	        else if (mode.equals("initiate")){
+	           responseData = fm.initiate(request);
+	        }        
+	        else if (mode.equals("getfolder")){
+	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
+	            responseData = fm.getFolder(request);
+	          }
+	        }
+	        else if (mode.equals("rename")){
+	          if(fm.setGetVar("old",  (strictServletCompliance)? qpm.get("old"):request.getParameter("old")) && 
+	              fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new"))) {
+	            responseData = fm.rename();
+	          }
+	        }
+	        else if (mode.equals("delete")){
+	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
+	            responseData = fm.delete();
+	          }
+	        }
+	        else if (mode.equals("addfolder")){
+	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path")) && 
+	              fm.setGetVar("name",  (strictServletCompliance)? qpm.get("name"):request.getParameter("name"))) {
+	            responseData = fm.addFolder();
+	          }
+	        }
+	        else if (mode.equals("download")){
+	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
+	        	  responseData = fm.download(request, response);
+	          }
+	        }
+	        else if (mode.equals("getimage")){
+	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
+	            String paramThumbs  =request.getParameter("thumbnail");
+	            responseData = fm.preview(request, response);
+	          }
+	        } 
+	        else if (mode.equals("readfile")){
+	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) { 
+	        	  responseData = fm.preview(request, response);
+	          }
+	        }
+	        else if (mode.equals("move")){
+	            if(fm.setGetVar("old",  (strictServletCompliance)? qpm.get("old"):request.getParameter("old")) && 
+	                    fm.setGetVar("new",  (strictServletCompliance)? qpm.get("new"):request.getParameter("new")) 
+	                    ) {
+	                responseData = fm.moveItem();
+	                }
+	        }
+	        else if (mode.equals("copy")){
+	              responseData = fm.copyItem(request);
+	         }
+	        else if (mode.equals("summarize")) {
+	        	responseData = fm.summarize();
+	        } else {
+	        	responseData = fm.getErrorResponse(fm.lang("MODE_ERROR"));
+	        }
+        } catch (Exception e) {
+        	// already formatted if from setGetVar
+        	log.error("error in filemanager.jsp:",e);
+        	responseData = fm.getErrorResponse(e.getMessage());
         }
       }
     } else if(request.getMethod().equals("POST")){
@@ -104,9 +119,6 @@
       responseData = fm.add();
       //putTextarea = true;
     }
-  }
-  if (responseData == null){
-    responseData = fm.getError();
   }
   if (responseData != null){
       //request.setCharacterEncoding("UTF-8");  

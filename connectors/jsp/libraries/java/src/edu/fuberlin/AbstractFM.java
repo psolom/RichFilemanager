@@ -1,4 +1,11 @@
-package com.nartex;
+/*
+ *	AbstractFM.java utility class for for RichFileManager.java
+ *
+ *	@license	MIT License
+ *
+ *
+ */
+package edu.fuberlin;
 
 import java.awt.Dimension;
 import java.awt.Image;
@@ -7,16 +14,15 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
@@ -29,38 +35,42 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fabriceci.fmc.error.FileManagerException;
+
 /**
  * 
  * CHANGES
- * - adjust document root to allow relative paths (should work also in old Filemanager?
+ * 2016
+ * - adjust document root to allow relative paths 
  * - optional reload parameter for config, lang file
+ * 2017
+ * - using initiate
  * 
  * @author gkallidis
  *
  */
-public abstract class AbstractFM  implements FileManagerI{
+public abstract class AbstractFM  extends AbstractFileManager implements FileManagerI {
 
-	protected static Properties config = null;
 	protected static JSONObject language = null;
 	protected Map<String, String> get = new HashMap<String, String>();
 	protected Map<String, String> properties = new HashMap<String, String>();
 	protected Map<String, Object> item = new HashMap<String, Object>();
 	protected Map<String, String> params = new HashMap<String, String>();
 	protected Path documentRoot; // make it static?
-	protected Path fileManagerRoot = null; // static?
+	protected Path fileManagerRoot = null; // renamed old: fileManagerRoot
 	protected Logger log = LoggerFactory.getLogger("filemanager");
 	protected JSONObject error = null;
-	protected SimpleDateFormat dateFormat;
 	protected List<FileItem> files = null;
 	protected boolean reload = false;
 
-
-	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws IOException {
-        String contextPath = request.getContextPath();
+	public AbstractFM(ServletContext servletContext, HttpServletRequest request) throws Exception, IOException {
+        super();
+		String contextPath = request.getContextPath();
         
         Path localPath = Paths.get(servletContext.getRealPath("/")); 
         Path docRoot4FileManager = localPath.toRealPath(LinkOption.NOFOLLOW_LINKS);
@@ -89,11 +99,11 @@ public abstract class AbstractFM  implements FileManagerI{
 			} catch (Exception e) { // no error handling}
 			}
 
-		this.properties.put("Date Created", null);
-		this.properties.put("Date Modified", null);
-		this.properties.put("Height", null);
-		this.properties.put("Width", null);
-		this.properties.put("Size", null);
+		this.properties.put("created", null);
+		this.properties.put("modified", null);
+		this.properties.put("height", null);
+		this.properties.put("width", null);
+		this.properties.put("size", null);
 
 		// kind of a hack, should not used except for super admin purposes
 		if (request.getParameter("reload") != null) {
@@ -102,22 +112,35 @@ public abstract class AbstractFM  implements FileManagerI{
 		
 		// load config file		
 		loadConfig();
+		
+		if (propertiesConfig.getProperty("serverRoot") != null &&
+				propertiesConfig.getProperty("serverRoot").contains("$context")) {
+			String parsedRoot = propertiesConfig.getProperty("serverRoot").replace("$context", contextPath);
+			propertiesConfig.setProperty("serverRoot", parsedRoot);
+		}
+		
+    	if(locale == null) {
+            locale = new Locale(propertiesConfig.getProperty("culture"));
+        }
+    	try {
+            df = new SimpleDateFormat(propertiesConfig.getProperty("date"));
+        }catch(IllegalArgumentException e){
+            logger.error("The date format is not valid - setting the default one instead : yyyy-MM-dd HH:mm:ss");
+            df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        }
 
 		if (this.documentRoot == null || reload) {
-			if (config.getProperty("doc_root") != null) {
+			if (propertiesConfig.getProperty("fileRoot") != null) {
 				Path documentRoot = 
-			    		config.getProperty("doc_root").startsWith("/") ? 
-			    		Paths.get(config.getProperty("doc_root")) : 
-			    	docRoot4FileManager.resolve(config.getProperty("doc_root"));
+						propertiesConfig.getProperty("fileRoot").startsWith("/") ? 
+			    		Paths.get(propertiesConfig.getProperty("fileRoot")) : 
+			    	docRoot4FileManager.resolve(propertiesConfig.getProperty("fileRoot"));
 				this.documentRoot = documentRoot.normalize();		
 			} else {
 				this.documentRoot =  docRoot4FileManager.toRealPath(LinkOption.NOFOLLOW_LINKS);
 			}
 		    log.debug("final documentRoot:"+ this.documentRoot);
 		}
-
-
-		dateFormat = new SimpleDateFormat(config.getProperty("date"));
 
 		this.setParams(referer);
 		
@@ -126,36 +149,55 @@ public abstract class AbstractFM  implements FileManagerI{
 		this.reload = false;
 
 	}
-
-	@Override
-	public JSONObject error(String msg, Throwable ex) {
-		JSONObject errorInfo = new JSONObject();
-		try {
-			errorInfo.put("Error", msg);
-			errorInfo.put("Code", "-1");
-			errorInfo.put("Properties", this.properties);
-		} catch (Exception e) {
-			this.error("JSONObject error");
-		}
-		if (ex != null) {
-			log.error( msg, ex ); 
-		} else {
-			log.error( msg); 
-		}
-		this.error = errorInfo;
-		return error;
-	}
-	
 	
 	@Override
-	public JSONObject error(String msg) {
-		return error(msg, null);
-	}
+    public JSONObject initiate(HttpServletRequest request) throws FileManagerException, JSONException {
+        JSONObject init = new JSONObject();
+        JSONObject data = new JSONObject();
+        JSONObject attributes = new JSONObject();
+        data.put("id", "/");
+        data.put("type", "initiate");
 
-	@Override
-	public JSONObject getError() {
-		return error;
-	}
+        JSONObject options = new JSONObject();
+        options.put("culture", propertiesConfig.getProperty("culture"));
+        options.put("charsLatinOnly", Boolean.parseBoolean(propertiesConfig.getProperty("charsLatinOnly")));
+        if( propertiesConfig.getProperty("capabilities") != null ){
+            options.put("capabilities", propertiesConfig.getProperty("capabilities"));
+        } else{
+            options.put("capabilities", false);
+        }
+        options.put("allowFolderDownload", Boolean.parseBoolean(propertiesConfig.getProperty("allowFolderDownload")));
+
+        JSONObject security = new JSONObject();
+        security.put("allowNoExtension", Boolean.parseBoolean(propertiesConfig.getProperty("allowNoExtension")));
+        
+        JSONObject extensions = new JSONObject();
+        
+        extensions.put("ignoreCase", propertiesConfig.getProperty("extensions_ignoreCase"));
+        extensions.put("policy", propertiesConfig.getProperty("extensions_policy"));
+        extensions.put("restrictions", propertiesConfig.getProperty("extensions_restrictions").split(","));
+        
+        security.put("extensions", extensions);
+
+        JSONObject upload = new JSONObject();
+        try {
+            upload.put("fileSizeLimit", Long.parseLong(propertiesConfig.getProperty("upload_fileSizeLimit")));
+        }catch (NumberFormatException e){
+            logger.error("fileSizeLimit -> Format Exception", e);
+        }
+        upload.put("policy", propertiesConfig.getProperty("upload_policy"));
+        upload.put("restrictions", propertiesConfig.getProperty("upload_restrictions").split(","));
+
+        JSONObject sharedConfig = new JSONObject();
+        sharedConfig.put("options", options);
+        sharedConfig.put("security", security);
+        sharedConfig.put("upload", upload);
+        attributes.put("config", sharedConfig);
+
+        data.put("attributes", attributes);
+        init.put("data", data);
+        return init;
+    }
 
 	@Override
 	public String lang(String key) {
@@ -170,10 +212,10 @@ public abstract class AbstractFM  implements FileManagerI{
 	}
 
 	@Override
-	public boolean setGetVar(String var, String value) {
+	public boolean setGetVar(String var, String value) throws FileManagerException {
 		boolean retval = false;
 		if (value == null || value == "") {
-			this.error(sprintf(lang("INVALID_VAR"), var));
+			throw new FileManagerException(sprintf(lang("INVALID_VAR"), var));
 		} else {
 			// clean first slash, as Path does not resolve it relative otherwise 
 			if (var.equals("path") && value.startsWith("/")) {
@@ -189,20 +231,17 @@ public abstract class AbstractFM  implements FileManagerI{
 	protected boolean checkImageType() {
 		return this.params
 				.get("type").equals("Image")
-				&& contains(config.getProperty("images"), (String)this.item.get("filetype"));
+				&& contains(propertiesConfig.getProperty("images"), (String)this.item.get("filetype"));
 	}
 
 	protected boolean checkFlashType() {
 		return this.params
 				.get("type").equals("Flash")
-				&& contains(config.getProperty("flash"),  (String)this.item.get("filetype"));
+				&& contains(propertiesConfig.getProperty("flash"),  (String)this.item.get("filetype"));
 	}
 
-	
 
-
-
-	protected void readFile(HttpServletResponse resp, File file) {
+	protected void readFile(HttpServletResponse resp, File file) throws FileManagerException {
 		OutputStream os = null;
 		FileInputStream fis = null;
 		try {
@@ -212,7 +251,7 @@ public abstract class AbstractFM  implements FileManagerI{
 			fis.read(fileContent);
 			os.write(fileContent);
 		} catch (Exception e) {
-			this.error(sprintf(lang("INVALID_DIRECTORY_OR_FILE"), file.getName()));
+			throw new FileManagerException(sprintf(lang("INVALID_DIRECTORY_OR_FILE"), file.getName()));
 		} finally {
 			try {
 				if (os != null)
@@ -264,13 +303,31 @@ public abstract class AbstractFM  implements FileManagerI{
 
 	@Override
 	public String getConfigString(String key) {
-		return config.getProperty(key);
+		return propertiesConfig.getProperty(key);
 	}
 
 	public Path getDocumentRoot() {
 		return this.documentRoot;
 	}
 
+	protected void loadConfig() throws FileManagerException {
+		InputStream is;
+		if (propertiesConfig == null || propertiesConfig.isEmpty() || reload) {
+			try {
+				//log.info("reading from " + this.fileManagerRoot.resolve("connectors/jsp/config.properties").toString());
+				is = new FileInputStream( this.fileManagerRoot.resolve("connectors/jsp/config.properties").toString());
+				propertiesConfig = new Properties();
+				propertiesConfig.load(is);
+			} catch (Exception e) {
+				throw new FileManagerException("Error loading config file "+ this.fileManagerRoot.resolve("connectors/jsp/config.properties"));
+			}
+		}
+	}
+	
+	@Override
+	public final JSONObject getErrorResponse(String msg) throws JSONException {
+        return getErrorResponse(msg,null);
+    }
 
 	protected boolean isImage(String fileName) {
 		boolean isImage = false;
@@ -278,7 +335,7 @@ public abstract class AbstractFM  implements FileManagerI{
 		int pos = fileName.lastIndexOf(".");
 		if (pos > 1 && pos != fileName.length()) {
 			ext = fileName.substring(pos + 1);
-			isImage = contains(config.getProperty("images"), ext);
+			isImage = contains(propertiesConfig.getProperty("images"), ext);
 		}
 		return isImage;
 	}
@@ -326,14 +383,27 @@ public abstract class AbstractFM  implements FileManagerI{
 		}
 	}
 
-	protected HashMap<String, String> cleanString(HashMap<String, String> strList, String[] allowed) {
+	/**
+	 * cleans a key based list of string values. The default allowed characters are 
+	 * <code>\\w</code> i.e. word character <code>[a-zA-Z_0-9]</code>.
+	 *  
+	 * @param strList the list of strings to be cleaned
+	 * @param allowed list of  characters, which are added  to the list of allowed characters.
+	 * @param replaced the character, which replaces noz allowed characters, by default if null, empty string
+	 * @return
+	 */
+	protected HashMap<String, String> cleanString(HashMap<String, String> strList, char[] allowed, String replaced) {
 		String allow = "";
+		if (replaced == null) {
+			replaced = "";			
+		}
 		HashMap<String, String> cleaned = null;
 		Iterator<String> it = null;
 		String cleanStr = null;
 		String key = null;
 		for (int i = 0; i < allowed.length; i++) {
-			allow += "\\" + allowed[i];
+			//allow += "\\" + allowed[i];
+			allow +=  allowed[i];
 		}
 	
 		if (strList != null) {
@@ -341,6 +411,7 @@ public abstract class AbstractFM  implements FileManagerI{
 			it = strList.keySet().iterator();
 			while (it.hasNext()) {
 				key = it.next();
+				// this is basically [^\\w] 
 				cleanStr = strList.get(key).replaceAll("[^{" + allow + "}_a-zA-Z0-9]", "");
 				cleaned.put(key, cleanStr);
 			}
@@ -371,19 +442,19 @@ public abstract class AbstractFM  implements FileManagerI{
 			return this.checkFilename(path, filename, i);
 		}
 	}
-
-	protected void loadConfig() {
-		InputStream is;
-		if (config == null || reload) {
-			try {
-				//log.info("reading from " + this.fileManagerRoot.resolve("connectors/jsp/config.properties").toString());
-				is = new FileInputStream( this.fileManagerRoot.resolve("connectors/jsp/config.properties").toString());
-				config = new Properties();
-				config.load(is);
-			} catch (Exception e) {
-				error("Error loading config file "+ this.fileManagerRoot.resolve("connectors/jsp/config.properties"));
-			}
-		}
+	
+	protected String cleanFileNameDefault(String fileName)
+	{
+		char allowed[] = { '.', '-' };
+		String replaced = "_";
+		return cleanFileName(fileName, allowed, replaced);
+	}
+	
+	protected String cleanFileName(String fileName, char[] allowed, String replaced)
+	{
+		LinkedHashMap<String, String> strList = new LinkedHashMap<String, String>();
+		strList.put("fileName", fileName);
+		return cleanString(strList, allowed, replaced).get("fileName");
 	}
 
 	protected String sprintf(String text, String params) {
