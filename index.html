@@ -135,7 +135,12 @@
 								<div class="item-background"></div>
 								<div class="item-content" data-bind="draggableView: koItem">
 									<div class="clip">
-										<img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+                    <!-- ko if: koItem.cdo.lazyload  -->
+										<img src="" data-bind="css: koItem.gridIconClass(), attr: {'data-original': koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+                    <!-- /ko -->     
+                    <!-- ko if: !koItem.cdo.lazyload -->                    
+                    <img src="" data-bind="css: koItem.gridIconClass(), attr: {src: koItem.cdo.imageUrl, width: koItem.cdo.previewWidth}" />
+                    <!-- /ko -->                         
 									</div>
 									<p data-bind="text: koItem.rdo.attributes.name"></p>
 								</div>
@@ -412,9 +417,8 @@
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
-
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->

@@ -64,6 +64,7 @@
     "viewer": {
         "absolutePath": true,
         "previewUrl": false,
+        "lazyLoad": false,
         "image": {
             "enabled": true,
             "showThumbs": true,

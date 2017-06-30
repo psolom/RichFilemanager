@@ -341,6 +341,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         if(config.customScrollbar.enabled) {
             primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
             primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+            if(config.viewer.lazyLoad) {
+                primary.push('/scripts/lazyload/lazyload.transpiled.js');
+            }
         }
 
         // add callback on loaded assets and inject primary ones
@@ -470,6 +473,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 fmModel.ddModel.makeDroppable(valueAccessor(), element);
 			}
 		};
+    
 
         $wrapper.mousewheel(function(e) {
             if (!fmModel.ddModel.dragHelper) {
@@ -695,6 +699,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                             var yIncrement = Math.abs(this.mcs.top) - Math.abs(this.yStartPosition);
                             $viewItems.selectable("repositionCssHelper", yIncrement, 0);
+                        }
+                        if (config.viewer.lazyLoad) {
+                           fm.lazyload.main.handleScroll(); // use throttle 
                         }
                     }
                 },
@@ -1460,7 +1467,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadList = function(path) {
 				model.loadingView(true);
-
+        
 				var queryParams = {
 					mode: 'getfolder',
 					path: path
@@ -1476,9 +1483,31 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					cache: false,
 					success: function(response) {
                         if (response.data) {
+                            //model.itemsModel.objects( {} ); // empty old first
                             model.currentPath(path);
                             model.breadcrumbsModel.splitCurrent();
                             model.itemsModel.setList(response.data);
+                            if (config.customScrollbar.enabled && config.viewer.lazyLoad) {
+                              fm.lazyload = fm.lazyload || {};
+                              fm.lazyload.logElementEvent = function(eventName, element) {
+                                console.log(new Date().getTime(), eventName, element.getAttribute('data-original'));
+                              }
+                              fm.lazyload.logEvent  = function(eventName, elementsLeft) {
+                                console.log(new Date().getTime(), eventName, elementsLeft + " images left");
+                              }    
+                              fm.lazyload.main = new LazyLoad({
+                                  //container: document.getElementById('file-viewer'),
+                                  callback_load: function (element) {
+                                    fm.lazyload.logElementEvent("LOADED", element);
+                                  },
+                                  callback_set: function (element) {
+                                    fm.lazyload.logElementEvent("SET", element);
+                                  },
+                                  callback_processed: function(elementsLeft) {
+                                    fm.lazyload.logEvent("PROCESSED", elementsLeft);
+                                  }
+                              });
+                            }
                         }
 						handleAjaxResponseErrors(response);
 					},
@@ -1647,7 +1676,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
                 cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
                 imageUrl: createImageUrl(resourceObject, true, true),
-                previewWidth: previewWidth
+                previewWidth: previewWidth,
+                lazyload: (config.customScrollbar.enabled && config.viewer.lazyLoad)? true: false
             };
             this.visible = ko.observable(true);
             this.selected = ko.observable(false);
