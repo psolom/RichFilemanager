@@ -1497,7 +1497,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                               }    
                               fm.lazyload.main = new LazyLoad({
                                   //container: document.getElementById('file-viewer'),
-                                  callback_load: function (element) {
+                                  /*callback_load: function (element) {
                                     fm.lazyload.logElementEvent("LOADED", element);
                                   },
                                   callback_set: function (element) {
@@ -1505,7 +1505,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                   },
                                   callback_processed: function(elementsLeft) {
                                     fm.lazyload.logEvent("PROCESSED", elementsLeft);
-                                  }
+                                  }*/
                               });
                             }
                         }
