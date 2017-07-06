@@ -178,7 +178,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		}
 		
 		if (!root.toFile().exists() || !root.toFile().isDirectory()) {
-			log.warn("path problem:" + root.toAbsolutePath());
+			log.warn("path problem root does not exist or is no folder:" + root.toAbsolutePath());
 			root = documentRoot;
 			log.debug("reset path to documentRoot:" + root.toAbsolutePath());
 		} else {
@@ -293,7 +293,9 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
         return (StringUtils.isEmpty(serverRoot)) ? path : serverRoot + path;
     }
 
-	
+	/**
+	 * path file name path
+	 */
 	@Override
 	public JSONObject download(HttpServletRequest request, HttpServletResponse resp) throws JSONException, FileManagerException {
 		File file = this.documentRoot.resolve(this.get.get("path")).toFile();
@@ -512,7 +514,9 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 		int pos = relativePath.lastIndexOf("/");
 		String path = relativePath.substring(0, pos + 1);
 		
-		if (!path.endsWith("/")) path = path + "/";
+		if (path.startsWith("/")) {
+			path.replaceAll("^/", "");
+		}
 		
 		Path fileFrom = null;
 		Path fileTo = null;
@@ -592,8 +596,11 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 									// characters
 			return getErrorResponse(sprintf(lang("UNABLE_TO_CREATE_DIRECTORY"), this.get.get("name")));
 		else {
-			String targetPath =  this.get.get("path");
-			if (!targetPath.endsWith("/")) targetPath += "/";
+			String targetPath =  this.get.get("path");// may be empty
+			if (!targetPath.startsWith("/") ) {
+				targetPath += targetPath.replaceFirst("^/", "");
+			}
+			if (!filename.endsWith("/")) filename += "/";
 			File file = this.documentRoot.resolve(targetPath).resolve(filename).toFile();
 			if (file.isDirectory()) {
 				return getErrorResponse(sprintf(lang("DIRECTORY_ALREADY_EXISTS"), filename));
