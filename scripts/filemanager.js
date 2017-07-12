@@ -2945,7 +2945,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return ($.inArray(getExtension(filename), config.viewer.markdownRenderer.extensions) !== -1);
 	};
 
-	var buildAjaxRequest = function(method, parameters) {
+    var extendRequestParams = function(method, parameters) {
         var methodParams,
             configParams = config.api.requestParams;
 
@@ -2957,31 +2957,34 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             if ($.isPlainObject(methodParams) && !$.isEmptyObject(methodParams)) {
                 var extendParams = $.extend({}, configParams['MIXED'] || {}, methodParams);
 
-            	// append params to serialized form
-            	if (method === 'POST' && $.isArray(parameters)) {
-            		$.each(extendParams, function(key, value) {
+                // append params to serialized form
+                if (method === 'POST' && $.isArray(parameters)) {
+                    $.each(extendParams, function(key, value) {
                         parameters.push({
-							name: key,
-							value: value
-						});
+                            name: key,
+                            value: value
+                        });
                     });
-				} else {
+                } else {
                     parameters = $.extend({}, parameters, extendParams);
-				}
+                }
             }
         }
+        return parameters;
+	};
 
+	var buildAjaxRequest = function(method, parameters) {
         return $.ajax({
             type: method,
             cache: false,
-            url: buildConnectorUrl(), // request 'savefile' connector action
+            url: buildConnectorUrl(),
             dataType: 'json',
-            data: parameters
+            data: extendRequestParams(method, parameters)
         });
 	};
 
 	var buildConnectorUrl = function(params) {
-    var defaults = {
+		var defaults = {
 			time: new Date().getTime()
 		};
 		var queryParams = $.extend({}, params || {}, defaults);
@@ -3794,7 +3797,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						label: lg.action_upload,
 						autoClose: false,
 						click: function(e, ui) {
-              if($dropzone.children('.upload-item').length > 0) {
+							if($dropzone.children('.upload-item').length > 0) {
 								$dropzone.find('.button-start').trigger('click');
 							} else {
 								fm.error(lg.upload_choose_file);
@@ -3853,7 +3856,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				 * Start uploading process.
 				 */
 				$dropzone.on('click', '.button-start', function(e) {
-          var $target = $(this);
+					var $target = $(this);
 					var $buttons = $target.parent().parent();
 					var data = $buttons.data();
 
@@ -3942,12 +3945,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}
 				};
 
-				var formData = {
-          mode: 'upload',
-          path: currentPath
-				};
-				Object.assign(formData, config.api.requestParams.POST);
-
 				$('#fileupload', $uploadContainer)
 					.fileupload({
 						autoUpload: false,
@@ -3958,7 +3955,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						url: buildConnectorUrl(),
 						paramName: 'files',
 						singleFileUploads: true,
-						formData: formData,
+						formData: extendRequestParams('POST', {
+                            mode: 'upload',
+                            path: currentPath
+                        }),
 						// validation
 						// maxNumberOfFiles works only for single "add" call when "singleFileUploads" is set to "false"
 						maxNumberOfFiles: config.upload.maxNumberOfFiles,
@@ -3994,7 +3994,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 								imagesPath: fm.settings.baseUrl + '/scripts/jQuery-File-Upload/img'
 							}));
 							file.context = $template;
-              $template.find('.buttons').data(data);
+							$template.find('.buttons').data(data);
 							$template.appendTo($dropzone);
 						});
 						updateDropzoneView();
@@ -4150,12 +4150,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				})
 
 				.on('fileuploadsubmit', function(e, data) {
-					var formData = {
-						mode: 'upload',
-						path: fmModel.currentPath()
-					};
-          Object.assign(formData, config.api.requestParams.POST);
-          data.formData = formData;
+                    data.formData = extendRequestParams('POST', {
+                        mode: 'upload',
+                        path: fmModel.currentPath()
+                    });
 					$uploadButton.addClass('loading').prop('disabled', true);
 					$uploadButton.children('span').text(lg.loading_data);
 				})
