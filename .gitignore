@@ -5,3 +5,4 @@ composer.lock
 /node_modules
 /config/filemanager.config.json
 /config/filemanager.init.js
+/config/config.php

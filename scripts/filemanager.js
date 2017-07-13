@@ -3032,7 +3032,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						queryParams.thumbnail = 'true';
 					}
 				}
-                imageUrl = buildConnectorUrl(queryParams);
+        queryParams = extendRequestParams("GET", queryParams);
+				imageUrl = buildConnectorUrl(queryParams);
 			}
             imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
 		}
