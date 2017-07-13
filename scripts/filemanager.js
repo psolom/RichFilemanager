@@ -3004,12 +3004,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
             previewUrl = buildAbsolutePath(objectPath, false);
 		} else {
-			var queryParams = {
+            previewUrl = buildConnectorUrl({
 				mode: 'readfile',
 				path: resourceObject.id
-			};
-			queryParams = extendRequestParams("GET", queryParams);
-			previewUrl = buildConnectorUrl(queryParams);
+			});
 		}
 
         previewUrl = fm.settings.callbacks.beforeCreatePreviewUrl(resourceObject, previewUrl);
@@ -3036,10 +3034,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						queryParams.thumbnail = 'true';
 					}
 				}
-				queryParams = extendRequestParams("GET", queryParams);
-				imageUrl = buildConnectorUrl(queryParams);
+                imageUrl = buildConnectorUrl(queryParams);
 			}
-			imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
+            imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
 		}
 		return imageUrl;
 	};
