@@ -476,7 +476,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         $wrapper.mousewheel(function(e) {
             if (!fmModel.ddModel.dragHelper) {
-                return false;
+                return true;
             }
 
             var $panes,
