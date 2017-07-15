@@ -2104,7 +2104,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                     '</code></pre>';
                             } catch (__) {}
                         }
-                        return '<pre class="highlight"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+                        return '<pre class="highlight"><code>' + instance.utils.escapeHtml(str) + '</code></pre>';
                     },
 
                     // custom link function to enable <img ...> and file d/ls:
