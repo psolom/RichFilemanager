@@ -50,7 +50,11 @@
     "api": {
         "lang": "php",
         "connectorUrl": false,
-        "requestParams": []
+        "requestParams": {
+            "GET": {},
+            "POST": {},
+            "MIXED": {}
+        }
     },
     "upload": {
         "multiple": true,
@@ -64,9 +68,9 @@
     "viewer": {
         "absolutePath": true,
         "previewUrl": false,
-        "lazyLoad": true,
         "image": {
             "enabled": true,
+            "lazyLoad": true,
             "showThumbs": true,
             "thumbMaxWidth": 64,
             "extensions": [

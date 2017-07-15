@@ -341,7 +341,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         // theme defined in configuration file
         primary.push('/themes/' + config.options.theme + '/styles/theme.css');
 
-        if(config.viewer.lazyLoad) {
+        if(config.viewer.image.lazyLoad) {
             primary.push('/scripts/lazyload/dist/lazyload.min.js');
         }
         if(config.customScrollbar.enabled) {
@@ -1433,7 +1433,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.descriptivePanel = new RenderModel();
             this.lazyLoad = null;
 
-            if (config.viewer.lazyLoad) {
+            if (config.viewer.image.lazyLoad) {
                 this.lazyLoad = new LazyLoad({
                     container: $fileinfo[0], // work only for default scrollbar
                     callback_load: function (element) {
@@ -1667,7 +1667,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.visible = ko.observable(true);
             this.selected = ko.observable(false);
             this.dragHovered = ko.observable(false);
-            this.lazyPreview = (config.viewer.lazyLoad && this.cdo.imageUrl);
+            this.lazyPreview = (config.viewer.image.lazyLoad && this.cdo.imageUrl);
 
             this.selected.subscribe(function (value) {
                 if (value && model.treeModel.selectedNode() !== null) {
