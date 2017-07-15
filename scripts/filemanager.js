@@ -91,7 +91,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	   where "element" is the element the plugin is attached to
 	--------------------------------------------------------------------------------------------------------------*/
 
-	fm.log = function(message, obj) {
+	fm.write = function(message, obj) {
 		var log = alertify;
 		var options = $.extend({}, {
 			reset: true,
@@ -121,21 +121,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	fm.error = function(message, options) {
-		return fm.log(message, $.extend({}, {
+		return fm.write(message, $.extend({}, {
 			type: 'error',
 			delay: 10000
 		}, options));
 	};
 
 	fm.warning = function(message, options) {
-		return fm.log(message, $.extend({}, {
+		return fm.write(message, $.extend({}, {
 			type: 'warning',
 			delay: 10000
 		}, options));
 	};
 
 	fm.success = function(message, options) {
-		return fm.log(message, $.extend({}, {
+		return fm.write(message, $.extend({}, {
 			type: 'success',
 			delay: 6000
 		}, options));
@@ -186,6 +186,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         $splitter.height(newH);
 		$fileinfo.width(newW);
 	};
+
+    fm.log = function() {
+        if(config.options.logger && arguments) {
+            [].unshift.call(arguments, new Date().getTime());
+            console.log.apply(this, arguments);
+        }
+    };
 
 
 	/*--------------------------------------------------------------------------------------------------------------
@@ -1441,19 +1448,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 this.lazyLoad = new LazyLoad({
                     container: $fileinfo[0], // work only for default scrollbar
                     callback_load: function (element) {
-                        if(config.options.logger) {
-                            console.log(new Date().getTime(), "LOADED", element.getAttribute('data-original'));
-						}
+                        fm.log("LOADED", element.getAttribute('data-original'));
                     },
                     callback_set: function (element) {
-                        if(config.options.logger) {
-                            console.log(new Date().getTime(), "SET", element.getAttribute('data-original'));
-                        }
+                        fm.log("SET", element.getAttribute('data-original'));
                     },
                     callback_processed: function (elementsLeft) {
-                        if(config.options.logger) {
-                            console.log(new Date().getTime(), "PROCESSED", elementsLeft + " images left");
-                        }
+                        fm.log("PROCESSED", elementsLeft + " images left");
                     }
                 });
 			}
@@ -1488,7 +1489,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadList = function(path) {
 				model.loadingView(true);
-        
+
 				var queryParams = {
 					mode: 'getfolder',
 					path: path
@@ -1504,7 +1505,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					cache: false,
 					success: function(response) {
                         if (response.data) {
-                            //model.itemsModel.objects( {} ); // empty old first
                             model.currentPath(path);
                             model.breadcrumbsModel.splitCurrent();
                             model.itemsModel.setList(response.data);
@@ -1825,7 +1825,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.closeButton = ko.observable(false);
 
             this.closeButtonOnClick = function() {
-				console.log('clicked');
+                fm.log("CLOSE button is clicked");
 			};
 
 			this.goHome = function() {
@@ -2775,9 +2775,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Handle ajax request error.
 	var handleAjaxError = function(response) {
-		if(config.options.logger) {
-			console.log(response.responseText || response);
-		}
+        fm.log(response.responseText || response);
 		fm.error(lg.ERROR_SERVER);
 		fm.error(response.responseText);
 	};
@@ -2785,9 +2783,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Handle ajax json response error.
 	var handleAjaxResponseErrors = function(response) {
 		if(response.errors) {
-            if(config.options.logger) {
-                console.log(response.errors);
-            }
+            fm.log(response.errors);
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
 
@@ -3121,7 +3117,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		if(totalCounter > 1) {
 			deferred.then(function() {
-				fm.log(lg.successful_processed.replace('%s', successCounter).replace('%s', totalCounter));
+				fm.write(lg.successful_processed.replace('%s', successCounter).replace('%s', totalCounter));
 			});
 		}
 

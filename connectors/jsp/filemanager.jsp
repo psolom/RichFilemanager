@@ -132,7 +132,6 @@
       String responseStr = responseData.toString();
       if (putTextarea)
         responseStr = "<textarea>" + responseStr + "</textarea>";
-      //fm.log("d:\\logs\\logfilej.txt", "mode:" + mode + ",response:" + responseStr);
       pw.print(responseStr);
       pw.close();
   }
