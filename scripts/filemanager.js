@@ -339,7 +339,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         primary.push('/themes/' + config.options.theme + '/styles/theme.css');
 
         if(config.viewer.lazyLoad) {
-            primary.push('/scripts/lazyload/lazyload.transpiled.min.js');
+            primary.push('/scripts/lazyload/dist/lazyload.min.js');
         }
         if(config.customScrollbar.enabled) {
             primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
