@@ -1,3 +1,11 @@
+Version 2.5.1
+---------------------------
+- added capability to pass parameters to the connector, thanks @Saso222 #132
+- lazyload images thumbnails in the right panel, thanks @gmkll #148
+- updated JSP connector, compatible with v2.5.x, thanks @gmkll #195
+- bugfix: mouse scrolling doesn't work for default browser scroll
+
+
 Version 2.5.0
 ---------------------------
 - Asp.Net Core connector support, thanks @sinanbozkus #163;

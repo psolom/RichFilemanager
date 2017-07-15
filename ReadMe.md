@@ -10,6 +10,7 @@ Based on the @simogeo [Filemanager](https://github.com/simogeo/Filemanager), wit
 * Multiple actions support for selected files & folders: move, delete, download
 * Before and After callback functions for some actions
 * Double or single click setup to open files & folders
+* Lazy loading of images thumbnails
 * Integration with AWS S3 storage
 * Integration with Imperavi Redactor WYSIWYG editor
 * Multiple & chunked uploads support - based on jQuery-File-Upload
