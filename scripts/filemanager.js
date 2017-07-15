@@ -258,12 +258,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// performs initial request to server to retrieve initial params
 	var performInitialRequest = function() {
-        return $.ajax({
-            type: 'GET',
-            url: buildConnectorUrl({
-                mode: 'initiate'
-            }),
-            dataType: 'json'
+        return buildAjaxRequest('GET', {
+            mode: 'initiate'
         }).done(function(response) {
             if(response.data) {
                 var serverConfig = response.data.attributes.config;
@@ -1131,33 +1127,26 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					queryParams.type = _url_.param('type');
 				}
 
-				$.ajax({
-					type: 'GET',
-					url: buildConnectorUrl(queryParams),
-					dataType: "json",
-					cache: false,
-					success: function(response) {
-						if(response.data) {
-							var nodes = [];
-							$.each(response.data, function(i, resourceObject) {
-								var nodeObject = tree_model.createNode(resourceObject);
-								nodes.push(nodeObject);
-							});
-							if(refresh) {
-								targetNode.children([]);
-							}
-							tree_model.addNodes(targetNode, nodes);
-							// not root
-							if(targetNode) {
-								targetNode.isLoaded(true);
-								tree_model.expandNode(targetNode);
-							}
-							expandFolderDefault(targetNode);
-						}
-						handleAjaxResponseErrors(response);
-					},
-					error: handleAjaxError
-				});
+                buildAjaxRequest('GET', queryParams).done(function(response) {
+                    if(response.data) {
+                        var nodes = [];
+                        $.each(response.data, function(i, resourceObject) {
+                            var nodeObject = tree_model.createNode(resourceObject);
+                            nodes.push(nodeObject);
+                        });
+                        if(refresh) {
+                            targetNode.children([]);
+                        }
+                        tree_model.addNodes(targetNode, nodes);
+                        // not root
+                        if(targetNode) {
+                            targetNode.isLoaded(true);
+                            tree_model.expandNode(targetNode);
+                        }
+                        expandFolderDefault(targetNode);
+                    }
+                    handleAjaxResponseErrors(response);
+                }).fail(handleAjaxError);
 			};
 
 			this.createNode = function(resourceObject) {
@@ -1498,25 +1487,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					queryParams.type = _url_.param('type');
 				}
 
-				$.ajax({
-					type: 'GET',
-					url: buildConnectorUrl(queryParams),
-					dataType: "json",
-					cache: false,
-					success: function(response) {
-                        if (response.data) {
-                            model.currentPath(path);
-                            model.breadcrumbsModel.splitCurrent();
-                            model.itemsModel.setList(response.data);
+                buildAjaxRequest('GET', queryParams).done(function(response) {
+                    if (response.data) {
+                        model.currentPath(path);
+                        model.breadcrumbsModel.splitCurrent();
+                        model.itemsModel.setList(response.data);
 
-                            if (model.itemsModel.lazyLoad) {
-                                model.itemsModel.lazyLoad.update();
-                            }
+                        if (model.itemsModel.lazyLoad) {
+                            model.itemsModel.lazyLoad.update();
                         }
-						handleAjaxResponseErrors(response);
-					},
-					error: handleAjaxError
-				});
+                    }
+                    handleAjaxResponseErrors(response);
+                }).fail(handleAjaxError);
 			};
 
 			this.setList = function(dataObjects) {
@@ -1865,27 +1847,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						return;
 					}
 
-					$.ajax({
-						type: 'GET',
-						url: buildConnectorUrl({
-							mode: 'addfolder',
-							path: fmModel.currentPath(),
-							name: folderName
-						}),
-						dataType: 'json',
-						success: function(response) {
-							if (response.data) {
-								fmModel.addItem(response.data, fmModel.currentPath());
+                    buildAjaxRequest('GET', {
+                        mode: 'addfolder',
+                        path: fmModel.currentPath(),
+                        name: folderName
+                    }).done(function(response) {
+                        if (response.data) {
+                            fmModel.addItem(response.data, fmModel.currentPath());
 
-								ui.closeDialog();
-								if (config.options.showConfirmation) {
-									fm.success(lg.successful_added_folder);
-								}
-							}
-							handleAjaxResponseErrors(response);
-						},
-						error: handleAjaxError
-					});
+                            ui.closeDialog();
+                            if (config.options.showConfirmation) {
+                                fm.success(lg.successful_added_folder);
+                            }
+                        }
+                        handleAjaxResponseErrors(response);
+                    }).fail(handleAjaxError);
 				};
 
 				fm.prompt({
@@ -2162,7 +2138,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                     '</code></pre>';
                             } catch (__) {}
                         }
-                        return '<pre class="highlight"><code>' + md.utils.escapeHtml(str) + '</code></pre>';
+                        return '<pre class="highlight"><code>' + instance.utils.escapeHtml(str) + '</code></pre>';
                     },
 
                     // custom link function to enable <img ...> and file d/ls:
@@ -2177,14 +2153,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(render_model.rdo().id);
                         var path = basePath + ltrim(link, '/');
 
-                        if(isMarkdownFile(path)) {
+                        if (isMarkdownFile(path)) {
                             // to open file in preview mode upon click
                             return path;
                         } else {
-                            return buildConnectorUrl({
+                            var queryParams = extendRequestParams("GET", {
                                 mode: 'readfile',
                                 path: path
                             });
+                            return buildConnectorUrl(queryParams);
                         }
                     }
                 }).use(window.markdownitReplaceLink);
@@ -2999,6 +2976,44 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		return ($.inArray(getExtension(filename), config.viewer.markdownRenderer.extensions) !== -1);
 	};
 
+    var extendRequestParams = function(method, parameters) {
+        var methodParams,
+            configParams = config.api.requestParams;
+
+        method = method.toUpperCase();
+
+        if ($.isPlainObject(configParams)) {
+            methodParams = configParams[method];
+
+            if ($.isPlainObject(methodParams) && !$.isEmptyObject(methodParams)) {
+                var extendParams = $.extend({}, configParams['MIXED'] || {}, methodParams);
+
+                // append params to serialized form
+                if (method === 'POST' && $.isArray(parameters)) {
+                    $.each(extendParams, function(key, value) {
+                        parameters.push({
+                            name: key,
+                            value: value
+                        });
+                    });
+                } else {
+                    parameters = $.extend({}, parameters, extendParams);
+                }
+            }
+        }
+        return parameters;
+	};
+
+	var buildAjaxRequest = function(method, parameters) {
+        return $.ajax({
+            type: method,
+            cache: false,
+            url: buildConnectorUrl(),
+            dataType: 'json',
+            data: extendRequestParams(method, parameters)
+        });
+	};
+
 	var buildConnectorUrl = function(params) {
 		var defaults = {
 			time: new Date().getTime()
@@ -3012,48 +3027,50 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var previewUrl,
 			objectPath = resourceObject.attributes.path;
 
-		if(config.viewer.absolutePath && objectPath) {
-			if(encode) {
-				objectPath = encodePath(objectPath);
-			}
+        if (config.viewer.absolutePath && objectPath) {
+            if (encode) {
+                objectPath = encodePath(objectPath);
+            }
             previewUrl = buildAbsolutePath(objectPath, false);
-		} else {
-            previewUrl = buildConnectorUrl({
-				mode: 'readfile',
-				path: resourceObject.id
-			});
-		}
+        } else {
+            var queryParams = extendRequestParams("GET", {
+                mode: 'readfile',
+                path: resourceObject.id
+            });
+            previewUrl = buildConnectorUrl(queryParams);
+        }
 
         previewUrl = fm.settings.callbacks.beforeCreatePreviewUrl(resourceObject, previewUrl);
 		return previewUrl;
 	};
 
 	// Build url to display image or its thumbnail
-	var createImageUrl = function(resourceObject, thumbnail, disableCache) {
-		var imageUrl;
-		if (isImageFile(resourceObject.id) &&
-			resourceObject.attributes.readable && (
+    var createImageUrl = function (resourceObject, thumbnail, disableCache) {
+        var imageUrl;
+        if (isImageFile(resourceObject.id) &&
+            resourceObject.attributes.readable && (
 			(thumbnail && config.viewer.image.showThumbs) ||
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
-			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
+            if (config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
                 imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path), disableCache);
-			} else {
-				var queryParams = {path: resourceObject.id};
-				if (getExtension(resourceObject.id) === 'svg') {
-					queryParams.mode = 'readfile';
-				} else {
-					queryParams.mode = 'getimage';
-					if (thumbnail) {
-						queryParams.thumbnail = 'true';
-					}
-				}
+            } else {
+                var queryParams = {path: resourceObject.id};
+                if (getExtension(resourceObject.id) === 'svg') {
+                    queryParams.mode = 'readfile';
+                } else {
+                    queryParams.mode = 'getimage';
+                    if (thumbnail) {
+                        queryParams.thumbnail = 'true';
+                    }
+                }
+                queryParams = extendRequestParams("GET", queryParams);
                 imageUrl = buildConnectorUrl(queryParams);
-			}
+            }
             imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
-		}
-		return imageUrl;
-	};
+        }
+        return imageUrl;
+    };
 
 	var buildAbsolutePath = function(path, disableCache) {
 		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : location.origin;
@@ -3316,65 +3333,59 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return;
 			}
 
-			$.ajax({
-				type: 'GET',
-				url: buildConnectorUrl({
-					mode: 'rename',
-					old: oldPath,
-					new: givenName
-				}),
-				dataType: 'json',
-				success: function(response) {
-					if(response.data) {
-						var newItem = response.data;
+            buildAjaxRequest('GET', {
+                mode: 'rename',
+                old: oldPath,
+                new: givenName
+            }).done(function(response) {
+                if(response.data) {
+                    var newItem = response.data;
 
-						// handle tree nodes
-						var sourceNode = fmModel.treeModel.findByParam('id', oldPath);
-						if(sourceNode) {
-							if(sourceNode.rdo.type === 'folder') {
-								sourceNode.nodeTitle(newItem.attributes.name);
-								// update object data for the current and all child nodes
-								fmModel.treeModel.actualizeNodeObject(sourceNode, oldPath, newItem.id);
-							}
-							if(sourceNode.rdo.type === 'file') {
-								var parentNode = sourceNode.parentNode();
-								var newNode = fmModel.treeModel.createNode(newItem);
-								sourceNode.remove();
+                    // handle tree nodes
+                    var sourceNode = fmModel.treeModel.findByParam('id', oldPath);
+                    if(sourceNode) {
+                        if(sourceNode.rdo.type === 'folder') {
+                            sourceNode.nodeTitle(newItem.attributes.name);
+                            // update object data for the current and all child nodes
+                            fmModel.treeModel.actualizeNodeObject(sourceNode, oldPath, newItem.id);
+                        }
+                        if(sourceNode.rdo.type === 'file') {
+                            var parentNode = sourceNode.parentNode();
+                            var newNode = fmModel.treeModel.createNode(newItem);
+                            sourceNode.remove();
 
-								if(parentNode) {
-									fmModel.treeModel.addNodes(parentNode, newNode);
-								}
-							}
-						}
+                            if(parentNode) {
+                                fmModel.treeModel.addNodes(parentNode, newNode);
+                            }
+                        }
+                    }
 
-						// handle view objects
-						var sourceItem = fmModel.itemsModel.findByParam('id', oldPath);
-						if(sourceItem) {
-							if(sourceItem.rdo.type === 'parent') {
-								sourceItem.id = newItem.id;
-							} else {
-								sourceItem.remove();
-								fmModel.itemsModel.addNew(newItem);
-							}
-						}
-						// ON rename currently open folder
-						if(fmModel.currentPath() === oldPath) {
-							fmModel.itemsModel.loadList(newItem.id);
-						}
-						// ON rename currently previewed file
-						if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
-                            fmModel.previewModel.applyObject(newItem);
-						}
+                    // handle view objects
+                    var sourceItem = fmModel.itemsModel.findByParam('id', oldPath);
+                    if(sourceItem) {
+                        if(sourceItem.rdo.type === 'parent') {
+                            sourceItem.id = newItem.id;
+                        } else {
+                            sourceItem.remove();
+                            fmModel.itemsModel.addNew(newItem);
+                        }
+                    }
+                    // ON rename currently open folder
+                    if(fmModel.currentPath() === oldPath) {
+                        fmModel.itemsModel.loadList(newItem.id);
+                    }
+                    // ON rename currently previewed file
+                    if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
+                        fmModel.previewModel.applyObject(newItem);
+                    }
 
-						ui.closeDialog();
-						if(config.options.showConfirmation) {
-							fm.success(lg.successful_rename);
-						}
-					}
-					handleAjaxResponseErrors(response);
-				},
-				error: handleAjaxError
-			});
+                    ui.closeDialog();
+                    if(config.options.showConfirmation) {
+                        fm.success(lg.successful_rename);
+                    }
+                }
+                handleAjaxResponseErrors(response);
+            }).fail(handleAjaxError);
 		};
 
 		fm.prompt({
@@ -3429,69 +3440,57 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Copy the current item to specified dir and returns the new name.
 	// Called upon paste copied items via clipboard.
-	var copyItem = function(resourceObject, targetPath) {
-		return $.ajax({
-			type: 'GET',
-			url: buildConnectorUrl({
-				mode: 'copy',
-                source: resourceObject.id,
-                target: targetPath
-			}),
-			dataType: 'json',
-			success: function(response) {
-				if(response.data) {
-					var newItem = response.data;
+    var copyItem = function (resourceObject, targetPath) {
+        return buildAjaxRequest('GET', {
+            mode: 'copy',
+            source: resourceObject.id,
+            target: targetPath
+        }).done(function (response) {
+            if (response.data) {
+                var newItem = response.data;
 
-					fmModel.addItem(newItem, targetPath);
+                fmModel.addItem(newItem, targetPath);
 
-					alertify.clearDialogs();
-					if(config.options.showConfirmation) {
-						fm.success(lg.successful_copied);
-					}
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
-	};
+                alertify.clearDialogs();
+                if (config.options.showConfirmation) {
+                    fm.success(lg.successful_copied);
+                }
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
+    };
 
 	// Move the current item to specified dir and returns the new name.
 	// Called by clicking the "Move" button in detail views
 	// or choosing the "Move" contextual menu option in list views.
 	var moveItem = function(resourceObject, targetPath) {
-		return $.ajax({
-			type: 'GET',
-			url: buildConnectorUrl({
-				mode: 'move',
-				old: resourceObject.id,
-				new: targetPath
-			}),
-			dataType: 'json',
-			success: function(response) {
-				if(response.data) {
-					var newItem = response.data;
+	    return buildAjaxRequest('GET', {
+            mode: 'move',
+            old: resourceObject.id,
+            new: targetPath
+        }).done(function(response) {
+            if(response.data) {
+                var newItem = response.data;
 
-					fmModel.removeItem(resourceObject);
-					fmModel.addItem(newItem, targetPath);
+                fmModel.removeItem(resourceObject);
+                fmModel.addItem(newItem, targetPath);
 
-					// ON move currently open folder to another folder
-					if(fmModel.currentPath() === resourceObject.id) {
-						fmModel.itemsModel.loadList(newItem.id);
-					}
-					// ON move currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
-						fmModel.previewFile(false);
-					}
+                // ON move currently open folder to another folder
+                if(fmModel.currentPath() === resourceObject.id) {
+                    fmModel.itemsModel.loadList(newItem.id);
+                }
+                // ON move currently previewed file
+                if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
+                    fmModel.previewFile(false);
+                }
 
-					alertify.clearDialogs();
-					if(config.options.showConfirmation) {
-						fm.success(lg.successful_moved);
-					}
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
+                alertify.clearDialogs();
+                if(config.options.showConfirmation) {
+                    fm.success(lg.successful_moved);
+                }
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
 	// Prompts for confirmation, then deletes the current item.
@@ -3515,32 +3514,26 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Delete item by path
 	var deleteItem = function(path) {
-		return $.ajax({
-			type: 'GET',
-			url: buildConnectorUrl({
-				mode: 'delete',
-				path: path
-			}),
-			dataType: 'json',
-			success: function (response) {
-				if(response.data) {
-					var targetItem = response.data;
+        return buildAjaxRequest('GET', {
+            mode: 'delete',
+            path: path
+        }).done(function(response) {
+            if(response.data) {
+                var targetItem = response.data;
 
-					fmModel.removeItem(targetItem);
+                fmModel.removeItem(targetItem);
 
-					// ON delete currently previewed file
-					if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
-						fmModel.previewFile(false);
-					}
+                // ON delete currently previewed file
+                if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
+                    fmModel.previewFile(false);
+                }
 
-					if(config.options.showConfirmation) {
-						fm.success(lg.successful_delete);
-					}
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
+                if(config.options.showConfirmation) {
+                    fm.success(lg.successful_delete);
+                }
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
 	// Starts file download process.
@@ -3552,119 +3545,90 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			path: resourceObject.id
 		};
 
-		return $.ajax({
-			type: 'GET',
-			url: buildConnectorUrl(queryParams),
-			dataType: 'json',
-			success: function (response) {
-				if(response.data) {
-					//window.location = buildConnectorUrl(queryParams);
-					$.fileDownload(buildConnectorUrl(queryParams));
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
+        return buildAjaxRequest('GET', queryParams).done(function(response) {
+            if(response.data) {
+                //window.location = buildConnectorUrl(queryParams);
+                $.fileDownload(buildConnectorUrl(queryParams));
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
 	// Creates CodeMirror instance to let user change the content of the file
 	var previewItem = function(resourceObject) {
-		return $.ajax({
-			type: 'GET',
-			url: buildConnectorUrl({
-				mode: 'editfile',
-				path: resourceObject.id
-			}),
-			dataType: 'json',
-			success: function (response) {
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
+        return buildAjaxRequest('GET', {
+            mode: 'editfile',
+            path: resourceObject.id
+        }).done(function(response) {
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
 	// Save CodeMirror editor content to file
 	var saveItem = function(resourceObject) {
-		$.ajax({
-			type: 'POST',
-			url: buildConnectorUrl(), // request 'savefile' connector action
-			dataType: 'json',
-			data: $('#fm-js-editor-form').serializeArray(),
-			success: function (response) {
-				if(response.data) {
-                    var dataObject = response.data,
-                        preview_model = fmModel.previewModel,
-						content = preview_model.editor.content();
+		var formParams = $('#fm-js-editor-form').serializeArray();
 
-                    // update preview object data
-                    preview_model.rdo(dataObject);
+        buildAjaxRequest('POST', formParams).done(function(response) {
+            if(response.data) {
+                var dataObject = response.data,
+                    preview_model = fmModel.previewModel,
+                    content = preview_model.editor.content();
 
-                    // assign new content to the viewer and close editor
-                    preview_model.viewer.content(content);
-                    preview_model.closeEditor();
+                // update preview object data
+                preview_model.rdo(dataObject);
 
-                    // replace original item with a new one to adjust observable items
-                    var newItem = fmModel.itemsModel.createObject(dataObject);
-                    var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
-                    fmModel.itemsModel.objects.replace(originalItem, newItem);
+                // assign new content to the viewer and close editor
+                preview_model.viewer.content(content);
+                preview_model.closeEditor();
 
-                    fm.success(lg.successful_edit);
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
+                // replace original item with a new one to adjust observable items
+                var newItem = fmModel.itemsModel.createObject(dataObject);
+                var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
+                fmModel.itemsModel.objects.replace(originalItem, newItem);
+
+                fm.success(lg.successful_edit);
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
     var getItemInfo = function(targetPath) {
-        return $.ajax({
-            type: 'GET',
-            url: buildConnectorUrl({
-                mode: 'getfile',
-                path: targetPath
-            }),
-            dataType: "json",
-            success: function (response) {
-                handleAjaxResponseErrors(response);
-            },
-            error: handleAjaxError
-        });
+        return buildAjaxRequest('GET', {
+            mode: 'getfile',
+            path: targetPath
+        }).done(function(response) {
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
 	// Display storage summary info
 	var summarizeItems = function() {
-		$.ajax({
-			type: 'GET',
-			url: buildConnectorUrl({
-				mode: 'summarize'
-			}),
-			dataType: "json",
-			success: function (response) {
-				if(response.data) {
-					var data = response.data.attributes,
-						size = formatBytes(data.size, true);
+        return buildAjaxRequest('GET', {
+            mode: 'summarize'
+        }).done(function(response) {
+            if(response.data) {
+                var data = response.data.attributes,
+                    size = formatBytes(data.size, true);
 
-					if(data.sizeLimit > 0) {
-						var sizeTotal = formatBytes(data.sizeLimit, true);
-						var ratio = data.size * 100 / data.sizeLimit;
-						var percentage = Math.round(ratio * 100) / 100;
-						size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
-					}
+                if(data.sizeLimit > 0) {
+                    var sizeTotal = formatBytes(data.sizeLimit, true);
+                    var ratio = data.size * 100 / data.sizeLimit;
+                    var percentage = Math.round(ratio * 100) / 100;
+                    size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
+                }
 
-					fmModel.summaryModel.files(data.files);
-					fmModel.summaryModel.folders(data.folders);
-					fmModel.summaryModel.size(size);
+                fmModel.summaryModel.files(data.files);
+                fmModel.summaryModel.folders(data.folders);
+                fmModel.summaryModel.size(size);
 
-					fmModel.summaryModel.enabled(true);
-					var $summary = $('#summary-popup').clone().show();
-					fmModel.summaryModel.enabled(false);
+                fmModel.summaryModel.enabled(true);
+                var $summary = $('#summary-popup').clone().show();
+                fmModel.summaryModel.enabled(false);
 
-					fm.alert($summary[0].outerHTML);
-				}
-				handleAjaxResponseErrors(response);
-			},
-			error: handleAjaxError
-		});
+                fm.alert($summary[0].outerHTML);
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
 	};
 
     // Prompts for confirmation, then extracts the current archive.
@@ -3697,31 +3661,24 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
     // Extract files and folders from archive.
     // Called by choosing the "Extract" contextual menu option in list views.
     var extractItem = function(resourceObject, targetPath) {
-        $.ajax({
-            type: 'POST',
-            url: buildConnectorUrl(),
-            data: {
-                mode: 'extract',
-                source: resourceObject.id,
-                target: targetPath
-            },
-            dataType: 'json',
-            success: function(response) {
-                if(response.data) {
-                	// TODO: implement "addItems", add in batches
-                	$.each(response.data, function(i, resourceObject) {
-                        fmModel.addItem(resourceObject, targetPath);
-                    });
+        buildAjaxRequest('POST', {
+            mode: 'extract',
+            source: resourceObject.id,
+            target: targetPath
+        }).done(function(response) {
+            if(response.data) {
+                // TODO: implement "addItems", add in batches
+                $.each(response.data, function(i, resourceObject) {
+                    fmModel.addItem(resourceObject, targetPath);
+                });
 
-                    alertify.clearDialogs();
-                    if(config.options.showConfirmation) {
-                        fm.success(lg.successful_extracted);
-                    }
+                alertify.clearDialogs();
+                if(config.options.showConfirmation) {
+                    fm.success(lg.successful_extracted);
                 }
-                handleAjaxResponseErrors(response);
-            },
-            error: handleAjaxError
-        });
+            }
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
     };
 
 	/*---------------------------------------------------------
@@ -4031,10 +3988,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						url: buildConnectorUrl(),
 						paramName: 'files',
 						singleFileUploads: true,
-						formData: {
-							mode: 'upload',
-							path: currentPath
-						},
+						formData: extendRequestParams('POST', {
+                            mode: 'upload',
+                            path: currentPath
+                        }),
 						// validation
 						// maxNumberOfFiles works only for single "add" call when "singleFileUploads" is set to "false"
 						maxNumberOfFiles: config.upload.maxNumberOfFiles,
@@ -4226,10 +4183,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				})
 
 				.on('fileuploadsubmit', function(e, data) {
-					data.formData = {
-						mode: 'upload',
-						path: fmModel.currentPath()
-					};
+                    data.formData = extendRequestParams('POST', {
+                        mode: 'upload',
+                        path: fmModel.currentPath()
+                    });
 					$uploadButton.addClass('loading').prop('disabled', true);
 					$uploadButton.children('span').text(lg.loading_data);
 				})
