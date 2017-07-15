@@ -2119,15 +2119,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         var basePath = (startsWith(link, '/')) ? fileRoot : getDirname(render_model.rdo().id);
                         var path = basePath + ltrim(link, '/');
 
-                        if(isMarkdownFile(path)) {
+                        if (isMarkdownFile(path)) {
                             // to open file in preview mode upon click
                             return path;
                         } else {
-                        		var queryParams = {
-                              mode: 'readfile',
-                              path: path
-                            };
-                        		queryParams = extendRequestParams("GET", queryParams);
+                            var queryParams = extendRequestParams("GET", {
+                                mode: 'readfile',
+                                path: path
+                            });
                             return buildConnectorUrl(queryParams);
                         }
                     }
@@ -2998,51 +2997,50 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var previewUrl,
 			objectPath = resourceObject.attributes.path;
 
-		if(config.viewer.absolutePath && objectPath) {
-			if(encode) {
-				objectPath = encodePath(objectPath);
-			}
-      previewUrl = buildAbsolutePath(objectPath, false);
-		} else {
-		  var queryParams = {
-        mode: 'readfile',
-        path: resourceObject.id
-      };
-		  queryParams = extendRequestParams("GET", queryParams);
-      previewUrl = buildConnectorUrl(queryParams);
-		}
+        if (config.viewer.absolutePath && objectPath) {
+            if (encode) {
+                objectPath = encodePath(objectPath);
+            }
+            previewUrl = buildAbsolutePath(objectPath, false);
+        } else {
+            var queryParams = extendRequestParams("GET", {
+                mode: 'readfile',
+                path: resourceObject.id
+            });
+            previewUrl = buildConnectorUrl(queryParams);
+        }
 
         previewUrl = fm.settings.callbacks.beforeCreatePreviewUrl(resourceObject, previewUrl);
 		return previewUrl;
 	};
 
 	// Build url to display image or its thumbnail
-	var createImageUrl = function(resourceObject, thumbnail, disableCache) {
-		var imageUrl;
-		if (isImageFile(resourceObject.id) &&
-			resourceObject.attributes.readable && (
+    var createImageUrl = function (resourceObject, thumbnail, disableCache) {
+        var imageUrl;
+        if (isImageFile(resourceObject.id) &&
+            resourceObject.attributes.readable && (
 			(thumbnail && config.viewer.image.showThumbs) ||
 			(!thumbnail && config.viewer.image.enabled === true)
 		)) {
-			if(config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
+            if (config.viewer.absolutePath && !thumbnail && resourceObject.attributes.path) {
                 imageUrl = buildAbsolutePath(encodePath(resourceObject.attributes.path), disableCache);
-			} else {
-				var queryParams = {path: resourceObject.id};
-				if (getExtension(resourceObject.id) === 'svg') {
-					queryParams.mode = 'readfile';
-				} else {
-					queryParams.mode = 'getimage';
-					if (thumbnail) {
-						queryParams.thumbnail = 'true';
-					}
-				}
-				queryParams = extendRequestParams("GET", queryParams);
-        imageUrl = buildConnectorUrl(queryParams);
-			}
-      imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
-		}
-		return imageUrl;
-	};
+            } else {
+                var queryParams = {path: resourceObject.id};
+                if (getExtension(resourceObject.id) === 'svg') {
+                    queryParams.mode = 'readfile';
+                } else {
+                    queryParams.mode = 'getimage';
+                    if (thumbnail) {
+                        queryParams.thumbnail = 'true';
+                    }
+                }
+                queryParams = extendRequestParams("GET", queryParams);
+                imageUrl = buildConnectorUrl(queryParams);
+            }
+            imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
+        }
+        return imageUrl;
+    };
 
 	var buildAbsolutePath = function(path, disableCache) {
 		var url = (typeof config.viewer.previewUrl === "string") ? config.viewer.previewUrl : location.origin;
