@@ -4000,7 +4000,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         };
 
         var shownExtensions = getFilteredFileExtensions();
-        $('#fileupload').attr('accept', shownExtensions.map(function(el){return '.'+el;}).join());
+        if(shownExtensions !== undefined)
+          $('#fileupload').attr('accept', shownExtensions.map(function(el){return '.'+el;}).join());
 
         $('#fileupload', $uploadContainer)
           .fileupload({
