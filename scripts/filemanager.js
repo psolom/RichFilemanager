@@ -1123,14 +1123,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					path: path
 				};
 
-				if(_url_.param('type')) {
-					queryParams.type = _url_.param('type');
-				}
+        var shownExtensions = getFilteredFileExtensions();
 
                 buildAjaxRequest('GET', queryParams).done(function(response) {
                     if(response.data) {
                         var nodes = [];
                         $.each(response.data, function(i, resourceObject) {
+                          if (shownExtensions !== undefined && resourceObject.type === "file") {
+                            var fileExtension = resourceObject.attributes.name.split('.').pop();
+                            if (shownExtensions.indexOf(fileExtension) === -1) {
+                              return true; //Jump over this iteration. I.e. do not add the node
+                            }
+                          }
                             var nodeObject = tree_model.createNode(resourceObject);
                             nodes.push(nodeObject);
                         });
@@ -1539,6 +1543,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 // clear previously rendered content
                 items_model.descriptivePanel.content(null);
 
+        var shownExtensions = getFilteredFileExtensions();
+
 				$.each(dataObjects, function (i, resourceObject) {
 					if (config.manager.renderer.position && typeof config.manager.renderer.indexFile === 'string' &&
 						resourceObject.attributes.name.toLowerCase() === config.manager.renderer.indexFile.toLowerCase()
@@ -1551,6 +1557,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             }
                         });
 					}
+          if (shownExtensions !== undefined && resourceObject.type === "file") {
+            var fileExtension = resourceObject.attributes.name.split('.').pop();
+            if (shownExtensions.indexOf(fileExtension) === -1) {
+              return true; //Jump over this iteration. I.e. do not add the node
+            }
+          }
 					objects.push(items_model.createObject(resourceObject));
 				});
 
@@ -3014,6 +3026,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         });
 	};
 
+  var getFilteredFileExtensions = function() {
+    if (_url_.param('filter')) {
+      if (config.filter[_url_.param('filter')] !== undefined) {
+        var shownExtensions = config.filter[_url_.param('filter')];
+      }
+    }
+    return shownExtensions;
+  };
+
 	var buildConnectorUrl = function(params) {
 		var defaults = {
 			time: new Date().getTime()
@@ -3978,6 +3999,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}
 				};
 
+        var shownExtensions = getFilteredFileExtensions();
+        if(shownExtensions !== undefined)
+          $('#fileupload').attr('accept', shownExtensions.map(function(el){return '.'+el;}).join());
+
 				$('#fileupload', $uploadContainer)
 					.fileupload({
 						autoUpload: false,
@@ -4075,9 +4100,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$.each(data.files, function (index, file) {
 							if(response && response.data && response.data[index]) {
 								var resourceObject = response.data[index];
+                var fileExtension = resourceObject.attributes.name.split('.').pop();
+                if (shownExtensions === undefined ||
+                    resourceObject.type !== "file" ||
+                    shownExtensions.indexOf(fileExtension) !== -1) {
 								fmModel.removeItem(resourceObject);
 								fmModel.addItem(resourceObject, fmModel.currentPath());
 							}
+              }
 						});
 
 						var $items = $dropzone.children('.upload-item');
@@ -4104,8 +4134,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$.each(data.files, function (index, file) {
 							if(response.data && response.data[index]) {
 								var resourceObject = response.data[index];
+
+                var fileExtension = resourceObject.attributes.name.split('.').pop();
+                if (shownExtensions === undefined ||
+                    resourceObject.type !== "file" ||
+                    shownExtensions.indexOf(fileExtension) !== -1) {
 								fmModel.removeItem(resourceObject);
 								fmModel.addItem(resourceObject, fmModel.currentPath());
+                }
 
 								// get filename from server, it may differ from original
 								file.serverName = resourceObject.attributes.name;
@@ -4203,8 +4239,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}
 					if(response && response.data) {
 						var resourceObject = response.data[0];
+            var shownExtensions = getFilteredFileExtensions();
+            var fileExtension = resourceObject.attributes.name.split('.').pop();
+            if (shownExtensions === undefined ||
+                resourceObject.type !== "file" ||
+                shownExtensions.indexOf(fileExtension) !== -1) {
 						fmModel.removeItem(resourceObject);
 						fmModel.addItem(resourceObject, fmModel.currentPath());
+            }
 
 						if(config.options.showConfirmation) {
 							fm.success(lg.upload_successful_file);
@@ -4216,8 +4258,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					var response = data.result;
 					if(response.data && response.data[0]) {
 						var resourceObject = response.data[0];
+            var shownExtensions = getFilteredFileExtensions();
+            var fileExtension = resourceObject.attributes.name.split('.').pop();
+            if (shownExtensions === undefined ||
+                resourceObject.type !== "file" ||
+                shownExtensions.indexOf(fileExtension) !== -1) {
 						fmModel.removeItem(resourceObject);
 						fmModel.addItem(resourceObject, fmModel.currentPath());
+            }
 					}
 				})
 
