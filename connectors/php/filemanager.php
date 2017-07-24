@@ -15,7 +15,7 @@ require 'vendor/autoload.php';
 
 // fix display non-latin chars correctly
 // https://github.com/servocoder/RichFilemanager/issues/7
-setlocale(LC_CTYPE, 'en_US.UTF-8');
+setlocale(LC_CTYPE, 'es_ES.UTF-8');
 
 // fix for undefined timezone in php.ini
 // https://github.com/servocoder/RichFilemanager/issues/43
@@ -23,6 +23,8 @@ if(!ini_get('date.timezone')) {
     date_default_timezone_set('GMT');
 }
 
+
+session_start();
 
 // This function is called for every server connection. It must return true.
 //
@@ -33,14 +35,35 @@ if(!ini_get('date.timezone')) {
 // Authorization for individual files or dirs is provided by the two functions below.
 //
 // NOTE: If using session variables, the session must be started first (session_start()).
+
+$token = null;
+if($_GET['token'])
+    $token = $_GET['token'];
+else if ($_POST['token'])
+    $token = $_POST['token'];
+
+$folder = null;
+if($_GET['folder'])
+    $folder = $_GET['folder'];
+else if ($_POST['folder'])
+    $folder = $_POST['folder'];
+
 function fm_authenticate()
 {
-    // Customize this code as desired.
-    return true;
+    global $token;
 
-    // If this function returns false, the user will just see an error.
-    // If this function returns an array with "redirect" key, the user will be redirected to the specified URL:
-    // return ['redirect' => 'http://domain.my/login'];
+    $urlServicioweb = "http://serviciosweb.seas.es/index/autorizacionficherocampus";
+
+
+    $url = $urlServicioweb."/token/". $token;
+
+    $file = fopen($url, "rb");
+    $result = stream_get_contents($file);
+    fclose($file);
+    $bAutorizado = $result === "1";
+
+    return true; //Comentar en producción.
+    return $bAutorizado;
 }
 
 
@@ -82,29 +105,89 @@ function fm_has_write_permission($filepath)
     return true;
 }
 
-
-$config = [];
-
 // example to override the default config
-//$config = [
-//    'security' => [
-//        'readOnly' => true,
-//        'extensions' => [
-//            'policy' => 'ALLOW_LIST',
-//            'restrictions' => [
-//                'jpg',
-//                'jpe',
-//                'jpeg',
-//                'gif',
-//                'png',
-//            ],
-//        ],
-//    ],
-//];
+$config = [
+    'security' => [
+        'readOnly' => false,
+        'extensions' => [
+            'policy' => 'ALLOW_LIST',
+            'restrictions' => [
+                "",
+                "jpg",
+                "jpe",
+                "jpeg",
+                "gif",
+                "png",
+                "svg",
+                "ogv",
+                "mp4",
+                "wmv",
+                "mov",
+                "webm",
+                "m4v",
+                "ogg",
+                "mp3",
+                "wav",
+                "htm",
+                "html",
+                "pdf",
+                "odt",
+                "odp",
+                "ods",
+                "doc",
+                "docx",
+                "xls",
+                "xlsx",
+                "ppt",
+                "pptx",
+                "ppsx",
+                "txt",
+                "csv",
+                "rar",
+                "zip",
+                "md"
+            ],
+        ],
+    ],
+     "patterns" => [
+        "policy" => "DISALLOW_LIST",
+        "ignoreCase" => true,
+        "restrictions" => [
+            // files
+            "*/.htaccess",
+            "*/web.config",
+            // folders
+            "*/_thumbs/*",
+            "*/.CDN_ACCESS_LOGS/*",
+        ],
+    ],
+    "upload" => [
+        /**
+         * Default value "16000000" (16 MB).
+         * The maximum allowed file size (in Bytes). If set to "false", no size limitations applied.
+         * See https://github.com/blueimp/jQuery-File-Upload/wiki/Options#maxfilesize.
+         */
+        "fileSizeLimit" => 100000000,
+        /**
+         * Default value "false".
+         * If set to "true" files will be overwritten on uploads if they have same names, otherwise an index will be added.
+         */
+        "overwrite" => false,
+    ],
+    /*'logger' => [
+        'enabled' => true,
+        'file' => '/home/iruiz/filemanager.log',
+    ],*/
+];
 
 $app = new \RFM\Application();
 
 $local = new \RFM\Repository\Local\Storage($config);
+
+$rootFolder = "/home/iruiz/htdocs/Tests/files"; //Comment this on production
+//$rootFolder = "/var/www/video/campusficheros/files/media"; //Uncomment this on production
+
+$local->setRoot($rootFolder.$folder, true, false);
 
 // example to setup files root folder
 //$local->setRoot('userfiles', true);
