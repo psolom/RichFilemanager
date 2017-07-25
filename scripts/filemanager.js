@@ -3028,7 +3028,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
   var getFilteredFileExtensions = function() {
     if (_url_.param('filter')) {
-      if (config.filter[_url_.param('filter')] !== undefined) {
+      if (config.filter !== undefined && config.filter[_url_.param('filter')] !== undefined) {
         var shownExtensions = config.filter[_url_.param('filter')];
       }
     }
