@@ -903,7 +903,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
                 if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
                     viewerObject.type = 'google';
-                    viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
+                    viewerObject.url = 'https://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
                     viewerObject.options = {
                         width: config.viewer.google.readerWidth,
                         height: config.viewer.google.readerHeight
