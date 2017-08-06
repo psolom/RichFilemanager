@@ -45,6 +45,11 @@
 				</div>
 			</div>
 			<div class="buttons-panel">
+				<div class="button-group filter-controls">
+					<button class="btn-filter-images no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('images')}}"><span>&nbsp;</span></button>
+					<button class="btn-filter-media no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('media')}}"><span>&nbsp;</span></button>
+					<button class="btn-filter-reset no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.reset()}}"><span>&nbsp;</span></button>
+				</div>
 				<!-- ko if: clipboardModel.enabled() -->
 				<div class="button-group clipboards-controls">
 					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: localizeGUI() ? lg().clipboard_copy : null}"><span>&nbsp;</span></button>
