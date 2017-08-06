@@ -429,6 +429,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         fmModel.filterModel.setName(_url_.param('filter'));
 		ko.applyBindings(fmModel);
 
+        fmModel.itemsModel.initiateLazyLoad();
+
 		ko.bindingHandlers.toggleNodeVisibility = {
 			init: function (element, valueAccessor) {
 				var node = valueAccessor();
@@ -904,7 +906,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
                 if(isGoogleDocsFile(filename) && config.viewer.google.enabled === true) {
                     viewerObject.type = 'google';
-                    viewerObject.url = 'http://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
+                    viewerObject.url = 'https://docs.google.com/viewer?url=' + encodeURIComponent(createPreviewUrl(resourceObject, false)) + '&embedded=true';
                     viewerObject.options = {
                         width: config.viewer.google.readerWidth,
                         height: config.viewer.google.readerHeight
@@ -1453,21 +1455,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.descriptivePanel = new RenderModel();
             this.lazyLoad = null;
 
-            if (config.viewer.image.lazyLoad) {
-                this.lazyLoad = new LazyLoad({
-                    container: $fileinfo[0], // work only for default scrollbar
-                    callback_load: function (element) {
-                        fm.log("LOADED", element.getAttribute('data-original'));
-                    },
-                    callback_set: function (element) {
-                        fm.log("SET", element.getAttribute('data-original'));
-                    },
-                    callback_processed: function (elementsLeft) {
-                        fm.log("PROCESSED", elementsLeft + " images left");
-                    }
-                });
-			}
-
 			this.isSelecting.subscribe(function(state) {
 				if(!state) {
 				    // means selection lasso has been dropped
@@ -1629,6 +1616,27 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			};
 
+            this.initiateLazyLoad = function() {
+            	// not configured or already initiated
+                if (config.viewer.image.lazyLoad !== true || items_model.lazyLoad) {
+                	return;
+				}
+
+                items_model.lazyLoad = new LazyLoad({
+                    container: $fileinfo[0], // work only for default scrollbar
+                    callback_load: function (element) {
+                        fm.log("LOADED", element.getAttribute('data-original'));
+                    },
+                    callback_set: function (element) {
+                        console.log(element);
+                        fm.log("SET", element.getAttribute('data-original'));
+                    },
+                    callback_processed: function (elementsLeft) {
+                        fm.log("PROCESSED", elementsLeft + " images left");
+                    }
+                });
+            };
+
 			this.objects.subscribe(function(items) {
 				var totalNumber = 0,
 					totalSize = 0;
@@ -1645,7 +1653,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				items_model.objectsNumber(totalNumber);
 				items_model.objectsSize(formatBytes(totalSize));
 
-				// context menu
+				// update
+                if (items_model.lazyLoad) {
+                    setTimeout(function() {
+                        items_model.lazyLoad.update();
+                    }, 50);
+                }
+
+                // context menu
 				$viewItems.contextMenu({
 					selector: '.file, .directory',
 					zIndex: 100,
