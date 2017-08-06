@@ -188,6 +188,27 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .fm-header .btn-clipboard-clear span {
     background-image: url(../images/clipboard/clipboard_clear.png);
 }
+.fm-container .fm-header .btn-filter-audio span {
+    background-image: url(../images/filter/grey/file-audio.png);
+}
+.fm-container .fm-header .btn-filter-archive span {
+    background-image: url(../images/filter/grey/file-archive.png);
+}
+.fm-container .fm-header .btn-filter-office span {
+    background-image: url(../images/filter/grey/file-office.png);
+}
+.fm-container .fm-header .btn-filter-image span {
+    background-image: url(../images/filter/grey/file-image.png);
+}
+.fm-container .fm-header .btn-filter-media span {
+    background-image: url(../images/filter/grey/file-media.png);
+}
+.fm-container .fm-header .btn-filter-reset span {
+    background-image: url(../images/filter/grey/file-all.png);
+}
+.fm-container .fm-header .btn-filter-video span {
+    background-image: url(../images/filter/grey/file-video.png);
+}
 .fm-container .fm-header .fm-upload span {
     background-image: url(../images/upload.png);
 }

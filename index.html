@@ -45,10 +45,36 @@
 				</div>
 			</div>
 			<div class="buttons-panel">
+				<div class="button-group navigate-controls">
+					<button class="btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
+						<span>&nbsp;</span>
+					</button>
+					<button class="btn-home-folder no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<div class="button-group viewmode-controls">
+					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
+						<span>&nbsp;</span>
+					</button>
+					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: localizeGUI() ? lg().list_view : null}, css: {active: viewMode() === 'list'}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<div class="button-group">
+					<button class="separator" type="button">&nbsp;</button>
+				</div>
 				<div class="button-group filter-controls">
-					<button class="btn-filter-images no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('images')}}"><span>&nbsp;</span></button>
-					<button class="btn-filter-media no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('media')}}"><span>&nbsp;</span></button>
-					<button class="btn-filter-reset no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.reset()}}"><span>&nbsp;</span></button>
+					<button class="btn-filter-image no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('image')}}, attr: {title: lg().filter_image}"><span>&nbsp;</span></button>
+					<button class="btn-filter-media no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('media')}}, attr: {title: lg().filter_media}"><span>&nbsp;</span></button>
+					<button class="btn-filter-office no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('office')}}, attr: {title: lg().filter_office}"><span>&nbsp;</span></button>
+					<button class="btn-filter-archive no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('archive')}}, attr: {title: lg().filter_archive}"><span>&nbsp;</span></button>
+					<!--<button class="btn-filter-audio no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('audio')}}, attr: {title: lg().filter_audio}"><span>&nbsp;</span></button>-->
+					<!--<button class="btn-filter-video no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('video')}}, attr: {title: lg().filter_video}"><span>&nbsp;</span></button>-->
+					<button class="btn-filter-reset no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.reset()}}, attr: {title: lg().filter_reset}"><span>&nbsp;</span></button>
+				</div>
+				<div class="button-group">
+					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- ko if: clipboardModel.enabled() -->
 				<div class="button-group clipboards-controls">
@@ -61,14 +87,6 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- /ko -->
-				<div class="button-group navigate-controls">
-					<button class="btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
-						<span>&nbsp;</span>
-					</button>
-					<button class="btn-home-folder no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
-						<span>&nbsp;</span>
-					</button>
-				</div>
 				<!-- ko if: !browseOnly() -->
 				<div class="button-group upload-controls">
 					<form class="fm-uploader" method="post">
@@ -91,14 +109,6 @@
 					</button>
 				</div>
 				<!-- /ko -->
-				<div class="button-group viewmode-controls">
-					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
-						<span>&nbsp;</span>
-					</button>
-					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: localizeGUI() ? lg().list_view : null}, css: {active: viewMode() === 'list'}">
-						<span>&nbsp;</span>
-					</button>
-				</div>
 				<!-- ko if: headerModel.closeButton() -->
 				<div class="button-group">
 					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: localizeGUI() ? lg().close : null}">

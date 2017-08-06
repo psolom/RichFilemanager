@@ -426,10 +426,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		// Activates knockout.js
 		fmModel = new FmModel();
-        fmModel.filterModel.setName(_url_.param('filter'));
 		ko.applyBindings(fmModel);
 
         fmModel.itemsModel.initiateLazyLoad();
+        fmModel.filterModel.setName(_url_.param('filter'));
 
 		ko.bindingHandlers.toggleNodeVisibility = {
 			init: function (element, valueAccessor) {
@@ -1628,7 +1628,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         fm.log("LOADED", element.getAttribute('data-original'));
                     },
                     callback_set: function (element) {
-                        console.log(element);
                         fm.log("SET", element.getAttribute('data-original'));
                     },
                     callback_processed: function (elementsLeft) {
