@@ -65,6 +65,11 @@
         "enabled": true,
         "encodeCopyUrl": true
     },
+    "filter": {
+        "images": ["jpg", "jpeg", "gif", "png"],
+        "media": ["ogv", "avi", "mkv", "mp4", "webm", "m4v", "ogg", "mp3", "wav"],
+        "custom": ["pdf", "doc", "zip", "txt", "csv", "md"]
+    },
     "viewer": {
         "absolutePath": true,
         "previewUrl": false,
