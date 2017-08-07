@@ -1850,12 +1850,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 fm.log("CLOSE button is clicked");
 			};
 
-			this.goHome = function() {
+			this.navHome = function() {
 				model.previewFile(false);
 				model.itemsModel.loadList(fileRoot);
 			};
 
-			this.goParent = function() {
+			this.navLevelUp = function() {
 				var parentFolder = model.previewFile()
                     ? getDirname(model.previewModel.rdo().id)
                     : getParentDirname(model.currentPath());
@@ -1868,6 +1868,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					model.itemsModel.loadList(parentFolder);
                 }
 			};
+
+            this.navRefresh = function() {
+                if(model.previewFile()) {
+                    model.previewFile(false);
+                    model.previewFile(true);
+                } else {
+                    model.itemsModel.loadList(model.currentPath());
+				}
+            };
 
 			this.displayGrid = function() {
 				model.viewMode('grid');
