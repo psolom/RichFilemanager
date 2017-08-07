@@ -85,7 +85,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .fm-header .breadcrumbs .nav-item.root {
     width: 20px;
     height: 20px;
-    background-image: url(../images/house.png);
+    background-image: url(../images/nav/grey/home.png);
     background-size: 20px;
 }
 
@@ -158,11 +158,14 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     border-style: inset;
 }
 
-.fm-container .fm-header .btn-home-folder span {
-    background-image: url(../images/house.png);
+.fm-container .fm-header .btn-nav-home span {
+    background-image: url(../images/nav/grey/home.png);
 }
-.fm-container .fm-header .btn-level-up span {
-    background-image: url(../images/level-up.png);
+.fm-container .fm-header .btn-nav-level-up span {
+    background-image: url(../images/nav/grey/level-up.png);
+}
+.fm-container .fm-header .btn-nav-refresh span {
+    background-image: url(../images/nav/grey/refresh.png);
 }
 .fm-container .fm-header .btn-grid-mode span {
     background-image: url(../images/application_view_icons.png);

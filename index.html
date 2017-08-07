@@ -46,12 +46,18 @@
 			</div>
 			<div class="buttons-panel">
 				<div class="button-group navigate-controls">
-					<button class="btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
+					<button class="btn-nav-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="btn-home-folder no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
+					<button class="btn-nav-home no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
 						<span>&nbsp;</span>
 					</button>
+					<button class="btn-nav-refresh no-label" type="button" data-bind="click: headerModel.refreshFolder, attr: {title: localizeGUI() ? lg().go_refresh : null}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<div class="button-group">
+					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<div class="button-group viewmode-controls">
 					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
@@ -77,7 +83,7 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- ko if: clipboardModel.enabled() -->
-				<div class="button-group clipboards-controls">
+				<div class="button-group clipboard-controls">
 					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: localizeGUI() ? lg().clipboard_copy : null}"><span>&nbsp;</span></button>
 					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: localizeGUI() ? lg().clipboard_cut : null}"><span>&nbsp;</span></button>
 					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: localizeGUI() ? lg().clipboard_paste_full : null}"><span>&nbsp;</span></button>
