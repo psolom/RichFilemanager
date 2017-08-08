@@ -45,25 +45,54 @@
 				</div>
 			</div>
 			<div class="buttons-panel">
+				<div class="button-group navigate-controls">
+					<button class="btn-nav-level-up no-label" type="button" data-bind="click: headerModel.navLevelUp, attr: {title: lg().nav_level_up}">
+						<span>&nbsp;</span>
+					</button>
+					<button class="btn-nav-home no-label" type="button" data-bind="click: headerModel.navHome, attr: {title: lg().nav_home}">
+						<span>&nbsp;</span>
+					</button>
+					<button class="btn-nav-refresh no-label" type="button" data-bind="click: headerModel.navRefresh, attr: {title: lg().nav_refresh}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<div class="button-group">
+					<button class="separator" type="button">&nbsp;</button>
+				</div>
+				<div class="button-group viewmode-controls">
+					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
+						<span>&nbsp;</span>
+					</button>
+					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
+						<span>&nbsp;</span>
+					</button>
+				</div>
+				<div class="button-group">
+					<button class="separator" type="button">&nbsp;</button>
+				</div>
+				<div class="button-group filter-controls">
+					<button class="btn-filter-image no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('image')}}, attr: {title: lg().filter_image}"><span>&nbsp;</span></button>
+					<button class="btn-filter-media no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('media')}}, attr: {title: lg().filter_media}"><span>&nbsp;</span></button>
+					<button class="btn-filter-office no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('office')}}, attr: {title: lg().filter_office}"><span>&nbsp;</span></button>
+					<button class="btn-filter-archive no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('archive')}}, attr: {title: lg().filter_archive}"><span>&nbsp;</span></button>
+					<!--<button class="btn-filter-audio no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('audio')}}, attr: {title: lg().filter_audio}"><span>&nbsp;</span></button>-->
+					<!--<button class="btn-filter-video no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('video')}}, attr: {title: lg().filter_video}"><span>&nbsp;</span></button>-->
+					<button class="btn-filter-reset no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.reset()}}, attr: {title: lg().filter_reset}"><span>&nbsp;</span></button>
+				</div>
+				<div class="button-group">
+					<button class="separator" type="button">&nbsp;</button>
+				</div>
 				<!-- ko if: clipboardModel.enabled() -->
-				<div class="button-group clipboards-controls">
-					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: localizeGUI() ? lg().clipboard_copy : null}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: localizeGUI() ? lg().clipboard_cut : null}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: localizeGUI() ? lg().clipboard_paste_full : null}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: localizeGUI() ? lg().clipboard_clear_full : null}"><span>&nbsp;</span></button>
+				<div class="button-group clipboard-controls">
+					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: lg().clipboard_copy}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: lg().clipboard_cut}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: lg().clipboard_paste_full}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: lg().clipboard_clear_full}"><span>&nbsp;</span></button>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- /ko -->
-				<div class="button-group navigate-controls">
-					<button class="btn-level-up no-label" type="button" data-bind="click: headerModel.goParent, attr: {title: localizeGUI() ? lg().go_level_up : null}">
-						<span>&nbsp;</span>
-					</button>
-					<button class="btn-home-folder no-label" type="button" data-bind="click: headerModel.goHome, attr: {title: localizeGUI() ? lg().go_home : null}">
-						<span>&nbsp;</span>
-					</button>
-				</div>
 				<!-- ko if: !browseOnly() -->
 				<div class="button-group upload-controls">
 					<form class="fm-uploader" method="post">
@@ -86,17 +115,9 @@
 					</button>
 				</div>
 				<!-- /ko -->
-				<div class="button-group viewmode-controls">
-					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: localizeGUI() ? lg().grid_view : null}, css: {active: viewMode() === 'grid'}">
-						<span>&nbsp;</span>
-					</button>
-					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: localizeGUI() ? lg().list_view : null}, css: {active: viewMode() === 'list'}">
-						<span>&nbsp;</span>
-					</button>
-				</div>
 				<!-- ko if: headerModel.closeButton() -->
 				<div class="button-group">
-					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: localizeGUI() ? lg().close : null}">
+					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: lg().close}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -202,7 +223,7 @@
 					<div class="fm-preview" data-bind="with: previewModel">
 						<div class="fm-preview-toolbar">
 							<form id="fm-js-preview-toolbar">
-								<button class="btn-file-preview-close" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.goParent()}}">
+								<button class="btn-file-preview-close" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.navLevelUp()}}">
 									<span data-bind="text: $root.lg().parentfolder"></span>
 								</button>
 								<!-- ko if: buttonVisibility('select') -->
@@ -372,7 +393,7 @@
 		</script>
 
 		<script type="text/html" id="node-parent-template">
-			<li data-bind="template: {name: 'node-template', data: koNode}, css: koNode.itemClass()"></li>
+			<li data-bind="template: {name: 'node-template', data: koNode}, css: koNode.itemClass(), visible: koNode.visible"></li>
 		</script>
 
 		<script type="text/html" id="node-template">
