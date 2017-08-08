@@ -740,13 +740,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var FmModel = function() {
 		var model = this;
 		this.config = ko.observable(config);
-		this.lg = ko.observable(lg);
 		this.loadingView = ko.observable(true);
 		this.previewFile = ko.observable(false);
 		this.viewMode = ko.observable(config.options.defaultViewMode);
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
         this.previewModel = ko.observable(null);
+        this.lg = lg;
 
         this.previewFile.subscribe(function (enabled) {
             if (!enabled) {
