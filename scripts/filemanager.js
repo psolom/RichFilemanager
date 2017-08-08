@@ -741,7 +741,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var model = this;
 		this.config = ko.observable(config);
 		this.lg = ko.observable(lg);
-        this.localizeGUI = ko.observable(config.options.localizeGUI);
 		this.loadingView = ko.observable(true);
 		this.previewFile = ko.observable(false);
 		this.viewMode = ko.observable(config.options.defaultViewMode);

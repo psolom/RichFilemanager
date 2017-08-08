@@ -4,8 +4,6 @@
         "culture": "en",
         "theme": "flat-dark",
         "defaultViewMode": "grid",
-        "localizeGUI": true,
-        "showFullPath": false,
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
