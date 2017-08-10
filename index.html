@@ -115,6 +115,18 @@
 					</button>
 				</div>
 				<!-- /ko -->
+				<div class="button-group">
+					<button type="button" class="lang-selector">
+						<select data-bind="event: {change: function(data, event) {headerModel.setLang(event)}}">
+							<option value="en">EN</option>
+							<option value="de">DE</option>
+							<option value="fr">FR</option>
+							<option value="it">IT</option>
+							<option value="ru">RU</option>
+						</select>
+					</button>
+				</div>
+
 				<!-- ko if: headerModel.closeButton() -->
 				<div class="button-group">
 					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: lg.close}">
@@ -438,7 +450,7 @@
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
-		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
+		<script type="text/javascript" src="scripts/filemanager.js"></script>
 		<script type="text/javascript" src="config/filemanager.init.js"></script>
 
 		<!-- Start RichFilemanager plugin -->

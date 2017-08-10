@@ -1887,6 +1887,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				model.previewFile(false);
 			};
 
+            this.setLang = function(e) {
+                var langNew = e.target.value,
+                    langCode = _url_.param('langCode');
+
+                if (langNew && langCode) {
+                    langNew = langNew.toLowerCase();
+
+                    if (langNew !== langCode.toLowerCase()) {
+                        var newUrl, url = window.location.toString(),
+                        	regExp = new RegExp('(langCode=)' + langCode);
+
+                        newUrl = url.replace(regExp, '$1' + langNew);
+                        window.location.href = newUrl;
+					}
+				}
+            };
+
 			this.createFolder = function() {
 				var makeFolder = function(e, ui) {
 					var folderName = ui.getInputValue();

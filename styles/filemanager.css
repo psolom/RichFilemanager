@@ -127,7 +127,8 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     cursor: pointer;
 }
 
-.fm-container button:hover {
+.fm-container button:hover,
+.fm-container .fm-header button.lang-selector:hover > select {
     background-color: #ffffff;
 }
 
@@ -156,6 +157,12 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .fm-header button.active {
     background: none repeat scroll 0 0 #F9F8F7;
     border-style: inset;
+}
+
+.fm-container .fm-header button.lang-selector select {
+    border: none;
+    background-color: #E5E5E5;
+    cursor: pointer;
 }
 
 .fm-container .fm-header .btn-nav-home span {
