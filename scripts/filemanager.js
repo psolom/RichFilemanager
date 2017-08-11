@@ -56,13 +56,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		$uploadButton = $uploader.children('.fm-upload'),
 
 		config = null,				// configuration options
-		lg = null,					// localized messages
 		fileRoot = '/',				// relative files root, may be changed with some query params
 		apiConnector = null,		// API connector URL to perform requests to server
 		capabilities = [],			// allowed actions to perform in FM
 		configSortField = null,		// items sort field name
 		configSortOrder = null,		// items sort order 'asc'/'desc'
 		fmModel = null,				// filemanager knockoutJS model
+		langModel = null,			// language model
 
 		/** variables to keep request options data **/
 		fullexpandedFolder = null,	// path to be automatically expanded by filetree plugin
@@ -290,35 +290,33 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// localize messages based on culture var or from URL
 	var localize = function() {
-		var langCode = _url_.param('langCode');
-		var langPath = fm.settings.baseUrl + '/languages/';
-
-		function buildLangPath(code) {
-			return langPath + code + '.json';
-		}
+        langModel = new LangModel();
 
 		return $.ajax()
 			.then(function() {
-				if(langCode) {
+                var urlLangCode = _url_.param('langCode');
+				if(urlLangCode) {
 					// try to load lang file based on langCode in query params
-					return file_exists(buildLangPath(langCode))
+					return file_exists(langModel.buildLangFileUrl(urlLangCode))
 						.done(function() {
-							config.options.culture = langCode;
+                            langModel.setLang(urlLangCode);
 						})
 						.fail(function() {
 							setTimeout(function() {
-								fm.error('Given language file (' + buildLangPath(langCode) + ') does not exist!');
+								fm.error('Given language file (' + langModel.buildLangFileUrl(urlLangCode) + ') does not exist!');
 							}, 500);
 						});
+				} else {
+                    langModel.setLang(config.options.culture);
 				}
 			})
 			.then(function() {
 				return $.ajax({
 					type: 'GET',
-					url: buildLangPath(config.options.culture),
+					url: langModel.buildLangFileUrl(langModel.getLang()),
 					dataType: 'json'
-				}).done(function(conf_lg) {
-					lg = conf_lg;
+				}).done(function(jsonTrans) {
+                    langModel.setTranslations(jsonTrans);
 				});
 			});
 	};
@@ -566,11 +564,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             build: function ($triggerElement, e) {
                 var contextMenuItems = {
                     createFolder: {
-                    	name: lg.create_folder,
+                    	name: lg('create_folder'),
 						className: 'create-folder'
                     },
                     paste: {
-                    	name: lg.clipboard_paste,
+                    	name: lg('clipboard_paste'),
 						className: 'paste',
                         disabled: function (key, options) {
 							return fmModel.clipboardModel.isEmpty();
@@ -733,6 +731,40 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         fm.setDimensions();
 	};
 
+    /**
+	 * Language model
+     * @constructor
+     */
+    var LangModel = function() {
+        var currentLang = null,
+            translationsHash = {},
+            translationsPath = fm.settings.baseUrl + '/languages/';
+
+        this.buildLangFileUrl = function(code) {
+            return translationsPath + code + '.json';
+        };
+
+        this.setLang = function(code) {
+            currentLang = code;
+        };
+
+        this.getLang = function() {
+            return currentLang;
+        };
+
+        this.setTranslations = function(json) {
+            translationsHash = json;
+        };
+
+        this.getTranslations = function() {
+            return translationsHash;
+        };
+
+        this.translate = function(key) {
+            return translationsHash[key];
+        };
+    };
+
 	/**
 	 * Knockout general model
 	 * @constructor
@@ -746,7 +778,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		this.currentPath = ko.observable(fileRoot);
 		this.browseOnly = ko.observable(config.options.browseOnly);
         this.previewModel = ko.observable(null);
-        this.lg = lg;
+        this.currentLang = langModel.getLang();
+        this.lg = langModel.getTranslations();
 
         this.previewFile.subscribe(function (enabled) {
             if (!enabled) {
@@ -957,7 +990,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 clipboard = new Clipboard(copyBtnEl);
 
                 clipboard.on('success', function(e) {
-                    fm.success(lg.copied);
+                    fm.success(lg('copied'));
                 });
             };
 
@@ -1315,7 +1348,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     return false;
                 }
                 if(!node.rdo.attributes.readable) {
-                    fm.error(lg.NOT_ALLOWED_SYSTEM);
+                    fm.error(lg('NOT_ALLOWED_SYSTEM'));
                     return false;
                 }
                 if(!node.isLoaded()) {
@@ -1843,7 +1876,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		var HeaderModel = function() {
+            var header_model = this;
+
 			this.closeButton = ko.observable(false);
+			this.langSwitcher = $.isArray(config.language.available) && config.language.available.length > 0;
 
             this.closeButtonOnClick = function() {
                 fm.log("CLOSE button is clicked");
@@ -1887,20 +1923,20 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				model.previewFile(false);
 			};
 
-            this.setLang = function(e) {
+            this.switchLang = function(e) {
                 var langNew = e.target.value,
-                    langCode = _url_.param('langCode');
+                    langCurrent = langModel.getLang();
 
-                if (langNew && langCode) {
-                    langNew = langNew.toLowerCase();
+				if (langNew && langNew.toLowerCase() !== langCurrent.toLowerCase()) {
+					var newUrl, url = window.location.toString(),
+						regExp = new RegExp('(langCode=)' + langCurrent);
 
-                    if (langNew !== langCode.toLowerCase()) {
-                        var newUrl, url = window.location.toString(),
-                        	regExp = new RegExp('(langCode=)' + langCode);
-
+					if (regExp.test(url)) {
                         newUrl = url.replace(regExp, '$1' + langNew);
-                        window.location.href = newUrl;
+					} else {
+                        newUrl = url + ($.isEmptyObject(_url_.param()) ? '?' : '#') + 'langCode=' + langNew;
 					}
+					window.location.href = newUrl;
 				}
             };
 
@@ -1908,7 +1944,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				var makeFolder = function(e, ui) {
 					var folderName = ui.getInputValue();
 					if(!folderName) {
-						fm.error(lg.no_foldername);
+						fm.error(lg('no_foldername'));
 						return;
 					}
 
@@ -1922,7 +1958,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                             ui.closeDialog();
                             if (config.options.showConfirmation) {
-                                fm.success(lg.successful_added_folder);
+                                fm.success(lg('successful_added_folder'));
                             }
                         }
                         handleAjaxResponseErrors(response);
@@ -1930,15 +1966,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				};
 
 				fm.prompt({
-					message: lg.prompt_foldername,
-					value: lg.default_foldername,
+					message: lg('prompt_foldername'),
+					value: lg('default_foldername'),
 					okBtn: {
-						label: lg.create_folder,
+						label: lg('create_folder'),
 						autoClose: false,
 						click: makeFolder
 					},
 					cancelBtn: {
-						label: lg.cancel
+						label: lg('cancel')
 					}
 				});
 			};
@@ -2084,7 +2120,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     return;
                 }
                 if (cbMode === null || cbObjects.length === 0) {
-                    fm.warning(lg.clipboard_empty);
+                    fm.warning(lg('clipboard_empty'));
                     return;
                 }
 
@@ -2105,7 +2141,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     return;
                 }
                 clearClipboard();
-                fm.success(lg.clipboard_cleared);
+                fm.success(lg('clipboard_cleared'));
 			};
 
             this.isEmpty = function() {
@@ -2651,6 +2687,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 Helper functions
 	 ---------------------------------------------------------*/
 
+	// Wrapper for translate method
+	var lg = function(key) {
+		return langModel.translate(key);
+	};
+
 	var sortItems = function(items) {
 		var parentItem;
 		var sortOrder = (fmModel.viewMode() === 'list') ? fmModel.itemsModel.listSortOrder() : configSortOrder;
@@ -2853,7 +2894,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var n = parseFloat(bytes);
 		var d = parseFloat(round ? 1000 : 1024);
 		var c = 0;
-		var u = [lg.unit_bytes, lg.unit_kb, lg.unit_mb, lg.unit_gb];
+		var u = [lg('unit_bytes'), lg('unit_kb'), lg('unit_mb'), lg('unit_gb')];
 
 		while(true) {
 			if(n < d) {
@@ -2870,8 +2911,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
     var formatServerError = function(errorObject) {
         var message;
         // look for message in case an error CODE is provided
-        if (lg && lg[errorObject.message]) {
-            message = lg[errorObject.message];
+        if (langModel.getLang() && lg(errorObject.message)) {
+            message = lg(errorObject.message);
             $.each(errorObject.arguments, function(i, argument) {
                 message = message.replace('%s', argument);
             });
@@ -2884,7 +2925,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Handle ajax request error.
 	var handleAjaxError = function(response) {
         fm.log(response.responseText || response);
-		fm.error(lg.ERROR_SERVER);
+		fm.error(lg('ERROR_SERVER'));
 		fm.error(response.responseText);
 	};
 
@@ -3274,7 +3315,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		if(totalCounter > 1) {
 			deferred.then(function() {
-				fm.write(lg.successful_processed.replace('%s', successCounter).replace('%s', totalCounter));
+				fm.write(lg('successful_processed').replace('%s', successCounter).replace('%s', totalCounter));
 			});
 		}
 
@@ -3448,7 +3489,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			var givenName = ui.getInputValue();
 			if(!givenName) {
 				// TODO: file/folder message depending on file type
-				fm.error(lg.new_filename);
+				fm.error(lg('new_filename'));
 				return;
 			}
 
@@ -3461,12 +3502,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			// File only - Check if file extension is allowed
 			if (isFile(oldPath) && !isAuthorizedFile(givenName)) {
-				var str = '<p>' + lg.INVALID_FILE_TYPE + '</p>';
+				var str = '<p>' + lg('INVALID_FILE_TYPE') + '</p>';
 				if(config.security.extensions.policy == 'ALLOW_LIST') {
-					str += '<p>' + lg.ALLOWED_FILE_TYPE.replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
+					str += '<p>' + lg('ALLOWED_FILE_TYPE').replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
 				if(config.security.extensions.policy == 'DISALLOW_LIST') {
-					str += '<p>' + lg.DISALLOWED_FILE_TYPE.replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
+					str += '<p>' + lg('DISALLOWED_FILE_TYPE').replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
 				$("#filepath").val('');
 				fm.error(str);
@@ -3521,7 +3562,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                     ui.closeDialog();
                     if(config.options.showConfirmation) {
-                        fm.success(lg.successful_rename);
+                        fm.success(lg('successful_rename'));
                     }
                 }
                 handleAjaxResponseErrors(response);
@@ -3529,15 +3570,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		fm.prompt({
-			message: lg.new_filename,
+			message: lg('new_filename'),
 			value: config.options.allowChangeExtensions ? resourceObject.attributes.name : getFilename(resourceObject.attributes.name),
 			okBtn: {
-				label: lg.action_rename,
+				label: lg('action_rename'),
 				autoClose: false,
 				click: doRename
 			},
 			cancelBtn: {
-				label: lg.cancel
+				label: lg('cancel')
 			}
 		});
 	};
@@ -3549,7 +3590,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var doMove = function(e, ui) {
 			var targetPath = ui.getInputValue();
 			if(!targetPath) {
-				fm.error(lg.prompt_foldername);
+				fm.error(lg('prompt_foldername'));
 				return;
 			}
 			targetPath = rtrim(targetPath, '/') + '/';
@@ -3557,23 +3598,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
 		var objectsTotal = objects.length,
-			message = (objectsTotal > 1) ? lg.prompt_move_multiple.replace('%s', objectsTotal) : lg.prompt_move;
+			message = (objectsTotal > 1) ? lg('prompt_move_multiple').replace('%s', objectsTotal) : lg('prompt_move');
 
 		fm.prompt({
 			message: message,
 			value: fmModel.currentPath(),
 			okBtn: {
-				label: lg.action_move,
+				label: lg('action_move'),
 				autoClose: false,
 				click: doMove
 			},
 			cancelBtn: {
-				label: lg.cancel
+				label: lg('cancel')
 			},
 			template: {
 				dialogInput:
 				'<input data-alertify-input type="text" value="" />' +
-				'<div class="prompt-info">' + lg.help_move + '</div>'
+				'<div class="prompt-info">' + lg('help_move') + '</div>'
 			}
 		});
 	};
@@ -3593,7 +3634,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 alertify.clearDialogs();
                 if (config.options.showConfirmation) {
-                    fm.success(lg.successful_copied);
+                    fm.success(lg('successful_copied'));
                 }
             }
             handleAjaxResponseErrors(response);
@@ -3626,7 +3667,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 alertify.clearDialogs();
                 if(config.options.showConfirmation) {
-                    fm.success(lg.successful_moved);
+                    fm.success(lg('successful_moved'));
                 }
             }
             handleAjaxResponseErrors(response);
@@ -3636,18 +3677,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Prompts for confirmation, then deletes the current item.
 	var deleteItemPrompt = function(objects, successCallback) {
 		var objectsTotal = objects.length,
-			message = (objectsTotal > 1) ? lg.confirm_delete_multiple.replace('%s', objectsTotal) : lg.confirm_delete;
+			message = (objectsTotal > 1) ? lg('confirm_delete_multiple').replace('%s', objectsTotal) : lg('confirm_delete');
 
 		fm.confirm({
 			message: message,
 			okBtn: {
-				label: lg.yes,
+				label: lg('yes'),
 				click: function(e, ui) {
 					successCallback();
 				}
 			},
 			cancelBtn: {
-				label: lg.no
+				label: lg('no')
 			}
 		});
 	};
@@ -3669,7 +3710,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
 
                 if(config.options.showConfirmation) {
-                    fm.success(lg.successful_delete);
+                    fm.success(lg('successful_delete'));
                 }
             }
             handleAjaxResponseErrors(response);
@@ -3726,7 +3767,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
                 fmModel.itemsModel.objects.replace(originalItem, newItem);
 
-                fm.success(lg.successful_edit);
+                fm.success(lg('successful_edit'));
             }
             handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
@@ -3754,7 +3795,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     var sizeTotal = formatBytes(data.sizeLimit, true);
                     var ratio = data.size * 100 / data.sizeLimit;
                     var percentage = Math.round(ratio * 100) / 100;
-                    size += ' (' + percentage + '%) ' + lg.of + ' ' + sizeTotal;
+                    size += ' (' + percentage + '%) ' + lg('of') + ' ' + sizeTotal;
                 }
 
                 fmModel.summaryModel.files(data.files);
@@ -3776,7 +3817,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         var doExtract = function(e, ui) {
             var targetPath = ui.getInputValue();
             if(!targetPath) {
-                fm.error(lg.prompt_foldername);
+                fm.error(lg('prompt_foldername'));
                 return;
             }
             targetPath = rtrim(targetPath, '/') + '/';
@@ -3785,15 +3826,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         };
 
         fm.prompt({
-            message: lg.prompt_extract,
+            message: lg('prompt_extract'),
             value: fmModel.currentPath(),
             okBtn: {
-                label: lg.action_extract,
+                label: lg('action_extract'),
                 autoClose: false,
                 click: doExtract
             },
             cancelBtn: {
-                label: lg.cancel
+                label: lg('cancel')
             }
         });
     };
@@ -3814,7 +3855,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 alertify.clearDialogs();
                 if(config.options.showConfirmation) {
-                    fm.success(lg.successful_extracted);
+                    fm.success(lg('successful_extracted'));
                 }
             }
             handleAjaxResponseErrors(response);
@@ -3828,7 +3869,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	// Retrieves file or folder info based on the path provided.
 	function getDetailView(resourceObject) {
 		if(!resourceObject.attributes.readable) {
-			fm.error(lg.NOT_ALLOWED_SYSTEM);
+			fm.error(lg('NOT_ALLOWED_SYSTEM'));
 			return false;
 		}
 		if(resourceObject.type === 'file') {
@@ -3844,16 +3885,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	function getContextMenuItems(resourceObject) {
         var clipboardDisabled = !fmModel.clipboardModel.enabled(),
             contextMenuItems = {
-                select: {name: lg.action_select, className: 'select'},
-                download: {name: lg.action_download, className: 'download'},
-                rename: {name: lg.action_rename, className: 'rename'},
-                move: {name: lg.action_move, className: 'move'},
+                select: {name: lg('action_select'), className: 'select'},
+                download: {name: lg('action_download'), className: 'download'},
+                rename: {name: lg('action_rename'), className: 'rename'},
+                move: {name: lg('action_move'), className: 'move'},
                 separator1: "-----",
-                copy: {name: lg.clipboard_copy, className: 'copy'},
-                cut: {name: lg.clipboard_cut, className: 'cut'},
-                delete: {name: lg.action_delete, className: 'delete'},
-                extract: {name: lg.action_extract, className: 'extract'},
-                copyUrl: {name: lg.copy_to_clipboard, className: 'copy-url'}
+                copy: {name: lg('clipboard_copy'), className: 'copy'},
+                cut: {name: lg('clipboard_cut'), className: 'cut'},
+                delete: {name: lg('action_delete'), className: 'delete'},
+                extract: {name: lg('action_extract'), className: 'extract'},
+                copyUrl: {name: lg('copy_to_clipboard'), className: 'copy-url'}
             };
 
 		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
@@ -3926,7 +3967,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 });
 
                 clipboard.on('success', function(e) {
-                    fm.success(lg.copied);
+                    fm.success(lg('copied'));
                     clipboard.destroy();
                 });
 				break;
@@ -3946,16 +3987,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			$uploadButton.unbind().click(function() {
 				if(capabilities.indexOf('upload') === -1) {
-					fm.error(lg.NOT_ALLOWED);
+					fm.error(lg('NOT_ALLOWED'));
 					return false;
 				}
 
 				var allowedFileTypes = null,
 					currentPath = fmModel.currentPath(),
 					templateContainer = tmpl('tmpl-fileupload-container', {
-						folder: lg.current_folder + currentPath,
-						info: lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles) + ' ' + lg.upload_file_size_limit.replace('%s', formatBytes(config.upload.fileSizeLimit, true)),
-						lang: lg
+						folder: lg('current_folder') + currentPath,
+						info: lg('upload_files_number_limit').replace('%s', config.upload.maxNumberOfFiles) + ' ' + lg('upload_file_size_limit').replace('%s', formatBytes(config.upload.fileSizeLimit, true)),
+						lang: langModel.getTranslations()
 					});
 
 				if(config.security.extensions.policy == 'ALLOW_LIST') {
@@ -3967,24 +4008,24 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					width: 'auto',
 					buttons: [{
 						type: "ok",
-						label: lg.action_upload,
+						label: lg('action_upload'),
 						autoClose: false,
 						click: function(e, ui) {
 							if($dropzone.children('.upload-item').length > 0) {
 								$dropzone.find('.button-start').trigger('click');
 							} else {
-								fm.error(lg.upload_choose_file);
+								fm.error(lg('upload_choose_file'));
 							}
 						}
 					},{
-						label: lg.action_select,
+						label: lg('action_select'),
 						closeOnClick: false,
 						click: function(e, ui) {
 							$('#fileupload', $uploadContainer).trigger('click');
 						}
 					},{
 						type: "cancel",
-						label: lg.close
+						label: lg('close')
 					}]
 				});
 
@@ -4047,7 +4088,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$node = data.files[0].context;
 
 					data.abort();
-					$node.find('.error-message').text(lg.upload_aborted);
+					$node.find('.error-message').text(lg('upload_aborted'));
 					$node.addClass('aborted');
 				});
 
@@ -4145,9 +4186,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						acceptFileTypes: allowedFileTypes,
 						maxFileSize: config.upload.fileSizeLimit,
 						messages: {
-							maxNumberOfFiles: lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles),
-							acceptFileTypes: lg.upload_file_type_invalid,
-							maxFileSize: lg.upload_file_too_big + ' ' + lg.upload_file_size_limit.replace('%s', formatBytes(config.upload.fileSizeLimit, true))
+							maxNumberOfFiles: lg('upload_files_number_limit').replace('%s', config.upload.maxNumberOfFiles),
+							acceptFileTypes: lg('upload_file_type_invalid'),
+							maxFileSize: lg('upload_file_too_big') + ' ' + lg('upload_file_size_limit').replace('%s', formatBytes(config.upload.fileSizeLimit, true))
 						},
 						// image preview options
 						previewMaxHeight: 120,
@@ -4160,7 +4201,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$.each(data.files, function (index, file) {
 							// skip selected files if total files number exceed "maxNumberOfFiles"
 							if($items.length >= config.upload.maxNumberOfFiles) {
-								fm.error(lg.upload_files_number_limit.replace('%s', config.upload.maxNumberOfFiles), {
+								fm.error(lg('upload_files_number_limit').replace('%s', config.upload.maxNumberOfFiles), {
 									logClass: 'fileuploadadd',
 									unique: true
 								});
@@ -4170,7 +4211,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							file.formattedSize = formatBytes(file.size);
 							var $template = $(tmpl('tmpl-upload-item', {
 								file: file,
-								lang: lg,
+								lang: langModel.getTranslations(),
 								imagesPath: fm.settings.baseUrl + '/scripts/jQuery-File-Upload/img'
 							}));
 							file.context = $template;
@@ -4195,7 +4236,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 					.on('fileuploadfail', function(e, data) {
 						$.each(data.files, function (index, file) {
-							file.error = lg.upload_failed;
+							file.error = lg('upload_failed');
 							var $node = file.context;
 							$node.removeClass('added process').addClass('error');
 						});
@@ -4235,12 +4276,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 								alertify.clearDialogs();
 
 								if (config.options.showConfirmation) {
-									fm.success(lg.upload_successful_files);
+									fm.success(lg('upload_successful_files'));
 								}
 							}
 							// errors occurred
 							if($items.filter('.error').length) {
-								fm.error(lg.upload_partially + "<br>" + lg.upload_failed_details);
+								fm.error(lg('upload_partially') + "<br>" + lg('upload_failed_details'));
 							}
 						}
 						updateDropzoneView();
@@ -4304,13 +4345,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			$uploadButton.click(function() {
 				if(capabilities.indexOf('upload') === -1) {
-					fm.error(lg.NOT_ALLOWED);
+					fm.error(lg('NOT_ALLOWED'));
 					return false;
 				}
 
 				var data = $(this).data();
 				if($.isEmptyObject(data)) {
-					fm.error(lg.upload_choose_file);
+					fm.error(lg('upload_choose_file'));
 				} else {
 					data.submit();
 				}
@@ -4335,18 +4376,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         path: fmModel.currentPath()
                     });
 					$uploadButton.addClass('loading').prop('disabled', true);
-					$uploadButton.children('span').text(lg.loading_data);
+					$uploadButton.children('span').text(lg('loading_data'));
 				})
 
 				.on('fileuploadalways', function(e, data) {
 					$("#filepath").val('');
 					$uploadButton.removeData().removeClass('loading').prop('disabled', false);
-					$uploadButton.children('span').text(lg.action_upload);
+					$uploadButton.children('span').text(lg('action_upload'));
 					var response = data.result;
 
 					// handle server-side errors
 					if(response && response.errors) {
-						fm.error(lg.upload_failed + "<br>" + formatServerError(response.errors[0]));
+						fm.error(lg('upload_failed') + "<br>" + formatServerError(response.errors[0]));
 					}
 					if(response && response.data) {
 						var resourceObject = response.data[0];
@@ -4354,7 +4395,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						fmModel.addItem(resourceObject, fmModel.currentPath());
 
 						if(config.options.showConfirmation) {
-							fm.success(lg.upload_successful_file);
+							fm.success(lg('upload_successful_file'));
 						}
 					}
 				})
@@ -4370,7 +4411,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 				.on('fileuploadfail', function(e, data) {
 					// server error 500, etc.
-					fm.error(lg.upload_failed);
+					fm.error(lg('upload_failed'));
 				});
 		}
 	};

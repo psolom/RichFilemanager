@@ -160,6 +160,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 .fm-container .fm-header button.lang-selector select {
+    width: 40px;
     border: none;
     background-color: #E5E5E5;
     cursor: pointer;
