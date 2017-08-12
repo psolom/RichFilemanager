@@ -789,20 +789,28 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		};
 
         // fetch selected view items OR tree nodes
-        this.fetchSelectedItems = function(item) {
-            if (item instanceof TreeNodeModel) {
-                return model.treeModel.getSelected();
-            }
-            if (item instanceof ItemObject) {
+        this.fetchSelectedItems = function(instanceName) {
+            var selectedNodes, selectedItems;
+
+            if (instanceName === 'ItemObject') {
                 return model.itemsModel.getSelected();
             }
+            if (instanceName === 'TreeNodeModel') {
+                return model.treeModel.getSelected();
+            }
+            if (!instanceName) {
+                selectedNodes = model.treeModel.getSelected();
+                selectedItems = model.itemsModel.getSelected();
+
+            	return (selectedItems.length > 0) ? selectedItems : selectedNodes;
+			}
             throw new Error('Unknown item type.');
         };
 
         // fetch resource objects out of the selected items
         this.fetchSelectedObjects = function(item) {
             var objects = [];
-            $.each(model.fetchSelectedItems(item), function(i, itemObject) {
+            $.each(model.fetchSelectedItems(item.constructor.name), function(i, itemObject) {
                 objects.push(itemObject.rdo);
             });
             return objects;
@@ -2046,20 +2054,20 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.enabled = ko.observable(model.config().clipboard.enabled && active);
 
-			this.copy = function(selected) {
+			this.copy = function() {
 				if (!clipboard_model.hasCapability('copy')) {
 					return;
 				}
                 cbMode = 'copy';
-                cbObjects = selected;
+                cbObjects = model.fetchSelectedItems();
 			};
 
-			this.cut = function(selected) {
+			this.cut = function() {
                 if (!clipboard_model.hasCapability('cut')) {
                     return;
                 }
                 cbMode = 'cut';
-                cbObjects = selected;
+                cbObjects = model.fetchSelectedItems();
 			};
 
 			this.paste = function() {
@@ -2498,7 +2506,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             var $cloned,
                                 iconClass;
 
-                            if (model.fetchSelectedItems(item).length > 1) {
+                            if (model.fetchSelectedItems(item.constructor.name).length > 1) {
                                 iconClass = 'ico_multiple';
                             } else {
                                 iconClass = (item.rdo.type === "folder")
@@ -2513,7 +2521,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             return $cloned;
                         },
                         start: function(event, ui) {
-                            drag_model.items = model.fetchSelectedItems(item);
+                            drag_model.items = model.fetchSelectedItems(item.constructor.name);
                         },
                         drag: function(event, ui) {
                             $(this).draggable('option', 'refreshPositions', drag_model.isScrolling || drag_model.isScrolled);
