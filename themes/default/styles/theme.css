@@ -44,7 +44,8 @@
     border-radius: 6px;
 }
 
-.fm-container button:hover {
+.fm-container button:hover,
+.fm-container .fm-header button.lang-selector:hover > select {
     background-color: #dfdfdf;
 }
 

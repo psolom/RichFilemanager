@@ -36,7 +36,7 @@
 	<div class="fm-wrapper">
 		<div class="fm-header">
 			<div class="breadcrumbs">
-				<div class="nav-title" data-bind="text: lg().current_folder"></div>
+				<div class="nav-title" data-bind="text: lg.current_folder"></div>
 				<div data-bind="foreach: {data: breadcrumbsModel.items, as: 'bcItem'}">
 					<div data-bind="text: bcItem.label, click: bcItem.goto, css: bcItem.itemClass()"></div>
 					<!-- ko if: !bcItem.active -->
@@ -46,13 +46,13 @@
 			</div>
 			<div class="buttons-panel">
 				<div class="button-group navigate-controls">
-					<button class="btn-nav-level-up no-label" type="button" data-bind="click: headerModel.navLevelUp, attr: {title: lg().nav_level_up}">
+					<button class="btn-nav-level-up no-label" type="button" data-bind="click: headerModel.navLevelUp, attr: {title: lg.nav_level_up}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="btn-nav-home no-label" type="button" data-bind="click: headerModel.navHome, attr: {title: lg().nav_home}">
+					<button class="btn-nav-home no-label" type="button" data-bind="click: headerModel.navHome, attr: {title: lg.nav_home}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="btn-nav-refresh no-label" type="button" data-bind="click: headerModel.navRefresh, attr: {title: lg().nav_refresh}">
+					<button class="btn-nav-refresh no-label" type="button" data-bind="click: headerModel.navRefresh, attr: {title: lg.nav_refresh}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -60,10 +60,10 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<div class="button-group viewmode-controls">
-					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg().grid_view}, css: {active: viewMode() === 'grid'}">
+					<button class="btn-grid-mode no-label" type="button" data-bind="click: headerModel.displayGrid, attr: {title: lg.grid_view}, css: {active: viewMode() === 'grid'}">
 						<span>&nbsp;</span>
 					</button>
-					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: lg().list_view}, css: {active: viewMode() === 'list'}">
+					<button class="btn-list-mode no-label" type="button" data-bind="click: headerModel.displayList, attr: {title: lg.list_view}, css: {active: viewMode() === 'list'}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -71,23 +71,23 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<div class="button-group filter-controls">
-					<button class="btn-filter-image no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('image')}}, attr: {title: lg().filter_image}"><span>&nbsp;</span></button>
-					<button class="btn-filter-media no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('media')}}, attr: {title: lg().filter_media}"><span>&nbsp;</span></button>
-					<button class="btn-filter-office no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('office')}}, attr: {title: lg().filter_office}"><span>&nbsp;</span></button>
-					<button class="btn-filter-archive no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('archive')}}, attr: {title: lg().filter_archive}"><span>&nbsp;</span></button>
-					<!--<button class="btn-filter-audio no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('audio')}}, attr: {title: lg().filter_audio}"><span>&nbsp;</span></button>-->
-					<!--<button class="btn-filter-video no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('video')}}, attr: {title: lg().filter_video}"><span>&nbsp;</span></button>-->
-					<button class="btn-filter-reset no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.reset()}}, attr: {title: lg().filter_reset}"><span>&nbsp;</span></button>
+					<button class="btn-filter-image no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('image')}}, attr: {title: lg.filter_image}"><span>&nbsp;</span></button>
+					<button class="btn-filter-media no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('media')}}, attr: {title: lg.filter_media}"><span>&nbsp;</span></button>
+					<button class="btn-filter-office no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('office')}}, attr: {title: lg.filter_office}"><span>&nbsp;</span></button>
+					<button class="btn-filter-archive no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('archive')}}, attr: {title: lg.filter_archive}"><span>&nbsp;</span></button>
+					<!--<button class="btn-filter-audio no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('audio')}}, attr: {title: lg.filter_audio}"><span>&nbsp;</span></button>-->
+					<!--<button class="btn-filter-video no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.filter('video')}}, attr: {title: lg.filter_video}"><span>&nbsp;</span></button>-->
+					<button class="btn-filter-reset no-label" type="button" data-bind="event: {click: function(data, event) {filterModel.reset()}}, attr: {title: lg.filter_reset}"><span>&nbsp;</span></button>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- ko if: clipboardModel.enabled() -->
 				<div class="button-group clipboard-controls">
-					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: lg().clipboard_copy}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: lg().clipboard_cut}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: lg().clipboard_paste_full}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: lg().clipboard_clear_full}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: lg.clipboard_copy}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: lg.clipboard_cut}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: lg.clipboard_paste_full}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: lg.clipboard_clear_full}"><span>&nbsp;</span></button>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
@@ -100,24 +100,31 @@
 						<div id="file-input-container">
 							<div id="alt-fileinput">
 								<input id="filepath" name="filepath" type="text"/>
-								<button id="browse" type="button" data-bind="attr: {title: lg().browse}">+</button>
+								<button id="browse" type="button" data-bind="attr: {title: lg.browse}">+</button>
 							</div>
 							<input id="newfile" name="newfile" type="file" />
 						</div>
 						<button class="fm-upload" type="button">
-							<span data-bind="text: lg().action_upload"></span>
+							<span data-bind="text: lg.action_upload"></span>
 						</button>
 					</form>
 				</div>
 				<div class="button-group create-controls">
 					<button class="btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
-						<span data-bind="text: lg().new_folder"></span>
+						<span data-bind="text: lg.new_folder"></span>
+					</button>
+				</div>
+				<!-- /ko -->
+				<!-- ko if: headerModel.langSwitcher -->
+				<div class="button-group">
+					<button type="button" class="lang-selector">
+						<select data-bind="value: currentLang, options: config().language.available, optionsText: function(item) {return item.toUpperCase();}, event: {change: function(data, event) {headerModel.switchLang(event)}}"></select>
 					</button>
 				</div>
 				<!-- /ko -->
 				<!-- ko if: headerModel.closeButton() -->
 				<div class="button-group">
-					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: lg().close}">
+					<button class="btn-close-window no-label" type="button" data-bind="click: headerModel.closeButtonOnClick, attr: {title: lg.close}">
 						<span>&nbsp;</span>
 					</button>
 				</div>
@@ -172,11 +179,11 @@
 						<table class="list" data-bind="visible: viewMode() === 'list'">
 							<thead>
 							<tr class="rowHeader" data-bind="with: tableViewModel">
-								<th data-bind="click: thName.sort, css: thName.sortClass()"><span data-bind="text: $root.lg().name"></span></th>
-								<th data-bind="click: thType.sort, css: thType.sortClass()"><span data-bind="text: $root.lg().type"></span></th>
-								<th data-bind="click: thSize.sort, css: thSize.sortClass()"><span data-bind="text: $root.lg().size"></span></th>
-								<th data-bind="click: thDimensions.sort, css: thDimensions.sortClass()"><span data-bind="text: $root.lg().dimensions"></span></th>
-								<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg().modified"></span></th>
+								<th data-bind="click: thName.sort, css: thName.sortClass()"><span data-bind="text: $root.lg.name"></span></th>
+								<th data-bind="click: thType.sort, css: thType.sortClass()"><span data-bind="text: $root.lg.type"></span></th>
+								<th data-bind="click: thSize.sort, css: thSize.sortClass()"><span data-bind="text: $root.lg.size"></span></th>
+								<th data-bind="click: thDimensions.sort, css: thDimensions.sortClass()"><span data-bind="text: $root.lg.dimensions"></span></th>
+								<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg.modified"></span></th>
 							</tr>
 							</thead>
 							<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
@@ -224,44 +231,44 @@
 						<div class="fm-preview-toolbar">
 							<form id="fm-js-preview-toolbar">
 								<button class="btn-file-preview-close" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.navLevelUp()}}">
-									<span data-bind="text: $root.lg().parentfolder"></span>
+									<span data-bind="text: $root.lg.parentfolder"></span>
 								</button>
 								<!-- ko if: buttonVisibility('select') -->
 								<button class="btn-file-select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
-									<span data-bind="text: $root.lg().action_select"></span>
+									<span data-bind="text: $root.lg.action_select"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('download') -->
 								<button class="btn-file-download" type="button" data-bind="event: {click: function(data, event) {bindToolbar('download')}}">
-									<span data-bind="text: $root.lg().action_download"></span>
+									<span data-bind="text: $root.lg.action_download"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('rename') -->
 								<button class="btn-file-rename" type="button" data-bind="event: {click: function(data, event) {bindToolbar('rename')}}">
-									<span data-bind="text: $root.lg().action_rename"></span>
+									<span data-bind="text: $root.lg.action_rename"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('move') -->
 								<button class="btn-file-move" type="button" data-bind="event: {click: function(data, event) {bindToolbar('move')}}">
-									<span data-bind="text: $root.lg().action_move"></span>
+									<span data-bind="text: $root.lg.action_move"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: buttonVisibility('delete') -->
 								<button class="btn-file-delete" type="button" data-bind="event: {click: function(data, event) {bindToolbar('delete')}}">
-									<span data-bind="text: $root.lg().action_delete"></span>
+									<span data-bind="text: $root.lg.action_delete"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: viewer.isEditable() && !editor.enabled() -->
 								<button class="btn-file-edit" type="button" data-bind="click: editFile">
-									<span data-bind="text: $root.lg().editor_edit"></span>
+									<span data-bind="text: $root.lg.editor_edit"></span>
 								</button>
 								<!-- /ko -->
 								<!-- ko if: viewer.isEditable() && editor.enabled() -->
 								<button class="btn-file-save" type="button" data-bind="click: saveFile">
-									<span data-bind="text: $root.lg().editor_save"></span>
+									<span data-bind="text: $root.lg.editor_save"></span>
 								</button>
 								<button class="btn-file-editor-close" type="button" data-bind="click: closeEditor">
-									<span data-bind="text: $root.lg().editor_quit"></span>
+									<span data-bind="text: $root.lg.editor_quit"></span>
 								</button>
 								<!-- /ko -->
 							</form>
@@ -311,13 +318,13 @@
 						<div class="fm-preview-title">
 							<h1 data-bind="text: rdo().attributes.name, attr: {title: rdo().id}"></h1>
 							<div class="fm-preview-title-controls">
-								<a href="#" class="btn-copy-url" data-bind="attr: {title: $root.lg().copy_to_clipboard, 'data-clipboard-text': viewer.pureUrl()}"></a>
+								<a href="#" class="btn-copy-url" data-bind="attr: {title: $root.lg.copy_to_clipboard, 'data-clipboard-text': viewer.pureUrl()}"></a>
 								<!-- ko if: viewer.isEditable() && !editor.enabled() && viewer.options().is_writable -->
-								<a href="#" class="btn-editor-open" data-bind="attr: {title: $root.lg().editor_edit}, click: editFile"></a>
+								<a href="#" class="btn-editor-open" data-bind="attr: {title: $root.lg.editor_edit}, click: editFile"></a>
 								<!-- /ko -->
 								<!-- ko if: viewer.isEditable() && editor.enabled() -->
-								<a href="#" class="btn-editor-save" data-bind="attr: {title: $root.lg().editor_save}, click: saveFile"></a>
-								<a href="#" class="btn-editor-quit" data-bind="attr: {title: $root.lg().editor_quit}, click: closeEditor"></a>
+								<a href="#" class="btn-editor-save" data-bind="attr: {title: $root.lg.editor_save}, click: saveFile"></a>
+								<a href="#" class="btn-editor-quit" data-bind="attr: {title: $root.lg.editor_quit}, click: closeEditor"></a>
 								<!-- /ko -->
 							</div>
 						</div>
@@ -325,19 +332,19 @@
 						<div class="fm-preview-details">
 							<table>
 								<tr data-bind="visible: cdo().sizeFormatted">
-									<td data-bind="text: $root.lg().size"></td>
+									<td data-bind="text: $root.lg.size"></td>
 									<td data-bind="text: cdo().sizeFormatted"></td>
 								</tr>
 								<tr data-bind="visible: cdo().dimensions">
-									<td data-bind="text: $root.lg().dimensions"></td>
+									<td data-bind="text: $root.lg.dimensions"></td>
 									<td data-bind="text: cdo().dimensions"></td>
 								</tr>
 								<tr data-bind="visible: rdo().attributes.created">
-									<td data-bind="text: $root.lg().created"></td>
+									<td data-bind="text: $root.lg.created"></td>
 									<td data-bind="text: rdo().attributes.created"></td>
 								</tr>
 								<tr data-bind="visible: rdo().attributes.modified">
-									<td data-bind="text: $root.lg().modified"></td>
+									<td data-bind="text: $root.lg.modified"></td>
 									<td data-bind="text: rdo().attributes.modified"></td>
 								</tr>
 							</table>
@@ -359,21 +366,21 @@
 
 			<div class="right">
 				<div id="folder-info">
-					<span data-bind="text: itemsModel.objectsNumber() + ' ' + lg().items"></span> -
-					<span data-bind="text: lg().size + ': ' + itemsModel.objectsSize()"></span>
+					<span data-bind="text: itemsModel.objectsNumber() + ' ' + lg.items"></span> -
+					<span data-bind="text: lg.size + ': ' + itemsModel.objectsSize()"></span>
 				</div>
 				<div id="summary" data-bind="click: summaryModel.doSummarize"></div>
-				<a href="" target="_blank" id="link-to-project" data-bind="attr: {href: config().url, title: lg().support_fm + ' [' + lg().version + ' : ' + config().version + ']'}"></a>
+				<a href="" target="_blank" id="link-to-project" data-bind="attr: {href: config().url, title: lg.support_fm + ' [' + lg.version + ' : ' + config().version + ']'}"></a>
 			</div>
 			<div style="clear: both"></div>
 		</div>
 
 		<!-- ko if: summaryModel.enabled() -->
 		<div id="summary-popup" data-bind="visible: false">
-			<div class="title" data-bind="text: lg().summary_title"></div>
-			<div class="line" data-bind="text: lg().summary_files + ': ' + summaryModel.files()"></div>
-			<div class="line" data-bind="text: lg().summary_folders + ': ' + summaryModel.folders(), visible: summaryModel.folders()"></div>
-			<div class="line" data-bind="text: lg().summary_size + ': ' + summaryModel.size()"></div>
+			<div class="title" data-bind="text: lg.summary_title"></div>
+			<div class="line" data-bind="text: lg.summary_files + ': ' + summaryModel.files()"></div>
+			<div class="line" data-bind="text: lg.summary_folders + ': ' + summaryModel.folders(), visible: summaryModel.folders()"></div>
+			<div class="line" data-bind="text: lg.summary_size + ': ' + summaryModel.size()"></div>
 		</div>
 		<!-- /ko -->
 
