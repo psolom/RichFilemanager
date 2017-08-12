@@ -1,4 +1,4 @@
-LazyLoad is a fast, lightweight and flexible script that _speeds up your web application_ by **loading images only as they enter the viewport**. LazyLoad is written in plain (vanilla) Javascript, it supports [responsive images](https://alistapart.com/article/responsive-images-in-practice), it's SEO friendly and it has some others [notable features](#notable-features). 
+LazyLoad is a fast, lightweight and flexible script that _speeds up your web application_ by **loading images only as they enter the viewport**. LazyLoad is written in plain (vanilla) Javascript, it supports [responsive images](https://alistapart.com/article/responsive-images-in-practice), it's SEO friendly and it has some other [notable features](#notable-features). 
 
 Check out the [LazyLoad website](https://verlok.github.io/lazyload/), in case you're reading this on GitHub.
 
@@ -14,7 +14,7 @@ Jump to:
 Just include the [latest version](https://cdnjs.com/libraries/vanilla-lazyload) script, e.g. like that:
 
 ```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-lazyload/7.2.0/lazyload.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-lazyload/8.0.1/lazyload.min.js"></script>
 ```
 
 ### Local install
