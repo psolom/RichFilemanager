@@ -2,7 +2,6 @@
     "_comment": "IMPORTANT : go to the wiki page to know about options configuration https://github.com/servocoder/RichFilemanager/wiki/Configuration-options",
     "options": {
         "theme": "flat-dark",
-        "defaultViewMode": "grid",
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
@@ -38,6 +37,7 @@
         "minWidth": 200
     },
     "manager": {
+        "defaultViewMode": "grid",
         "dblClickOpen": false,
         "selection": {
             "enabled": true,
