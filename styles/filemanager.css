@@ -106,6 +106,10 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     margin: 0 1px;
 }
 
+.fm-container .fm-header .button-group button.disabled {
+    background-color: #c5c5c5;
+}
+
 .fm-container .fm-header .button-group button.separator {
     width: 2px;
     padding-left: 0;

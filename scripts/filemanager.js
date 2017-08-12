@@ -2105,6 +2105,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             	clipboard_model = this,
 				active = capabilities.indexOf('copy') > -1 || capabilities.indexOf('move') > -1;
 
+            this.itemsNum = ko.observable(0);
             this.enabled = ko.observable(model.config().clipboard.enabled && active);
 
 			this.copy = function() {
@@ -2113,6 +2114,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
                 cbMode = 'copy';
                 cbObjects = model.fetchSelectedItems();
+                clipboard_model.itemsNum(cbObjects.length);
 			};
 
 			this.cut = function() {
@@ -2121,10 +2123,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
                 cbMode = 'cut';
                 cbObjects = model.fetchSelectedItems();
+                clipboard_model.itemsNum(cbObjects.length);
 			};
 
 			this.paste = function() {
-                if (!clipboard_model.hasCapability('paste')) {
+                if (!clipboard_model.hasCapability('paste') || clipboard_model.isEmpty()) {
                     return;
                 }
                 if (cbMode === null || cbObjects.length === 0) {
@@ -2145,7 +2148,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.clear = function() {
-                if (!clipboard_model.hasCapability('clear')) {
+                if (!clipboard_model.hasCapability('clear') || clipboard_model.isEmpty()) {
                     return;
                 }
                 clearClipboard();
@@ -2174,6 +2177,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			function clearClipboard() {
                 cbObjects = [];
                 cbMode = null;
+                clipboard_model.itemsNum(0);
 			}
 		};
 

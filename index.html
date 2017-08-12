@@ -86,8 +86,8 @@
 				<div class="button-group clipboard-controls">
 					<button class="btn-clipboard-copy no-label" type="button" data-bind="click: clipboardModel.copy, visible: clipboardModel.hasCapability('copy'), attr: {title: lg.clipboard_copy}"><span>&nbsp;</span></button>
 					<button class="btn-clipboard-cut no-label" type="button" data-bind="click: clipboardModel.cut, visible: clipboardModel.hasCapability('cut'), attr: {title: lg.clipboard_cut}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: lg.clipboard_paste_full}"><span>&nbsp;</span></button>
-					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: lg.clipboard_clear_full}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-paste no-label" type="button" data-bind="click: clipboardModel.paste, visible: clipboardModel.hasCapability('paste'), attr: {title: lg.clipboard_paste_full}, css: {disabled: clipboardModel.itemsNum() === 0}"><span>&nbsp;</span></button>
+					<button class="btn-clipboard-clear no-label" type="button" data-bind="click: clipboardModel.clear, visible: clipboardModel.hasCapability('clear'), attr: {title: lg.clipboard_clear_full}, css: {disabled: clipboardModel.itemsNum() === 0}"><span>&nbsp;</span></button>
 				</div>
 				<div class="button-group">
 					<button class="separator" type="button">&nbsp;</button>
