@@ -288,7 +288,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// localize messages based on culture var or from URL
+	// localize messages based on configuration or URL value
 	var localize = function() {
         langModel = new LangModel();
 
@@ -307,7 +307,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							}, 500);
 						});
 				} else {
-                    langModel.setLang(config.options.culture);
+                    langModel.setLang(config.language.default);
 				}
 			})
 			.then(function() {
