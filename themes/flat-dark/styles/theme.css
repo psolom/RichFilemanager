@@ -42,6 +42,11 @@
     border-bottom: 1px dotted #efefef;
 }
 
+.fm-container .fm-header .button-group select.button {
+    background-color: #E8E8E8;
+    border: 1px solid #fff;
+}
+
 .fm-container button {
     color: #333;
     background-color: #E8E8E8;
@@ -53,7 +58,7 @@
 }
 
 .fm-container button:hover,
-.fm-container .fm-header button.lang-selector:hover > select {
+.fm-container .fm-header .button-group select.button:hover {
     background-color: #C3D2F7;
 }
 

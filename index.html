@@ -117,9 +117,7 @@
 				<!-- /ko -->
 				<!-- ko if: headerModel.langSwitcher -->
 				<div class="button-group">
-					<button type="button" class="lang-selector">
-						<select data-bind="value: currentLang, options: config().language.available, optionsText: function(item) {return item.toUpperCase();}, event: {change: function(data, event) {headerModel.switchLang(event)}}"></select>
-					</button>
+					<select class="button lang-selector" data-bind="value: currentLang, options: config().language.available, optionsText: function(item) {return item.toUpperCase();}, event: {change: function(data, event) {headerModel.switchLang(event)}}"></select>
 				</div>
 				<!-- /ko -->
 				<!-- ko if: headerModel.closeButton() -->
