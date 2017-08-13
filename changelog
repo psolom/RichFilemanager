@@ -1,3 +1,10 @@
+Version 2.6.1 (Hotfix)
+---------------------------
+- better compression with uglifyJs
+- bugfix: broken references in the minified RFM script
+- bugfix: no images previews in the grid/list when using filters along with images lazyLoad feature
+
+
 Version 2.6.0
 ---------------------------
 - implemented language switcher with page reload #171
