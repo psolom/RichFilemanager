@@ -89,6 +89,16 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     background-size: 20px;
 }
 
+.fm-container .button-group .btn {
+    color: #777777;
+    background-color: #ffffff;
+    border: 1px solid #dcdcdc;
+    display: inline-block;
+    vertical-align: middle;
+    text-decoration: none;
+    cursor: pointer;
+}
+
 .fm-container .fm-header .buttons-panel {
     float: right;
     margin-bottom: 0.5em;
@@ -100,55 +110,34 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     padding: 0;
 }
 
-.fm-container .fm-header .button-group button,
-.fm-container .fm-header .button-group .button {
-    display: inline-block;
-    cursor: pointer;
-    padding: 2px 3px;
+.fm-container .fm-header .button-group .btn {
     margin: 0 1px;
 }
 
-.fm-container .fm-header .button-group select.button {
-    padding: 4px 2px 3px;
-    background-color: #E5E5E5;
-    border: 1px solid #dcdcdc;
-    -moz-border-radius: 2px;
-    -webkit-border-radius: 2px;
-    border-radius: 2px;
+.fm-container .fm-preview .button-group .btn {
+    padding: 0.1em 0.3em;
+    margin: 0 0.2em 0.5em 0.2em;
+    line-height: 1.7em;
 }
 
-.fm-container .fm-header .button-group button.disabled {
+.fm-container .button-group .btn.active {
+    background-color: #C3D2F7;
+    border-color: #aac2ff;
+}
+
+.fm-container .button-group .btn.disabled {
     background-color: #c5c5c5;
 }
 
-.fm-container .fm-header .button-group button.separator {
+.fm-container .button-group .separator {
     width: 2px;
-    padding-left: 0;
-    padding-right: 0;
     margin: 1px 5px 0;
+    padding: 3px 1px;
     border: none;
     cursor: default;
 }
 
-.fm-container button {
-    display: inline-block;
-    color: #777777;
-    background-color: #ffffff;
-    border: 1px solid #dcdcdc;
-    padding: 0.1em 0.3em;
-    text-decoration: none;
-    margin: 0 0.2em 0.5em 0.2em;
-    line-height: 1.7em;
-    cursor: pointer;
-}
-
-.fm-container button:hover,
-.fm-container .fm-header .button-group select.button:hover {
-    background-color: #ffffff;
-}
-
-.fm-container .fm-header button span,
-.fm-container .fm-fileinfo button span {
+.fm-container .button-group .btn span {
     display: block;
     padding-left: 20px;
     background-position: left center;
@@ -157,21 +146,20 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     white-space: nowrap;
 }
 
-.fm-container button:active,
-.fm-container button:focus {
+.fm-container .button-group .btn:not(.disabled):hover {
+    background-color: #ffffff;
+}
+
+.fm-container .button-group .btn:active,
+.fm-container .button-group .btn:focus {
     color:#000;
     outline-color: transparent;
     outline-style: none;
     outline-width: 0;
 }
 
-.fm-container .fm-header button.no-label span {
+.fm-container .button-group .btn.no-label span {
     background-position: center center;
-}
-
-.fm-container .fm-header button.active {
-    background: none repeat scroll 0 0 #F9F8F7;
-    border-style: inset;
 }
 
 .fm-container .fm-header select.lang-selector {
@@ -574,9 +562,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 
 /** Input file Replacement */
 
-.fm-container input,
-.fm-container button,
-.fm-container .button {
+.fm-container input {
     vertical-align: text-top;
 }
 

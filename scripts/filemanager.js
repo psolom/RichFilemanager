@@ -2001,21 +2001,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         var FilterModel = function() {
             var filter_model = this;
-            this.name = null;
+            this.name = ko.observable(null);
 
             this.setName = function(filterName) {
                 if (filterName &&
                     config.filter &&
                     $.isArray(config.filter[filterName])
                 ) {
-                    filter_model.name = filterName;
+                    filter_model.name(filterName);
 				}
             };
 
             // return extensions which are match a filter name
             this.getExtensions = function() {
-            	if (filter_model.name) {
-            		return config.filter[filter_model.name];
+            	if (filter_model.name()) {
+            		return config.filter[filter_model.name()];
 				}
 				return null;
             };
@@ -2053,7 +2053,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             this.reset = function() {
-                filter_model.name = null;
+                filter_model.name(null);
                 filter_model.filter(null);
             };
         };

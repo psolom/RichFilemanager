@@ -34,24 +34,30 @@
     border-bottom: 1px dotted #ccc;
 }
 
-.fm-container .fm-header .button-group select.button {
-    background-color: #ffffff;
-    border: 1px solid #dcdcdc;
-}
-
-.fm-container button {
+.fm-container .button-group .btn {
     color: #777777;
     background-color: #ffffff;
-    padding: 0.1em 0.3em;
     border: 1px solid #dcdcdc;
     -moz-border-radius: 6px;
     -webkit-border-radius: 6px;
     border-radius: 6px;
 }
 
-.fm-container button:hover,
-.fm-container .fm-header .button-group select.button:hover {
-    background-color: #dfdfdf;
+.fm-container .button-group .separator {
+    padding: 0 1px;
+    background-color: #ffffff;
+}
+
+.fm-container .fm-header .button-group .btn {
+    padding: 2px 3px;
+}
+
+.fm-container .fm-header .button-group select.btn {
+    padding: 1px 2px;
+}
+
+.fm-container .button-group .btn:not(.disabled):hover {
+    background-color: #ffffff;
 }
 
 .fm-container #filepath {
