@@ -140,6 +140,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .button-group .btn span {
     display: block;
     padding-left: 20px;
+    line-height: 17px;
     background-position: left center;
     background-repeat: no-repeat;
     background-color: transparent;
