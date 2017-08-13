@@ -69,7 +69,7 @@
     "confirm_delete": "Вы уверены, что хотите удалить этот файл?",
     "confirm_delete_multiple": "Вы уверены, что хотите удалить %s элементов?",
     "copied": "URL скопирован!",
-    "copy_to_clipboard": "Скопировать в буфер обмена",
+    "copy_to_clipboard": "Скопировать URL в буфер",
     "could_not_retrieve_folder": "Не могу получить содержимое папки.",
     "create_folder": "Создать папку",
     "created": "Создан",

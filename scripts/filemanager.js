@@ -2050,6 +2050,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 model.treeModel.mapNodes(function (node) {
 					filter_model.filterItem(node);
                 });
+
+                if (model.itemsModel.lazyLoad) {
+                    model.itemsModel.lazyLoad.update();
+                }
             };
 
             this.reset = function() {
