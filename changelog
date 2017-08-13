@@ -1,3 +1,26 @@
+Version 2.6.0
+---------------------------
+- implemented language switcher with page reload #171
+- implemented client-side filtering with UI buttons #204
+- added predefined filters in the config file for client-side filtering, thanks @Saso222 #205
+- updated NodeJs connector: new response format, support for most API methods, thanks @forestlake #209
+- updates and customizations for LazyLoad plugin to support IE9 & IE10 #214
+- added refresh folder items / item preview UI button #215
+- clipboard UI buttons are disabled when no actions are available #220
+- rearranged header UI buttons
+- updated DE translations
+- updated ZN-CN translations, thanks @toolgood #208
+- bugfix: wrong URL docs.google.com viewer, thanks @abnerjacobsen #213
+- bugfix: Lazy Loading for thumbs doesn't work for new/moved/copied images #214
+- bugfix: selected files are not taken properly when using the copy button in the toolbar #219
+
+Backward incompatible changes:
+- "options.culture" configuration option is moved to "language.default" option
+- "options.defaultViewMode" configuration option is moved to "manager.defaultView" option
+- removed obsolete "showFullPath" and "localizeGUI" configuration options #216
+- removed "flat-oil" and "flat-turquoise" themes
+
+
 Version 2.5.1
 ---------------------------
 - added capability to pass parameters to the connector, thanks @Saso222 #132
