@@ -27,6 +27,15 @@
     "grunt": "^1.0.1",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-cssmin": "^1.0.1",
-    "grunt-contrib-uglify": "^1.0.1"
+    "grunt-contrib-uglify": "^1.0.1",
+    "npm-run-all": "^4.0.2",
+    "uglify-js": "^3.0.27"
+  },
+  "scripts": {
+    "uglify:1": "uglifyjs ./scripts/filemanager.js -c -m -o ./scripts/filemanager.min.js",
+    "uglify:2": "uglifyjs ./scripts/jquery-ui/jquery-ui.js -c -m -o ./scripts/jquery-ui/jquery-ui.min.js",
+    "uglify:3": "uglifyjs ./scripts/jquery.fileDownload/jquery.fileDownload.js -c -m -o ./scripts/jquery.fileDownload/jquery.fileDownload.min.js",
+    "uglify:4": "uglifyjs ./scripts/lazyload/dist/lazyload.js -c -m -o ./scripts/lazyload/dist/lazyload.min.js",
+    "uglify:5": "uglifyjs ./scripts/purl/purl.js -c -m -o ./scripts/purl/purl.min.js"
   }
 }

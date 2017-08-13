@@ -825,10 +825,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         this.fetchSelectedItems = function(instanceName) {
             var selectedNodes, selectedItems;
 
-            if (instanceName === 'ItemObject') {
+            if (instanceName === ItemObject.name) {
                 return model.itemsModel.getSelected();
             }
-            if (instanceName === 'TreeNodeModel') {
+            if (instanceName === TreeNodeModel.name) {
                 return model.treeModel.getSelected();
             }
             if (!instanceName) {
