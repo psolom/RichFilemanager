@@ -2903,14 +2903,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		});
 	};
 
-	// Converts bytes to KB, MB, or GB as needed for display
+	// Converts bytes to KB, MB, GB, or TB as needed for display
 	var formatBytes = function(bytes, round) {
 		if(!bytes) return '';
 		round = round || false;
 		var n = parseFloat(bytes);
 		var d = parseFloat(round ? 1000 : 1024);
 		var c = 0;
-		var u = [lg('unit_bytes'), lg('unit_kb'), lg('unit_mb'), lg('unit_gb')];
+		var u = [lg('unit_bytes'), lg('unit_kb'), lg('unit_mb'), lg('unit_gb'), lg('unit_tb')];
 
 		while(true) {
 			if(n < d) {
