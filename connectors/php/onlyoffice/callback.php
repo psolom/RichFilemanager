@@ -46,8 +46,16 @@ try {
 	}
 
 	header("HTTP/1.1 200 OK");
-	echo "Payload digested";
+	header("Content-Type: application/json");
+	echo json_encode([
+		'status' => 'success',
+		'error' => false,
+	]);
 } catch (Exception $ex) {
 	header("HTTP/1.1 500 Internal Server Error");
-	echo $ex->getMessage();
+	header("Content-Type: application/json");
+	echo json_encode([
+		'status' => 'error',
+		'error' => $ex->getMessage(),
+	]);
 }
