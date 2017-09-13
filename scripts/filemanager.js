@@ -239,7 +239,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				delete config_user.version;
 			}
 			// merge default config and user config file
-			config = $.extend({}, config_default, config_user);
+			config = $.extend(true, config_default, config_user);
 
 			// setup apiConnector
 			if(config.api.connectorUrl) {
