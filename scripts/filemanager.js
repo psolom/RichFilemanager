@@ -19,6 +19,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	 */
 	var defaults = {
 		baseUrl: '.',	// relative path to the FM plugin folder
+		configUrl: null,
 		config: {},		// configuration options
         callbacks: {
             beforeCreateImageUrl: function (resourceObject, url) {
@@ -238,7 +239,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				delete config_user.version;
 			}
 			// merge default config and user config file
-			config = $.extend({}, config_default, config_user);
+			config = $.extend(true, config_default, config_user);
 
 			// setup apiConnector
 			if(config.api.connectorUrl) {
@@ -934,6 +935,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     viewerObject.options = {
                         width: config.viewer.video.playerWidth,
                         height: config.viewer.video.playerHeight
+                    };
+                }
+                if(isOnlyOfficeFile(filename) && config.viewer.onlyoffice.enabled === true) {
+                    viewerObject.type = 'onlyoffice';
+                    var connectorUrl = config.viewer.onlyoffice.connectorUrl || fm.settings.baseUrl + '/connectors/php/onlyoffice/editor.php';
+                    viewerObject.url = connectorUrl + '?path=' + encodeURIComponent(resourceObject.attributes.path);
+                    viewerObject.options = {
+                        width: config.viewer.onlyoffice.editorWidth,
+                        height: config.viewer.onlyoffice.editorHeight
                     };
                 }
                 if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
@@ -2863,7 +2873,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		type = (typeof type === "undefined") ? "user" : type;
 
 		if(type === 'user') {
-			if(_url_.param('config')) {
+			if (fm.settings.configUrl) {
+				url = fm.settings.configUrl;
+			} else if(_url_.param('config')) {
 				url = fm.settings.baseUrl + '/config/' + _url_.param('config');
 			} else {
 				url = fm.settings.baseUrl + '/config/filemanager.config.json';
@@ -3136,6 +3148,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var isAudioFile = function(filename) {
 		return ($.inArray(getExtension(filename), config.viewer.audio.extensions) !== -1);
 	};
+
+    // Test if file is supported by Only Office viewer
+    var isOnlyOfficeFile = function(filename) {
+        return ($.inArray(getExtension(filename), config.viewer.onlyoffice.extensions) !== -1);
+    };
 
 	// Test if file is openable in iframe
 	var isIFrameFile = function(filename) {

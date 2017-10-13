@@ -111,7 +111,7 @@
             ]
         },
         "iframe": {
-            "enabled": true,
+            "enabled": false,
             "extensions": [
                 "htm",
                 "html"
@@ -119,8 +119,36 @@
             "readerWidth": "95%",
             "readerHeight": "600"
         },
-        "opendoc": {
+        "onlyoffice": {
             "enabled": true,
+            "extensions": [
+                "doc",
+                "docx",
+                "odt",
+                "rtf",
+                "txt",
+                "pdf",
+                "html",
+                "epub",
+                "xps",
+                "djvu",
+                "xls",
+                "xlsx",
+                "ods",
+                "csv",
+                "pptx",
+                "ppt",
+                "odp"
+            ],
+            "editorWidth": "95%",
+            "editorHeight": "600",
+            "apiUrl": "https://doc.onlyoffice.com/web-apps/apps/api/documents/api.js",
+            "connectorUrl": false,
+            "downloadUrl": false,
+            "callbackUrl": false
+        },
+        "opendoc": {
+            "enabled": false,
             "extensions": [
                 "pdf",
                 "odt",
@@ -131,7 +159,7 @@
             "readerHeight": "480"
         },
         "google": {
-            "enabled": true,
+            "enabled": false,
             "extensions": [
                 "doc",
                 "docx",
@@ -144,14 +172,14 @@
             "readerHeight": "480"
         },
         "codeMirrorRenderer": {
-            "enabled": true,
+            "enabled": false,
             "extensions": [
                 "txt",
                 "csv"
             ]
         },
         "markdownRenderer": {
-            "enabled": true,
+            "enabled": false,
             "extensions": [
                 "md"
             ]
