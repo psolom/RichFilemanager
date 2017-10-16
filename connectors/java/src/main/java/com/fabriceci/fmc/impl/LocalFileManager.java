@@ -894,6 +894,10 @@ public class LocalFileManager extends AbstractFileManager {
                 if (!isAllowedName(filename, false)) {
                     throw new FMUnallowedException(filename);
                 }
+                if (!isAllowedFileType(filename)) {
+                    throw new FMUploadException(dictionnary.getProperty("INVALID_FILE_TYPE"));
+                }
+
                 Long uploadFileSizeLimit = 0L;
                 String uploadFileSizeLimitString = propertiesConfig.getProperty("upload_fileSizeLimit");
                 try {
