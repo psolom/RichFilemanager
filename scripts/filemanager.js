@@ -1924,6 +1924,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.displayGrid = function() {
 				model.viewMode('grid');
 				model.previewFile(false);
+
+                if (model.itemsModel.lazyLoad) {
+                    model.itemsModel.lazyLoad.update();
+                }
 			};
 
 			this.displayList = function() {

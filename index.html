@@ -198,7 +198,7 @@
 							<!-- /ko -->
 
 							<!-- ko if: koItem.rdo.type !== "parent" -->
-							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
+							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
 								<td>
 									<div class="list-item" data-bind="draggableView: koItem">
 										<span class="list-icon" data-bind="css: koItem.listIconClass()"></span>
