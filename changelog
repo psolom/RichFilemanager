@@ -1,3 +1,14 @@
+Version 2.6.2
+---------------------------
+- implemented progress bar for batch operations #249
+- bugfix: type filters do not work with the list view #225 #228
+- Java connector: added file type check before uploading files #245
+- Chinese (Taiwan) language: updated translations #240
+- Persian (Farsi) language: added lang file #250 #251
+- Arabic language: complete rewrite #230
+- Portuguese language: updated translations
+
+
 Version 2.6.1 (Hotfix)
 ---------------------------
 - better compression with uglifyJs
