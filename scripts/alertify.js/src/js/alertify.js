@@ -2,9 +2,13 @@
 
     "use strict";
 
-    var logsUI;
+    var logsUI = {
+        container: null,
+        elements: []
+    };
     var TRANSITION_FALLBACK_DURATION = 500;
-    var hideElement = function(el) {
+
+    function hideElement (el) {
         if (! el) {
             return;
         }
@@ -21,7 +25,7 @@
 
         // Fallback for no transitions.
         setTimeout(removeThis, TRANSITION_FALLBACK_DURATION);
-    };
+    }
 
     function centerDialog(node) {
         var nodeHeight = node.offsetHeight;
@@ -98,7 +102,10 @@
             // log options
             logDelay: 5000,
             logMaxItems: 2,
-            logPosition: "bottom left",
+            logPosition: {
+                v: "bottom",
+                h: "left"
+            },
             logContainerClass: "alertify-logs",
             logTemplateMethod: null,
             // html templates
@@ -108,6 +115,80 @@
                 dialogInput: '<input data-alertify-input type="text">',
                 logMessage: '<div data-alertify-log-msg></div>'
             }
+        };
+
+        var LogItem = function(type) {
+            var that = this;
+            this.type = type;
+            this.fixed = false;
+            this.template = _alertify.logTemplateMethod;
+            this.dom = {};
+
+            this.createDomElements = function(template) {
+                this.dom.wrapper = createElementFromHtml(template);
+                this.dom.message = findElementByData(this.dom.wrapper, 'alertify-log-msg');
+
+                setTimeout(function() {
+                    that.dom.wrapper.className += " show";
+                }, 10);
+            };
+
+            this.getDomElements = function() {
+                return this.dom;
+            };
+
+            this.setMessage = function(message) {
+                var content = message;
+                if (this.template) {
+                    content = this.template(message);
+                }
+
+                if (content instanceof HTMLElement) {
+                    this.dom.message.innerHTML = '';
+                    this.dom.message.appendChild(content);
+                } else {
+                    this.dom.message.innerHTML = content;
+                }
+            };
+
+            this.setType = function(type) {
+                addClass(this.dom.message, type);
+            };
+
+            this.setClickEvent = function(handler) {
+                this.dom.wrapper.addEventListener("click", function (event) {
+                    handler(event, that);
+                });
+            };
+
+            this.injectHtml = function() {
+                var logs = logsUI.elements;
+
+                if (logs.length === 0 || _alertify.logPosition.v === "top") {
+                    logsUI.container.appendChild(this.dom.wrapper);
+                } else {
+                    logsUI.container.insertBefore(this.dom.wrapper, logs[logs.length - 1].dom.wrapper);
+                }
+
+                logsUI.elements.push(this);
+            };
+
+            this.stick = function(bool) {
+                this.fixed = bool;
+            };
+
+            this.isFixed = function() {
+                return this.fixed;
+            };
+
+            this.remove = function() {
+                hideElement(this.dom.wrapper);
+                var index = logsUI.elements.indexOf(this);
+
+                if (index > -1) {
+                    logsUI.elements.splice(index, 1);
+                }
+            };
         };
 
         /**
@@ -239,23 +320,21 @@
             /**
              * Close the log messages
              *
-             * @param  {Object} elem    HTML Element of log message to close
+             * @param  {LogItem} item   LogItem class instance
              * @param  {Number} wait    [optional] Time (in ms) to wait before automatically hiding the message, if 0 never hide
              *
              * @return {undefined}
              */
-            close: function(elem, wait) {
-
+            close: function(item, wait) {
                 wait = wait && !isNaN(+wait) ? +wait : this.logDelay;
 
                 if (wait < 0) {
-                    hideElement(elem);
+                    item.remove();
                 } else if(wait > 0) {
                     setTimeout(function() {
-                        hideElement(elem);
+                        item.remove();
                     }, wait);
                 }
-
             },
 
             /**
@@ -286,12 +365,20 @@
              */
             log: function(message, type, click) {
 
-                if (logsUI && logsUI.elements.length) {
-                    var diff = logsUI.elements.length - this.logMaxItems;
-                    if (diff >= 0) {
-                        for (var i = 0, _i = diff + 1; i < _i; i++) {
-                            this.close(logsUI.elements[i], -1);
-                        }
+                var logs = logsUI.elements,
+                    floatLogs = [];
+
+                // ignore fixed logs
+                for (var i = 0, l = logs.length; i < l; i++) {
+                    if (!logs[i].isFixed()) {
+                        floatLogs.push(logs[i]);
+                    }
+                }
+
+                var diff = floatLogs.length - this.logMaxItems;
+                if (diff >= 0) {
+                    for (var n = 0, _n = diff + 1; n < _n; n++) {
+                        this.close(floatLogs[n], -1);
                     }
                 }
 
@@ -306,20 +393,34 @@
                 var position = string.split(' ');
                 if( ["top", "bottom"].indexOf(position[0]) !== -1 &&
                     ["left", "right"].indexOf(position[1]) !== -1) {
-                    this.logPosition = string;
+                    this.logPosition = {
+                        v: position[0],
+                        h: position[1]
+                    };
+                } else {
+                    throw new Error('Wrong value for "logPosition" parameter.');
+                }
+            },
+
+            setLogFixed: function(bool) {
+                if (typeof(bool) === "boolean") {
+                    this.logFixed = bool;
+                } else {
+                    throw new Error('Wrong value for "logFixed" parameter. Should be boolean.');
                 }
             },
 
             setupLogContainer: function() {
 
-                var className = this.logContainerClass + " " + this.logPosition;
-                var recreateContainer = (logsUI && logsUI.container.parentNode !== this.parent);
+                var positionClass = this.logPosition.v + " " + this.logPosition.h;
+                var className = this.logContainerClass + " " + positionClass;
+                var recreateContainer = (logsUI.container && logsUI.container.parentNode !== this.parent);
 
-                if (! logsUI || recreateContainer) {
+                if (! logsUI.container || recreateContainer) {
                     if(recreateContainer) {
                         hideElement(logsUI.container);
                     }
-                    logsUI = {};
+                    logsUI.elements = [];
                     logsUI.container = document.createElement("div");
                     logsUI.container.className = className;
                     this.parent.appendChild(logsUI.container);
@@ -345,41 +446,19 @@
             notify: function(message, type, click) {
 
                 this.setupLogContainer();
-                var ui = {};
-                var domLog = {};
-                ui.dom = domLog;
-
-                domLog.wrapper = createElementFromHtml(this.templates.logMessage);
-                domLog.message = findElementByData(domLog.wrapper, 'alertify-log-msg');
-
-                addClass(domLog.message, type);
-                if (_alertify.logTemplateMethod) {
-                    domLog.message.innerHTML = _alertify.logTemplateMethod(message);
-                } else {
-                    domLog.message.innerHTML = message;
-                }
-
-                ui.closeLog = function() {
-                    hideElement(domLog.wrapper);
-                };
+                var logItem = new LogItem();
+                logItem.createDomElements(this.templates.logMessage);
+                logItem.setMessage(message);
+                logItem.setType(type);
 
                 // Add the click handler, if specified.
                 if ("function" === typeof click) {
-                    domLog.wrapper.addEventListener("click", function (event) {
-                        click(event, ui);
-                    });
+                    logItem.setClickEvent(click);
                 }
 
-                if(!logsUI.elements) {
-                    logsUI.elements = [];
-                }
-                logsUI.elements.push(domLog.wrapper);
-                logsUI.container.appendChild(domLog.wrapper);
-                setTimeout(function() {
-                    domLog.wrapper.className += " show";
-                }, 10);
+                logItem.injectHtml();
 
-                this.close(domLog.wrapper, this.logDelay);
+                this.close(logItem, this.logDelay);
             },
 
             /**
@@ -599,7 +678,7 @@
                 this.logMaxItems = _defaults.logMaxItems;
                 this.logPosition = _defaults.logPosition;
                 this.logContainerClass = _defaults.logContainerClass;
-                this.logTemplateMethod = null;
+                this.logTemplateMethod = _defaults.logTemplateMethod;
             },
 
             injectCSS: function() {
@@ -626,11 +705,15 @@
         return {
             _$$alertify: _alertify,
             _$$defaults: _defaults,
+            reset: function() {
+                _alertify.reset();
+                return this;
+            },
             parent: function(elem) {
                 _alertify.parent = elem;
             },
-            reset: function() {
-                _alertify.reset();
+            theme: function(theme) {
+                _alertify.setTheme(theme);
                 return this;
             },
             dialog: function(message, buttons) {
@@ -655,6 +738,25 @@
                 _alertify.promptValue = defaultValue || '';
                 return _alertify.dialog(message, "prompt", buttons) || this;
             },
+            dialogWidth: function(width) {
+                _alertify.setDialogWidth(width);
+                return this;
+            },
+            dialogPersistent: function(bool) {
+                _alertify.setDialogPersistent(bool);
+                return this;
+            },
+            dialogContainerClass: function(str) {
+                _alertify.setDialogContainerClass(str || "");
+                return this;
+            },
+            clearDialogs: function() {
+                var dialog;
+                while(dialog = _alertify.parent.querySelector(':scope > .' + _defaults.dialogContainerClass)) {
+                    _alertify.parent.removeChild(dialog);
+                }
+                return this;
+            },
             log: function(message, click) {
                 _alertify.log(message, "default", click);
                 return this;
@@ -669,18 +771,6 @@
             },
             error: function(message, click) {
                 _alertify.log(message, "error", click);
-                return this;
-            },
-            dialogWidth: function(width) {
-                _alertify.setDialogWidth(width);
-                return this;
-            },
-            dialogPersistent: function(bool) {
-                _alertify.setDialogPersistent(bool);
-                return this;
-            },
-            dialogContainerClass: function(str) {
-                _alertify.setDialogContainerClass(str || "");
                 return this;
             },
             logDelay: function(time) {
@@ -703,21 +793,12 @@
                 _alertify.logTemplateMethod = templateMethod;
                 return this;
             },
-            theme: function(theme) {
-                _alertify.setTheme(theme);
-                return this;
-            },
-            clearDialogs: function() {
-                var dialog;
-                while(dialog = _alertify.parent.querySelector(':scope > .' + _defaults.dialogContainerClass)) {
-                    _alertify.parent.removeChild(dialog);
-                }
-                return this;
+            getLogs: function() {
+                return logsUI.elements;
             },
             clearLogs: function() {
-                if(logsUI) {
-                    logsUI.container.innerHTML = "";
-                }
+                logsUI.container.innerHTML = "";
+                logsUI.elements = [];
                 return this;
             },
             version: _alertify.version

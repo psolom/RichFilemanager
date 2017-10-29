@@ -288,7 +288,7 @@
             e.preventDefault();
 
             // method to close current log message
-            ui.closeLog();
+            ui.remove();
 
             alertify.log("You clicked the notification");
         });
@@ -308,7 +308,7 @@
         alertify
             .logDelay(0)
             .log("Will stay until clicked", function(e, ui) {
-                ui.closeLog();
+                ui.remove();
             });
     });
 
@@ -354,6 +354,78 @@
             alertify.reset(); // Puts the message back to default position.
             alertify.log("Back to default");
         }, 6000);
+    });
+
+    // ==============================
+    // Advanced example - Progress Bar
+    demo("#log-advanced-progress-bar", function (event) {
+        var ProcessingLog = function() {
+            this.total = 0;
+            this.succeed = 0;
+            this.failure = 0;
+            this.processed = 0;
+
+            this.getProgress = function() {
+                var progress = Math.round((this.succeed / this.total) * 100);
+                return (progress < 5) ? 5 : progress;
+            };
+
+            this.getMessage = function() {
+                return '%s of %s items successfully processed'.replace('%s', this.succeed).replace('%s', this.total);
+            };
+
+            this.succeeded = function() {
+                this.succeed++;
+                this.processed++;
+            };
+
+            this.failed = function() {
+                this.failure++;
+                this.processed++;
+            };
+
+            this.isProcessed = function() {
+                return this.processed === this.total;
+            };
+        };
+
+        var process = new ProcessingLog();
+        process.total = 5;
+
+        var logs = alertify
+            .logDelay(0)
+            .logMessageTemplate(function (message) {
+                var progress = process.getProgress(),
+                    animateCss = process.isProcessed() ? 'striped' : 'striped animated';
+
+                return '<div>' + message + '</div>' +
+                    '<div class="progress">' +
+                    '<div class="progress-counter">' + progress + '%</div>' +
+                    '<div class="progress-bar ' + animateCss + '" style="width: ' + progress + '%"></div>' +
+                    '</div>';
+            })
+            .log(process.getMessage())
+            .getLogs();
+
+        var logUI = logs[logs.length-1];
+        logUI.stick(true);
+
+        var interval = setInterval(function() {
+            process.succeeded();
+            logUI.setMessage(process.getMessage());
+            alertify
+                .reset()
+                .logDelay(5000)
+                .success("Item #" + process.processed + " processed.");
+
+            if (process.isProcessed()) {
+                logUI.stick(false);
+                clearInterval(interval);
+                setTimeout(function() {
+                    logUI.remove();
+                }, 5000);
+            }
+        }, 500);
     });
 
 

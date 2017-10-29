@@ -644,7 +644,7 @@ alertify.log("Log message with callback", function(e, ui) {
     e.preventDefault();
 
     // method to close current log message
-    ui.closeLog();
+    ui.remove();
 
     alertify.log("You clicked the notification");
 });
@@ -673,7 +673,7 @@ alertify
                 <h5 class="mdl-typeography--headline">Persistent Log</h5>
                 <p>
                   Persistent log messages will stay until clicked
-                  (if "<b>ui.closeLog()</b>" is used inside callback function) or until forcibly
+                  (if "<b>ui.remove()</b>" is used inside callback function) or until forcibly
                   removed when the number of messages exceeds the "<b>logMaxItems</b>" setting.
                   See below.
                 </p>
@@ -685,7 +685,7 @@ alertify
 alertify
     .logDelay(0)
     .log("Will stay until clicked", function(e, ui) {
-        ui.closeLog();
+        ui.remove();
     });
 </pre>
               </div>
@@ -784,6 +784,125 @@ alertify.parent(elem);
 </pre>
               </div>
             </div>
+
+              <div class="mdl-grid">
+                  <div class="mdl-cell mdl-cell--8-col mdl-cell--5-col-desktop left-col">
+                      <h5 class="mdl-typeography--headline">Advanced example - Progress Bar</h5>
+                      <p>
+                          This complex example demonstrates how to create log that contains progress bar.
+                          <b>Concept</b> - you perform batch operations on some objects (uploading files e.g.)
+                          and would like to:
+                      </p>
+                      <ul>
+                          <li>
+                              display a single log message with total progress;
+                          </li>
+                          <li>
+                              display a success log message for each processed object;
+                          </li>
+                          <li>
+                              message with progress bar is stuck/fixed until all objects are processed;
+                          </li>
+                      </ul>
+                      <p>
+                          First we log the message with progress bar and apply <b>logMessageTemplate</b> method
+                          to customize its template. All following "success" messages in the stack use default
+                          settings by cleaning previous setup with <b>reset</b> method.
+                      </p>
+                      <p>
+                          Note that we use <b>getLogs</b> to get all existing log messages, fetch the last one
+                          (which contains progress bar) and assign it to the "logUI" variable for further usage.
+                      </p>
+                      <p>
+                          After that we stick the progressbar log message by calling <b>stick</b> method
+                          on this message with <i>true</i> argument.
+                      </p>
+                      <p>
+                          <i>Stuck (fixed)</i> log message means that
+                          it will constantly remains in the beginning of the log messages stack and wouldn't
+                          be shifted by other messages when the maximum number of log messages is exceeded.
+                      </p>
+                      <p>
+                          Once all objects are processed we "unstick" progressbar log message so now it behaves
+                          the same way as other messages and can be shifted by the following messages.
+                          Also we set timeout to remove the message with delay.
+                      </p>
+
+                      <a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect" id="log-advanced-progress-bar">Try It</a>
+                  </div>
+                  <div class="mdl-cell mdl-cell--8-col mdl-cell--7-col-desktop right-col">
+                      <h5 class="mdl-typeography--headline">Code Example</h5>
+<pre>
+var ProcessingLog = function() {
+    this.total = 0;
+    this.succeed = 0;
+    this.failure = 0;
+    this.processed = 0;
+
+    this.getProgress = function() {
+        var progress = Math.round((this.succeed / this.total) * 100);
+        return (progress < 5) ? 5 : progress;
+    };
+
+    this.getMessage = function() {
+        return '%s of %s items successfully processed'.replace('%s', this.succeed).replace('%s', this.total);
+    };
+
+    this.succeeded = function() {
+        this.succeed++;
+        this.processed++;
+    };
+
+    this.failed = function() {
+        this.failure++;
+        this.processed++;
+    };
+
+    this.isProcessed = function() {
+        return this.processed === this.total;
+    };
+};
+
+var process = new ProcessingLog();
+process.total = 5;
+
+var logs = alertify
+    .logDelay(0)
+    .logMessageTemplate(function (message) {
+        var progress = process.getProgress(),
+            animateCss = process.isProcessed() ? 'striped' : 'striped animated';
+
+        return '&lt;div&gt;' + message + '&lt;/div&gt;' +
+            '&lt;div class="progress"&gt;' +
+            '&lt;div class="progress-counter"&gt;' + progress + '%&lt;/div&gt;' +
+            '&lt;div class="progress-bar ' + animateCss + '" style="width: ' + progress + '%"&gt;&lt;/div&gt;' +
+            '&lt;/div&gt;';
+    })
+    .log(process.getMessage())
+    .getLogs();
+
+var logUI = logs[logs.length-1];
+logUI.stick(true);
+
+var interval = setInterval(function() {
+    process.succeeded();
+    logUI.setMessage(process.getMessage());
+    alertify
+        .reset()
+        .logDelay(5000)
+        .success("Item #" + process.processed + " processed.");
+
+    if (process.isProcessed()) {
+        logUI.stick(false);
+        clearInterval(interval);
+        setTimeout(function() {
+            logUI.remove();
+        }, 5000);
+    }
+}, 500);
+</pre>
+                  </div>
+              </div>
 
 
 

@@ -30,6 +30,7 @@ gulp.task("website:css", function() {
         .src([
             p("node_modules/material-design-lite/material.css"),
             p("website/css/bootstrap-demo.css"),
+            p("website/css/demo.css"),
             p("website/css/styles.css")
         ])
         .pipe(concat("styles.min.css"))
