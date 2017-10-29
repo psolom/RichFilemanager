@@ -1025,9 +1025,102 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 }
 
 .fm-log.alertify-logs {
-    position: absolute;
     font-size: 13px;
     line-height: 13px;
+}
+
+.fm-log.alertify-logs.left {
+    left: 20px;
+}
+.fm-log.alertify-logs.right {
+    right: 35px;
+}
+.fm-log.alertify-logs.top {
+    top: 50px;
+}
+.fm-log.alertify-logs.bottom {
+    bottom: 50px;
+}
+
+.fm-log.alertify-logs .progress {
+    padding-top: 1px;
+    text-align: center;
+}
+
+.fm-log.alertify-logs .progress .progress-counter {
+    position: absolute;
+    display: inline-block;
+    left: 0;
+    right: 0;
+}
+
+.fm-log.alertify-logs .progress .progress-bar {
+    opacity: 1;
+    display: block;
+    height: 12px;
+    overflow: hidden;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.25), inset 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 1px 1px rgba(0, 0, 0, 0.25), inset 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.fm-log.alertify-logs .progress .progress-segment {
+    height: 100%;
+    float: left;
+}
+
+.fm-log.alertify-logs .progress .progress-segment {
+    height: 100%;
+    float: left;
+}
+
+.fm-log.alertify-logs .progress .progress-segment.progress-succeed {
+    background-color: #5ab01e;
+}
+
+.fm-log.alertify-logs .progress .progress-segment.progress-failure {
+    background-color: #d50700;
+}
+
+.fm-log.alertify-logs .progress .progress-bar.striped .progress-segment {
+    background-image: -webkit-linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-image: -o-linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    background-image: linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent);
+    -webkit-background-size: 2rem 2rem;
+    background-size: 2rem 2rem;
+}
+
+.fm-log.alertify-logs .progress .progress-bar.animated .progress-segment {
+    -webkit-animation: progress-bar-motion 2s linear infinite;
+    -o-animation: progress-bar-motion 2s linear infinite;
+    animation: progress-bar-motion 2s linear infinite;
+}
+
+@-webkit-keyframes progress-bar-motion {
+    from {
+        background-position: 0 2rem;
+    }
+    to {
+        background-position: 0 0;
+    }
+}
+
+@-o-keyframes progress-bar-motion {
+    from {
+        background-position: 0 2rem;
+    }
+    to {
+        background-position: 0 0;
+    }
+}
+
+@keyframes progress-bar-motion {
+    from {
+        background-position: 0 2rem;
+    }
+    to {
+        background-position: 0 0;
+    }
 }
 
 .fm-popup.alertify .alert,
