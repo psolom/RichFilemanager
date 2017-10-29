@@ -622,11 +622,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 		}
 
-		// input file replacement
-		$("#newfile").change(function() {
-			$("#filepath").val($(this).val().replace(/.+[\\\/]/, ""));
-		});
-
         prepareFileTree();
         prepareFileView();
         setupUploader();
@@ -3599,7 +3594,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				if(config.security.extensions.policy == 'DISALLOW_LIST') {
 					str += '<p>' + lg('DISALLOWED_FILE_TYPE').replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
-				$("#filepath").val('');
 				fm.error(str);
 				return;
 			}
@@ -4072,9 +4066,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		// Multiple Uploads
 		if(config.upload.multiple) {
-			// remove simple file upload element
-			$('#file-input-container').remove();
-
 			$uploadButton.unbind().click(function() {
 				if(capabilities.indexOf('upload') === -1) {
 					fm.error(lg('NOT_ALLOWED'));
@@ -4432,24 +4423,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		// Simple Upload
 		} else {
+            $uploadButton.unbind().click(function() {
+                if(capabilities.indexOf('upload') === -1) {
+                    fm.error(lg('NOT_ALLOWED'));
+                    return false;
+                }
 
-			$uploadButton.click(function() {
-				if(capabilities.indexOf('upload') === -1) {
-					fm.error(lg('NOT_ALLOWED'));
-					return false;
-				}
-
-				var data = $(this).data();
-				if($.isEmptyObject(data)) {
-					fm.error(lg('upload_choose_file'));
-				} else {
-					data.submit();
-				}
+                $("#newfile").trigger('click');
 			});
 
 			$uploader
 				.fileupload({
-					autoUpload: false,
+					autoUpload: true,
 					dataType: 'json',
 					url: buildConnectorUrl(),
 					paramName: 'files',
@@ -4470,7 +4455,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				})
 
 				.on('fileuploadalways', function(e, data) {
-					$("#filepath").val('');
 					$uploadButton.removeData().removeClass('loading').prop('disabled', false);
 					$uploadButton.children('span').text(lg('action_upload'));
 					var response = data.result;

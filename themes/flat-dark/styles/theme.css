@@ -68,15 +68,6 @@
     background-color: #C3D2F7;
 }
 
-.fm-container #filepath {
-    -webkit-border-top-left-radius: 2px;
-    -webkit-border-bottom-left-radius: 2px;
-    -moz-border-radius-topleft: 2px;
-    -moz-border-radius-bottomleft: 2px;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
-}
-
 .fm-container #folder-info {
     color: #bbb;
 }

@@ -14,20 +14,6 @@ html[data-useragent*='MSIE 10.0'] .fm-container .fm-header button,
 html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     vertical-align: top;
 }
-html[data-useragent*='MSIE 10.0'] .fm-container #file-input-container,
-html[data-useragent*='MSIE 11.0'] .fm-container #file-input-container {
-    width: 220px;
-    height: 32px;
-    overflow: hidden;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #filepath,
-html[data-useragent*='MSIE 11.0'] .fm-container #filepath {
-    height: 22px;
-}
-html[data-useragent*='MSIE 10.0'] .fm-container #newfile,
-html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
-    height: 23px;
-}
 
 .fm-container * {
     font-family: Lucida Sans Unicode, Lucida Grande, sans-serif;
@@ -41,6 +27,19 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
     height: 100%;
     background-color: #ffffff;
     overflow: hidden;
+}
+
+.fm-container input {
+    vertical-align: text-top;
+}
+
+.fm-container .hidden-file-input {
+    position: absolute;
+    overflow: hidden;
+    visibility: hidden;
+    left: -1000px;
+    width: 1px;
+    z-index: -1;
 }
 
 .fm-container .fm-wrapper {
@@ -559,76 +558,6 @@ html[data-useragent*='MSIE 11.0'] .fm-container #newfile {
 .fm-container .fm-preview .btn-copy-url {
     background: url(../images/copy.png) no-repeat center center;
 }
-
-
-/** Input file Replacement */
-
-.fm-container input {
-    vertical-align: text-top;
-}
-
-.fm-container #file-input-container {
-    display: inline;
-    margin: 0;
-    position: relative;
-    top: 0;
-    width: 255px;
-    height: 32px;
-    overflow: hidden;
-}
-
-.fm-container #newfile {
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 28px;
-    width: 100%;
-    opacity: 0;
-    filter: alpha(opacity=0);
-    cursor: pointer;
-    border: 1px solid blue;
-}
-
-.fm-container .hidden-file-input {
-    display: inline-block;
-    overflow: hidden;
-    visibility: hidden;
-    width: 1px;
-    z-index:-1;
-}
-
-.fm-container #alt-fileinput {
-    display: inline;
-}
-
-.fm-container #filepath {
-    margin: 0;
-    padding: 0 5px;
-    line-height: 26px;
-    background-color: #F4F1ED;
-    border: 1px solid #dcdcdc;
-}
-
-.fm-container button#browse {
-    margin-left:0;
-    -webkit-border-top-left-radius: 0;
-    -webkit-border-bottom-left-radius: 0;
-    -moz-border-radius-topleft: 0;
-    -moz-border-radius-bottomleft: 0;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-    min-height: 16px;
-    min-width: 40px;
-}
-.fm-container button#browse span {
-    margin:0;
-    padding:0;
-    background: url(../images/plus.png) no-repeat center center;
-    display: block;
-    color:#666;
-    text-shadow: none;
-}
-/** Input file Replacement - end */
 
 .fm-container .fm-footer .right {
     float: right;

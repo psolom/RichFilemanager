@@ -60,15 +60,6 @@
     background-color: #ffffff;
 }
 
-.fm-container #filepath {
-    -webkit-border-top-left-radius: 6px;
-    -webkit-border-bottom-left-radius: 6px;
-    -moz-border-radius-topleft: 6px;
-    -moz-border-radius-bottomleft: 6px;
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
-}
-
 .fm-container #folder-info {
     color: #777;
 }
