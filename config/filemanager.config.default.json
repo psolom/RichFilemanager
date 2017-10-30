@@ -119,6 +119,34 @@
             "readerWidth": "95%",
             "readerHeight": "600"
         },
+        "onlyoffice": {
+            "enabled": false,
+            "extensions": [
+                "doc",
+                "docx",
+                "odt",
+                "rtf",
+                "txt",
+                "pdf",
+                "html",
+                "epub",
+                "xps",
+                "djvu",
+                "xls",
+                "xlsx",
+                "ods",
+                "csv",
+                "pptx",
+                "ppt",
+                "odp"
+            ],
+            "editorWidth": "95%",
+            "editorHeight": "600",
+            "apiUrl": "https://doc.onlyoffice.com/web-apps/apps/api/documents/api.js",
+            "connectorUrl": false,
+            "downloadUrl": false,
+            "callbackUrl": false
+        },
         "opendoc": {
             "enabled": true,
             "extensions": [

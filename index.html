@@ -287,6 +287,9 @@
 								<!-- ko if: viewer.type() === 'video' -->
 								<video src="" controls="controls" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}"></video>
 								<!-- /ko -->
+								<!-- ko if: viewer.type() === 'onlyoffice' -->
+								<iframe src="" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}" allowfullscreen webkitallowfullscreen></iframe>
+								<!-- /ko -->
 								<!-- ko if: viewer.type() === 'opendoc' -->
 								<iframe src="" data-bind="attr: {src: viewer.url(), width: viewer.options().width, height: viewer.options().height}" allowfullscreen webkitallowfullscreen></iframe>
 								<!-- /ko -->
