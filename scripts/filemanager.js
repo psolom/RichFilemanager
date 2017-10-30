@@ -3788,6 +3788,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 fmModel.removeItem(targetItem);
 
+                // ON delete currently open folder
+                if(fmModel.currentPath() === targetItem.id) {
+                    var parentFolder = getParentDirname(fmModel.currentPath());
+                    fmModel.itemsModel.loadList(parentFolder);
+                }
+
                 // ON delete currently previewed file
                 if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
                     fmModel.previewFile(false);
