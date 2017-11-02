@@ -1,3 +1,10 @@
+Version 2.6.3
+---------------------------
+- improvement: direct upload upon simple file uploads #247
+- bugfix: when delete opened folder from filetree the right panel should switch to the parent folder #252
+- Spanish language: updated translations #253
+
+
 Version 2.6.2
 ---------------------------
 - implemented progress bar for batch operations #249
