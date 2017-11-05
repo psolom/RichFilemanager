@@ -270,7 +270,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 // configuration options retrieved from the server
                 $.each(serverConfig, function(section, options) {
                     $.each(options, function(param, value) {
-                        if(config[section] === undefined) {
+                    	if (value === null) {
+                    		return true;
+						}
+                        if (config[section] === undefined) {
                             config[section] = [];
                         }
                         config[section][param] = value;
