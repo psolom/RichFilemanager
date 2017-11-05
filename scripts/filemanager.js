@@ -935,15 +935,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         height: config.viewer.video.playerHeight
                     };
                 }
-                if(isOnlyOfficeFile(filename) && config.viewer.onlyoffice.enabled === true) {
-                    viewerObject.type = 'onlyoffice';
-                    var connectorUrl = config.viewer.onlyoffice.connectorUrl || fm.settings.baseUrl + '/connectors/php/onlyoffice/editor.php';
-                    viewerObject.url = connectorUrl + '?path=' + encodeURIComponent(resourceObject.attributes.path);
-                    viewerObject.options = {
-                        width: config.viewer.onlyoffice.editorWidth,
-                        height: config.viewer.onlyoffice.editorHeight
-                    };
-                }
+                // if(isOnlyOfficeFile(filename) && config.viewer.onlyoffice.enabled === true) {
+                //     viewerObject.type = 'onlyoffice';
+                //     var connectorUrl = config.viewer.onlyoffice.connectorUrl || fm.settings.baseUrl + '/connectors/php/onlyoffice/editor.php';
+                //     viewerObject.url = connectorUrl + '?path=' + encodeURIComponent(resourceObject.attributes.path);
+                //     viewerObject.options = {
+                //         width: config.viewer.onlyoffice.editorWidth,
+                //         height: config.viewer.onlyoffice.editorHeight
+                //     };
+                // }
                 if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
                     viewerObject.type = 'opendoc';
                     viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
