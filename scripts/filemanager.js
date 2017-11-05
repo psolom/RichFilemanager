@@ -2255,6 +2255,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             var $containerElement,
 				render_model = this;
 
+            function getRendererInstance(filename) {
+                if (isMarkdownFile(filename)) {
+                	return new MarkdownRenderer();
+				}
+                if (isCodeMirrorFile(filename)) {
+                	return new CodeMirrorRenderer();
+				}
+			}
+
             this.rdo = ko.observable({});
             this.content = ko.observable(null);
             this.renderer = ko.observable(null);
@@ -2267,14 +2276,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.setRenderer = function(resourceObject) {
                 render_model.rdo(resourceObject);
-
-                if (isMarkdownFile(resourceObject.attributes.name)) {
-                    // markdown renderer
-                    render_model.renderer(new MarkdownRenderer());
-                } else {
-                    // CodeMirror renderer
-                    render_model.renderer(new CodeMirrorRenderer());
-				}
+                render_model.renderer(getRendererInstance(resourceObject.attributes.name));
             };
 
             this.setContainer = function(templateElements) {
