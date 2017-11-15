@@ -626,8 +626,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 
         prepareFileTree();
-        prepareFileView();
         setupUploader();
+        fmModel.treeModel.loadDataNode(null, false);
 
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
@@ -792,36 +792,36 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 if (model.itemsModel.descriptivePanel.rdo().id === model.previewModel.rdo().id) {
                     model.itemsModel.descriptivePanel.render(model.previewModel.viewer.content());
                 }
-			}
+            }
         });
 
-		this.addItem = function(resourceObject, targetPath) {
-			// handle tree nodes
-			var targetNode = fmModel.treeModel.findByParam('id', targetPath);
-			if(targetNode) {
-				var newNode = fmModel.treeModel.createNode(resourceObject);
-				fmModel.treeModel.addNodes(targetNode, newNode);
-			}
+        this.initFolderLoader = function (options) {
+            return new FolderLoader(options);
+        };
 
-			// handle view objects
-			if(fmModel.currentPath() === targetPath) {
-				model.itemsModel.addNew(resourceObject);
-			}
-		};
+        this.addElements = function (resourceObjects, targetPath, reset) {
+            // handle tree nodes
+            model.treeModel.addNodes(resourceObjects, targetPath, reset);
 
-		this.removeItem = function(resourceObject) {
-			// handle tree nodes
-			var treeNode = fmModel.treeModel.findByParam('id', resourceObject.id);
-			if(treeNode) {
-				treeNode.remove();
-			}
+            // handle view objects
+            if(model.currentPath() === targetPath) {
+                model.itemsModel.addItems(resourceObjects, targetPath, reset);
+            }
+        };
 
-			// handle view objects
-			var viewItem = model.itemsModel.findByParam('id', resourceObject.id);
-			if(viewItem && viewItem.rdo.type !== 'parent') {
-				viewItem.remove();
-			}
-		};
+        this.removeElement = function (resourceObject) {
+            // handle tree nodes
+            var treeNode = model.treeModel.findByParam('id', resourceObject.id);
+            if (treeNode) {
+                treeNode.remove();
+            }
+
+            // handle view objects
+            var viewItem = model.itemsModel.findByParam('id', resourceObject.id);
+            if (viewItem && viewItem.rdo.type !== 'parent') {
+                viewItem.remove();
+            }
+        };
 
         // fetch selected view items OR tree nodes
         this.fetchSelectedItems = function(instanceName) {
@@ -865,6 +865,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             return true;
         }
+
+        /**
+         * PanelLoader Interface
+         * @constructor
+         */
+        var PanelLoader = function() {
+            this.beforeLoad = function(path) {};
+            this.afterLoad = function(path, response) {};
+		};
 
 		var PreviewModel = function() {
 			var preview_model = this,
@@ -1108,7 +1117,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 					if (node) {
                         config.filetree.expandSpeed = 10;
-						tree_model.loadNodes(node, false);
+                        tree_model.loadDataNode(node, true);
 					} else {
 						fullexpandedFolder = null;
                         config.filetree.expandSpeed = 200;
@@ -1184,37 +1193,39 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 return selectedItems;
             };
 
-			this.loadNodes = function(targetNode, refresh) {
-				var path = targetNode ? targetNode.id : tree_model.treeData.id;
-				if(targetNode) {
-					targetNode.isLoaded(false);
-				}
+			this.loadDataNode = function(targetNode, refresh) {
+                var targetPath = targetNode ? targetNode.id : tree_model.treeData.id;
 
-				var queryParams = {
-					mode: 'getfolder',
-					path: path
-				};
+                model.initFolderLoader(targetPath)
+                    .setLoader(model.itemsModel.dataLoader())
+                    .setLoader(tree_model.dataLoader(targetNode))
+                    .setHandler(function (resourceObjects, targetPath) {
+                        tree_model.addNodes(resourceObjects, targetPath, refresh);
+                        model.itemsModel.addItems(resourceObjects, targetPath, refresh);
+                    })
+                    .load();
+			};
 
-                buildAjaxRequest('GET', queryParams).done(function(response) {
-                    if(response.data) {
-                        var nodes = [];
-                        $.each(response.data, function(i, resourceObject) {
-                            var nodeObject = tree_model.createNode(resourceObject);
-                            nodes.push(nodeObject);
-                        });
-                        if(refresh) {
-                            targetNode.children([]);
-                        }
-                        tree_model.addNodes(targetNode, nodes);
-                        // not root
-                        if(targetNode) {
-                            targetNode.isLoaded(true);
-                            tree_model.expandNode(targetNode);
-                        }
-                        expandFolderDefault(targetNode);
+            this.dataLoader = function(targetNode) {
+                var loader = function() {};
+                loader.prototype = Object.create(PanelLoader);
+
+                loader.prototype.beforeLoad = function(path) {
+                    if(targetNode) {
+                        targetNode.isLoaded(false);
                     }
-                    handleAjaxResponseErrors(response);
-                }).fail(handleAjaxError);
+                };
+
+                loader.prototype.afterLoad = function(path, response) {
+                    // not root
+                    if(targetNode) {
+                        targetNode.isLoaded(true);
+                        tree_model.expandNode(targetNode);
+                    }
+                    expandFolderDefault(targetNode);
+                };
+
+                return new loader();
 			};
 
 			this.createNode = function(resourceObject) {
@@ -1223,7 +1234,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				return node;
 			};
 
-			this.addNodes = function(targetNode, newNodes) {
+            this.createNodes = function(resourceObjects) {
+                var nodes = [];
+                $.each(resourceObjects, function(i, resourceObject) {
+                    nodes.push(tree_model.createNode(resourceObject));
+                });
+                return nodes;
+            };
+
+			this.appendNodes = function(targetNode, newNodes) {
 				if(!$.isArray(newNodes)) {
 					newNodes = [newNodes];
 				}
@@ -1241,6 +1260,21 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				});
 				var allNodes = targetNode.children().concat(newNodes);
 				targetNode.children(sortItems(allNodes));
+			};
+
+            this.addNodes = function(resourceObjects, targetPath, reset) {
+                if(!$.isArray(resourceObjects)) {
+                    resourceObjects = [resourceObjects];
+                }
+
+                var targetNode = tree_model.findByParam('id', targetPath);
+                if(targetNode) {
+                    var newNodes = tree_model.createNodes(resourceObjects);
+                    if (reset) {
+                        targetNode.children([]);
+                    }
+                    tree_model.appendNodes(targetNode, newNodes);
+                }
 			};
 
 			this.expandNode = function(node) {
@@ -1399,18 +1433,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
                 if(node.rdo.type === 'folder') {
                     if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
-                        model.treeModel.loadNodes(node, true);
-                        getDetailView(node.rdo);
+                        model.treeModel.loadDataNode(node, true);
                     } else {
                         model.treeModel.toggleNode(node);
 
-                        fmModel.currentPath(node.id);
-                        fmModel.breadcrumbsModel.splitCurrent();
                         var dataObjects = [];
                         $.each(node.children(), function(i, cnode) {
                             dataObjects.push(cnode.rdo);
                         });
-                        model.itemsModel.setList(dataObjects);
+                        model.itemsModel.addItems(dataObjects, node.id, true);
                     }
                 }
             };
@@ -1513,56 +1544,59 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			});
 
-			this.createObject = function(resourceObject) {
-				var item = new ItemObject(resourceObject);
+            this.createItem = function(resourceObject) {
+                var item = new ItemObject(resourceObject);
                 fmModel.filterModel.filterItem(item);
                 return item;
-			};
+            };
 
-			this.addNew = function(dataObjects) {
-				// use underlying array for better performance
-				// http://www.knockmeout.net/2012/04/knockoutjs-performance-gotcha.html
-                var items = model.itemsModel.objects();
-
-				if(!$.isArray(dataObjects)) {
-					dataObjects = [dataObjects];
-				}
-
-                $.each(dataObjects, function (i, resourceObject) {
-                    items.push(items_model.createObject(resourceObject));
+            this.createItems = function(resourceObjects) {
+                var items = [];
+                $.each(resourceObjects, function(i, resourceObject) {
+                    items.push(items_model.createItem(resourceObject));
                 });
+                return items;
+            };
 
+            this.appendItems = function(items) {
+                if(!$.isArray(items)) {
+                    items = [items];
+                }
+
+                var allItems = items_model.objects().concat(items);
+                items_model.objects(sortItems(allItems));
+            };
+
+            this.addItems = function(resourceObjects, targetPath, reset) {
+                if(!$.isArray(resourceObjects)) {
+                    resourceObjects = [resourceObjects];
+                }
+
+                var items = items_model.createItems(resourceObjects);
+
+                if (reset) {
+                    model.currentPath(targetPath);
+                    model.breadcrumbsModel.splitCurrent();
+
+                    items_model.setDescriptivePanel(resourceObjects);
+                    items_model.setList(items);
+                } else {
+                    items_model.appendItems(items);
+                }
+            };
+
+			this.loadDataList = function(targetPath) {
+                model.initFolderLoader(targetPath)
+                    .setLoader(items_model.dataLoader())
+                    .setHandler(function (resourceObjects, targetPath) {
+                        items_model.addItems(resourceObjects, targetPath, true);
+                    })
+                    .load();
+			};
+
+			this.setList = function(items) {
                 items = sortItems(items);
-                model.itemsModel.objects.valueHasMutated();
-			};
 
-			this.loadList = function(path) {
-				model.loadingView(true);
-
-				var queryParams = {
-					mode: 'getfolder',
-					path: path
-				};
-				if(_url_.param('type')) {
-					queryParams.type = _url_.param('type');
-				}
-
-                buildAjaxRequest('GET', queryParams).done(function(response) {
-                    if (response.data) {
-                        model.currentPath(path);
-                        model.breadcrumbsModel.splitCurrent();
-                        model.itemsModel.setList(response.data);
-
-                        if (model.itemsModel.lazyLoad) {
-                            model.itemsModel.lazyLoad.update();
-                        }
-                    }
-                    handleAjaxResponseErrors(response);
-                }).fail(handleAjaxError);
-			};
-
-			this.setList = function(dataObjects) {
-				var objects = [];
 				// add parent folder object
 				if(!isFile(model.currentPath()) && model.currentPath() !== fileRoot) {
 					var parentPath = getParentDirname(model.currentPath());
@@ -1581,7 +1615,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                     parentItem.open = function(item, e) {
                         if(isItemOpenable(e)) {
-                            items_model.loadList(parentItem.id);
+                            items_model.loadDataList(parentItem.id);
                         }
 					};
 
@@ -1593,16 +1627,20 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         return cssClass.join(' ');
                     });
 
-					objects.push(parentItem);
+                    items.unshift(parentItem);
 				}
 
+                items_model.objects(items);
+			};
+
+            this.setDescriptivePanel = function(dataObjects) {
                 // clear previously rendered content
                 items_model.descriptivePanel.content(null);
 
-				$.each(dataObjects, function (i, resourceObject) {
-					if (config.manager.renderer.position && typeof config.manager.renderer.indexFile === 'string' &&
-						resourceObject.attributes.name.toLowerCase() === config.manager.renderer.indexFile.toLowerCase()
-					) {
+                $.each(dataObjects, function (i, resourceObject) {
+                    if (config.manager.renderer.position && typeof config.manager.renderer.indexFile === 'string' &&
+                        resourceObject.attributes.name.toLowerCase() === config.manager.renderer.indexFile.toLowerCase()
+                    ) {
                         items_model.descriptivePanel.setRenderer(resourceObject);
                         // load and render index file content
                         previewItem(items_model.descriptivePanel.rdo()).then(function(response) {
@@ -1610,16 +1648,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 items_model.descriptivePanel.render(response.data.attributes.content);
                             }
                         });
-					}
-					objects.push(items_model.createObject(resourceObject));
-				});
-
-				model.itemsModel.objects(sortItems(objects));
-				model.loadingView(false);
-			};
+                    }
+                });
+            };
 
 			this.findByParam = function(key, value) {
-				return ko.utils.arrayFirst(model.itemsModel.objects(), function(object) {
+				return ko.utils.arrayFirst(items_model.objects(), function(object) {
 					return object[key] === value;
 				});
 			};
@@ -1685,6 +1719,25 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         fm.log("PROCESSED", elementsLeft + " images left");
                     }
                 });
+            };
+
+            this.dataLoader = function() {
+                var loader = function() {};
+                loader.prototype = Object.create(PanelLoader);
+
+                loader.prototype.beforeLoad = function(path) {
+                    model.loadingView(true);
+                };
+
+                loader.prototype.afterLoad = function(path, response) {
+                    model.loadingView(false);
+
+                    if (items_model.lazyLoad) {
+                        items_model.lazyLoad.update();
+                    }
+                };
+
+                return new loader();
             };
 
 			this.objects.subscribe(function(items) {
@@ -1863,6 +1916,48 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
         };
 
+        var FolderLoader = function(path) {
+			var folder_loader = this,
+				handler = null,
+                /** @type {PanelLoader[]} */
+				loaders = [];
+
+            /**
+             * @param {PanelLoader} loader
+             * @returns {FolderLoader}
+             */
+            this.setLoader = function(loader) {
+                loaders.push(loader);
+                return folder_loader;
+            };
+
+            /**
+			 *
+             * @param {function} callback
+             * @returns {FolderLoader}
+             */
+            this.setHandler = function(callback) {
+                handler = callback;
+                return folder_loader;
+            };
+
+            this.load = function() {
+                loaders.forEach(function (loader, index, array) {
+                    loader.beforeLoad(path);
+				});
+
+                getFolder(path).then(function(response) {
+                    if(response.data) {
+                        handler(response.data, path);
+
+                        $.each(loaders, function(i, loader) {
+                            loader.afterLoad(path, response);
+                        });
+                    }
+                });
+            };
+		};
+
 		var TableViewModel = function() {
 			var SortableHeader = function(name) {
 				var thead = this;
@@ -1906,7 +2001,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.navHome = function() {
 				model.previewFile(false);
-				model.itemsModel.loadList(fileRoot);
+				model.itemsModel.loadDataList(fileRoot);
 			};
 
 			this.navLevelUp = function() {
@@ -1919,7 +2014,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 
                 if(parentFolder !== model.currentPath()) {
-					model.itemsModel.loadList(parentFolder);
+					model.itemsModel.loadDataList(parentFolder);
                 }
 			};
 
@@ -1928,7 +2023,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     model.previewFile(false);
                     model.previewFile(true);
                 } else {
-                    model.itemsModel.loadList(model.currentPath());
+                    model.itemsModel.loadDataList(model.currentPath());
 				}
             };
 
@@ -1977,7 +2072,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         name: folderName
                     }).done(function(response) {
                         if (response.data) {
-                            fmModel.addItem(response.data, fmModel.currentPath());
+                            fmModel.addElements(response.data, fmModel.currentPath());
 
                             ui.closeDialog();
                             if (config.options.showConfirmation) {
@@ -2248,7 +2343,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 this.goto = function(item, e) {
                 	if (!item.active) {
-                        model.itemsModel.loadList(item.path);
+                        model.itemsModel.loadDataList(item.path);
 					}
                 };
 			};
@@ -3454,13 +3549,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             minLeft: config.filetree.minWidth,
             minRight: 200
         });
-
-		fmModel.treeModel.loadNodes(null, false);
-	}
-
-    // Build FileTree and bind events
-    function prepareFileView() {
-        fmModel.itemsModel.loadList(fileRoot);
 	}
 
 	// Check if plugin instance created inside some context
@@ -3623,23 +3711,23 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 new: givenName
             }).done(function(response) {
                 if(response.data) {
-                    var newItem = response.data;
+                    var dataObject = response.data;
 
                     // handle tree nodes
                     var sourceNode = fmModel.treeModel.findByParam('id', oldPath);
                     if(sourceNode) {
                         if(sourceNode.rdo.type === 'folder') {
-                            sourceNode.nodeTitle(newItem.attributes.name);
+                            sourceNode.nodeTitle(dataObject.attributes.name);
                             // update object data for the current and all child nodes
-                            fmModel.treeModel.actualizeNodeObject(sourceNode, oldPath, newItem.id);
+                            fmModel.treeModel.actualizeNodeObject(sourceNode, oldPath, dataObject.id);
                         }
                         if(sourceNode.rdo.type === 'file') {
                             var parentNode = sourceNode.parentNode();
-                            var newNode = fmModel.treeModel.createNode(newItem);
+                            var newNode = fmModel.treeModel.createNode(dataObject);
                             sourceNode.remove();
 
                             if(parentNode) {
-                                fmModel.treeModel.addNodes(parentNode, newNode);
+                                fmModel.treeModel.appendNodes(parentNode, newNode);
                             }
                         }
                     }
@@ -3648,19 +3736,20 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     var sourceItem = fmModel.itemsModel.findByParam('id', oldPath);
                     if(sourceItem) {
                         if(sourceItem.rdo.type === 'parent') {
-                            sourceItem.id = newItem.id;
+                            sourceItem.id = dataObject.id;
                         } else {
                             sourceItem.remove();
-                            fmModel.itemsModel.addNew(newItem);
+                            var newItem = fmModel.itemsModel.createItem(dataObject);
+                            fmModel.itemsModel.appendItems(newItem);
                         }
                     }
                     // ON rename currently open folder
                     if(fmModel.currentPath() === oldPath) {
-                        fmModel.itemsModel.loadList(newItem.id);
+                        fmModel.itemsModel.loadDataList(dataObject.id);
                     }
                     // ON rename currently previewed file
                     if(fmModel.previewFile() && fmModel.previewModel.rdo().id === oldPath) {
-                        fmModel.previewModel.applyObject(newItem);
+                        fmModel.previewModel.applyObject(dataObject);
                     }
 
                     ui.closeDialog();
@@ -3731,9 +3820,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             target: targetPath
         }).done(function (response) {
             if (response.data) {
-                var newItem = response.data;
+                var dataObject = response.data;
 
-                fmModel.addItem(newItem, targetPath);
+                fmModel.addElements(dataObject, targetPath);
 
                 alertify.clearDialogs();
                 if (config.options.showConfirmation) {
@@ -3754,14 +3843,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             new: targetPath
         }).done(function(response) {
             if(response.data) {
-                var newItem = response.data;
+                var dataObject = response.data;
 
-                fmModel.removeItem(resourceObject);
-                fmModel.addItem(newItem, targetPath);
+                fmModel.removeElement(resourceObject);
+                fmModel.addElements(dataObject, targetPath);
 
                 // ON move currently open folder to another folder
                 if(fmModel.currentPath() === resourceObject.id) {
-                    fmModel.itemsModel.loadList(newItem.id);
+                    fmModel.itemsModel.loadDataList(dataObject.id);
                 }
                 // ON move currently previewed file
                 if(fmModel.previewFile() && fmModel.previewModel.rdo().id === resourceObject.id) {
@@ -3803,18 +3892,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             path: path
         }).done(function(response) {
             if(response.data) {
-                var targetItem = response.data;
+                var dataObject = response.data;
 
-                fmModel.removeItem(targetItem);
+                fmModel.removeElement(dataObject);
 
                 // ON delete currently open folder
-                if(targetItem.type === 'folder' && startsWith(fmModel.currentPath(), targetItem.id)) {
-                    var parentFolder = getParentDirname(targetItem.id);
-                    fmModel.itemsModel.loadList(parentFolder);
+                if(dataObject.type === 'folder' && startsWith(fmModel.currentPath(), dataObject.id)) {
+                    var parentFolder = getParentDirname(dataObject.id);
+                    fmModel.itemsModel.loadDataList(parentFolder);
                 }
 
                 // ON delete currently previewed file
-                if(fmModel.previewFile() && fmModel.previewModel.rdo().id === targetItem.id) {
+                if(fmModel.previewFile() && fmModel.previewModel.rdo().id === dataObject.id) {
                     fmModel.previewFile(false);
                 }
 
@@ -3844,7 +3933,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         }).fail(handleAjaxError);
 	};
 
-	// Creates CodeMirror instance to let user change the content of the file
+	// Perform "editfile" API request
 	var previewItem = function(resourceObject) {
         return buildAjaxRequest('GET', {
             mode: 'editfile',
@@ -3872,7 +3961,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preview_model.closeEditor();
 
                 // replace original item with a new one to adjust observable items
-                var newItem = fmModel.itemsModel.createObject(dataObject);
+                var newItem = fmModel.itemsModel.createItem(dataObject);
                 var originalItem = fmModel.itemsModel.findByParam('id', dataObject.id);
                 fmModel.itemsModel.objects.replace(originalItem, newItem);
 
@@ -3882,6 +3971,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         }).fail(handleAjaxError);
 	};
 
+    // Perform "getFolder" API request
+    var getFolder = function(targetPath) {
+        return buildAjaxRequest('GET', {
+            mode: 'getfolder',
+            path: targetPath
+        }).done(function(response) {
+            handleAjaxResponseErrors(response);
+        }).fail(handleAjaxError);
+	};
+
+    // Perform "getfile" API request
     var getItemInfo = function(targetPath) {
         return buildAjaxRequest('GET', {
             mode: 'getfile',
@@ -3957,10 +4057,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             target: targetPath
         }).done(function(response) {
             if(response.data) {
-                // TODO: implement "addItems", add in batches
-                $.each(response.data, function(i, resourceObject) {
-                    fmModel.addItem(resourceObject, targetPath);
-                });
+                fmModel.addElements(response.data, targetPath);
 
                 alertify.clearDialogs();
                 if(config.options.showConfirmation) {
@@ -3986,7 +4083,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 		if(resourceObject.type === 'folder' || resourceObject.type === 'parent') {
             fmModel.previewFile(false);
-			fmModel.itemsModel.loadList(resourceObject.id);
+			fmModel.itemsModel.loadDataList(resourceObject.id);
 		}
 	}
 
@@ -4369,8 +4466,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$.each(data.files, function (index, file) {
 							if(response && response.data && response.data[index]) {
 								var resourceObject = response.data[index];
-								fmModel.removeItem(resourceObject);
-								fmModel.addItem(resourceObject, fmModel.currentPath());
+								fmModel.removeElement(resourceObject);
+								fmModel.addElements(resourceObject, fmModel.currentPath());
 							}
 						});
 
@@ -4398,8 +4495,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						$.each(data.files, function (index, file) {
 							if(response.data && response.data[index]) {
 								var resourceObject = response.data[index];
-								fmModel.removeItem(resourceObject);
-								fmModel.addItem(resourceObject, fmModel.currentPath());
+								fmModel.removeElement(resourceObject);
+								fmModel.addElements(resourceObject, fmModel.currentPath());
 
 								// get filename from server, it may differ from original
 								file.serverName = resourceObject.attributes.name;
@@ -4490,8 +4587,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					}
 					if(response && response.data) {
 						var resourceObject = response.data[0];
-						fmModel.removeItem(resourceObject);
-						fmModel.addItem(resourceObject, fmModel.currentPath());
+						fmModel.removeElement(resourceObject);
+						fmModel.addElements(resourceObject, fmModel.currentPath());
 
 						if(config.options.showConfirmation) {
 							fm.success(lg('upload_successful_file'));
@@ -4503,8 +4600,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					var response = data.result;
 					if(response.data && response.data[0]) {
 						var resourceObject = response.data[0];
-						fmModel.removeItem(resourceObject);
-						fmModel.addItem(resourceObject, fmModel.currentPath());
+						fmModel.removeElement(resourceObject);
+						fmModel.addElements(resourceObject, fmModel.currentPath());
 					}
 				})
 
