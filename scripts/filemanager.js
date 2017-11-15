@@ -818,7 +818,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			// handle view objects
 			var viewItem = model.itemsModel.findByParam('id', resourceObject.id);
-			if(viewItem) {
+			if(viewItem && viewItem.rdo.type !== 'parent') {
 				viewItem.remove();
 			}
 		};
@@ -3808,8 +3808,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 fmModel.removeItem(targetItem);
 
                 // ON delete currently open folder
-                if(fmModel.currentPath() === targetItem.id) {
-                    var parentFolder = getParentDirname(fmModel.currentPath());
+                if(targetItem.type === 'folder' && startsWith(fmModel.currentPath(), targetItem.id)) {
+                    var parentFolder = getParentDirname(targetItem.id);
                     fmModel.itemsModel.loadList(parentFolder);
                 }
 
