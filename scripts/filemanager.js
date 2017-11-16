@@ -30,7 +30,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			beforeSelectItem: function (resourceObject, url) {
 				return url;
 			},
-			afterSelectItem: function (resourceObject, url, contextWindow) {}
+			afterSelectItem: function (resourceObject, url, contextWindow) {},
+            beforeSetRequestParams: function (requestMethod, requestParams) {
+                return requestParams;
+            },
+            beforeSendRequest: function (requestMethod, requestParams) {
+                return true;
+            }
 		}
 	};
 
@@ -3052,9 +3058,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Handle ajax request error.
 	var handleAjaxError = function(response) {
-        fm.log(response.responseText || response);
-		fm.error(lg('ERROR_SERVER'));
-		fm.error(response.responseText);
+		var errorMessage;
+		if ($.isPlainObject(response) && response.responseText) {
+            errorMessage = lg('ERROR_SERVER') + ' ' + response.responseText;
+		} else {
+			// $.Deferred().reject() case e.g.
+            errorMessage = response;
+		}
+
+        fm.log(errorMessage);
+		fm.error(errorMessage);
 	};
 
 	// Handle ajax json response error.
@@ -3306,10 +3319,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
             }
         }
+
+        parameters = fm.settings.callbacks.beforeSetRequestParams(method, parameters);
         return parameters;
 	};
 
 	var buildAjaxRequest = function(method, parameters) {
+        if (fm.settings.callbacks.beforeSendRequest(method, parameters) === false) {
+            return $.Deferred().reject(lg('NOT_ALLOWED'));
+		}
+
         return $.ajax({
             type: method,
             cache: false,
@@ -4425,6 +4444,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					})
 
 					.on('fileuploadsend', function(e, data) {
+                        if (fm.settings.callbacks.beforeSendRequest(data.type, data.formData) === false) {
+                            $.each(data.files, function (index, file) {
+                                var $node = file.context;
+                                $node.find('.error-message').text(lg('NOT_ALLOWED'));
+                                $node.removeClass('added process').addClass('error');
+                            });
+                            return false;
+                        }
+
 						$.each(data.files, function (index, file) {
 							var $node = file.context;
 							$node.removeClass('added aborted error').addClass('process');
@@ -4575,6 +4603,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					$uploadButton.addClass('loading').prop('disabled', true);
 					$uploadButton.children('span').text(lg('loading_data'));
 				})
+
+                .on('fileuploadsend', function(e, data) {
+                    if (fm.settings.callbacks.beforeSendRequest(data.type, data.formData) === false) {
+                        fm.error(lg('NOT_ALLOWED'));
+                        return false;
+                    }
+                })
 
 				.on('fileuploadalways', function(e, data) {
 					$uploadButton.removeData().removeClass('loading').prop('disabled', false);
