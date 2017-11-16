@@ -197,7 +197,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		$fileinfo.width(newW);
 	};
 
-    fm.log = function() {
+    fm.console = function() {
         if(config.options.logger && arguments) {
             [].unshift.call(arguments, new Date().getTime());
             console.log.apply(this, arguments);
@@ -1716,13 +1716,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 items_model.lazyLoad = new LazyLoad({
                     container: $fileinfo[0], // work only for default scrollbar
                     callback_load: function (element) {
-                        fm.log("LOADED", element.getAttribute('data-original'));
+                        fm.console("LOADED", element.getAttribute('data-original'));
                     },
                     callback_set: function (element) {
-                        fm.log("SET", element.getAttribute('data-original'));
+                        fm.console("SET", element.getAttribute('data-original'));
                     },
                     callback_processed: function (elementsLeft) {
-                        fm.log("PROCESSED", elementsLeft + " images left");
+                        fm.console("PROCESSED", elementsLeft + " images left");
                     }
                 });
             };
@@ -2002,7 +2002,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.langSwitcher = $.isArray(config.language.available) && config.language.available.length > 0;
 
             this.closeButtonOnClick = function() {
-                fm.log("CLOSE button is clicked");
+                fm.console("CLOSE button is clicked");
 			};
 
 			this.navHome = function() {
@@ -3066,14 +3066,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             errorMessage = response;
 		}
 
-        fm.log(errorMessage);
+        fm.console(errorMessage);
 		fm.error(errorMessage);
 	};
 
 	// Handle ajax json response error.
 	var handleAjaxResponseErrors = function(response) {
 		if(response.errors) {
-            fm.log(response.errors);
+            fm.console(response.errors);
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
 
