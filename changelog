@@ -1,3 +1,12 @@
+Version 2.6.4
+---------------------------
+- reworked folder loader for filetree and right panel #255
+- implemented "beforeSetRequestParams" and "beforeSendRequest" callback functions #260
+- bugfix: should close folder in right panel upon delete its ancestor n filetree #261
+- added template for GitHub issues
+- better file renderers support
+
+
 Version 2.6.3
 ---------------------------
 - improvement: direct upload upon simple file uploads #247
