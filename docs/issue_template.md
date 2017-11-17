@@ -4,6 +4,7 @@
 - [ ] I have checked that the bug I am reporting can be replicated, or that the feature I am suggesting isn't already present.
 - [ ] I have checked the pull requests tab for existing solutions/implementations to my issue/suggestion.
 - [ ] I realise that server-side connectors are provided by various contributors. The implementations are vary due to programming language features/limitations or other factors. Thus a particular connector may not implement, or partially implement, the [API](https://github.com/servocoder/RichFilemanager/wiki/API) features.
+- [ ] I realise that any changes in configuration options and/or plugin parameters affect the plugin behavior. I specified all the differences from defaults in details.
 
 **I use the following server-side connector (check one):**
 
