@@ -1,6 +1,6 @@
 **In raising this issue, I confirm the following (please check boxes):**
 
-- [ ] I have read and understood the [Wiki](https://github.com/servocoder/RichFilemanager/wiki/Deploy-and-setup). Especially [deploy](https://github.com/servocoder/RichFilemanager/wiki/Deploy-and-setup) and [configuration](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options) articles.
+- [ ] I have read and understood the [Wiki](https://github.com/servocoder/RichFilemanager/wiki). Especially [deploy](https://github.com/servocoder/RichFilemanager/wiki/Deploy-and-setup) and [configuration](https://github.com/servocoder/RichFilemanager/wiki/Configuration-options) articles.
 - [ ] I have checked that the bug I am reporting can be replicated, or that the feature I am suggesting isn't already present.
 - [ ] I have checked the pull requests tab for existing solutions/implementations to my issue/suggestion.
 - [ ] I realise that server-side connectors are provided by various contributors. The implementations are vary due to programming language features/limitations or other factors. Thus a particular connector may not implement, or partially implement, the [API](https://github.com/servocoder/RichFilemanager/wiki/API) features.
