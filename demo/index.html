@@ -213,12 +213,15 @@
 
             var tabCount = dialogDefinition.contents.length;
             for (var i = 0; i < tabCount; i++) {
-                var browseButton = dialogDefinition.contents[i].get('browse');
+                var dialogTab = dialogDefinition.contents[i];
+                if (!(dialogTab && typeof dialogTab.get === 'function')) {
+                    continue;
+                }
 
+                var browseButton = dialogTab.get('browse');
                 if (browseButton !== null) {
                     browseButton.hidden = false;
-                    browseButton.onClick = function (dialog, i)
-                    {
+                    browseButton.onClick = function (dialog, i) {
                         editor._.filebrowserSe = this;
                         var iframe = $("<iframe id='fm-iframe' class='fm-modal'/>").attr({
                             src: './../index.html' + // Change it to wherever  Filemanager is stored.
