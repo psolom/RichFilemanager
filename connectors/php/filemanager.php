@@ -106,7 +106,7 @@ $config = [];
 $app = new \RFM\Application();
 
 // uncomment to use events
-$app->registerEventsListeners();
+//$app->registerEventsListeners();
 
 $local = new \RFM\Repository\Local\Storage($config);
 
