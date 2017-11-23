@@ -11,7 +11,8 @@
 // error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
 // ini_set('display_errors', '1');
 
-require 'vendor/autoload.php';
+require_once 'vendor/autoload.php';
+require_once __DIR__ . '/events.php';
 
 // fix display non-latin chars correctly
 // https://github.com/servocoder/RichFilemanager/issues/7
@@ -103,6 +104,9 @@ $config = [];
 //];
 
 $app = new \RFM\Application();
+
+// uncomment to use events
+$app->registerEventsListeners();
 
 $local = new \RFM\Repository\Local\Storage($config);
 
