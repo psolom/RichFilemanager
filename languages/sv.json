@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "Kan ej byta namn på mappen %s till %s.",
     "ERROR_RENAMING_FILE": "Kan ej byta namn på filen %s till %s.",
-    "ERROR_REPLACING_FILE": "Please, provide a file having the following extension: %s",
     "ERROR_SAVING_FILE": "Error saving file.",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Error uploading file.",

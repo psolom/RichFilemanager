@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Chyba při přesunu souboru %s do %s.",
     "ERROR_RENAMING_DIRECTORY": "Pokus o přejmenování adresáře '%s' na '%s' se nezdařil.",
     "ERROR_RENAMING_FILE": "Pokus o přejmenování souboru '%s' na '%s' se nezdařil.",
-    "ERROR_REPLACING_FILE": "Prosím, vložte soubor, který má následující rozšíření: %s",
     "ERROR_SAVING_FILE": "Chyba při ukládání souboru.",
     "ERROR_SERVER": "Chyba serveru.",
     "ERROR_UPLOADING_FILE": "Chyba při nahrávání souboru.",

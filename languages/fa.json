@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "هنگام انتقال فایل %s به %s رخ داده است.",
     "ERROR_RENAMING_DIRECTORY": "خطا هنگام تغییر اسم پوشه ی %s به %s وجود دارد.",
     "ERROR_RENAMING_FILE": "خطا هنگام تغییر نام از %s به %s.",
-    "ERROR_REPLACING_FILE": "لطفاً فایلهایی با این فرمت را انتخاب کنید: %s",
     "ERROR_SAVING_FILE": "خطا هنگام ذخیره سازی فایل.",
     "ERROR_SERVER": "خطا در سرور.",
     "ERROR_UPLOADING_FILE": "خطا هنگام آپلود فایل.",

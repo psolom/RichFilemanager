@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "フォルダー名を %s から %s に変更中にエラーが発生しました。",
     "ERROR_RENAMING_FILE": "ファイル名を %s から %sに変更中にエラーが発生しました。",
-    "ERROR_REPLACING_FILE": "次の拡張子を持つファイルを指定してください: %s",
     "ERROR_SAVING_FILE": "ファイルを保存中にエラーが発生しました。",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "ファイルをアップロード中にエラーが発生しました。",

@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Lỗi khi di chuyển file từ %s sang %s.",
     "ERROR_RENAMING_DIRECTORY": "Có lỗi khi đổi tên thư mục %s thành %s.",
     "ERROR_RENAMING_FILE": "Có lỗi khi đổi tên file %s thành %s.",
-    "ERROR_REPLACING_FILE": "Vui lòng cung cấp những file có phần mở rộng sau: %s",
     "ERROR_SAVING_FILE": "Lỗi khi lưu file.",
     "ERROR_SERVER": "Server bị lỗi.",
     "ERROR_UPLOADING_FILE": "Lỗi khi upload file.",

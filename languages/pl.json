@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "Nie udało się zmienić lokalizacji z %s na %s.",
     "ERROR_RENAMING_FILE": "Nie udało się zmienić nazwy pliku z %s na %s.",
-    "ERROR_REPLACING_FILE": "Proszę podać plik z rozszerzeniem: %s",
     "ERROR_SAVING_FILE": "Wystąpił błąd w trakcie zapisu pliku.",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Wystąpił błąd podczas wgrywania pliku.",

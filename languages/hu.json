@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "A(z) %s mappa átnevezése %s névre sikertelen volt.",
     "ERROR_RENAMING_FILE": "A(z) %s fájl átnevezése %s fájlnévre sikertelen volt.",
-    "ERROR_REPLACING_FILE": "Please, provide a file having the following extension: %s",
     "ERROR_SAVING_FILE": "Error saving file.",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Error uploading file.",

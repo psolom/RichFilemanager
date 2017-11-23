@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Erro ao mover o arquivo %s para %s.",
     "ERROR_RENAMING_DIRECTORY": "Erro ao renomear uma pasta de %s para %s.",
     "ERROR_RENAMING_FILE": "Erro ao renomear o arquivo de %s para %s.",
-    "ERROR_REPLACING_FILE": "Por favor, forneça um arquivo contendo a seguinte extensão: %s",
     "ERROR_SAVING_FILE": "Erro ao salvar o arquivo.",
     "ERROR_SERVER": "Erro do servidor.",
     "ERROR_UPLOADING_FILE": "Erro ao enviar o arquivo.",

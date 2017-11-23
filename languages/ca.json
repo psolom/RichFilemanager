@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "Error al canviar el nom de la carpeta %s a %s.",
     "ERROR_RENAMING_FILE": "Error al canviar el nom de l'arxiu %s a %s.",
-    "ERROR_REPLACING_FILE": "Si us plau, proporciona un arxiu amb la següent extensió: %s",
     "ERROR_SAVING_FILE": "Error guardant arxiu.",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Error pujant arxiu.",

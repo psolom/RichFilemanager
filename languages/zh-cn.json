@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "移动文件 %s 到 %s 时出错。",
     "ERROR_RENAMING_DIRECTORY": "发生错误当重新命名的目录%s到%s。",
     "ERROR_RENAMING_FILE": "发生错误当重新命名的文件%s到%s。",
-    "ERROR_REPLACING_FILE": "请提供一个具有以下扩展的文件： %s",
     "ERROR_SAVING_FILE": "保存文件时出错。",
     "ERROR_SERVER": "服务出错。",
     "ERROR_UPLOADING_FILE": "文件上传时出错。",

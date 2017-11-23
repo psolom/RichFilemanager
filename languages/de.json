@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Fehler beim Verschieben der Datei '%s' nach '%s'.",
     "ERROR_RENAMING_DIRECTORY": "Fehler beim Umbenennen des Ordners '%s' nach '%s'.",
     "ERROR_RENAMING_FILE": "Fehler beim Umbenennen der Datei '%s' nach '%s'.",
-    "ERROR_REPLACING_FILE": "Bitte verwenden Sie eine Datei mit folgender Erweiterung: %s",
     "ERROR_SAVING_FILE": "Fehler beim Speichern der Datei.",
     "ERROR_SERVER": "Serverfehler.",
     "ERROR_UPLOADING_FILE": "Fehler beim Hochladen der Datei.",

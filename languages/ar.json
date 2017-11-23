@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "خطا اثناء نقل الملف %s إلى %s.",
     "ERROR_RENAMING_DIRECTORY": "خطأ اثناء إعادة تسمية الدليل  %s إلى  %s.",
     "ERROR_RENAMING_FILE": " خطأ اثناء إعادة تسمية الملف  %s إلى  %s.",
-    "ERROR_REPLACING_FILE": "الرجاء توفير ملف له اللاحقة التالية: %s",
     "ERROR_SAVING_FILE": "خطأ في حفظ الملف.",
     "ERROR_SERVER": "خطأ في الخادم.",
     "ERROR_UPLOADING_FILE": "خطأ في رفع الملف.",

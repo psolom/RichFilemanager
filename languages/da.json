@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "Omdøbning af mappen %s til %s mislykkedes.",
     "ERROR_RENAMING_FILE": "Omdøbning af filen %s til %s mislykkedes.",
-    "ERROR_REPLACING_FILE": "Please, provide a file having the following extension: %s",
     "ERROR_SAVING_FILE": "Error saving file.",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Error uploading file.",

@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "เกิดความผิดพลาดขณะเปลี่ยนชื่อโฟล์เดอร์ %s เป็น %s",
     "ERROR_RENAMING_FILE": "เกิดความผิดพลาดขณะเปลี่ยนชื่อไฟล์ %s เป็น %s",
-    "ERROR_REPLACING_FILE": "กรุณาเลือกไฟล์ที่มีนามสกุลเหล่านี้: %s",
     "ERROR_SAVING_FILE": "เกิดความผิดพลาดขณะบันทึกไฟล์",
     "ERROR_SERVER": "เซอร์เวอร์ error",
     "ERROR_UPLOADING_FILE": "เกิดข้อผิดพลาดขณะอัปโหลดไฟล์นี้",

@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "Greška pri promjeni naziva direktorija iz %s u %s.",
     "ERROR_RENAMING_FILE": "Greška pri promjeni naziva datoteke iz %s u %s.",
-    "ERROR_REPLACING_FILE": "Molimo Vas da postavite datoteku sljedećeg tipa: %s",
     "ERROR_SAVING_FILE": "Greška pri snimanju .",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Greška pri uploadu (postavljanju).",

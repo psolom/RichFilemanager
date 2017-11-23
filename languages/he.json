@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Error while moving the file %s to %s.",
     "ERROR_RENAMING_DIRECTORY": "שגיאה בעת ניסיון לשנות את התיקייה %s ל %s",
     "ERROR_RENAMING_FILE": "שגיאה בעת ניסיון לשנות את הקובץ %s ל %s",
-    "ERROR_REPLACING_FILE": "Please, provide a file having the following extension: %s",
     "ERROR_SAVING_FILE": "Error saving file.",
     "ERROR_SERVER": "Server error.",
     "ERROR_UPLOADING_FILE": "Error uploading file.",

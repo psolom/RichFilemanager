@@ -17,7 +17,6 @@
     "ERROR_MOVING_FILE": "Errore durante lo spostamento del file da %s a %s.",
     "ERROR_RENAMING_DIRECTORY": "Errore nel rinominare la cartella %s in %s.",
     "ERROR_RENAMING_FILE": "Errore nel rinominare il file %s in %s.",
-    "ERROR_REPLACING_FILE": "Si prega di inviare un file con questa estensione: %s",
     "ERROR_SAVING_FILE": "Errore nel salvataggio del file.",
     "ERROR_SERVER": "Errore del Server.",
     "ERROR_UPLOADING_FILE": "Errore nell'invio del file.",
