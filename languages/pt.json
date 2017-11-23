@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "Erro ao copiar o diretório %s para %s.",
     "ERROR_COPYING_FILE": "Erro ao copiar o arquivo %s para %s.",
     "ERROR_CREATING_ZIP": "Erro ao criar o arquivo zip",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "Erro ao extrair itens do arquivo",
     "ERROR_OPENING_FILE": "Erro ao abrir o Arquivo.",
     "ERROR_MOVING_DIRECTORY": "Erro ao mover o diretório %s para %s.",

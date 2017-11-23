@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "Errore durante la copia della directory da %s a %s.",
     "ERROR_COPYING_FILE": "Errore durante la copia del file da %s a %s.",
     "ERROR_CREATING_ZIP": "Errore nella creazione dell'archivio ZIP.",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "Errore nell'estrazione degli elementi dall'archivio.",
     "ERROR_OPENING_FILE": "Errore nell'apertura del file.",
     "ERROR_MOVING_DIRECTORY": "Errore durante lo spostamento della directory da %s a %s.",

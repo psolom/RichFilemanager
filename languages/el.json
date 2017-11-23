@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "Σφάλμα κατά την αντιγραφή του φακέλου %s στο %s.",
     "ERROR_COPYING_FILE": "Σφάλμα κατά την αντιγραφή του αρχείου %s στο %s.",
     "ERROR_CREATING_ZIP": "Λάθος δημιουργίας  Zip αρχείου",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "Error extracting items from archive",
     "ERROR_OPENING_FILE": "Λάθος στο άνοιγμα του αρχείου.",
     "ERROR_MOVING_DIRECTORY": "Σφάλμα κατά την μετακίνηση του φακέλου %s στο %s.",

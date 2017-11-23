@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "Ошибка при копировании папки %s в %s.",
     "ERROR_COPYING_FILE": "Ошибка при копировании файла %s в %s.",
     "ERROR_CREATING_ZIP": "Неудалось создать Zip архив.",
+    "ERROR_DELETING_FILE": "Ошибка удаления файла %s",
+    "ERROR_DELETING_DIRECTORY": "Ошибка удаления папки %s",
     "ERROR_EXTRACTING_FILE": "Неудалось извлечь элементы из архива.",
     "ERROR_OPENING_FILE": "Неудалось открыть файл.",
     "ERROR_MOVING_DIRECTORY": "Ошибка при перемещении папки %s в %s.",

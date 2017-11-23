@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "حدث خطا اثناء نسخ الدليل %s إلى %s.",
     "ERROR_COPYING_FILE": "حدث خطا اثناء نسخ الملف %s إلى %s.",
     "ERROR_CREATING_ZIP": "خطا في إنشاء أرشيف Zip",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "خطأ في استخراج العناصر من الأرشيف",
     "ERROR_OPENING_FILE": "خطا في فتح الملف.",
     "ERROR_MOVING_DIRECTORY": "خطأ اثناء نقل الدليل %s إلى %s.",

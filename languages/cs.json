@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "Při kopírování adresáře došlo k chybě %s do %s.",
     "ERROR_COPYING_FILE": "Chyba při kopírování souboru %s do %s.",
     "ERROR_CREATING_ZIP": "Chyba při vytváření ZIP archívu",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "Chyba při extrahování položek z archivu",
     "ERROR_OPENING_FILE": "Chyba při otevírání souboru.",
     "ERROR_MOVING_DIRECTORY": "Chyba při přesunu adresáře %s do %s.",

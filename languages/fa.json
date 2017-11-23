@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "خطایی در رونوشت پوشه ی %s به %s وجود دارد.",
     "ERROR_COPYING_FILE": "خطایی هنگام رونوشت فایل %s به %s وجود دارد.",
     "ERROR_CREATING_ZIP": "خطایی در فشرده سازی رویداده است",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "خطایی در بازکردن فایل فشرده شدن وجود دارد",
     "ERROR_OPENING_FILE": "خطایی در بازکردن فایل بوجود امده.",
     "ERROR_MOVING_DIRECTORY": "خطایی هنگام انتقال پوشه ی %s به %s رخ داده است.",

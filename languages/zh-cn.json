@@ -9,6 +9,8 @@
     "ERROR_COPYING_DIRECTORY": "复制目录 %s 到 %s 时出错。",
     "ERROR_COPYING_FILE": "复制文件 %s 到 %s 时出错。",
     "ERROR_CREATING_ZIP": "创建ZIP压缩文档时出错。",
+    "ERROR_DELETING_FILE": "Error while deleting the file %s",
+    "ERROR_DELETING_DIRECTORY": "Error while deleting the directory %s",
     "ERROR_EXTRACTING_FILE": "从压缩文档提取文件的错误",
     "ERROR_OPENING_FILE": "打开文件时的错误。",
     "ERROR_MOVING_DIRECTORY": "移动目录 %s 到 %s 时出错。",
