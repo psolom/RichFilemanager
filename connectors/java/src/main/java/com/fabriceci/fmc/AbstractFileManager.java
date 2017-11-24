@@ -233,7 +233,7 @@ public abstract class AbstractFileManager implements IFileManager {
         try {
             errorInfo.put("id", "server");
             errorInfo.put("code", "500");
-            errorInfo.put("message", msg);
+            errorInfo.put("title", msg);
 
         } catch (JSONException e) {
             logger.error("JSONObject error");
