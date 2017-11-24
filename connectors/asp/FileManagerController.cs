@@ -187,10 +187,13 @@ namespace RfmNetCore.Controllers
                 errorResult.Errors.Add(new
                 {
                     Code = "500",
-                    Message = "DIRECTORY_ALREADY_EXISTS",
-                    Arguments = new List<string>
+                    Title = "DIRECTORY_ALREADY_EXISTS",
+                    Meta = new
                     {
-                        name
+                        Arguments = new List<string>
+                        {
+                            name
+                        }
                     }
                 });
 
@@ -239,10 +242,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "FILE_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "FILE_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            file.FileName
+                            Arguments = new List<string>
+                            {
+                                file.FileName
+                            }
                         }
                     });
 
@@ -297,10 +303,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "DIRECTORY_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "DIRECTORY_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            @new
+                            Arguments = new List<string>
+                            {
+                                @new
+                            }
                         }
                     });
 
@@ -345,10 +354,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "FILE_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "FILE_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            @new
+                            Arguments = new List<string>
+                            {
+                                @new
+                            }
                         }
                     });
 
@@ -400,10 +412,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "DIRECTORY_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "DIRECTORY_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            directoryName
+                            Arguments = new List<string>
+                            {
+                                directoryName
+                            }
                         }
                     });
 
@@ -451,10 +466,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "FILE_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "FILE_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            fileName
+                            Arguments = new List<string>
+                            {
+                                fileName
+                            }
                         }
                     });
 
@@ -506,10 +524,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "DIRECTORY_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "DIRECTORY_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            directoryName
+                            Arguments = new List<string>
+                            {
+                                directoryName
+                            }
                         }
                     });
 
@@ -553,10 +574,13 @@ namespace RfmNetCore.Controllers
                     errorResult.Errors.Add(new
                     {
                         Code = "500",
-                        Message = "FILE_ALREADY_EXISTS",
-                        Arguments = new List<string>
+                        Title = "FILE_ALREADY_EXISTS",
+                        Meta = new
                         {
-                            fileName
+                            Arguments = new List<string>
+                            {
+                                fileName
+                            }
                         }
                     });
 
@@ -712,7 +736,7 @@ namespace RfmNetCore.Controllers
             var fileName = Path.GetFileName(Path.Combine(_webRootPath, path));
             var fileExtension = Path.GetExtension(fileName).Replace(".", "");
 
-            // undone dosya var mý kontrolü...
+            // undone dosya var mï¿½ kontrolï¿½...
 
             var result = new
             {
