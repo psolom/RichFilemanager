@@ -3077,8 +3077,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
 
-				if (errorObject.meta.arguments.redirect) {
-                    window.location.href = errorObject.meta.arguments.redirect;
+				if (errorObject.meta.redirect) {
+                    window.location.href = errorObject.meta.redirect;
                 }
 			});
 		}
