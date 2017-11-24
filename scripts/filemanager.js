@@ -3045,13 +3045,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
     var formatServerError = function(errorObject) {
         var message;
         // look for message in case an error CODE is provided
-        if (langModel.getLang() && lg(errorObject.message)) {
-            message = lg(errorObject.message);
-            $.each(errorObject.arguments, function(i, argument) {
+        if (langModel.getLang() && lg(errorObject.title)) {
+            message = lg(errorObject.title);
+            $.each(errorObject.meta.arguments, function(i, argument) {
                 message = message.replace('%s', argument);
             });
         } else {
-            message = errorObject.message;
+            message = errorObject.title;
         }
         return message;
     };
@@ -3077,8 +3077,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			$.each(response.errors, function(i, errorObject) {
 				fm.error(formatServerError(errorObject));
 
-				if (errorObject.arguments.redirect) {
-                    window.location.href = errorObject.arguments.redirect;
+				if (errorObject.meta.arguments.redirect) {
+                    window.location.href = errorObject.meta.arguments.redirect;
                 }
 			});
 		}
