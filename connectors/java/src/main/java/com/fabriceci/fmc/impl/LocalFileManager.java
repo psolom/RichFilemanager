@@ -440,50 +440,44 @@ public class LocalFileManager extends AbstractFileManager {
             }
         }
 
-        // Ajax
-        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-            return new JSONObject().put("data", new JSONObject(getFileInfo(path)));
-        } else {
+        try {
+            response.setHeader("Content-Description", "File Transfer");
+            if (file.isFile()) {
+                String fileExt = filename.substring(filename.lastIndexOf(".") + 1);
+                String mimeType = (!StringUtils.isEmpty(FileManagerUtils.mimetypes.get(fileExt))) ? FileManagerUtils.mimetypes.get(fileExt) : "application/octet-stream";
+                response.setContentLength((int) file.length());
+                response.setContentType(mimeType);
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+                response.setContentLength((int) file.length());
 
-            try {
-                response.setHeader("Content-Description", "File Transfer");
-                if (file.isFile()) {
-                    String fileExt = filename.substring(filename.lastIndexOf(".") + 1);
-                    String mimeType = (!StringUtils.isEmpty(FileManagerUtils.mimetypes.get(fileExt))) ? FileManagerUtils.mimetypes.get(fileExt) : "application/octet-stream";
-                    response.setContentLength((int) file.length());
-                    response.setContentType(mimeType);
-                    response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-                    response.setContentLength((int) file.length());
+                FileUtils.copy(new BufferedInputStream(new FileInputStream(file)), response.getOutputStream());
+            } else {
+                String[] files = file.list();
 
-                    FileUtils.copy(new BufferedInputStream(new FileInputStream(file)), response.getOutputStream());
-                } else {
-                    String[] files = file.list();
-
-                    if (files == null || files.length == 0) {
-                        return getErrorResponse(String.format(dictionnary.getProperty("DIRECTORY_EMPTY"), file.getName()));
-                    }
-
-                    String zipFileName = FileUtils.getBaseName(path.substring(0, path.length() - 1)) + ".zip";
-                    String mimType = FileManagerUtils.mimetypes.get("zip");
-                    response.setContentType(mimType);
-                    response.setHeader("Content-Disposition", "attachment; filename=\"" + zipFileName + "\"");
-                    byte[] zipFileByteArray;
-                    try {
-                        zipFileByteArray = ZipUtils.zipFolder(file);
-                    } catch (IOException e) {
-                        throw new FMIOException("Exception during ZipFiles", e);
-                    }
-                    response.setContentLength(zipFileByteArray.length);
-
-                    FileUtils.copy(new ByteArrayInputStream(zipFileByteArray), response.getOutputStream());
+                if (files == null || files.length == 0) {
+                    return getErrorResponse(String.format(dictionnary.getProperty("DIRECTORY_EMPTY"), file.getName()));
                 }
 
-            } catch (IOException e) {
-                throw new FMIOException("Download error: " + file.getName(), e);
+                String zipFileName = FileUtils.getBaseName(path.substring(0, path.length() - 1)) + ".zip";
+                String mimType = FileManagerUtils.mimetypes.get("zip");
+                response.setContentType(mimType);
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + zipFileName + "\"");
+                byte[] zipFileByteArray;
+                try {
+                    zipFileByteArray = ZipUtils.zipFolder(file);
+                } catch (IOException e) {
+                    throw new FMIOException("Exception during ZipFiles", e);
+                }
+                response.setContentLength(zipFileByteArray.length);
+
+                FileUtils.copy(new ByteArrayInputStream(zipFileByteArray), response.getOutputStream());
             }
 
-            return null;
+        } catch (IOException e) {
+            throw new FMIOException("Download error: " + file.getName(), e);
         }
+
+        return null;
     }
 
     @Override

@@ -3943,13 +3943,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			path: resourceObject.id
 		};
 
-        return buildAjaxRequest('GET', queryParams).done(function(response) {
-            if(response.data) {
-                //window.location = buildConnectorUrl(queryParams);
-                $.fileDownload(buildConnectorUrl(queryParams));
-            }
-            handleAjaxResponseErrors(response);
-        }).fail(handleAjaxError);
+		$.fileDownload(buildConnectorUrl(queryParams), {
+			failCallback: function (responseHtml, url, error) {
+				var response = $.parseJSON(responseHtml);
+				handleAjaxResponseErrors(response);
+			}
+		});
 	};
 
 	// Perform "editfile" API request

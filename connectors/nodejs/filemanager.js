@@ -387,16 +387,6 @@ case 'readfile':
 });// parsePath
     break;
 case 'download':
-    // to make it works, you need to change filemanager.js downloadItem function, like this:
-    /*
-     var downloadItem = function(resourceObject) {
-     var queryParams = {mode: 'download', path: resourceObject.id};
-     var link = document.createElement("a");
-     link.download = resourceObject && resourceObject.attributes && resourceObject.attributes.name;
-     link.href = buildConnectorUrl(queryParams);
-     link.click();
-     };
-     */
     parsePath(path, (pp) => {
         getinfo(pp, (result) => {
         res.setHeader('content-type', 'text/html; charset=UTF-8');
