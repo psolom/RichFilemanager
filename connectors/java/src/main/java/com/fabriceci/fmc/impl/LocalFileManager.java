@@ -57,7 +57,7 @@ public class LocalFileManager extends AbstractFileManager {
     }
 
     @Override
-    public JSONObject actionGetFolder(HttpServletRequest request) throws FileManagerException {
+    public JSONObject actionReadFolder(HttpServletRequest request) throws FileManagerException {
 
         String path =  getPath(request, "path");
         String type = request.getParameter("type");
@@ -109,14 +109,10 @@ public class LocalFileManager extends AbstractFileManager {
     }
 
     @Override
-    public JSONObject actionGetFile(HttpServletRequest request) throws FileManagerException {
+    public JSONObject actionGetInfo(HttpServletRequest request) throws FileManagerException {
         String path =  getPath(request, "path");
 
         File file = new File(docRoot.getPath() + path);
-
-        if (file.isDirectory()) {
-            return getErrorResponse(dictionnary.getProperty("FORBIDDEN_ACTION_DIR"));
-        }
 
         // check if the name is not in "excluded" list
         String filename = file.getName();

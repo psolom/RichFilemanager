@@ -159,7 +159,7 @@ module.exports = (__appRoot) => { // eslint-disable-line max-statements
     });// parsePath
     }// getIndividualFileInfo
 
-    function getfolder(pp, callback) {
+    function readfolder(pp, callback) {
         fs.readdir(pp.osFullPath, (err, files) => {
             if (err) {
                 console.log('err -> ', err); // eslint-disable-line no-console
@@ -356,24 +356,11 @@ module.exports = (__appRoot) => { // eslint-disable-line max-statements
         });// getinfo
     });// parsePath
     break;
-case 'getfolder':
+case 'readFolder':
     parsePath(path, (pp) => {
-        getfolder(pp, (result) => {
+        readfolder(pp, (result) => {
         respond(res, {data: result});
-    });// getfolder
-});// parsePath
-    break;
-case 'editfile':
-    parsePath(path, (pp) => {
-        getinfo(pp, (result) => {
-        fs.readFile(paths.resolve(pp.osFullPath), (err, f) => {
-            if (err) {
-                res.status(500).send(err);
-            }
-            result.attributes.content = f.toString();
-        respond(res, {data: result});
-    });
-    });// getinfo
+    });// readfolder
 });// parsePath
     break;
 case 'getimage':
@@ -388,10 +375,10 @@ case 'readfile':
     break;
 case 'download':
     parsePath(path, (pp) => {
-        getinfo(pp, (result) => {
         res.setHeader('content-type', 'text/html; charset=UTF-8');
-        res.send(JSON.stringify({data: result}));
-    });// getinfo
+        res.setHeader('content-description', 'File Transfer');
+        res.setHeader('content-disposition', 'attachment; filename="' + pp.filename + '"');
+        res.sendFile(paths.resolve(pp.osFullPath));
 });// parsePath
     break;
 case 'addfolder':

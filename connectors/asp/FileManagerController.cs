@@ -39,8 +39,8 @@ namespace RfmNetCore.Controllers
             {
                 case "initiate":
                     return Json(Initiate());
-                case "getfolder":
-                    return Json(GetFolder(path));
+                case "readfolder":
+                    return Json(ReadFolder(path));
                 case "addfolder":
                     return Json(AddFolder(path, name));
                 case "upload":
@@ -51,26 +51,16 @@ namespace RfmNetCore.Controllers
                     return Json(Move(old, @new));
                 case "copy":
                     return Json(Copy(source, target));
-                case "editfile":
-                    return Json(EditFile(path));
                 case "savefile":
                     return Json(SaveFile(path, content));
                 case "delete":
                     return Json(Delete(path));
                 case "download":
-                    if (Request.Headers["accept"].ToString().Contains("json"))
-                    {
-                        return Json(Download(path));
-                    }
-                    else
-                    {
-                        var file = DownloadFile(path);
-                        return File(file.FileBytes, "application/x-msdownload", file.FileName);
-                    }
+                    return Download(path);
                 case "getimage":
                     return GetImage(path, thumbnail);
                 case "readfile":
-                    break;
+                    return ReadFile(path);
                 case "summarize":
                     return Json(Summarize());
             }
@@ -108,10 +98,8 @@ namespace RfmNetCore.Controllers
 
         }
 
-        private dynamic GetFolder(string path)
+        private dynamic ReadFolder(string path)
         {
-
-
             if (path == null) path = string.Empty;
 
             var rootpath = Path.Combine(_webRootPath, path);
@@ -612,36 +600,6 @@ namespace RfmNetCore.Controllers
             }
         }
 
-        private dynamic EditFile(string path)
-        {
-            var fileName = Path.GetFileName(path);
-            var fileExtension = Path.GetExtension(path).Replace(".", "");
-            var filePath = Path.Combine(_webRootPath, path);
-
-            var content = System.IO.File.ReadAllText(filePath, Encoding.UTF8);
-
-            var result = new
-            {
-                Data = new
-                {
-                    Id = path,
-                    Type = "file",
-                    Attributes = new
-                    {
-                        Name = fileName,
-                        Extension = fileExtension,
-                        Writable = 1,
-                        Readable = 1,
-                        // created vb.
-                        Content = content,
-                        Path = $"/{Path.Combine(path)}"
-                    }
-                }
-            };
-
-            return result;
-        }
-
         private dynamic SaveFile(string path, string content)
         {
             var filePath = Path.Combine(_webRootPath, path);
@@ -731,56 +689,43 @@ namespace RfmNetCore.Controllers
             }
         }
 
-        private dynamic Download(string path)
+        private dynamic ReadFile(string path)
         {
-            var fileName = Path.GetFileName(Path.Combine(_webRootPath, path));
-            var fileExtension = Path.GetExtension(fileName).Replace(".", "");
+            var filePath = Path.Combine(_webRootPath, path);
+            var fileName = Path.GetFileName(filePath);
+            byte[] fileBytes = System.IO.File.ReadAllBytes(filePath);
 
-            // undone dosya var m� kontrol�...
-
-            var result = new
+            var cd = new ContentDisposition
             {
-                Data = new
-                {
-                    Id = path,
-                    Type = "file",
-                    Attributes = new
-                    {
-                        Name = fileName,
-                        Extension = fileExtension,
-                        Readable = 1,
-                        Writable = 1,
-                        // created date, size vb.
-                        Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
-                        //Path = $"{path}"
-                    }
-                }
+                Inline = true,
+                FileName = fileName
             };
+            Response.AddHeader("Content-Disposition", cd.ToString());
 
-            return result;
-
-        }
-
-        private dynamic DownloadFile(string path)
-        {
-            var filepath = Path.Combine(_webRootPath, path);
-            var fileName = Path.GetFileName(filepath);
-            byte[] fileBytes = System.IO.File.ReadAllBytes(filepath);
-
-            var file = new
-            {
-                FileName = fileName,
-                FileBytes = fileBytes
-            };
-
-            return file;
+            return File(fileBytes, "application/octet-stream");
         }
 
         private IActionResult GetImage(string path, bool thumbnail)
         {
-            var filepath = Path.Combine(_webRootPath, path);
-            var fileName = Path.GetFileName(filepath);
-            byte[] fileBytes = System.IO.File.ReadAllBytes(filepath);
+            var filePath = Path.Combine(_webRootPath, path);
+            var fileName = Path.GetFileName(filePath);
+            byte[] fileBytes = System.IO.File.ReadAllBytes(filePath);
+
+            var cd = new ContentDisposition
+            {
+                Inline = true,
+                FileName = fileName
+            };
+            Response.AddHeader("Content-Disposition", cd.ToString());
+
+            return File(fileBytes, "image/*");
+        }
+
+        private dynamic Download(string path)
+        {
+            var filePath = Path.Combine(_webRootPath, path);
+            var fileName = Path.GetFileName(filePath);
+            byte[] fileBytes = System.IO.File.ReadAllBytes(filePath);
 
             return File(fileBytes, "application/x-msdownload", fileName);
         }
@@ -792,8 +737,6 @@ namespace RfmNetCore.Controllers
             var directoryInfo = new DirectoryInfo(_webRootPath);
             var files = directoryInfo.GetFiles("*", SearchOption.AllDirectories);
             var allSize = files.Select(f => f.Length).Sum();
-
-
 
             var result = new
             {

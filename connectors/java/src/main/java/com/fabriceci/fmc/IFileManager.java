@@ -12,9 +12,9 @@ public interface IFileManager {
 
     JSONObject actionInitiate(HttpServletRequest request) throws FileManagerException;
 
-    JSONObject actionGetFile(HttpServletRequest request) throws FileManagerException;
+    JSONObject actionGetInfo(HttpServletRequest request) throws FileManagerException;
 
-    JSONObject actionGetFolder(HttpServletRequest request) throws FileManagerException;
+    JSONObject actionReadFolder(HttpServletRequest request) throws FileManagerException;
 
     JSONObject actionReadFile(HttpServletRequest request, HttpServletResponse response) throws FileManagerException;
 

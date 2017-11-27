@@ -8,7 +8,7 @@
  */
 
 /**
- * Event listener on after "getfolder" API method successfully executed.
+ * Event listener on after "readfolder" API method successfully executed.
  *
  * @param \RFM\Event\Api\AfterFolderReadEvent $event
  */
