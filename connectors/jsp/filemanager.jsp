@@ -46,8 +46,7 @@
           }
         }
         try {
-	        // renamed getinfo to getfile
-	        if (mode.equals("getinfo") || mode.equals("getfile")){
+	        if (mode.equals("getinfo")){
 	          if(fm.setGetVar("path", (strictServletCompliance)? qpm.get("path"): request.getParameter("path"))) {
 	            responseData = fm.getInfo();
 	          }
@@ -55,9 +54,9 @@
 	        else if (mode.equals("initiate")){
 	           responseData = fm.initiate(request);
 	        }        
-	        else if (mode.equals("getfolder")){
+	        else if (mode.equals("readfolder")){
 	          if(fm.setGetVar("path",  (strictServletCompliance)? qpm.get("path"):request.getParameter("path"))) {
-	            responseData = fm.getFolder(request);
+	            responseData = fm.readFolder(request);
 	          }
 	        }
 	        else if (mode.equals("rename")){

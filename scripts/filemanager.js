@@ -291,7 +291,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     config.options.browseOnly = true;
                 }
             }
-            handleAjaxResponseErrors(response);
         }).fail(function() {
             fm.error('Unable to perform initial request to server.');
         }).then(function (response) {
@@ -1005,12 +1004,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preview_model.editor.isInteractive(editorObject.interactive);
 
                 if (viewerObject.type === 'renderer' || preview_model.viewer.isEditable()) {
-                    previewItem(resourceObject).then(function(response) {
-                        if(response.data) {
-                            var content = response.data.attributes.content;
-                            preview_model.viewer.content(content);
-                            model.previewFile(true);
-                        }
+                    previewItem(resourceObject).then(function(content) {
+						preview_model.viewer.content(content);
+						model.previewFile(true);
                     });
 				} else {
                     model.previewFile(true);
@@ -1649,10 +1645,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     ) {
                         items_model.descriptivePanel.setRenderer(resourceObject);
                         // load and render index file content
-                        previewItem(items_model.descriptivePanel.rdo()).then(function(response) {
-                            if(response.data) {
-                                items_model.descriptivePanel.render(response.data.attributes.content);
-                            }
+                        previewItem(items_model.descriptivePanel.rdo()).then(function(content) {
+							items_model.descriptivePanel.render(content);
                         });
                     }
                 });
@@ -1952,7 +1946,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     loader.beforeLoad(path);
 				});
 
-                getFolder(path).then(function(response) {
+                readFolder(path).then(function(response) {
                     if(response.data) {
                         handler(response.data, path);
 
@@ -2085,7 +2079,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 fm.success(lg('successful_added_folder'));
                             }
                         }
-                        handleAjaxResponseErrors(response);
                     }).fail(handleAjaxError);
 				};
 
@@ -3056,31 +3049,44 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         return message;
     };
 
-	// Handle ajax request error.
-	var handleAjaxError = function(response) {
+    // Handle JSON server errors.
+    var handleJsonErrors = function(errors) {
+		fm.console("ERROR JSON", errors);
+
+		$.each(errors, function (i, errorObject) {
+			fm.error(formatServerError(errorObject));
+
+			if (errorObject.meta.redirect) {
+				window.location.href = errorObject.meta.redirect;
+			}
+		});
+    };
+
+	// Handle ajax request errors.
+	var handleAjaxError = function(xhr) {
 		var errorMessage;
-		if ($.isPlainObject(response) && response.responseText) {
-            errorMessage = lg('ERROR_SERVER') + ' ' + response.responseText;
+
+		if ($.isPlainObject(xhr) && xhr.responseText) {
+			var isJSON = (xhr.getResponseHeader("content-type") === 'application/json');
+
+            // on "readfile" API request (dataType === 'text')
+            if (!xhr.responseJSON && isJSON) {
+                xhr.responseJSON = $.parseJSON(xhr.responseText);
+            }
+
+            if ($.isPlainObject(xhr.responseJSON) && xhr.responseJSON.errors) {
+                handleJsonErrors(xhr.responseJSON.errors);
+			} else {
+                errorMessage = lg('ERROR_SERVER') + ' ' + xhr.responseText;
+			}
 		} else {
 			// $.Deferred().reject() case e.g.
-            errorMessage = response;
+            errorMessage = xhr;
 		}
 
-        fm.console(errorMessage);
-		fm.error(errorMessage);
-	};
-
-	// Handle ajax json response error.
-	var handleAjaxResponseErrors = function(response) {
-		if(response.errors) {
-            fm.console(response.errors);
-			$.each(response.errors, function(i, errorObject) {
-				fm.error(formatServerError(errorObject));
-
-				if (errorObject.meta.redirect) {
-                    window.location.href = errorObject.meta.redirect;
-                }
-			});
+		if (errorMessage) {
+            fm.console("ERROR TEXT", errorMessage);
+            fm.error(errorMessage);
 		}
 	};
 
@@ -3324,7 +3330,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         return parameters;
 	};
 
-	var buildAjaxRequest = function(method, parameters) {
+	var buildAjaxRequest = function(method, parameters, dataType) {
+        dataType = (typeof dataType === "undefined") ? "json" : dataType;
+
         if (fm.settings.callbacks.beforeSendRequest(method, parameters) === false) {
             return $.Deferred().reject(lg('NOT_ALLOWED'));
 		}
@@ -3333,7 +3341,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             type: method,
             cache: false,
             url: buildConnectorUrl(),
-            dataType: 'json',
+            dataType: dataType,
             data: extendRequestParams(method, parameters)
         });
 	};
@@ -3425,7 +3433,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             return buildAbsolutePath(path, false);
         } else {
             var path = encodeCopyUrl(resourceObject.id),
-				mode = (resourceObject.type === 'folder') ? 'getfolder' : 'readfile';
+				mode = (resourceObject.type === 'folder') ? 'readfolder' : 'readfile';
             return apiConnector + '?path=' + path + '&mode=' + mode;
         }
 	};
@@ -3776,7 +3784,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         fm.success(lg('successful_rename'));
                     }
                 }
-                handleAjaxResponseErrors(response);
             }).fail(handleAjaxError);
 		};
 
@@ -3848,7 +3855,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     fm.success(lg('successful_copied'));
                 }
             }
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
     };
 
@@ -3881,7 +3887,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     fm.success(lg('successful_moved'));
                 }
             }
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
 	};
 
@@ -3930,7 +3935,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     fm.success(lg('successful_delete'));
                 }
             }
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
 	};
 
@@ -3945,20 +3949,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		$.fileDownload(buildConnectorUrl(queryParams), {
 			failCallback: function (responseHtml, url, error) {
-				var response = $.parseJSON(responseHtml);
-				handleAjaxResponseErrors(response);
+				var responseJSON = $.parseJSON(responseHtml);
+
+                if ($.isPlainObject(responseJSON) && responseJSON.errors) {
+                    handleJsonErrors(responseJSON.errors);
+                }
 			}
 		});
-	};
-
-	// Perform "editfile" API request
-	var previewItem = function(resourceObject) {
-        return buildAjaxRequest('GET', {
-            mode: 'editfile',
-            path: resourceObject.id
-        }).done(function(response) {
-            handleAjaxResponseErrors(response);
-        }).fail(handleAjaxError);
 	};
 
 	// Save CodeMirror editor content to file
@@ -3985,27 +3982,30 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 fm.success(lg('successful_edit'));
             }
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
 	};
 
-    // Perform "getFolder" API request
-    var getFolder = function(targetPath) {
+    // Perform "readfile" API request
+    var previewItem = function(resourceObject) {
         return buildAjaxRequest('GET', {
-            mode: 'getfolder',
+            mode: 'readfile',
+            path: resourceObject.id
+        }, 'text').fail(handleAjaxError);
+    };
+
+    // Perform "readfolder" API request
+    var readFolder = function(targetPath) {
+        return buildAjaxRequest('GET', {
+            mode: 'readfolder',
             path: targetPath
-        }).done(function(response) {
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
 	};
 
-    // Perform "getfile" API request
+    // Perform "getinfo" API request
     var getItemInfo = function(targetPath) {
         return buildAjaxRequest('GET', {
-            mode: 'getfile',
+            mode: 'getinfo',
             path: targetPath
-        }).done(function(response) {
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
 	};
 
@@ -4035,7 +4035,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 fm.alert($summary[0].outerHTML);
             }
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
 	};
 
@@ -4082,7 +4081,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     fm.success(lg('successful_extracted'));
                 }
             }
-            handleAjaxResponseErrors(response);
         }).fail(handleAjaxError);
     };
 

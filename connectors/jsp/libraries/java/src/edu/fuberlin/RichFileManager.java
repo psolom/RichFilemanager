@@ -147,7 +147,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	
 	
 	@Override
-	public JSONObject getFolder(HttpServletRequest request) throws JSONException, IOException, FileManagerException {
+	public JSONObject readFolder(HttpServletRequest request) throws JSONException, IOException, FileManagerException {
 		JSONArray array = new JSONArray();
 
 		boolean showThumbs = false;
@@ -223,10 +223,6 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 
         // get file
         File file = getFile(path);
-
-        if(file.isDirectory() && !path.endsWith("/")){
-            throw new FMIOException("Error reading the file (file as directory not allowed): " + file.getAbsolutePath());
-        }
 
         BasicFileAttributes attr;
         try {

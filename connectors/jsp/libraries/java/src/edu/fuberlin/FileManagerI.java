@@ -38,7 +38,7 @@ import com.fabriceci.fmc.error.FileManagerException;
 
 	 JSONObject getInfo() throws JSONException, FileManagerException;
 
-	 JSONObject getFolder(HttpServletRequest request) throws JSONException, IOException, FileManagerException;
+	 JSONObject readFolder(HttpServletRequest request) throws JSONException, IOException, FileManagerException;
 
 	 JSONObject rename() throws JSONException, FileManagerException;
 

@@ -126,14 +126,14 @@ public abstract class AbstractFileManager implements IFileManager {
                     case "initiate":
                         responseData = actionInitiate(request);
                         break;
-                    case "getfile":
+                    case "getinfo":
                         if (!StringUtils.isEmpty(request.getParameter("path"))) {
-                            responseData = actionGetFile(request);
+                            responseData = actionGetInfo(request);
                         }
                         break;
-                    case "getfolder":
+                    case "readfolder":
                         if (!StringUtils.isEmpty(request.getParameter("path"))) {
-                            responseData = actionGetFolder(request);
+                            responseData = actionReadFolder(request);
                         }
                         break;
                     case "rename":
@@ -303,12 +303,12 @@ public abstract class AbstractFileManager implements IFileManager {
     }
 
     @Override
-    public JSONObject actionGetFile(HttpServletRequest request) throws FileManagerException {
+    public JSONObject actionGetInfo(HttpServletRequest request) throws FileManagerException {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public JSONObject actionGetFolder(HttpServletRequest request) throws FileManagerException {
+    public JSONObject actionReadFolder(HttpServletRequest request) throws FileManagerException {
         throw new UnsupportedOperationException();
     }
 

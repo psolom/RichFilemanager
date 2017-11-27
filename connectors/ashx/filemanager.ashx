@@ -378,7 +378,7 @@ public class filemanager : IHttpHandler
                 context.Response.ContentEncoding = Encoding.UTF8;
                 context.Response.Write(Initiate());
                 break;
-            case "getfolder":
+            case "readfolder":
                  context.Response.ContentType = "plain/text";
                  context.Response.ContentEncoding = Encoding.UTF8;
                  context.Response.Write(getInfo(context.Request["path"]));
