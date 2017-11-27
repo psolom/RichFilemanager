@@ -103,54 +103,19 @@ $config = [];
 //    ],
 //];
 
-//$app = new \RFM\Application();
-//
-//// uncomment to use events
-////$app->registerEventsListeners();
-//
-//$local = new \RFM\Repository\Local\Storage($config);
-//
-//// example to setup files root folder
-////$local->setRoot('userfiles', true);
-//
-//$app->setStorage($local);
-//
-//// set application API
-//$app->api = new RFM\Api\LocalApi();
-//
-//$app->run();
-
-
-
 $app = new \RFM\Application();
 
-$config['credentials'] = [
-    'region' => 'eu-central-1',
-    'bucket' => 'mc-userfiles',
-    'endpoint' => null,
-    'credentials' => [
-        'key' => 'AKIAIRHA4IIND75AVHDA',
-        'secret' => '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',
-    ],
-    'options' => [
-        'use_path_style_endpoint' => false,
-    ],
-    'defaultAcl' => \RFM\Repository\S3\StorageHelper::ACL_PUBLIC_READ,
-    'debug' => false,
-];
-$config['images']['thumbnail']['useLocalStorage'] = true;
-$config['images']['thumbnail']['dir'] = '_thumbs_s3';
-$config['encryption'] = "AES256";
+// uncomment to use events
+//$app->registerEventsListeners();
 
 $local = new \RFM\Repository\Local\Storage($config);
-$local->setRoot('userfiles', true);
+
+// example to setup files root folder
+//$local->setRoot('userfiles', true);
+
 $app->setStorage($local);
 
-$s3 = new \RFM\Repository\S3\Storage($config);
-$s3->setRoot('sss', true);
-
-$app->setStorage($s3);
-
-$app->api = new RFM\Api\AwsS3Api();
+// set application API
+$app->api = new RFM\Api\LocalApi();
 
 $app->run();
