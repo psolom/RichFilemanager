@@ -5,7 +5,6 @@
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
-        "searchBox": true,
         "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
         "quickSelect": false,
@@ -73,6 +72,12 @@
         "archive": ["zip", "tar", "rar"],
         "audio": ["ogg", "mp3", "wav"],
         "video": ["ogv", "avi", "mkv", "mp4", "webm", "m4v"]
+    },
+    "search": {
+        "enabled": true,
+        "recursive": false,
+        "caseSensitive": false,
+        "typingDelay": 500
     },
     "viewer": {
         "absolutePath": true,

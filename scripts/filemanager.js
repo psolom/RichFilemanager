@@ -69,6 +69,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		configSortOrder = null,		// items sort order 'asc'/'desc'
 		fmModel = null,				// filemanager knockoutJS model
 		langModel = null,			// language model
+		delayStack = null,			// language model
 
 		/** variables to keep request options data **/
 		fullexpandedFolder = null,	// path to be automatically expanded by filetree plugin
@@ -408,6 +409,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	var initialize = function () {
+        delayStack = new DelayStack();
+
 		// reads capabilities from config files if exists else apply default settings
 		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract'];
 
@@ -740,6 +743,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
     /**
 	 * Language model
+	 *
      * @constructor
      */
     var LangModel = function() {
@@ -772,8 +776,36 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         };
     };
 
+    /**
+	 * DelayStack
+	 * Delays execution of functions that is passed as argument
+	 *
+     * @constructor
+     */
+    var DelayStack = function() {
+    	var hash = {},
+    		delay_stack = this;
+
+        this.push = function(name, callback, ms) {
+            delay_stack.removeTimer(name);
+            hash[name] = setTimeout(callback, ms);
+        };
+
+        this.getTimer = function(name) {
+            return hash[name];
+        };
+
+        this.removeTimer = function(name) {
+        	if (hash[name]) {
+                clearTimeout(hash[name]);
+                delete hash[name];
+			}
+        };
+    };
+
 	/**
 	 * Knockout general model
+	 *
 	 * @constructor
 	 */
 	var FmModel = function() {
@@ -1204,6 +1236,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     .setHandler(function (resourceObjects, targetPath) {
                         tree_model.addNodes(resourceObjects, targetPath, refresh);
                         model.itemsModel.addItems(resourceObjects, targetPath, refresh);
+                        model.searchModel.reset();
                     })
                     .load();
 			};
@@ -1592,6 +1625,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     .setLoader(items_model.dataLoader())
                     .setHandler(function (resourceObjects, targetPath) {
                         items_model.addItems(resourceObjects, targetPath, true);
+                        model.searchModel.reset();
                     })
                     .load();
 			};
@@ -2138,6 +2172,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 var extensions = filter_model.getExtensions(),
                 	visibility = !itemObject.cdo.hiddenBySearch;
 
+            	// set default visibility, required for "all files" filter
+                itemObject.cdo.hiddenByType = false;
+
                 if (itemObject.rdo.type === "file" && $.isArray(extensions)) {
                     var ext = getExtension(itemObject.id),
                         matchByType = extensions.indexOf(ext) !== -1;
@@ -2149,7 +2186,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             this.filter = function(filterName) {
-                model.searchModel.reset();
                 filter_model.setName(filterName);
 
 				$.each(model.itemsModel.objects(), function(i, itemObject) {
@@ -2176,40 +2212,91 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.value = ko.observable('');
 
             this.findAll = function(data, event) {
-                var delay = 200,
-                    insensitive = true;
+                var searchString = event.target.value;
 
-                search_model.value(event.target.value);
+                if (searchString === '') {
+                    delayStack.removeTimer('search');
+                    restoreItems();
+                    return;
+                }
 
-                delayCallback(function(){
-                    var searchString = insensitive ? search_model.value().toLowerCase() : search_model.value();
+                search_model.value(searchString);
 
-                    $.each(model.itemsModel.objects(), function(i, itemObject) {
-                        if (itemObject.rdo.type === 'parent' || itemObject.cdo.hiddenByType) {
+                // create delayed timer
+                delayStack.push('search', function() {
+                    var subject = config.search.caseSensitive ? searchString : searchString.toLowerCase();
+
+                    if (config.search.recursive) {
+                        // recursive search with server-side request
+                        buildAjaxRequest('GET', {
+                            mode: 'search',
+                            path: model.currentPath(),
+                            string: searchString
+                        }).done(function (response) {
+                            if (response.data) {
+                                var resourceObjects = [];
+
+                                if (config.search.caseSensitive) {
+                                    $.each(response.data, function (i, resourceObject) {
+                                        if (resourceObject.attributes.name.indexOf(subject) === 0) {
+                                            resourceObjects.push(resourceObject);
+										}
+                                    });
+								} else {
+                                    resourceObjects = response.data;
+								}
+
+                                var items = model.itemsModel.createItems(resourceObjects);
+                                model.itemsModel.setList(items);
+                            }
+                        }).fail(handleAjaxError);
+                    } else {
+                        // client-side search in the currently open folder
+                        $.each(model.itemsModel.objects(), function (i, itemObject) {
+                            if (itemObject.rdo.type === 'parent') {
+                                return;
+                            }
+                            var filename = itemObject.rdo.attributes.name;
+                            if (!config.search.caseSensitive) {
+                                filename = filename.toLowerCase();
+                            }
+
+							var matchByName = (filename.indexOf(subject) === 0);
+                            var visibility = !itemObject.cdo.hiddenByType;
+                            visibility = visibility && matchByName;
+
+                            itemObject.cdo.hiddenBySearch = !matchByName;
+                            itemObject.visible(visibility);
+                        });
+                    }
+                }, config.search.typingDelay);
+            };
+
+            this.reset = function (data, event) {
+                // skip reset if no search string
+                if (search_model.value() === '') {
+                    return;
+                }
+                restoreItems();
+            };
+
+            function restoreItems() {
+                // reset search string
+                search_model.value('');
+
+                // restore original content of the current folder
+                if (config.search.recursive) {
+                    model.itemsModel.loadDataList(model.currentPath());
+                } else {
+                    $.each(model.itemsModel.objects(), function (i, itemObject) {
+                        if (itemObject.rdo.type === 'parent') {
                             return;
                         }
-                        var itemName = itemObject.rdo.attributes.name;
-                        if (insensitive) {
-                            itemName = itemName.toLowerCase();
-                        }
-
-						var visibility = (itemName.indexOf(searchString) === 0);
-                        itemObject.cdo.hiddenBySearch = !visibility;
-						itemObject.visible(visibility);
+                        itemObject.cdo.hiddenBySearch = false;
+                        itemObject.visible(!itemObject.cdo.hiddenByType);
                     });
-                }, delay);
-            };
-
-            this.reset = function(data, event) {
-                search_model.value('');
-                $.each(model.itemsModel.objects(), function(i, itemObject) {
-                    if (itemObject.rdo.type === 'parent') {
-                        return;
-                    }
-                    itemObject.cdo.hiddenBySearch = false;
-                    itemObject.visible(!itemObject.cdo.hiddenByType);
-                });
-            };
+                }
+            }
         };
 
 		var ClipboardModel = function() {
@@ -2240,6 +2327,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			};
 
 			this.paste = function() {
+                var	targetPath = model.currentPath();
+
                 if (!clipboard_model.hasCapability('paste') || clipboard_model.isEmpty()) {
                     return;
                 }
@@ -2247,8 +2336,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     fm.warning(lg('clipboard_empty'));
                     return;
                 }
-
-                var	targetPath = model.currentPath();
 
                 processMultipleActions(cbObjects, function (i, itemObject) {
                     if (cbMode === 'cut') {
@@ -2299,27 +2386,34 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.items = ko.observableArray([]);
 
+            this.clean = function() {
+                bc_model.items([]);
+                // push root node
+                bc_model.add(fileRoot, '');
+            };
+
             this.add = function(path, label) {
                 bc_model.items.push(new BcItem(path, label));
-			};
+            };
 
-            this.splitCurrent = function() {
-            	var	path = fileRoot,
-					cPath = model.currentPath(),
-					chunks = cPath.replace(new RegExp('^' + fileRoot), '').split('/');
+            this.splitPath = function(targetPath) {
+                var	path = fileRoot,
+                    chunks = targetPath.replace(new RegExp('^' + fileRoot), '').split('/');
 
-            	// reset breadcrumbs
-            	bc_model.items([]);
-				// push root node
-                bc_model.add(fileRoot, '');
+                // reset breadcrumbs
+                bc_model.clean();
 
                 while (chunks.length > 0) {
-            		var chunk = chunks.shift();
-            		if (chunk) {
-            			path += chunk + '/';
+                    var chunk = chunks.shift();
+                    if (chunk) {
+                        path += chunk + '/';
                         bc_model.add(path, chunk);
-					}
-				}
+                    }
+                }
+            };
+
+            this.splitCurrent = function() {
+                bc_model.splitPath(model.currentPath());
             };
 
             var BcItem = function(path, label) {
@@ -3447,15 +3541,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			return $section;
 		}
 	};
-
-	// Delays execution of function that is passed as argument
-	var delayCallback = (function () {
-		var timer = 0;
-		return function(callback, ms) {
-			clearTimeout(timer);
-			timer = setTimeout(callback, ms);
-		};
-	})();
 
 	// Handle multiple actions in loop with deferred object
 	var processMultipleActions = function(items, callbackFunction, finishCallback) {
