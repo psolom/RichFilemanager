@@ -1,3 +1,11 @@
+Version 2.6.5
+---------------------------
+- tightened dependencies between "richfilemanager-php" and main packages #268
+- JAVA connector: replaced "title" with "message" in error response format #231
+- bugfix: broken modal window in CKEditor integration when open "table" tool #263
+- Vietnamese language: updated translations #267
+- Czech language: updated translations
+
 Version 2.6.4
 ---------------------------
 - reworked folder loader for filetree and right panel #255
