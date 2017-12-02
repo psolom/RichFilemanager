@@ -19,6 +19,18 @@ function fm_event_api_after_folder_read($event)
 }
 
 /**
+ * Event listener on after "seekfolder" API method successfully executed.
+ *
+ * @param \RFM\Event\Api\AfterFolderSeekEvent $event
+ */
+function fm_event_api_after_folder_seek($event)
+{
+    $data = $event->getFolderData();
+    $list = $event->getSearchResult();
+    $string = $event->getSearchString();
+}
+
+/**
  * Event listener on after "addfolder" API method successfully executed.
  *
  * @param \RFM\Event\Api\AfterFolderCreateEvent $event
