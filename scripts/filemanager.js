@@ -2229,7 +2229,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     if (config.search.recursive) {
                         // recursive search with server-side request
                         buildAjaxRequest('GET', {
-                            mode: 'search',
+                            mode: 'seekfolder',
                             path: model.currentPath(),
                             string: searchString
                         }).done(function (response) {
