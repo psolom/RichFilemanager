@@ -832,10 +832,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
         });
 
-        this.initFolderLoader = function (options) {
-            return new FolderLoader(options);
-        };
-
         this.addElements = function (resourceObjects, targetPath, reset) {
             // handle tree nodes
             model.treeModel.addNodes(resourceObjects, targetPath, reset);
@@ -905,6 +901,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         /**
          * PanelLoader Interface
+		 *
          * @constructor
          */
         var PanelLoader = function() {
@@ -912,6 +909,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.afterLoad = function(path, response) {};
 		};
 
+        /**
+		 * Preview model
+		 *
+         * @constructor
+         */
 		var PreviewModel = function() {
 			var preview_model = this,
 				clipboard = null;
@@ -1229,29 +1231,32 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.loadDataNode = function(targetNode, refresh) {
                 var targetPath = targetNode ? targetNode.id : tree_model.treeData.id;
+                var folderLoader = new FolderAjaxLoader(targetPath);
 
-                model.initFolderLoader(targetPath)
-                    .setLoader(model.itemsModel.dataLoader())
-                    .setLoader(tree_model.dataLoader(targetNode))
-                    .setHandler(function (resourceObjects, targetPath) {
+                folderLoader
+                    .setPreloader(model.itemsModel.getPreloader())
+                    .setPreloader(tree_model.getPreloader(targetNode))
+                    .setDataHandler(function (resourceObjects, targetPath) {
                         tree_model.addNodes(resourceObjects, targetPath, refresh);
                         model.itemsModel.addItems(resourceObjects, targetPath, refresh);
                         model.searchModel.reset();
                     })
-                    .load();
+                    .load(function() {
+                        return readFolder(targetPath);
+                    });
 			};
 
-            this.dataLoader = function(targetNode) {
-                var loader = function() {};
-                loader.prototype = Object.create(PanelLoader);
+            this.getPreloader = function(targetNode) {
+                var preloader = function() {};
+                preloader.prototype = Object.create(PanelLoader);
 
-                loader.prototype.beforeLoad = function(path) {
+                preloader.prototype.beforeLoad = function(path) {
                     if(targetNode) {
                         targetNode.isLoaded(false);
                     }
                 };
 
-                loader.prototype.afterLoad = function(path, response) {
+                preloader.prototype.afterLoad = function(path, response) {
                     // not root
                     if(targetNode) {
                         targetNode.isLoaded(true);
@@ -1260,7 +1265,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     expandFolderDefault(targetNode);
                 };
 
-                return new loader();
+                return new preloader();
 			};
 
 			this.createNode = function(resourceObject) {
@@ -1621,13 +1626,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
 			this.loadDataList = function(targetPath) {
-                model.initFolderLoader(targetPath)
-                    .setLoader(items_model.dataLoader())
-                    .setHandler(function (resourceObjects, targetPath) {
+                var folderLoader = new FolderAjaxLoader(targetPath);
+
+                folderLoader
+                    .setPreloader(items_model.getPreloader())
+                    .setDataHandler(function (resourceObjects, targetPath) {
                         items_model.addItems(resourceObjects, targetPath, true);
                         model.searchModel.reset();
                     })
-                    .load();
+                    .load(function() {
+                        return readFolder(targetPath);
+                    });
 			};
 
 			this.setList = function(items) {
@@ -1755,15 +1764,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 });
             };
 
-            this.dataLoader = function() {
-                var loader = function() {};
-                loader.prototype = Object.create(PanelLoader);
+            this.getPreloader = function() {
+                var preloader = function() {};
+                preloader.prototype = Object.create(PanelLoader);
 
-                loader.prototype.beforeLoad = function(path) {
+                preloader.prototype.beforeLoad = function(path) {
                     model.loadingView(true);
                 };
 
-                loader.prototype.afterLoad = function(path, response) {
+                preloader.prototype.afterLoad = function(path, response) {
                     model.loadingView(false);
 
                     if (items_model.lazyLoad) {
@@ -1771,7 +1780,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 };
 
-                return new loader();
+                return new preloader();
             };
 
 			this.objects.subscribe(function(items) {
@@ -1950,42 +1959,42 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
         };
 
-        var FolderLoader = function(path) {
+        var FolderAjaxLoader = function(path) {
 			var folder_loader = this,
 				handler = null,
                 /** @type {PanelLoader[]} */
-				loaders = [];
+				preloaders = [];
 
             /**
-             * @param {PanelLoader} loader
-             * @returns {FolderLoader}
+             * @param {PanelLoader} preloader
+             * @returns {FolderAjaxLoader}
              */
-            this.setLoader = function(loader) {
-                loaders.push(loader);
+            this.setPreloader = function(preloader) {
+                preloaders.push(preloader);
                 return folder_loader;
             };
 
             /**
 			 *
              * @param {function} callback
-             * @returns {FolderLoader}
+             * @returns {FolderAjaxLoader}
              */
-            this.setHandler = function(callback) {
+            this.setDataHandler = function(callback) {
                 handler = callback;
                 return folder_loader;
             };
 
-            this.load = function() {
-                loaders.forEach(function (loader, index, array) {
-                    loader.beforeLoad(path);
+            this.load = function(folderLoader) {
+                preloaders.forEach(function (preloader, index, array) {
+                    preloader.beforeLoad(path);
 				});
 
-                readFolder(path).then(function(response) {
+                folderLoader().then(function(response) {
                     if(response.data) {
                         handler(response.data, path);
 
-                        $.each(loaders, function(i, loader) {
-                            loader.afterLoad(path, response);
+                        $.each(preloaders, function(i, preloader) {
+                            preloader.afterLoad(path, response);
                         });
                     }
                 });
@@ -2228,29 +2237,31 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                     if (config.search.recursive) {
                         // recursive search with server-side request
-                        buildAjaxRequest('GET', {
-                            mode: 'seekfolder',
-                            path: model.currentPath(),
-                            string: searchString
-                        }).done(function (response) {
-                            if (response.data) {
+                        var targetPath = model.currentPath();
+                        var folderLoader = new FolderAjaxLoader(targetPath);
+
+                        folderLoader
+                            .setPreloader(model.itemsModel.getPreloader())
+                            .setDataHandler(function (dataObject, targetPath) {
                                 var resourceObjects = [];
 
                                 if (config.search.caseSensitive) {
-                                    $.each(response.data, function (i, resourceObject) {
+                                    $.each(dataObject, function (i, resourceObject) {
                                         if (resourceObject.attributes.name.indexOf(subject) === 0) {
                                             resourceObjects.push(resourceObject);
-										}
+                                        }
                                     });
-								} else {
-                                    resourceObjects = response.data;
-								}
+                                } else {
+                                    resourceObjects = dataObject;
+                                }
 
                                 var items = model.itemsModel.createItems(resourceObjects);
                                 model.itemsModel.setList(items);
-                            }
-                        }).fail(handleAjaxError);
-                    } else {
+                            })
+                            .load(function() {
+                                return seekFolder(targetPath, searchString);
+                            });
+                     } else {
                         // client-side search in the currently open folder
                         $.each(model.itemsModel.objects(), function (i, itemObject) {
                             if (itemObject.rdo.type === 'parent') {
@@ -4083,6 +4094,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         return buildAjaxRequest('GET', {
             mode: 'readfolder',
             path: targetPath
+        }).fail(handleAjaxError);
+	};
+
+    // Perform "seekfolder" API request
+    var seekFolder = function(targetPath, searchString) {
+        return buildAjaxRequest('GET', {
+            mode: 'seekfolder',
+            path: targetPath,
+            string: searchString
         }).fail(handleAjaxError);
 	};
 
