@@ -635,7 +635,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         prepareFileTree();
         setupUploader();
-        fmModel.treeModel.loadDataNode(null, false);
+        fmModel.treeModel.loadDataNode(null, true);
 
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
