@@ -32,7 +32,7 @@
 	<div class="fm-wrapper">
 		<div class="fm-header">
 			<div class="breadcrumbs">
-				<div class="nav-title" data-bind="text: lg.current_folder"></div>
+				<div class="nav-title" data-bind="text: breadcrumbsModel.getLabel"></div>
 				<div data-bind="foreach: {data: breadcrumbsModel.items, as: 'bcItem'}">
 					<div data-bind="text: bcItem.label, click: bcItem.goto, css: bcItem.itemClass()"></div>
 					<!-- ko if: !bcItem.active -->
@@ -350,9 +350,14 @@
 
 		<div class="fm-footer">
 			<div class="left">
-				<div class="search-box" data-bind="visible: config().options.searchBox">
-					<input type="text" data-bind="value: searchModel.value(), event: {keyup: searchModel.findAll}" />
-					<div class="search-box-reset" data-bind="event: {click: searchModel.reset}"></div>
+				<div class="search-box input-group" data-bind="visible: config().search.enabled">
+                    <span class="input-group-addon clickable" data-bind="event: {click: searchModel.seekItems}">
+                        <span class="icon search-icon"></span>
+                    </span>
+					<input class="input-group-input" type="text" data-bind="value: searchModel.value, event: {keyup: searchModel.inputKey}" />
+                    <span class="input-group-addon clickable" data-bind="event: {click: searchModel.reset}">
+                        <span class="icon reset-icon"></span>
+                    </span>
 				</div>
 			</div>
 
