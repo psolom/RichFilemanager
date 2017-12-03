@@ -1239,7 +1239,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     .setDataHandler(function (resourceObjects, targetPath) {
                         tree_model.addNodes(resourceObjects, targetPath, refresh);
                         model.itemsModel.addItems(resourceObjects, targetPath, refresh);
-                        model.searchModel.reset();
+                        model.searchModel.value('');
                     })
                     .load(function() {
                         return readFolder(targetPath);
@@ -1632,7 +1632,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     .setPreloader(items_model.getPreloader())
                     .setDataHandler(function (resourceObjects, targetPath) {
                         items_model.addItems(resourceObjects, targetPath, true);
-                        model.searchModel.reset();
+                        model.searchModel.value('');
                     })
                     .load(function() {
                         return readFolder(targetPath);
@@ -2220,76 +2220,76 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             var search_model = this;
             this.value = ko.observable('');
 
-            this.findAll = function(data, event) {
-                var searchString = event.target.value;
-
-                if (searchString === '') {
-                    delayStack.removeTimer('search');
-                    restoreItems();
-                    return;
+            this.inputKey = function(data, e) {
+                // search on Enter key pressed
+                if (e.which === 13 || e.keyCode === 13) {
+                    searchItems();
                 }
+            };
 
-                search_model.value(searchString);
-
-                // create delayed timer
-                delayStack.push('search', function() {
-                    var subject = config.search.caseSensitive ? searchString : searchString.toLowerCase();
-
-                    if (config.search.recursive) {
-                        // recursive search with server-side request
-                        var targetPath = model.currentPath();
-                        var folderLoader = new FolderAjaxLoader(targetPath);
-
-                        folderLoader
-                            .setPreloader(model.itemsModel.getPreloader())
-                            .setDataHandler(function (dataObject, targetPath) {
-                                var resourceObjects = [];
-
-                                if (config.search.caseSensitive) {
-                                    $.each(dataObject, function (i, resourceObject) {
-                                        if (resourceObject.attributes.name.indexOf(subject) === 0) {
-                                            resourceObjects.push(resourceObject);
-                                        }
-                                    });
-                                } else {
-                                    resourceObjects = dataObject;
-                                }
-
-                                var items = model.itemsModel.createItems(resourceObjects);
-                                model.itemsModel.setList(items);
-                            })
-                            .load(function() {
-                                return seekFolder(targetPath, searchString);
-                            });
-                     } else {
-                        // client-side search in the currently open folder
-                        $.each(model.itemsModel.objects(), function (i, itemObject) {
-                            if (itemObject.rdo.type === 'parent') {
-                                return;
-                            }
-                            var filename = itemObject.rdo.attributes.name;
-                            if (!config.search.caseSensitive) {
-                                filename = filename.toLowerCase();
-                            }
-
-							var matchByName = (filename.indexOf(subject) === 0);
-                            var visibility = !itemObject.cdo.hiddenByType;
-                            visibility = visibility && matchByName;
-
-                            itemObject.cdo.hiddenBySearch = !matchByName;
-                            itemObject.visible(visibility);
-                        });
-                    }
-                }, config.search.typingDelay);
+            this.seekItems = function(data, e) {
+                searchItems();
             };
 
             this.reset = function (data, event) {
-                // skip reset if no search string
-                if (search_model.value() === '') {
-                    return;
-                }
                 restoreItems();
             };
+
+            function searchItems() {
+            	var searchString = search_model.value(),
+                	subject = config.search.caseSensitive ? searchString : searchString.toLowerCase();
+
+                if (searchString === '') {
+                    fm.warning(lg('search_string_empty'));
+                    return;
+                }
+
+                if (config.search.recursive) {
+                    // recursive search with server-side request
+                    var targetPath = model.currentPath();
+                    var folderLoader = new FolderAjaxLoader(targetPath);
+
+                    folderLoader
+                        .setPreloader(model.itemsModel.getPreloader())
+                        .setDataHandler(function (dataObject, targetPath) {
+                            var resourceObjects = [];
+
+                            if (config.search.caseSensitive) {
+                                $.each(dataObject, function (i, resourceObject) {
+                                    if (resourceObject.attributes.name.indexOf(subject) === 0) {
+                                        resourceObjects.push(resourceObject);
+                                    }
+                                });
+                            } else {
+                                resourceObjects = dataObject;
+                            }
+
+                            var items = model.itemsModel.createItems(resourceObjects);
+                            model.itemsModel.setList(items);
+                        })
+                        .load(function () {
+                            return seekFolder(targetPath, searchString);
+                        });
+                } else {
+                    // client-side search in the currently open folder
+                    $.each(model.itemsModel.objects(), function (i, itemObject) {
+                        if (itemObject.rdo.type === 'parent') {
+                            return;
+                        }
+                        var filename = itemObject.rdo.attributes.name;
+                        if (!config.search.caseSensitive) {
+                            filename = filename.toLowerCase();
+                        }
+
+                        var matchByName = (filename.indexOf(subject) === 0);
+                        var visibility = !itemObject.cdo.hiddenByType;
+                        visibility = visibility && matchByName;
+
+                        itemObject.cdo.hiddenBySearch = !matchByName;
+                        itemObject.visible(visibility);
+                    });
+                }
+            }
 
             function restoreItems() {
                 // reset search string
@@ -2426,6 +2426,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.splitCurrent = function() {
                 bc_model.splitPath(model.currentPath());
             };
+
+            this.getLabel = ko.pureComputed(function() {
+                var label = model.searchModel.value() ? lg('search_results') : lg('current_folder');
+                return label + ': ';
+            }, this);
 
             var BcItem = function(path, label) {
                 var bc_item = this;
