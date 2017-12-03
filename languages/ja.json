@@ -110,6 +110,7 @@
     "search": "検索",
     "search_reset": "リセット",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "サイズ",
     "successful_added_file": "新規ファイルを追加しました。",
     "successful_added_folder": "新規フォルダーを追加しました。",

@@ -110,6 +110,7 @@
     "search": "Search",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Méret",
     "successful_added_file": "Az új fájl sikeresen létre lett hozva.",
     "successful_added_folder": "Az új mappa sikeresen létre lett hozva.",

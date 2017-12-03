@@ -110,6 +110,7 @@
     "search": "Szukaj",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Rozmiar",
     "successful_added_file": "Dodano nowy plik.",
     "successful_added_folder": "Dodano nowy folder.",

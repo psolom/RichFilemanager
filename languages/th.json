@@ -110,6 +110,7 @@
     "search": "ค้นหา",
     "search_reset": "รีเซ็ท",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "ขนาด",
     "successful_added_file": "ไฟล์ใหม่ถูกเพิ่มเรียบร้อยแล้ว",
     "successful_added_folder": "โฟล์เดอร์ใหม่ถูกเพิ่มเรียบร้อยแล้ว",

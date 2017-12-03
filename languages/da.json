@@ -110,6 +110,7 @@
     "search": "Search",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Størrelse",
     "successful_added_file": "Den nye fil blev tilføjet.",
     "successful_added_folder": "Den nye mappe blev oprettet.",

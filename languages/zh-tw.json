@@ -110,6 +110,7 @@
     "search": "Search",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "大小",
     "successful_added_file": "檔案建立成功。",
     "successful_added_folder": "目錄建立成功。",

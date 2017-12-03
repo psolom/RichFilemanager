@@ -110,6 +110,7 @@
     "search": "Tìm kiếm",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Kích cỡ",
     "successful_added_file": "Đã thêm file.",
     "successful_added_folder": "Đã thêm thư mục.",

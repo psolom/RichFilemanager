@@ -110,6 +110,7 @@
     "search": "Αναζήτηση",
     "search_reset": "Καθαρισμός ",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Μέγεθος",
     "successful_added_file": "Το νέο αρχείο προστέθηκε με επιτυχία.",
     "successful_added_folder": "Επιτυχής δημιουργία νέου φακέλου.",

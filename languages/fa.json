@@ -110,6 +110,7 @@
     "search": "جستجو",
     "search_reset": "ریست",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "اندازه",
     "successful_added_file": "فایل/فایلهای جدید با موفقیت افزوده شدند.",
     "successful_added_folder": "پوشه ی جدید با موفقیت افزوده شد.",

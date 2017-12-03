@@ -110,6 +110,7 @@
     "search": "Search",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Boyut",
     "successful_added_file": "Dosya başarıyla eklendi.",
     "successful_added_folder": "Klasör başarıyla eklendi.",

@@ -110,6 +110,7 @@
     "search": "Search",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Storlek",
     "successful_added_file": "En ny fil har lagts till.",
     "successful_added_folder": "En ny mapp skapades.",

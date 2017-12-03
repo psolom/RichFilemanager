@@ -110,6 +110,7 @@
     "search": "Buscar",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Tamany",
     "successful_added_file": "Arxiu afegit.",
     "successful_added_folder": "Carpeta creada.",

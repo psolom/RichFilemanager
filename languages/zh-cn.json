@@ -110,6 +110,7 @@
     "search": "搜索",
     "search_reset": "重置",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "大小",
     "successful_added_file": "新文件添加成功。",
     "successful_added_folder": "新建文件夹添加成功。",

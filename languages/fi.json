@@ -110,6 +110,7 @@
     "search": "Search",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Koko",
     "successful_added_file": "Uusi tiedosto lisätty onnistuneesti.",
     "successful_added_folder": "Uusi hakemisto lisätty onnistuneesti.",

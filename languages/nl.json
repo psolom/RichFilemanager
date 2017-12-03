@@ -110,6 +110,7 @@
     "search": "Zoeken",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Grootte",
     "successful_added_file": "Het nieuwe bestand is toegevoegd.",
     "successful_added_folder": "De nieuwe map is toegevoegd.",

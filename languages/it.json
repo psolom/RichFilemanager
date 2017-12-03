@@ -110,6 +110,7 @@
     "search": "Cerca",
     "search_reset": "Reset",
     "search_results": "Search results",
+    "search_string_empty": "Search string is empty",
     "size": "Peso",
     "successful_added_file": "Nuovo file aggiunto.",
     "successful_added_folder": "Nuova cartella aggiunta.",
