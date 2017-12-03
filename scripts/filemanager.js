@@ -1239,7 +1239,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     .setDataHandler(function (resourceObjects, targetPath) {
                         tree_model.addNodes(resourceObjects, targetPath, refresh);
                         model.itemsModel.addItems(resourceObjects, targetPath, refresh);
-                        model.searchModel.value('');
+                        model.searchModel.clearInput();
                     })
                     .load(function() {
                         return readFolder(targetPath);
@@ -1632,7 +1632,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     .setPreloader(items_model.getPreloader())
                     .setDataHandler(function (resourceObjects, targetPath) {
                         items_model.addItems(resourceObjects, targetPath, true);
-                        model.searchModel.value('');
+                        model.searchModel.clearInput();
                     })
                     .load(function() {
                         return readFolder(targetPath);
@@ -2217,8 +2217,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         };
 
         var SearchModel = function() {
-            var search_model = this;
+            var search_model = this,
+                previousValue = '';
             this.value = ko.observable('');
+
+            this.value.subscribe(function(oldValue) {
+                previousValue = oldValue;
+            }, null, "beforeChange");
 
             this.inputKey = function(data, e) {
                 // search on Enter key pressed
@@ -2231,8 +2236,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 searchItems();
             };
 
-            this.reset = function (data, event) {
+            this.reset = function (data, e) {
                 restoreItems();
+            };
+
+            this.clearInput = function () {
+                // reset search string
+                search_model.value('');
+                previousValue = search_model.value();
             };
 
             function searchItems() {
@@ -2240,7 +2251,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 	subject = config.search.caseSensitive ? searchString : searchString.toLowerCase();
 
                 if (searchString === '') {
-                    fm.warning(lg('search_string_empty'));
+                    if (searchString !== previousValue) {
+                        restoreItems();
+					} else {
+                        fm.warning(lg('search_string_empty'));
+					}
                     return;
                 }
 
@@ -2292,8 +2307,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
 
             function restoreItems() {
-                // reset search string
-                search_model.value('');
+                search_model.clearInput();
 
                 // restore original content of the current folder
                 if (config.search.recursive) {
