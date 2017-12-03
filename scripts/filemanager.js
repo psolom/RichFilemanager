@@ -2226,14 +2226,19 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }, null, "beforeChange");
 
             this.inputKey = function(data, e) {
-                // search on Enter key pressed
-                if (e.which === 13 || e.keyCode === 13) {
-                    searchItems();
+                if (config.search.typingDelay) {
+                    // explicit assign value, required for search-on-typing
+                    search_model.value(e.target.value);
+				}
+
+                // search on Enter key pressed or any key for search-on-typing
+                if (config.search.typingDelay || (e.which === 13 || e.keyCode === 13)) {
+                	performSearch();
                 }
             };
 
             this.seekItems = function(data, e) {
-                searchItems();
+                performSearch();
             };
 
             this.reset = function (data, e) {
@@ -2244,7 +2249,19 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 // reset search string
                 search_model.value('');
                 previousValue = search_model.value();
+                delayStack.removeTimer('search');
             };
+
+            function performSearch() {
+            	if (config.search.typingDelay) {
+                    // create delayed timer
+                    delayStack.push('search', function() {
+                    	searchItems();
+                    }, config.search.typingDelay);
+				} else {
+                    searchItems();
+				}
+			}
 
             function searchItems() {
             	var searchString = search_model.value(),
