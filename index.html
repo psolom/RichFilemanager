@@ -137,17 +137,19 @@
 					<!-- /ko -->
 
 					<div class="view-items">
-						<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
-							<!-- ko if: koItem.rdo.type === "parent" -->
-							<li class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, css: koItem.itemClass()" oncontextmenu="return false;">
+						<ul class="grid" data-bind="visible: viewMode() === 'grid'">
+							<!-- ko with: itemsModel.parentItem -->
+							<!-- ko if: $data -->
+							<li class="directory-parent" data-bind="event: {click: open, dblclick: open}, droppableView: $data, css: itemClass()" oncontextmenu="return false;">
 								<div class="clip">
 									<img src="" class="grid-icon ico_folder_parent" data-bind="attr: {src: null, width: $root.config().viewer.image.thumbMaxWidth}" />
 								</div>
 								<p>..</p>
 							</li>
 							<!-- /ko -->
+							<!-- /ko -->
 
-							<!-- ko if: koItem.rdo.type !== "parent" -->
+							<!-- ko foreach: {data: itemsModel.objects, as: 'koItem'} -->
 							<li data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
 								<div class="item-background"></div>
 								<div class="item-content" data-bind="draggableView: koItem">
@@ -175,9 +177,11 @@
 								<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg.modified"></span></th>
 							</tr>
 							</thead>
-							<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
-							<!-- ko if: koItem.rdo.type === "parent" -->
-							<tr class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, css: koItem.itemClass()" oncontextmenu="return false;">
+
+							<tbody>
+							<!-- ko with: itemsModel.parentItem -->
+							<!-- ko if: $data -->
+							<tr class="directory-parent" data-bind="event: {click: open, dblclick: open}, droppableView: $data, css: itemClass()" oncontextmenu="return false;">
 								<td>
 									<div class="list-item">..</div>
 								</td>
@@ -187,8 +191,9 @@
 								<td></td>
 							</tr>
 							<!-- /ko -->
+							<!-- /ko -->
 
-							<!-- ko if: koItem.rdo.type !== "parent" -->
+							<!-- ko foreach: {data: itemsModel.objects, as: 'koItem'} -->
 							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
 								<td>
 									<div class="list-item" data-bind="draggableView: koItem">
