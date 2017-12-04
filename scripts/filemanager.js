@@ -2220,21 +2220,31 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         var SearchModel = function() {
             var search_model = this,
-                previousValue = '';
+                previousValue = '',
+                searchOnTyping = !!config.search.typingDelay;
+
             this.value = ko.observable('');
 
             this.value.subscribe(function(oldValue) {
                 previousValue = oldValue;
             }, null, 'beforeChange');
 
-            this.inputKey = function(data, e) {
-                if (config.search.typingDelay) {
+            this.inputKeyUp = function(data, e) {
+                var keyCode = e.which || e.keyCode,
+                    // https://stackoverflow.com/a/19347349/7095038
+                    invalidKeyCodes = [16,17,18,27,37,38,39,40];
+
+                if (searchOnTyping) {
+                    // validate input
+                    if (invalidKeyCodes.indexOf(keyCode) > -1) {
+                        return;
+                    }
                     // explicit assign value, required for search-on-typing
                     search_model.value(e.target.value);
 				}
 
-                // search on Enter key pressed or any key for search-on-typing
-                if (config.search.typingDelay || (e.which === 13 || e.keyCode === 13)) {
+                // search-on-typing or Enter key pressed
+                if (searchOnTyping || keyCode === 13) {
                 	performSearch();
                 }
             };
@@ -2255,7 +2265,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             function performSearch() {
-            	if (config.search.typingDelay) {
+            	if (searchOnTyping) {
                     // create delayed timer
                     delayStack.push('search', function() {
                     	searchItems();
