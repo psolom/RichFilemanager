@@ -3878,7 +3878,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
 
                     /** handle view objects **/
-					if (fmModel.itemsModel.parentItem().id === oldPath) {
+                    var parentItem = fmModel.itemsModel.parentItem();
+					if (parentItem && parentItem.id === oldPath) {
 						// adjust parent item to keep correct reference
                         fmModel.itemsModel.parentItem().id = dataObject.id;
 					} else {
