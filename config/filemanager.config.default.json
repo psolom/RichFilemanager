@@ -19,7 +19,8 @@
             "copy",
             "move",
             "delete",
-            "extract"
+            "extract",
+            "createFolder"
         ]
     },
     "language": {

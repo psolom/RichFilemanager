@@ -412,7 +412,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         delayStack = new DelayStack();
 
 		// reads capabilities from config files if exists else apply default settings
-		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract'];
+		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract', 'createFolder'];
 
 		// defines sort params
 		var chunks = [];
@@ -591,9 +591,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 };
 
-                if (!fmModel.clipboardModel.enabled() || config.options.browseOnly === true ) {
+                if (!fmModel.clipboardModel.enabled() || config.options.browseOnly === true) {
                     delete contextMenuItems.paste;
                 }
+                if (!hasCapability('createFolder') || config.options.browseOnly === true) {
+                    delete contextMenuItems.createFolder;
+                }
+				// prevent the creation of context menu
+                if ($.isEmptyObject(contextMenuItems)) {
+                    return false;
+				}
 
                 return {
                     appendTo: '.fm-container',
@@ -832,6 +839,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
         });
 
+        this.isCapable = function(capability) {
+            return hasCapability(capability);
+        };
+
         this.addElements = function (resourceObjects, targetPath, reset) {
             // handle tree nodes
             model.treeModel.addNodes(resourceObjects, targetPath, reset);
@@ -1068,7 +1079,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			// fires specific action by clicking toolbar buttons in detail view
 			this.bindToolbar = function(action) {
-				if (has_capability(preview_model.rdo(), action)) {
+				if (isObjectCapable(preview_model.rdo(), action)) {
 					performAction(action, {}, preview_model.rdo());
 				}
 			};
@@ -1116,12 +1127,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.buttonVisibility = function(action) {
 				switch(action) {
 					case 'select':
-						return (has_capability(preview_model.rdo(), action) && hasContext());
+						return (isObjectCapable(preview_model.rdo(), action) && hasContext());
 					case 'move':
 					case 'rename':
 					case 'delete':
 					case 'download':
-						return (has_capability(preview_model.rdo(), action));
+						return (isObjectCapable(preview_model.rdo(), action));
 				}
 			};
 		};
@@ -1952,7 +1963,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 }
 
                 if(isItemOpenable(e)) {
-                    if(config.options.quickSelect && item.rdo.type === 'file' && has_capability(item.rdo, 'select')) {
+                    if(config.options.quickSelect && item.rdo.type === 'file' && isObjectCapable(item.rdo, 'select')) {
                         selectItem(item.rdo);
                     } else {
                         getDetailView(item.rdo);
@@ -2108,7 +2119,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
 			this.createFolder = function() {
-				var makeFolder = function(e, ui) {
+                if(!hasCapability('createFolder')) {
+                    fm.error(lg('NOT_ALLOWED'));
+                    return false;
+                }
+
+				function makeFolder(e, ui) {
 					var folderName = ui.getInputValue();
 					if(!folderName) {
 						fm.error(lg('no_foldername'));
@@ -2129,7 +2145,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                             }
                         }
                     }).fail(handleAjaxError);
-				};
+				}
 
 				fm.prompt({
 					message: lg('prompt_foldername'),
@@ -2351,7 +2367,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			var cbMode = null,
                 cbObjects = [],
             	clipboard_model = this,
-				active = capabilities.indexOf('copy') > -1 || capabilities.indexOf('move') > -1;
+				active = hasCapability('copy') && hasCapability('move');
 
             this.itemsNum = ko.observable(0);
             this.enabled = ko.observable(model.config().clipboard.enabled && active);
@@ -2414,9 +2430,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             	switch(capability) {
 					case 'copy':
-						return capabilities.indexOf('copy') > -1;
+						return hasCapability('copy');
                     case 'cut':
-                        return capabilities.indexOf('move') > -1;
+                        return hasCapability('move');
 					default:
                         return true;
 				}
@@ -3227,23 +3243,27 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 	};
 
-	// Test if item has the 'cap' capability
-	// 'cap' is one of 'select', 'rename', 'delete', 'download', 'copy', 'move'
-	function has_capability(resourceObject, cap) {
-		if(capabilities.indexOf(cap) === -1) return false;
-        if (cap === 'select' && resourceObject.type === 'folder') return false;
-        if (cap === 'extract') {
+    // Check if capability is allowed
+    function hasCapability(capability) {
+        return capabilities.indexOf(capability) > -1;
+    }
+
+    // Test if resource object has capability
+    function isObjectCapable(resourceObject, capability) {
+        if (!hasCapability(capability)) return false;
+        if (capability === 'select' && resourceObject.type === 'folder') return false;
+        if (capability === 'extract') {
             var extension = getExtension(resourceObject.attributes.name);
             return (resourceObject.type === 'file' && extension === 'zip');
         }
-		if (cap === 'download' && resourceObject.type === 'folder') {
-			return (config.options.allowFolderDownload === true);
-		}
-		if (typeof(resourceObject.attributes.capabilities) !== 'undefined') {
-			return $.inArray(cap, resourceObject.attributes.capabilities) > -1
-		}
-		return true;
-	}
+        if (capability === 'download' && resourceObject.type === 'folder') {
+            return (config.options.allowFolderDownload === true);
+        }
+        if (typeof(resourceObject.attributes.capabilities) !== 'undefined') {
+            return $.inArray(capability, resourceObject.attributes.capabilities) > -1
+        }
+        return true;
+    }
 
     // http://stackoverflow.com/questions/3390930/any-way-to-make-jquery-inarray-case-insensitive
     (function($){
@@ -3284,17 +3304,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		var ext = getExtension(filename);
 		
 		if (config.security.extensions.ignoreCase) {
-		    if(config.security.extensions.policy == 'ALLOW_LIST') {
+		    if(config.security.extensions.policy === 'ALLOW_LIST') {
 			    if($.inArrayInsensitive(ext, config.security.extensions.restrictions) !== -1) return true;
 		    }
-		    if(config.security.extensions.policy == 'DISALLOW_LIST') {
+		    if(config.security.extensions.policy === 'DISALLOW_LIST') {
 			    if($.inArrayInsensitive(ext, config.security.extensions.restrictions) === -1) return true;
 		    }
 		} else {
-		    if(config.security.extensions.policy == 'ALLOW_LIST') {
+		    if(config.security.extensions.policy === 'ALLOW_LIST') {
 			    if($.inArray(ext, config.security.extensions.restrictions) !== -1) return true;
 		    }
-		    if(config.security.extensions.policy == 'DISALLOW_LIST') {
+		    if(config.security.extensions.policy === 'DISALLOW_LIST') {
 			    if($.inArray(ext, config.security.extensions.restrictions) === -1) return true;
 		    }
 		}
@@ -3850,10 +3870,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			// File only - Check if file extension is allowed
 			if (isFile(oldPath) && !isAuthorizedFile(givenName)) {
 				var str = '<p>' + lg('INVALID_FILE_TYPE') + '</p>';
-				if(config.security.extensions.policy == 'ALLOW_LIST') {
+				if(config.security.extensions.policy === 'ALLOW_LIST') {
 					str += '<p>' + lg('ALLOWED_FILE_TYPE').replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
-				if(config.security.extensions.policy == 'DISALLOW_LIST') {
+				if(config.security.extensions.policy === 'DISALLOW_LIST') {
 					str += '<p>' + lg('DISALLOWED_FILE_TYPE').replace('%s', config.security.extensions.restrictions.join(', ')) + '.</p>';
 				}
 				fm.error(str);
@@ -4258,13 +4278,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 copyUrl: {name: lg('copy_to_clipboard'), className: 'copy-url'}
             };
 
-		if(!has_capability(resourceObject, 'download')) delete contextMenuItems.download;
-        if(!has_capability(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
-        if(!has_capability(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
-		if(!has_capability(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
-		if(!has_capability(resourceObject, 'extract') || config.options.browseOnly === true) delete contextMenuItems.extract;
-		if(!has_capability(resourceObject, 'copy') || config.options.browseOnly === true || clipboardDisabled) delete contextMenuItems.copy;
-		if(!has_capability(resourceObject, 'move') || config.options.browseOnly === true || clipboardDisabled) {
+		if(!isObjectCapable(resourceObject, 'download')) delete contextMenuItems.download;
+        if(!isObjectCapable(resourceObject, 'select') || !hasContext()) delete contextMenuItems.select;
+        if(!isObjectCapable(resourceObject, 'rename') || config.options.browseOnly === true) delete contextMenuItems.rename;
+		if(!isObjectCapable(resourceObject, 'delete') || config.options.browseOnly === true) delete contextMenuItems.delete;
+		if(!isObjectCapable(resourceObject, 'extract') || config.options.browseOnly === true) delete contextMenuItems.extract;
+		if(!isObjectCapable(resourceObject, 'copy') || config.options.browseOnly === true || clipboardDisabled) delete contextMenuItems.copy;
+		if(!isObjectCapable(resourceObject, 'move') || config.options.browseOnly === true || clipboardDisabled) {
             delete contextMenuItems.cut;
             delete contextMenuItems.move;
 		}
@@ -4344,7 +4364,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		// Multiple Uploads
 		if(config.upload.multiple) {
 			$uploadButton.unbind().click(function() {
-				if(capabilities.indexOf('upload') === -1) {
+				if (!hasCapability('upload')) {
 					fm.error(lg('NOT_ALLOWED'));
 					return false;
 				}
@@ -4357,7 +4377,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						lang: langModel.getTranslations()
 					});
 
-				if(config.security.extensions.policy == 'ALLOW_LIST') {
+				if(config.security.extensions.policy === 'ALLOW_LIST') {
 					allowedFileTypes = new RegExp('(\\.|\\/)(' + config.security.extensions.restrictions.join('|') + ')$', 'i');
 				}
 
@@ -4710,7 +4730,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		// Simple Upload
 		} else {
             $uploadButton.unbind().click(function() {
-                if(capabilities.indexOf('upload') === -1) {
+                if(!hasCapability('upload')) {
                     fm.error(lg('NOT_ALLOWED'));
                     return false;
                 }

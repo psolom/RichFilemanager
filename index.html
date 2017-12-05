@@ -89,7 +89,7 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- /ko -->
-				<!-- ko if: !browseOnly() -->
+				<!-- ko if: isCapable('upload') && !browseOnly() -->
 				<div class="button-group upload-controls">
 					<form class="fm-uploader" method="post">
 						<input id="mode" type="hidden" value="add"/>
@@ -100,6 +100,8 @@
 						</button>
 					</form>
 				</div>
+                <!-- /ko -->
+                <!-- ko if: isCapable('createFolder') && !browseOnly() -->
 				<div class="button-group create-controls">
 					<button class="btn btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg.new_folder"></span>
