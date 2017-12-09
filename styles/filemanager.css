@@ -599,7 +599,12 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 
 .fm-container .search-box {
     width: 200px;
+    height: 24px;
     margin-top: 10px;
+}
+
+.fm-container .search-box input {
+    height: 100%;
 }
 
 .fm-container .search-box .icon {
