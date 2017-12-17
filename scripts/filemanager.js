@@ -1751,7 +1751,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					items = items_model.objects();
 
 				if(!items || items.length === 0) {
-					return null;
+                    return firstMatch ? null : resultItems;
 				}
 				for (var i = 0, l = items.length; i < l; i++) {
 					if(filter(items[i])) {
@@ -1772,7 +1772,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			this.getSelected = function() {
 				var selectedItems = items_model.findByFilter(function (item) {
 					return item.selected();
-				}, true);
+				}, true) || [];
+
 				items_model.selectedNumber(selectedItems.length);
 				return selectedItems;
 			};
