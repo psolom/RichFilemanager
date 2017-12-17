@@ -206,7 +206,7 @@
 								<td data-bind="text: koItem.cdo.extension"></td>
 								<td data-bind="text: koItem.cdo.sizeFormatted"></td>
 								<td data-bind="text: koItem.cdo.dimensions"></td>
-								<td data-bind="text: koItem.rdo.attributes.modified"></td>
+								<td data-bind="text: koItem.cdo.modifiedFormatted"></td>
 							</tr>
 							<!-- /ko -->
 							</tbody>
@@ -338,13 +338,13 @@
 									<td data-bind="text: $root.lg.dimensions"></td>
 									<td data-bind="text: cdo().dimensions"></td>
 								</tr>
-								<tr data-bind="visible: rdo().attributes.created">
+								<tr data-bind="visible: cdo().createdFormatted">
 									<td data-bind="text: $root.lg.created"></td>
-									<td data-bind="text: rdo().attributes.created"></td>
+									<td data-bind="text: cdo().createdFormatted"></td>
 								</tr>
-								<tr data-bind="visible: rdo().attributes.modified">
+								<tr data-bind="visible: cdo().modifiedFormatted">
 									<td data-bind="text: $root.lg.modified"></td>
-									<td data-bind="text: rdo().attributes.modified"></td>
+									<td data-bind="text: cdo().modifiedFormatted"></td>
 								</tr>
 							</table>
 						</div>
@@ -447,6 +447,12 @@
         <script type="text/javascript" src="scripts/jquery.fileDownload/jquery.fileDownload.min.js"></script>
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
+		<script type="text/javascript" src="scripts/cldrjs/cldr.js"></script>
+		<script type="text/javascript" src="scripts/cldrjs/cldr/event.js"></script>
+		<script type="text/javascript" src="scripts/cldrjs/cldr/supplemental.js"></script>
+		<script type="text/javascript" src="scripts/globalizejs/globalize.js"></script>
+		<script type="text/javascript" src="scripts/globalizejs/globalize/number.js"></script>
+		<script type="text/javascript" src="scripts/globalizejs/globalize/date.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
 		<script type="text/javascript" src="scripts/filemanager.min.js"></script>

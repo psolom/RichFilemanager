@@ -69,7 +69,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		configSortOrder = null,		// items sort order 'asc'/'desc'
 		fmModel = null,				// filemanager knockoutJS model
 		langModel = null,			// language model
-		delayStack = null,			// language model
+        globalize = null,			// formatting and parsing tool (numbers, dates, etc.)
+		delayStack = null,			// function execution delay manager
 
 		/** variables to keep request options data **/
 		fullexpandedFolder = null,	// path to be automatically expanded by filetree plugin
@@ -331,7 +332,28 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}).done(function(jsonTrans) {
                     langModel.setTranslations(jsonTrans);
 				});
-			});
+            })
+            .then(function() {
+            	// trim language code to first 2 chars
+				var lang = langModel.getLang().substr(0, 2);
+
+                return $.when(
+                    $.get('/scripts/cldrjs/cldr-dates/' + lang + '/ca-gregorian.json'),
+                    $.get('/scripts/cldrjs/cldr-numbers/' + lang + '/numbers.json'),
+                    $.get('/scripts/cldrjs/cldr-core/supplemental/likelySubtags.json'),
+                    $.get('/scripts/cldrjs/cldr-core/supplemental/timeData.json'),
+                    $.get('/scripts/cldrjs/cldr-core/supplemental/weekData.json')
+                ).fail(function () {
+                    fm.error('CLDR files for "' + lang + '" language do not exist!');
+                }).then(function () {
+                    // Normalize $.get results, we only need the JSON, not the request statuses.
+                    return [].slice.apply(arguments, [0]).map(function (result) {
+                        return result[0];
+                    });
+                }).then(Globalize.load).then(function () {
+                    globalize = Globalize(lang);
+                });
+            });
 	};
 
 	var includeTemplates = function() {
@@ -950,6 +972,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preview_model.cdo({
                     isFolder: (resourceObject.type === 'folder'),
                     sizeFormatted: formatBytes(resourceObject.attributes.size),
+                    createdFormatted: formatTimestamp(resourceObject.attributes.created),
+                    modifiedFormatted: formatTimestamp(resourceObject.attributes.modified),
                     extension: (resourceObject.type === 'file') ? getExtension(resourceObject.id) : null,
                     dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null
                 });
@@ -1860,6 +1884,8 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             this.cdo = { // computed data object
                 isFolder: (resourceObject.type === 'folder'),
                 sizeFormatted: formatBytes(resourceObject.attributes.size),
+                createdFormatted: formatTimestamp(resourceObject.attributes.created),
+                modifiedFormatted: formatTimestamp(resourceObject.attributes.modified),
                 extension: (resourceObject.type === 'file') ? getExtension(resourceObject.id) : null,
                 dimensions: resourceObject.attributes.width ? resourceObject.attributes.width + 'x' + resourceObject.attributes.height : null,
                 cssItemClass: (resourceObject.type === 'folder') ? 'directory' : 'file',
@@ -3033,7 +3059,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					sortBy = item.rdo.attributes.size;
 					break;
 				case 'modified':
-					sortBy = item.rdo.attributes.timestamp;
+					sortBy = item.rdo.attributes.modified;
 					break;
 				case 'dimensions':
 					sortBy = item.cdo.dimensions || '';
@@ -3185,6 +3211,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				c += 1;
 			}
 		}
+	};
+
+	// Converts UNIX timestamp to formatted datetime string
+	var formatTimestamp = function(timestamp) {
+        var date = new Date();
+        date.setTime(timestamp * 1000);
+
+        // Timezone support requires "iana-tz-data" package:
+        // https://github.com/globalizejs/globalize/blob/master/README.md#3-iana-time-zone-data
+        return globalize.formatDate(date, config.formatter.datetime);
 	};
 
     // Format server-side response single error object

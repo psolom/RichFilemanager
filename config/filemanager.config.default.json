@@ -27,6 +27,11 @@
         "default": "en",
         "available": ["ar", "bs", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr", "he", "hu", "it", "ja", "nl", "pl", "pt", "ru", "sv", "th", "tr", "vi", "zh-CN", "zh-TW"]
     },
+    "formatter": {
+        "datetime": {
+            "skeleton": "yMMMdHm"
+        }
+    },
     "filetree": {
         "enabled": true,
         "foldersOnly": false,
