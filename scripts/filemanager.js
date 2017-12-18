@@ -4136,10 +4136,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		$.fileDownload(buildConnectorUrl(queryParams), {
 			failCallback: function (responseHtml, url, error) {
-				var responseJSON = $.parseJSON(responseHtml);
+                var message = $(responseHtml).text();
+				var messageJSON = $.parseJSON(message);
 
-                if ($.isPlainObject(responseJSON) && responseJSON.errors) {
-                    handleJsonErrors(responseJSON.errors);
+                if ($.isPlainObject(messageJSON) && messageJSON.errors) {
+                    handleJsonErrors(messageJSON.errors);
                 }
 			}
 		});
