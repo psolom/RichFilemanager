@@ -335,14 +335,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             })
             .then(function() {
             	// trim language code to first 2 chars
-				var lang = langModel.getLang().substr(0, 2);
+				var lang = langModel.getLang().substr(0, 2),
+                    baseUrl = fm.settings.baseUrl;
 
                 return $.when(
-                    $.get('/scripts/cldrjs/cldr-dates/' + lang + '/ca-gregorian.json'),
-                    $.get('/scripts/cldrjs/cldr-numbers/' + lang + '/numbers.json'),
-                    $.get('/scripts/cldrjs/cldr-core/supplemental/likelySubtags.json'),
-                    $.get('/scripts/cldrjs/cldr-core/supplemental/timeData.json'),
-                    $.get('/scripts/cldrjs/cldr-core/supplemental/weekData.json')
+                    $.get(baseUrl + '/scripts/cldrjs/cldr-dates/' + lang + '/ca-gregorian.json'),
+                    $.get(baseUrl + '/scripts/cldrjs/cldr-numbers/' + lang + '/numbers.json'),
+                    $.get(baseUrl + '/scripts/cldrjs/cldr-core/supplemental/likelySubtags.json'),
+                    $.get(baseUrl + '/scripts/cldrjs/cldr-core/supplemental/timeData.json'),
+                    $.get(baseUrl + '/scripts/cldrjs/cldr-core/supplemental/weekData.json')
                 ).fail(function () {
                     fm.error('CLDR files for "' + lang + '" language do not exist!');
                 }).then(function () {
