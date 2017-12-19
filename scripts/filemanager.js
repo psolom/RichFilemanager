@@ -1133,6 +1133,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 return cssClass.join(' ');
             }, this);
 
+            this.closePreview = function() {
+                model.previewFile(false);
+            };
+
 			this.editFile = function() {
 				var content = preview_model.viewer.content();
                 preview_model.renderer.render(content);
