@@ -3217,6 +3217,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 	// Converts UNIX timestamp to formatted datetime string
 	var formatTimestamp = function(timestamp) {
+		// if value doesn't look like timestamp
+		if (!timestamp || timestamp <= 0) {
+			return '';
+		}
+
         var date = new Date();
         date.setTime(timestamp * 1000);
 
