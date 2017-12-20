@@ -68,6 +68,15 @@
     background-color: #C3D2F7;
 }
 
+.fm-container .input-group .input-group-input {
+    color: #000;
+    background-color: #E8E8E8;
+}
+
+.fm-container .input-group .input-group-addon {
+    background-color: #E8E8E8;
+}
+
 .fm-container #folder-info {
     color: #bbb;
 }
@@ -78,17 +87,6 @@
 
 .fm-container #link-to-project {
     background: transparent url(../images/fmlogo.png) no-repeat 0 0;
-}
-
-.fm-container .search-box input {
-    background-color: #3F3F3B;
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px;
-}
-
-.fm-container .search-box input:focus {
-    background-color: #C6C6C6;
 }
 
 .fm-container .view-items .grid li {

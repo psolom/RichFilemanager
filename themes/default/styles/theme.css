@@ -60,6 +60,28 @@
     background-color: #ffffff;
 }
 
+.fm-container .input-group .input-group-input {
+    color: #000;
+    background-color: #FFFFFF;
+    border-style: solid;
+    border-color: #dcdcdc;
+    border-width: 1px 0 1px 0;
+}
+
+.fm-container .input-group .input-group-addon {
+    background-color: #FFFFFF;
+    border-style: solid;
+    border-color: #dcdcdc;
+}
+
+.fm-container .input-group .input-group-addon:first-child {
+    border-width: 1px 0 1px 1px;
+}
+
+.fm-container .input-group .input-group-addon:last-child {
+    border-width: 1px 1px 1px 0;
+}
+
 .fm-container #folder-info {
     color: #777;
 }
@@ -68,14 +90,6 @@
 }
 
 .fm-container #link-to-project {
-}
-
-.fm-container .search-box input {
-    background-color: #ffffff;
-}
-
-.fm-container .search-box input:focus {
-    background-color: #f5f5f5;
 }
 
 .fm-container .drag-helper-grid,

@@ -147,7 +147,7 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	
 	
 	@Override
-	public JSONObject getFolder(HttpServletRequest request) throws JSONException, IOException, FileManagerException {
+	public JSONObject readFolder(HttpServletRequest request) throws JSONException, IOException, FileManagerException {
 		JSONArray array = new JSONArray();
 
 		boolean showThumbs = false;
@@ -224,10 +224,6 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
         // get file
         File file = getFile(path);
 
-        if(file.isDirectory() && !path.endsWith("/")){
-            throw new FMIOException("Error reading the file (file as directory not allowed): " + file.getAbsolutePath());
-        }
-
         BasicFileAttributes attr;
         try {
             attr = Files.readAttributes(file.toPath(), BasicFileAttributes.class);
@@ -300,30 +296,21 @@ public class RichFileManager extends AbstractFM implements FileManagerI  {
 	public JSONObject download(HttpServletRequest request, HttpServletResponse resp) throws JSONException, FileManagerException {
 		File file = this.documentRoot.resolve(this.get.get("path")).toFile();
 		if (this.get.get("path") != null && file.exists()) {
-			
-			// Ajax
-	        if ("XMLHttpRequest".equals(request.getHeader("X-Requested-With"))) {
-	            return new JSONObject().put("data", new JSONObject(getFileInfo(
-	            		 this.get.get("path")
-	            )));
-	        } else {
-
-				resp.setHeader("Content-Description", "File Transfer");
-				//resp.setHeader("Content-Type", "application/force-download");
-				//resp.setHeader("Content-Disposition", "inline;filename=\"" + documentRoot.resolve(this.get.get("path")).toString() + "\"");
-				resp.setHeader("Content-Transfer-Encoding", "Binary");
-				resp.setHeader("Content-Length", "" + file.length());
-				resp.setHeader("Content-Type", "application/octet-stream");
-				resp.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
-				// handle caching
-				resp.setHeader("Pragma", "public");
-				resp.setHeader("Expires", "0");
-				resp.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
-				this.error = null;
-				readFile(resp, file);
-				log("file downloaded \""+ file.getAbsolutePath() + "\"");
-				return null;
-	        }
+            resp.setHeader("Content-Description", "File Transfer");
+            //resp.setHeader("Content-Type", "application/force-download");
+            //resp.setHeader("Content-Disposition", "inline;filename=\"" + documentRoot.resolve(this.get.get("path")).toString() + "\"");
+            resp.setHeader("Content-Transfer-Encoding", "Binary");
+            resp.setHeader("Content-Length", "" + file.length());
+            resp.setHeader("Content-Type", "application/octet-stream");
+            resp.setHeader("Content-Disposition", "attachment; filename=\"" + file.getName() + "\"");
+            // handle caching
+            resp.setHeader("Pragma", "public");
+            resp.setHeader("Expires", "0");
+            resp.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+            this.error = null;
+            readFile(resp, file);
+            log("file downloaded \""+ file.getAbsolutePath() + "\"");
+            return null;
 		} else {
 			return getErrorResponse(sprintf(lang("FILE_DOES_NOT_EXIST"), this.get.get("path")));
 		}

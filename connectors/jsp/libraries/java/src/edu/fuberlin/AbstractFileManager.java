@@ -59,15 +59,15 @@ public abstract class AbstractFileManager  {
         try {
             errorInfo.put("id", "server");
             errorInfo.put("code", "500");
-            errorInfo.put("message", msg);
+            errorInfo.put("title", msg);
             
             if (propertiesConfig.getProperty("errorObject_arguments_redirect") != null 
             		&& !propertiesConfig.getProperty("errorObject_arguments_redirect").equals("")) {
-            	 JSONObject redirect = new JSONObject();
-            	 redirect.put("redirect", propertiesConfig.getProperty("errorObject_arguments_redirect"));	
-            	 errorInfo.put("arguments",redirect);
+            	 JSONObject arguments = new JSONObject();
+            	 arguments.put("redirect", propertiesConfig.getProperty("errorObject_arguments_redirect"));
+            	 errorInfo.put("meta", arguments);
             } else {
-                errorInfo.put("arguments", new JSONObject());
+                errorInfo.put("meta", new JSONObject());
             } 
             
             if (ex != null) {

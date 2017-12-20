@@ -5,7 +5,6 @@
         "showTitleAttr": false,
         "showConfirmation": true,
         "browseOnly": false,
-        "searchBox": true,
         "fileSorting": "NAME_ASC",
         "folderPosition": "bottom",
         "quickSelect": false,
@@ -20,12 +19,18 @@
             "copy",
             "move",
             "delete",
-            "extract"
+            "extract",
+            "createFolder"
         ]
     },
     "language": {
         "default": "en",
-        "available": ["ar", "bs", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr", "he", "hu", "it", "ja", "nl", "pl", "pt", "ru", "sv", "th", "tr", "vn", "zh-cn", "zh-tw"]
+        "available": ["ar", "bs", "ca", "cs", "da", "de", "el", "en", "es", "fa", "fi", "fr", "he", "hu", "it", "ja", "nl", "pl", "pt", "ru", "sv", "th", "tr", "vi", "zh-CN", "zh-TW"]
+    },
+    "formatter": {
+        "datetime": {
+            "skeleton": "yMMMdHm"
+        }
     },
     "filetree": {
         "enabled": true,
@@ -73,6 +78,12 @@
         "archive": ["zip", "tar", "rar"],
         "audio": ["ogg", "mp3", "wav"],
         "video": ["ogv", "avi", "mkv", "mp4", "webm", "m4v"]
+    },
+    "search": {
+        "enabled": true,
+        "recursive": false,
+        "caseSensitive": false,
+        "typingDelay": 500
     },
     "viewer": {
         "absolutePath": true,
@@ -181,5 +192,5 @@
         "extra_js_async": true
     },
     "url": "https://github.com/servocoder/RichFilemanager",
-    "version": "2.6.5"
+    "version": "2.7.0"
 }

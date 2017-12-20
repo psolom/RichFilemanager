@@ -32,7 +32,7 @@
 	<div class="fm-wrapper">
 		<div class="fm-header">
 			<div class="breadcrumbs">
-				<div class="nav-title" data-bind="text: lg.current_folder"></div>
+				<div class="nav-title" data-bind="text: breadcrumbsModel.getLabel"></div>
 				<div data-bind="foreach: {data: breadcrumbsModel.items, as: 'bcItem'}">
 					<div data-bind="text: bcItem.label, click: bcItem.goto, css: bcItem.itemClass()"></div>
 					<!-- ko if: !bcItem.active -->
@@ -89,7 +89,7 @@
 					<button class="separator" type="button">&nbsp;</button>
 				</div>
 				<!-- /ko -->
-				<!-- ko if: !browseOnly() -->
+				<!-- ko if: isCapable('upload') && !browseOnly() -->
 				<div class="button-group upload-controls">
 					<form class="fm-uploader" method="post">
 						<input id="mode" type="hidden" value="add"/>
@@ -100,6 +100,8 @@
 						</button>
 					</form>
 				</div>
+                <!-- /ko -->
+                <!-- ko if: isCapable('createFolder') && !browseOnly() -->
 				<div class="button-group create-controls">
 					<button class="btn btn-create-folder" type="button" data-bind="click: headerModel.createFolder">
 						<span data-bind="text: lg.new_folder"></span>
@@ -137,17 +139,19 @@
 					<!-- /ko -->
 
 					<div class="view-items">
-						<ul class="grid" data-bind="visible: viewMode() === 'grid', foreach: {data: itemsModel.objects, as: 'koItem'}">
-							<!-- ko if: koItem.rdo.type === "parent" -->
-							<li class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, css: koItem.itemClass()" oncontextmenu="return false;">
+						<ul class="grid" data-bind="visible: viewMode() === 'grid'">
+							<!-- ko with: itemsModel.parentItem -->
+							<!-- ko if: $data -->
+							<li class="directory-parent" data-bind="event: {click: open, dblclick: open}, droppableView: $data, css: itemClass()" oncontextmenu="return false;">
 								<div class="clip">
 									<img src="" class="grid-icon ico_folder_parent" data-bind="attr: {src: null, width: $root.config().viewer.image.thumbMaxWidth}" />
 								</div>
 								<p>..</p>
 							</li>
 							<!-- /ko -->
+							<!-- /ko -->
 
-							<!-- ko if: koItem.rdo.type !== "parent" -->
+							<!-- ko foreach: {data: itemsModel.objects, as: 'koItem'} -->
 							<li data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()">
 								<div class="item-background"></div>
 								<div class="item-content" data-bind="draggableView: koItem">
@@ -175,9 +179,11 @@
 								<th data-bind="click: thModified.sort, css: thModified.sortClass()"><span data-bind="text: $root.lg.modified"></span></th>
 							</tr>
 							</thead>
-							<tbody data-bind="foreach: {data: itemsModel.objects, as: 'koItem'}">
-							<!-- ko if: koItem.rdo.type === "parent" -->
-							<tr class="directory-parent" data-bind="event: {click: koItem.open, dblclick: koItem.open}, droppableView: koItem, css: koItem.itemClass()" oncontextmenu="return false;">
+
+							<tbody>
+							<!-- ko with: itemsModel.parentItem -->
+							<!-- ko if: $data -->
+							<tr class="directory-parent" data-bind="event: {click: open, dblclick: open}, droppableView: $data, css: itemClass()" oncontextmenu="return false;">
 								<td>
 									<div class="list-item">..</div>
 								</td>
@@ -187,8 +193,9 @@
 								<td></td>
 							</tr>
 							<!-- /ko -->
+							<!-- /ko -->
 
-							<!-- ko if: koItem.rdo.type !== "parent" -->
+							<!-- ko foreach: {data: itemsModel.objects, as: 'koItem'} -->
 							<tr data-bind="event: {click: koItem.open, dblclick: koItem.open, mousedown: koItem.mouseDown}, droppableView: koItem, visible: koItem.visible, attr: {title: koItem.title()}, css: koItem.itemClass()" oncontextmenu="return false;">
 								<td>
 									<div class="list-item" data-bind="draggableView: koItem">
@@ -199,7 +206,7 @@
 								<td data-bind="text: koItem.cdo.extension"></td>
 								<td data-bind="text: koItem.cdo.sizeFormatted"></td>
 								<td data-bind="text: koItem.cdo.dimensions"></td>
-								<td data-bind="text: koItem.rdo.attributes.modified"></td>
+								<td data-bind="text: koItem.cdo.modifiedFormatted"></td>
 							</tr>
 							<!-- /ko -->
 							</tbody>
@@ -219,8 +226,8 @@
 					<div class="fm-preview" data-bind="with: previewModel">
 						<div class="fm-preview-toolbar button-group">
 							<form id="fm-js-preview-toolbar">
-								<button class="btn btn-file-preview-close" type="button" data-bind="event: {click: function(data, event) {$root.headerModel.navLevelUp()}}">
-									<span data-bind="text: $root.lg.parentfolder"></span>
+								<button class="btn btn-file-preview-close" type="button" data-bind="click: closePreview">
+									<span data-bind="text: $root.lg.close"></span>
 								</button>
 								<!-- ko if: buttonVisibility('select') -->
 								<button class="btn btn-file-select" type="button" data-bind="event: {click: function(data, event) {bindToolbar('select')}}">
@@ -331,13 +338,13 @@
 									<td data-bind="text: $root.lg.dimensions"></td>
 									<td data-bind="text: cdo().dimensions"></td>
 								</tr>
-								<tr data-bind="visible: rdo().attributes.created">
+								<tr data-bind="visible: cdo().createdFormatted">
 									<td data-bind="text: $root.lg.created"></td>
-									<td data-bind="text: rdo().attributes.created"></td>
+									<td data-bind="text: cdo().createdFormatted"></td>
 								</tr>
-								<tr data-bind="visible: rdo().attributes.modified">
+								<tr data-bind="visible: cdo().modifiedFormatted">
 									<td data-bind="text: $root.lg.modified"></td>
-									<td data-bind="text: rdo().attributes.modified"></td>
+									<td data-bind="text: cdo().modifiedFormatted"></td>
 								</tr>
 							</table>
 						</div>
@@ -350,9 +357,14 @@
 
 		<div class="fm-footer">
 			<div class="left">
-				<div class="search-box" data-bind="visible: config().options.searchBox">
-					<input type="text" data-bind="value: searchModel.value(), event: {keyup: searchModel.findAll}" />
-					<div class="search-box-reset" data-bind="event: {click: searchModel.reset}"></div>
+				<div class="search-box input-group" data-bind="visible: config().search.enabled">
+                    <span class="input-group-addon clickable" data-bind="event: {click: searchModel.seekItems}">
+                        <span class="icon search-icon"></span>
+                    </span>
+					<input class="input-group-input" type="text" data-bind="value: searchModel.value, event: {keyup: searchModel.inputKeyUp}" />
+                    <span class="input-group-addon clickable" data-bind="event: {click: searchModel.reset}">
+                        <span class="icon reset-icon"></span>
+                    </span>
 				</div>
 			</div>
 
@@ -435,6 +447,12 @@
         <script type="text/javascript" src="scripts/jquery.fileDownload/jquery.fileDownload.min.js"></script>
 		<script type="text/javascript" src="scripts/javascript-templates/js/tmpl.min.js"></script>
 		<script type="text/javascript" src="scripts/toast/lib/toast.min.js"></script>
+		<script type="text/javascript" src="scripts/cldrjs/cldr.js"></script>
+		<script type="text/javascript" src="scripts/cldrjs/cldr/event.js"></script>
+		<script type="text/javascript" src="scripts/cldrjs/cldr/supplemental.js"></script>
+		<script type="text/javascript" src="scripts/globalizejs/globalize.js"></script>
+		<script type="text/javascript" src="scripts/globalizejs/globalize/number.js"></script>
+		<script type="text/javascript" src="scripts/globalizejs/globalize/date.js"></script>
 		<script type="text/javascript" src="scripts/purl/purl.min.js"></script>
 		<!-- Load filemanager script -->
 		<script type="text/javascript" src="scripts/filemanager.min.js"></script>
