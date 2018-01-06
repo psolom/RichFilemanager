@@ -206,6 +206,17 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         }
     };
 
+    // Reload currently open folder content
+    fm.refreshFolder = function(applyTreeNode) {
+        fmModel.loadPath(fmModel.currentPath(), applyTreeNode);
+    };
+
+    // Load content of specified relative folder path
+    fm.loadFolder = function(path, applyTreeNode) {
+        path = '/' + trim(path, '/') + '/';
+        fmModel.loadPath(path, applyTreeNode);
+    };
+
 
 	/*--------------------------------------------------------------------------------------------------------------
 	 Private methods
@@ -287,7 +298,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         config[section][param] = value;
                     });
                 });
-                
+
                 // If the server is in read only mode, set the GUI to browseOnly:
                 if (config.security.readOnly) {
                     config.options.browseOnly = true;
@@ -665,7 +676,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         prepareFileTree();
         setupUploader();
-        fmModel.treeModel.loadDataNode(null, true);
+        fmModel.treeModel.loadDataNode(fmModel.treeModel.rootNode, true);
 
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
@@ -866,12 +877,40 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             return hasCapability(capability);
         };
 
+        this.loadPath = function (targetPath, applyTreeNode) {
+            var targetNode,
+                folderLoader = new FolderAjaxLoader(targetPath);
+
+            if (applyTreeNode) {
+                targetNode = fmModel.treeModel.findByParam('id', targetPath);
+            }
+            if (targetNode) {
+                folderLoader.setPreloader(fmModel.treeModel.getPreloader(targetNode))
+            }
+
+            folderLoader
+                .setPreloader(model.itemsModel.getPreloader())
+                .setDataHandler(function (resourceObjects, targetPath) {
+                    if (targetNode) {
+                        fmModel.treeModel.addNodes(resourceObjects, targetNode, true);
+                    }
+                    model.itemsModel.addItems(resourceObjects, targetPath, true);
+                    model.searchModel.clearInput();
+                })
+                .load(function () {
+                    return readFolder(targetPath);
+                });
+        };
+
         this.addElements = function (resourceObjects, targetPath, reset) {
             // handle tree nodes
-            model.treeModel.addNodes(resourceObjects, targetPath, reset);
+            var targetNode = model.treeModel.findByParam('id', targetPath);
+            if (targetNode) {
+                model.treeModel.addNodes(resourceObjects, targetNode, reset);
+            }
 
             // handle view objects
-            if(model.currentPath() === targetPath) {
+            if (model.currentPath() === targetPath) {
                 model.itemsModel.addItems(resourceObjects, targetPath, reset);
             }
         };
@@ -1170,20 +1209,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			var tree_model = this;
 			this.selectedNode = ko.observable(null);
 
-			this.treeData = {
-				id: fileRoot,
-				level: ko.observable(-1),
-				children: ko.observableArray([])
-			};
-
-			this.treeData.children.subscribe(function (value) {
-				tree_model.arrangeNode(tree_model.treeData);
-			});
+            var rootNode = new TreeNodeModel({attributes: {}});
+            rootNode.id = fileRoot;
+            rootNode.level = ko.observable(-1);
+            this.rootNode = rootNode;
 
 			var expandFolderDefault = function (parentNode) {
 				if (fullexpandedFolder !== null) {
 					if(!parentNode) {
-						parentNode = tree_model.treeData
+						parentNode = tree_model.rootNode;
 					}
 
 					// looking for node that starts with specified path
@@ -1203,10 +1237,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.mapNodes = function(filter, contextNode) {
                 if (!contextNode) {
-                    contextNode = tree_model.treeData;
+                    contextNode = tree_model.rootNode;
                 }
-                // don't apply callback function to the treeData root node
-                if (contextNode.id !== tree_model.treeData.id) {
+                // don't apply callback function to the filetree root node
+                if (!contextNode.isRoot()) {
                     filter.call(this, contextNode);
                 }
                 var nodes = contextNode.children();
@@ -1221,7 +1255,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.findByParam = function(key, value, contextNode) {
 				if(!contextNode) {
-					contextNode = tree_model.treeData;
+					contextNode = tree_model.rootNode;
 					if(contextNode[key] === value) {
 						return contextNode;
 					}
@@ -1242,7 +1276,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 			this.findByFilter = function(filter, contextNode) {
 				if(!contextNode) {
-					contextNode = tree_model.treeData;
+					contextNode = tree_model.rootNode;
 					if(filter(contextNode)) {
 						return contextNode;
 					}
@@ -1270,14 +1304,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
 			this.loadDataNode = function(targetNode, refresh) {
-                var targetPath = targetNode ? targetNode.id : tree_model.treeData.id;
+                var targetPath = targetNode.id;
                 var folderLoader = new FolderAjaxLoader(targetPath);
 
                 folderLoader
                     .setPreloader(model.itemsModel.getPreloader())
                     .setPreloader(tree_model.getPreloader(targetNode))
                     .setDataHandler(function (resourceObjects, targetPath) {
-                        tree_model.addNodes(resourceObjects, targetPath, refresh);
+                        tree_model.addNodes(resourceObjects, targetNode, refresh);
                         model.itemsModel.addItems(resourceObjects, targetPath, refresh);
                         model.searchModel.clearInput();
                     })
@@ -1291,14 +1325,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 preloader.prototype = Object.create(PanelLoader);
 
                 preloader.prototype.beforeLoad = function(path) {
-                    if(targetNode) {
+                    if(!targetNode.isRoot()) {
                         targetNode.isLoaded(false);
                     }
                 };
 
                 preloader.prototype.afterLoad = function(path, response) {
-                    // not root
-                    if(targetNode) {
+                    if(!targetNode.isRoot()) {
                         targetNode.isLoaded(true);
                         tree_model.expandNode(targetNode);
                     }
@@ -1327,7 +1360,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					newNodes = [newNodes];
 				}
 				if (!targetNode) {
-					targetNode = tree_model.treeData;
+					targetNode = tree_model.rootNode;
 				}
 				// list only folders in tree
 				if(config.filetree.foldersOnly) {
@@ -1342,12 +1375,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				targetNode.children(sortItems(allNodes));
 			};
 
-            this.addNodes = function(resourceObjects, targetPath, reset) {
+            this.addNodes = function(resourceObjects, targetNode, reset) {
                 if(!$.isArray(resourceObjects)) {
                     resourceObjects = [resourceObjects];
                 }
 
-                var targetNode = tree_model.findByParam('id', targetPath);
                 if(targetNode) {
                     var newNodes = tree_model.createNodes(resourceObjects);
                     if (reset) {
@@ -1423,7 +1455,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			};
 		};
-		
+
         var TreeNodeModel = function(resourceObject) {
             var tree_node = this;
             this.id = resourceObject.id;
@@ -1531,7 +1563,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             this.isRoot = function() {
-                return tree_node.level() === model.treeModel.treeData.id;
+                return tree_node.level() === model.treeModel.rootNode.level();
             };
 
             this.title = ko.pureComputed(function() {
@@ -3345,11 +3377,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             }
         });
     })(jQuery);
-    
+
 	// Test if file is authorized, based on extension only
 	var isAuthorizedFile = function(filename) {
 		var ext = getExtension(filename);
-		
+
 		if (config.security.extensions.ignoreCase) {
 		    if(config.security.extensions.policy === 'ALLOW_LIST') {
 			    if($.inArrayInsensitive(ext, config.security.extensions.restrictions) !== -1) return true;
@@ -3365,7 +3397,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			    if($.inArray(ext, config.security.extensions.restrictions) === -1) return true;
 		    }
 		}
-		
+
 		return false;
 	};
 
