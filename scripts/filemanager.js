@@ -280,18 +280,18 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	};
 
 	// performs initial request to server to retrieve initial params
-	var performInitialRequest = function() {
+    var performInitialRequest = function () {
         return buildAjaxRequest('GET', {
             mode: 'initiate'
-        }).done(function(response) {
-            if(response.data) {
+        }).done(function (response) {
+            if (response.data) {
                 var serverConfig = response.data.attributes.config;
                 // configuration options retrieved from the server
-                $.each(serverConfig, function(section, options) {
-                    $.each(options, function(param, value) {
-                    	if (value === null) {
-                    		return true;
-						}
+                $.each(serverConfig, function (section, options) {
+                    $.each(options, function (param, value) {
+                        if (value === null) {
+                            return true;
+                        }
                         if (config[section] === undefined) {
                             config[section] = [];
                         }
@@ -304,14 +304,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     config.options.browseOnly = true;
                 }
             }
-        }).fail(function() {
+        }).fail(function (xhr) {
             fm.error('Unable to perform initial request to server.');
+            handleAjaxError(xhr);
         }).then(function (response) {
-			if(response.errors) {
-				return $.Deferred().reject();
-			}
-		});
-	};
+            if (response.errors) {
+                return $.Deferred().reject();
+            }
+        });
+    };
 
 	// localize messages based on configuration or URL value
 	var localize = function() {
