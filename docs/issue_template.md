@@ -9,7 +9,7 @@
 **I use the following server-side connector (check one):**
 
 - [ ] PHP connector by @servocoder
-- [ ] Java Spring MVC connector by @fabriceci
+- [ ] Java connector by @fabriceci
 - [ ] Python3 Flask connector by @jsooter
 - [ ] Python3 Flask connector by @stevelittlefish
 - [ ] NodeJs connector by @jlaustill and @forestlake
