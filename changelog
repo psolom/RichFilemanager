@@ -1,3 +1,13 @@
+Version 2.7.1
+---------------------------
+- implemented RFM plugin public methods "refreshFolder" and "loadFolder" #275
+- bugfix: problem with folder downloading #273
+- bigfix: redirect on failed authentication doesn't work #278
+- bugfix: fileroot issue with symbolic links #285
+- updated PHP connector dependency to v1.2.1
+(https://github.com/servocoder/RichFilemanager-PHP/releases/tag/v1.2.1)
+
+
 Version 2.7.0
 ---------------------------
 - server-side search implemented, relative to the open folder #271
