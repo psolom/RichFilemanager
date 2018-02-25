@@ -111,7 +111,7 @@ $app = new \RFM\Application();
 $local = new \RFM\Repository\Local\Storage($config);
 
 // example to setup files root folder
-//$local->setRoot('userfiles', true);
+//$local->setRoot('userfiles', true, true);
 
 $app->setStorage($local);
 
