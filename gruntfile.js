@@ -1,6 +1,19 @@
 module.exports = function(grunt) {
     grunt.initConfig({
-
+        sass: {
+            options: {
+                outputStyle: 'compressed',
+                includePaths: [
+                    'styles',
+                    'scripts'
+                ]
+            },
+            dist: {
+                files: {
+                    'styles/merged.css': 'styles/merged.scss'
+                }
+            }
+        },
         uglify: {
             options: {
                 compress: {
@@ -45,7 +58,8 @@ module.exports = function(grunt) {
 
     // load plugins
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-sass');
 
     // default tasks
-    grunt.registerTask('default', ['uglify']);
+    grunt.registerTask('default', ['uglify', 'sass']);
 };
