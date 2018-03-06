@@ -28,6 +28,7 @@
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-cssmin": "^1.0.1",
     "grunt-contrib-uglify": "^1.0.1",
+    "grunt-sass": "^2.1.0",
     "npm-run-all": "^4.0.2",
     "uglify-js": "^3.0.27"
   },
