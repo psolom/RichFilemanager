@@ -677,7 +677,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         prepareFileTree();
         setupUploader();
-        fmModel.treeModel.loadDataNode(fmModel.treeModel.rootNode, true);
+        fmModel.treeModel.loadDataNode(fmModel.treeModel.rootNode, true, true);
 
 		// Loading CustomScrollbar if enabled
 		if(config.customScrollbar.enabled) {
@@ -1215,7 +1215,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             rootNode.level = ko.observable(-1);
             this.rootNode = rootNode;
 
-			var expandFolderDefault = function (parentNode) {
+			function expandFolderDefault(parentNode) {
 				if (fullexpandedFolder !== null) {
 					if(!parentNode) {
 						parentNode = tree_model.rootNode;
@@ -1228,13 +1228,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 					if (node) {
                         config.filetree.expandSpeed = 10;
-                        tree_model.loadDataNode(node, true);
+                        tree_model.loadDataNode(node, false, true);
 					} else {
 						fullexpandedFolder = null;
                         config.filetree.expandSpeed = 200;
+                        tree_model.setItemsFromNode(parentNode);
 					}
 				}
-			};
+			}
 
             this.mapNodes = function(filter, contextNode) {
                 if (!contextNode) {
@@ -1304,21 +1305,28 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 return selectedItems;
             };
 
-			this.loadDataNode = function(targetNode, refresh) {
+			this.loadDataNode = function(targetNode, populateItems, refresh) {
                 var targetPath = targetNode.id;
                 var folderLoader = new FolderAjaxLoader(targetPath);
 
                 folderLoader
-                    .setPreloader(model.itemsModel.getPreloader())
                     .setPreloader(tree_model.getPreloader(targetNode))
                     .setDataHandler(function (resourceObjects, targetPath) {
                         tree_model.addNodes(resourceObjects, targetNode, refresh);
-                        model.itemsModel.addItems(resourceObjects, targetPath, refresh);
-                        model.searchModel.clearInput();
-                    })
-                    .load(function() {
-                        return readFolder(targetPath);
                     });
+
+                if (populateItems) {
+                    folderLoader
+                        .setPreloader(model.itemsModel.getPreloader())
+                        .setDataHandler(function (resourceObjects, targetPath) {
+                            model.itemsModel.addItems(resourceObjects, targetPath, refresh);
+                            model.searchModel.clearInput();
+                        });
+                }
+
+                folderLoader.load(function() {
+                    return readFolder(targetPath);
+                });
 			};
 
             this.getPreloader = function(targetNode) {
@@ -1421,6 +1429,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				});
 			};
 
+            this.setItemsFromNode = function(node) {
+                var dataObjects = [];
+                $.each(node.children(), function(i, cnode) {
+                    dataObjects.push(cnode.rdo);
+                });
+                model.itemsModel.addItems(dataObjects, node.id, true);
+            };
+
 			this.nodeRendered = function(elements, node) {
 				// attach context menu
 				$(elements[1]).contextMenu({
@@ -1518,7 +1534,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     return false;
                 }
                 if(!node.isLoaded()) {
-                    tree_node.openNode(node);
+                    tree_node.openNode(node, false);
                 } else {
                     model.treeModel.toggleNode(node);
                 }
@@ -1530,31 +1546,29 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.nodeClick = function(node, e) {
                 if(!config.manager.dblClickOpen) {
-                    tree_node.openNode(node);
+                    tree_node.openNode(node, true);
                 }
             };
 
             this.nodeDblClick = function(node, e) {
                 if(config.manager.dblClickOpen) {
-                    tree_node.openNode(node);
+                    tree_node.openNode(node, true);
                 }
             };
 
-            this.openNode = function(node, e) {
+            this.openNode = function(node, populateItems, e) {
                 if(node.rdo.type === 'file') {
                     getDetailView(node.rdo);
                 }
                 if(node.rdo.type === 'folder') {
                     if(!node.isLoaded() || (node.isExpanded() && config.filetree.reloadOnClick)) {
-                        model.treeModel.loadDataNode(node, true);
+                        model.treeModel.loadDataNode(node, populateItems, true);
                     } else {
                         model.treeModel.toggleNode(node);
 
-                        var dataObjects = [];
-                        $.each(node.children(), function(i, cnode) {
-                            dataObjects.push(cnode.rdo);
-                        });
-                        model.itemsModel.addItems(dataObjects, node.id, true);
+                        if (populateItems) {
+                            model.treeModel.setItemsFromNode(node);
+                        }
                     }
                 }
             };
@@ -2043,7 +2057,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
         var FolderAjaxLoader = function(path) {
 			var folder_loader = this,
-				handler = null,
+				handlers = [],
                 /** @type {PanelLoader[]} */
 				preloaders = [];
 
@@ -2062,7 +2076,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
              * @returns {FolderAjaxLoader}
              */
             this.setDataHandler = function(callback) {
-                handler = callback;
+                handlers.push(callback);
                 return folder_loader;
             };
 
@@ -2073,7 +2087,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 folderLoader().then(function(response) {
                     if(response.data) {
-                        handler(response.data, path);
+                        $.each(handlers, function(i, handler) {
+                            handler(response.data, path);
+                        });
 
                         $.each(preloaders, function(i, preloader) {
                             preloader.afterLoad(path, response);
