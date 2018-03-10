@@ -303,6 +303,10 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 if (config.security.readOnly) {
                     config.options.browseOnly = true;
                 }
+                // Set default upload parameter
+                if (!config.upload.paramName) {
+                    config.upload.paramName = 'files';
+                }
             }
         }).fail(function (xhr) {
             fm.error('Unable to perform initial request to server.');
