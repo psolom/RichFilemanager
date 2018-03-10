@@ -355,11 +355,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     baseUrl = fm.settings.baseUrl;
 
                 return $.when(
-                    $.get(baseUrl + '/scripts/cldrjs/cldr-dates/' + lang + '/ca-gregorian.json'),
-                    $.get(baseUrl + '/scripts/cldrjs/cldr-numbers/' + lang + '/numbers.json'),
-                    $.get(baseUrl + '/scripts/cldrjs/cldr-core/supplemental/likelySubtags.json'),
-                    $.get(baseUrl + '/scripts/cldrjs/cldr-core/supplemental/timeData.json'),
-                    $.get(baseUrl + '/scripts/cldrjs/cldr-core/supplemental/weekData.json')
+                    $.get(baseUrl + '/libs/cldrjs/cldr-dates/' + lang + '/ca-gregorian.json'),
+                    $.get(baseUrl + '/libs/cldrjs/cldr-numbers/' + lang + '/numbers.json'),
+                    $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/likelySubtags.json'),
+                    $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/timeData.json'),
+                    $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/weekData.json')
                 ).fail(function () {
                     fm.error('CLDR files for "' + lang + '" language do not exist!');
                 }).then(function () {
@@ -392,11 +392,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
         primary.push('/themes/' + config.options.theme + '/styles/theme.css');
 
         if(config.viewer.image.lazyLoad) {
-            primary.push('/scripts/lazyload/dist/lazyload.min.js');
+            primary.push('/libs/lazyload/dist/lazyload.min.js');
         }
         if(config.customScrollbar.enabled) {
-            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
-            primary.push('/scripts/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
+            primary.push('/libs/custom-scrollbar-plugin/jquery.mCustomScrollbar.min.css');
+            primary.push('/libs/custom-scrollbar-plugin/jquery.mCustomScrollbar.concat.min.js');
         }
 
         // add callback on loaded assets and inject primary ones
@@ -407,38 +407,31 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		if(config.editor.enabled) {
 			var editorTheme = config.editor.theme;
             if (editorTheme && editorTheme !== 'default') {
-                secondary.push('/scripts/CodeMirror/theme/' + editorTheme + '.css');
+                secondary.push('/libs/CodeMirror/theme/' + editorTheme + '.css');
             }
-            secondary.push('/scripts/CodeMirror/lib/codemirror.css');
-            secondary.push('/scripts/CodeMirror/lib/codemirror.js');
-            secondary.push('/scripts/CodeMirror/addon/selection/active-line.js');
-            secondary.push('/scripts/CodeMirror/addon/display/fullscreen.css');
-            secondary.push('/scripts/CodeMirror/addon/display/fullscreen.js');
+            secondary.push('/libs/CodeMirror/lib/codemirror.css');
+            secondary.push('/libs/CodeMirror/lib/codemirror.js');
+            secondary.push('/libs/CodeMirror/addon/selection/active-line.js');
+            secondary.push('/libs/CodeMirror/addon/display/fullscreen.css');
+            secondary.push('/libs/CodeMirror/addon/display/fullscreen.js');
 		}
 
 		// Load Markdown-it, if enabled. For .md to HTML rendering:
 		if(config.viewer.markdownRenderer.enabled) {
-            secondary.push('/styles/fm-markdown.css');
-            secondary.push('/scripts/markdown-it/markdown-it.min.js');
-            secondary.push('/scripts/markdown-it/default.min.css');
-            secondary.push('/scripts/markdown-it/highlight.min.js');
-            secondary.push('/scripts/markdown-it/markdown-it-footnote.min.js');
-            secondary.push('/scripts/markdown-it/markdown-it-replace-link.min.js');
+            secondary.push('/src/css/fm-markdown.css');
+            secondary.push('/libs/markdown-it/markdown-it.min.js');
+            secondary.push('/libs/markdown-it/default.min.css');
+            secondary.push('/libs/markdown-it/highlight.min.js');
+            secondary.push('/libs/markdown-it/markdown-it-footnote.min.js');
+            secondary.push('/libs/markdown-it/markdown-it-replace-link.min.js');
 		}
 
 		if(!config.options.browseOnly) {
 			// Loading jquery file upload library
-            secondary.push('/scripts/jQuery-File-Upload/js/vendor/jquery.ui.widget.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/canvas-to-blob.min.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/load-image.all.min.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/jquery.iframe-transport.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-process.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-image.js');
-            secondary.push('/scripts/jQuery-File-Upload/js/jquery.fileupload-validate.js');
+            secondary.push('/src/js/libs-fileupload.js');
 
 			if(config.upload.multiple) {
-                secondary.push('/scripts/jQuery-File-Upload/css/dropzone.css');
+                secondary.push('/libs/jQuery-File-Upload/css/dropzone.css');
 			}
 		}
 
@@ -1077,7 +1070,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 // }
                 if(isOpenDocFile(filename) && config.viewer.opendoc.enabled === true) {
                     viewerObject.type = 'opendoc';
-                    viewerObject.url = fm.settings.baseUrl + '/scripts/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
+                    viewerObject.url = fm.settings.baseUrl + '/libs/ViewerJS/index.html#' + createPreviewUrl(resourceObject, true);
                     viewerObject.options = {
                         width: config.viewer.opendoc.readerWidth,
                         height: config.viewer.opendoc.readerHeight
@@ -2686,7 +2679,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     replaceLink: function (link, env) {
 
                         // do not change if link as http:// or ftp:// or mailto: etc.
-                        if (link.search('://') != -1 || startsWith(link, 'mailto:')) {
+                        if (link.search('://') !== -1 || startsWith(link, 'mailto:')) {
                             return link;
                         }
 
@@ -2729,7 +2722,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                                 return false; // prevent onClick event
                             });
                         } else {
-                            if (href.search('://') != -1 || startsWith(href, 'mailto:')) {
+                            if (href.search('://') !== -1 || startsWith(href, 'mailto:')) {
                                 return; // do nothing
                             }
 
@@ -2826,61 +2819,61 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 // highlight code according to extension file
                 if (config.editor.codeHighlight) {
                     if (extension === 'js') {
-                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/libs/CodeMirror/mode/javascript/javascript.js');
                         currentMode = 'javascript';
                     }
                     if (extension === 'css') {
-                        assets.push('/scripts/CodeMirror/mode/css/css.js');
+                        assets.push('/libs/CodeMirror/mode/css/css.js');
                         currentMode = 'css';
                     }
                     if (extension === 'html') {
-                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                        assets.push('/libs/CodeMirror/mode/xml/xml.js');
                         currentMode = 'text/html';
                     }
                     if (extension === 'xml') {
-                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
+                        assets.push('/libs/CodeMirror/mode/xml/xml.js');
                         currentMode = 'application/xml';
                     }
                     if (extension === 'php') {
-                        assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
-                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-                        assets.push('/scripts/CodeMirror/mode/css/css.js');
-                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
-                        assets.push('/scripts/CodeMirror/mode/php/php.js');
+                        assets.push('/libs/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                        assets.push('/libs/CodeMirror/mode/xml/xml.js');
+                        assets.push('/libs/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/libs/CodeMirror/mode/css/css.js');
+                        assets.push('/libs/CodeMirror/mode/clike/clike.js');
+                        assets.push('/libs/CodeMirror/mode/php/php.js');
                         currentMode = 'application/x-httpd-php';
                     }
                     if (extension === 'java') {
-                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
+                        assets.push('/libs/CodeMirror/mode/clike/clike.js');
                         currentMode = 'text/x-java';
                     }
                     if (extension === 'sql') {
-                        assets.push('/scripts/CodeMirror/mode/sql/sql.js');
+                        assets.push('/libs/CodeMirror/mode/sql/sql.js');
                         currentMode = 'text/x-mysql';
                     }
                     if (extension === 'md') {
-                        assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
-                        assets.push('/scripts/CodeMirror/mode/xml/xml.js');
-                        assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
-                        assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
-                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-                        assets.push('/scripts/CodeMirror/mode/css/css.js');
-                        assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
-                        assets.push('/scripts/CodeMirror/mode/shell/shell.js');
-                        assets.push('/scripts/CodeMirror/mode/meta.js');
+                        assets.push('/libs/CodeMirror/addon/mode/overlay.js');
+                        assets.push('/libs/CodeMirror/mode/xml/xml.js');
+                        assets.push('/libs/CodeMirror/mode/markdown/markdown.js');
+                        assets.push('/libs/CodeMirror/mode/gfm/gfm.js');
+                        assets.push('/libs/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/libs/CodeMirror/mode/css/css.js');
+                        assets.push('/libs/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                        assets.push('/libs/CodeMirror/mode/clike/clike.js');
+                        assets.push('/libs/CodeMirror/mode/shell/shell.js');
+                        assets.push('/libs/CodeMirror/mode/meta.js');
                         currentMode = 'gfm';
                     }
                     if (extension === 'sh') {
-                        assets.push('/scripts/CodeMirror/addon/mode/overlay.js');
-                        assets.push('/scripts/CodeMirror/mode/markdown/markdown.js');
-                        assets.push('/scripts/CodeMirror/mode/gfm/gfm.js');
-                        assets.push('/scripts/CodeMirror/mode/javascript/javascript.js');
-                        assets.push('/scripts/CodeMirror/mode/css/css.js');
-                        assets.push('/scripts/CodeMirror/mode/htmlmixed/htmlmixed.js');
-                        assets.push('/scripts/CodeMirror/mode/clike/clike.js');
-                        assets.push('/scripts/CodeMirror/mode/meta.js');
-                        assets.push('/scripts/CodeMirror/mode/shell/shell.js');
+                        assets.push('/libs/CodeMirror/addon/mode/overlay.js');
+                        assets.push('/libs/CodeMirror/mode/markdown/markdown.js');
+                        assets.push('/libs/CodeMirror/mode/gfm/gfm.js');
+                        assets.push('/libs/CodeMirror/mode/javascript/javascript.js');
+                        assets.push('/libs/CodeMirror/mode/css/css.js');
+                        assets.push('/libs/CodeMirror/mode/htmlmixed/htmlmixed.js');
+                        assets.push('/libs/CodeMirror/mode/clike/clike.js');
+                        assets.push('/libs/CodeMirror/mode/meta.js');
+                        assets.push('/libs/CodeMirror/mode/shell/shell.js');
                         currentMode = 'shell';
                     }
                 }
@@ -3247,7 +3240,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 	var loadTemplate = function(id, data) {
 		return $.ajax({
 			type: 'GET',
-			url: fm.settings.baseUrl + '/scripts/templates/' + id + '.html',
+			url: fm.settings.baseUrl + '/src/templates/' + id + '.html',
 			error: handleAjaxError
 		});
 	};
@@ -4692,7 +4685,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 							var $template = $(tmpl('tmpl-upload-item', {
 								file: file,
 								lang: langModel.getTranslations(),
-								imagesPath: fm.settings.baseUrl + '/scripts/jQuery-File-Upload/img'
+								imagesPath: fm.settings.baseUrl + '/libs/jQuery-File-Upload/img'
 							}));
 							file.context = $template;
 							$template.find('.buttons').data(data);
@@ -4919,7 +4912,7 @@ $.fn.richFilemanager = function(options) {
 	return this.each(function() {
 
 		// if plugin has not already been attached to the element
-		if (undefined == $(this).data('richFilemanager')) {
+		if (undefined === $(this).data('richFilemanager')) {
 
 			/**
 			 * Creates a new instance of the plugin

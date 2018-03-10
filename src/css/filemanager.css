@@ -88,7 +88,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 .fm-container .fm-header .breadcrumbs .nav-item.root {
     width: 20px;
     height: 20px;
-    background-image: url(../images/nav/grey/home.png);
+    background-image: url(../../images/nav/grey/home.png);
     background-size: 20px;
 }
 
@@ -171,64 +171,64 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .fm-header .btn-nav-home span {
-    background-image: url(../images/nav/grey/home.png);
+    background-image: url(../../images/nav/grey/home.png);
 }
 .fm-container .fm-header .btn-nav-level-up span {
-    background-image: url(../images/nav/grey/level-up.png);
+    background-image: url(../../images/nav/grey/level-up.png);
 }
 .fm-container .fm-header .btn-nav-refresh span {
-    background-image: url(../images/nav/grey/refresh.png);
+    background-image: url(../../images/nav/grey/refresh.png);
 }
 .fm-container .fm-header .btn-grid-mode span {
-    background-image: url(../images/application_view_icons.png);
+    background-image: url(../../images/application_view_icons.png);
 }
 .fm-container .fm-header .btn-list-mode span {
-    background-image: url(../images/application_view_list.png);
+    background-image: url(../../images/application_view_list.png);
 }
 .fm-container .fm-header .btn-create-folder span {
-    background-image: url(../images/folder_add.png);
+    background-image: url(../../images/folder_add.png);
 }
 .fm-container .fm-header .btn-close-window span {
-    background-image: url(../images/reset_dark.png);
+    background-image: url(../../images/reset_dark.png);
 }
 .fm-container .fm-header .btn-clipboard-cut span {
-    background-image: url(../images/clipboard/clipboard_cut.png);
+    background-image: url(../../images/clipboard/clipboard_cut.png);
 }
 .fm-container .fm-header .btn-clipboard-copy span {
-    background-image: url(../images/clipboard/clipboard_copy.png);
+    background-image: url(../../images/clipboard/clipboard_copy.png);
 }
 .fm-container .fm-header .btn-clipboard-paste span {
-    background-image: url(../images/clipboard/clipboard_paste.png);
+    background-image: url(../../images/clipboard/clipboard_paste.png);
 }
 .fm-container .fm-header .btn-clipboard-clear span {
-    background-image: url(../images/clipboard/clipboard_clear.png);
+    background-image: url(../../images/clipboard/clipboard_clear.png);
 }
 .fm-container .fm-header .btn-filter-audio span {
-    background-image: url(../images/filter/grey/file-audio.png);
+    background-image: url(../../images/filter/grey/file-audio.png);
 }
 .fm-container .fm-header .btn-filter-archive span {
-    background-image: url(../images/filter/grey/file-archive.png);
+    background-image: url(../../images/filter/grey/file-archive.png);
 }
 .fm-container .fm-header .btn-filter-office span {
-    background-image: url(../images/filter/grey/file-office.png);
+    background-image: url(../../images/filter/grey/file-office.png);
 }
 .fm-container .fm-header .btn-filter-image span {
-    background-image: url(../images/filter/grey/file-image.png);
+    background-image: url(../../images/filter/grey/file-image.png);
 }
 .fm-container .fm-header .btn-filter-media span {
-    background-image: url(../images/filter/grey/file-media.png);
+    background-image: url(../../images/filter/grey/file-media.png);
 }
 .fm-container .fm-header .btn-filter-reset span {
-    background-image: url(../images/filter/grey/file-all.png);
+    background-image: url(../../images/filter/grey/file-all.png);
 }
 .fm-container .fm-header .btn-filter-video span {
-    background-image: url(../images/filter/grey/file-video.png);
+    background-image: url(../../images/filter/grey/file-video.png);
 }
 .fm-container .fm-header .fm-upload span {
-    background-image: url(../images/upload.png);
+    background-image: url(../../images/upload.png);
 }
 .fm-container .fm-header .fm-upload.loading span {
-    background-image: url(../images/ajax-loader.gif);
+    background-image: url(../../images/ajax-loader.gif);
     color: #555555;
     font-size: 0.9em;
 }
@@ -239,7 +239,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 
 .fm-container .fm-splitter .splitter-bar-vertical {
     width: 6px;
-    background: url(../images/vgrabber.gif) no-repeat center;
+    background: url(../../images/vgrabber.gif) no-repeat center;
 }
 
 .fm-container .fm-splitter > * {
@@ -272,7 +272,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .fm-filetree li ul.line {
-    background: url(../images/filetree/line_conn.gif) 0 0 repeat-y;
+    background: url(../../images/filetree/line_conn.gif) 0 0 repeat-y;
 }
 
 .fm-container .fm-filetree li > div.row {
@@ -346,8 +346,8 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     background-color: transparent;
     background-repeat: no-repeat;
     background-attachment: scroll;
-    background-image: url("../images/filetree/preset.png");
-    *background-image: url("../images/filetree/preset.gif")
+    background-image: url("../../images/filetree/preset.png");
+    *background-image: url("../../images/filetree/preset.gif")
 }
 
 .fm-container .fm-filetree li span.button.switch {
@@ -389,7 +389,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     width: 30px;
     height: 30px;
     margin: 100px auto 0;
-    background: url(../images/spinner.gif) no-repeat center center;
+    background: url(../../images/spinner.gif) no-repeat center center;
 }
 
 .fm-container .fm-fileinfo .fm-renderer-container {
@@ -501,31 +501,31 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .fm-preview .btn-file-preview-close span {
-    background-image: url(../images/parentfolder.png);
+    background-image: url(../../images/parentfolder.png);
 }
 .fm-container .fm-preview .btn-file-select span {
-    background-image: url(../images/accept.png);
+    background-image: url(../../images/accept.png);
 }
 .fm-container .fm-preview .btn-file-download span {
-    background-image: url(../images/download.png);
+    background-image: url(../../images/download.png);
 }
 .fm-container .fm-preview .btn-file-rename span {
-    background-image: url(../images/tag.png);
+    background-image: url(../../images/tag.png);
 }
 .fm-container .fm-preview .btn-file-move span {
-    background-image: url(../images/move.png);
+    background-image: url(../../images/move.png);
 }
 .fm-container .fm-preview .btn-file-delete span {
-    background-image: url(../images/bin_closed.png);
+    background-image: url(../../images/bin_closed.png);
 }
 .fm-container .fm-preview .btn-file-edit span {
-    background-image: url(../images/edit_dark.png);
+    background-image: url(../../images/edit_dark.png);
 }
 .fm-container .fm-preview .btn-file-save span {
-    background-image: url(../images/save_dark.png);
+    background-image: url(../../images/save_dark.png);
 }
 .fm-container .fm-preview .btn-file-editor-close span {
-    background-image: url(../images/reset_dark.png);
+    background-image: url(../../images/reset_dark.png);
 }
 
 .fm-container .fm-preview .fm-preview-title {
@@ -551,16 +551,16 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .fm-preview .btn-editor-open {
-    background: url(../images/edit.png) no-repeat center center;
+    background: url(../../images/edit.png) no-repeat center center;
 }
 .fm-container .fm-preview .btn-editor-save {
-    background: url(../images/save.png) no-repeat center center;
+    background: url(../../images/save.png) no-repeat center center;
 }
 .fm-container .fm-preview .btn-editor-quit {
-    background: url(../images/reset.png) no-repeat center center;
+    background: url(../../images/reset.png) no-repeat center center;
 }
 .fm-container .fm-preview .btn-copy-url {
-    background: url(../images/copy.png) no-repeat center center;
+    background: url(../../images/copy.png) no-repeat center center;
 }
 
 .fm-container .fm-footer .right {
@@ -585,7 +585,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     width: 16px;
     height: 16px;
     display: inline-block;
-    background: url(../images/summary.png) no-repeat center center;
+    background: url(../../images/summary.png) no-repeat center center;
     cursor: pointer;
 }
 
@@ -593,7 +593,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     height: 12px;
     width: 45px;
     display: inline-block;
-    background: transparent url(../images/fmlogo.png) no-repeat 0 0;
+    background: transparent url(../../images/fmlogo.png) no-repeat 0 0;
     margin: 1em 1em 0 1em;
 }
 
@@ -616,11 +616,11 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .search-box .search-icon {
-    background-image: url(../images/search_dark.png);
+    background-image: url(../../images/search_dark.png);
 }
 
 .fm-container .search-box .reset-icon {
-    background-image: url(../images/reset_dark.png);
+    background-image: url(../../images/reset_dark.png);
 }
 
 .fm-container .input-group {
@@ -782,7 +782,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     display: block;
     width: 100%;
     margin-right: 20px;
-    background-image: url(../images/bullet_arrow_up.png);
+    background-image: url(../../images/bullet_arrow_up.png);
     background-repeat: no-repeat;
     background-position: right center;
 }
@@ -791,7 +791,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     display: block;
     width: 100%;
     margin-right: 20px;
-    background-image: url(../images/bullet_arrow_down.png);
+    background-image: url(../../images/bullet_arrow_down.png);
     background-repeat: no-repeat;
     background-position: right center;
 }
@@ -850,37 +850,37 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .context-menu-item.select:before {
-    background-image: url(../images/accept.png);
+    background-image: url(../../images/accept.png);
 }
 .fm-container .context-menu-item.download:before {
-    background-image: url(../images/download.png);
+    background-image: url(../../images/download.png);
 }
 .fm-container .context-menu-item.rename:before {
-    background-image: url(../images/tag.png);
+    background-image: url(../../images/tag.png);
 }
 .fm-container .context-menu-item.move:before {
-    background-image: url(../images/move.png);
+    background-image: url(../../images/move.png);
 }
 .fm-container .context-menu-item.extract:before {
-    background-image: url(../images/extract.png);
+    background-image: url(../../images/extract.png);
 }
 .fm-container .context-menu-item.delete:before {
-    background-image: url(../images/bin_closed.png);
+    background-image: url(../../images/bin_closed.png);
 }
 .fm-container .context-menu-item.create-folder:before {
-    background-image: url(../images/folder_add.png);
+    background-image: url(../../images/folder_add.png);
 }
 .fm-container .context-menu-item.copy-url:before {
-    background-image: url(../images/copy_url.png);
+    background-image: url(../../images/copy_url.png);
 }
 .fm-container .context-menu-item.cut:before {
-    background-image: url(../images/clipboard/clipboard_cut.png);
+    background-image: url(../../images/clipboard/clipboard_cut.png);
 }
 .fm-container .context-menu-item.copy:before {
-    background-image: url(../images/clipboard/clipboard_copy.png);
+    background-image: url(../../images/clipboard/clipboard_copy.png);
 }
 .fm-container .context-menu-item.paste:before {
-    background-image: url(../images/clipboard/clipboard_paste.png);
+    background-image: url(../../images/clipboard/clipboard_paste.png);
 }
 
 
@@ -957,7 +957,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     width: 20px;
     height: 20px;
     margin: 0 auto;
-    background: url(../images/fileicons/drag-n-drop/cancel-4.png) center center no-repeat;
+    background: url(../../images/fileicons/drag-n-drop/cancel-4.png) center center no-repeat;
     background-size: cover;
 }
 
@@ -1114,7 +1114,7 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
     margin-top: 5px;
     padding-left: 25px;
     color: #444;
-    background: transparent url(../images/info.png) no-repeat 0 0;
+    background: transparent url(../../images/info.png) no-repeat 0 0;
     background-position: left center;
 }
 
@@ -1160,32 +1160,32 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 
 .fm-container .list-icon.ico_folder,
 .fm-container li span.button.ico_folder {
-    background: url(../images/filetree/ico_folder.png) left top no-repeat;
+    background: url(../../images/filetree/ico_folder.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_folder_lock,
 .fm-container li span.button.ico_folder_lock {
-    background: url(../images/filetree/ico_folder_lock.png) left top no-repeat;
+    background: url(../../images/filetree/ico_folder_lock.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_folder_open,
 .fm-container li span.button.ico_folder_open {
-    background: url(../images/filetree/ico_folder_open.png) left top no-repeat;
+    background: url(../../images/filetree/ico_folder_open.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_file,
 .fm-container li span.button.ico_file {
-    background: url(../images/filetree/ico_file.png) left top no-repeat;
+    background: url(../../images/filetree/ico_file.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_file_lock,
 .fm-container li span.button.ico_file_lock {
-    background: url(../images/filetree/ico_file_lock.png) left top no-repeat !important;
+    background: url(../../images/filetree/ico_file_lock.png) left top no-repeat !important;
 }
 
 .fm-container .list-icon.ico_loading,
 .fm-container li span.button.ico_loading {
-    background: url(../images/filetree/loading.gif) left top no-repeat;
+    background: url(../../images/filetree/loading.gif) left top no-repeat;
 }
 
 
@@ -1193,377 +1193,377 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 
 .fm-container .list-icon.ico_ext_3g2,
 .fm-container li span.button.ico_ext_3g2 {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_3gp,
 .fm-container li span.button.ico_ext_3gp {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_7z,
 .fm-container li span.button.ico_ext_7z {
-    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+    background: url(../../images/filetree/ico_zip.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_afp,
 .fm-container li span.button.ico_ext_afp {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_afpa,
 .fm-container li span.button.ico_ext_afpa {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_asp,
 .fm-container li span.button.ico_ext_asp {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_aspx,
 .fm-container li span.button.ico_ext_aspx {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_avi,
 .fm-container li span.button.ico_ext_avi {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_bat,
 .fm-container li span.button.ico_ext_bat {
-    background: url(../images/filetree/ico_application.png) left top no-repeat;
+    background: url(../../images/filetree/ico_application.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_bmp,
 .fm-container li span.button.ico_ext_bmp {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_c,
 .fm-container li span.button.ico_ext_c {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_cfm,
 .fm-container li span.button.ico_ext_cfm {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_cgi,
 .fm-container li span.button.ico_ext_cgi {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_com,
 .fm-container li span.button.ico_ext_com {
-    background: url(../images/filetree/ico_application.png) left top no-repeat;
+    background: url(../../images/filetree/ico_application.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_cpp,
 .fm-container li span.button.ico_ext_cpp {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_css,
 .fm-container li span.button.ico_ext_css {
-    background: url(../images/filetree/ico_css.png) left top no-repeat;
+    background: url(../../images/filetree/ico_css.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_csv,
 .fm-container li span.button.ico_ext_csv {
-    background: url(../images/filetree/ico_txt.png) left top no-repeat;
+    background: url(../../images/filetree/ico_txt.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_doc,
 .fm-container li span.button.ico_ext_doc {
-    background: url(../images/filetree/ico_doc.png) left top no-repeat;
+    background: url(../../images/filetree/ico_doc.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_docx,
 .fm-container li span.button.ico_ext_docx {
-    background: url(../images/filetree/ico_doc.png) left top no-repeat;
+    background: url(../../images/filetree/ico_doc.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_exe,
 .fm-container li span.button.ico_ext_exe {
-    background: url(../images/filetree/ico_application.png) left top no-repeat;
+    background: url(../../images/filetree/ico_application.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_gif,
 .fm-container li span.button.ico_ext_gif {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_f4v,
 .fm-container li span.button.ico_ext_f4v {
-    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+    background: url(../../images/filetree/ico_flash.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_fla,
 .fm-container li span.button.ico_ext_fla {
-    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+    background: url(../../images/filetree/ico_flash.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_flv,
 .fm-container li span.button.ico_ext_flv {
-    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+    background: url(../../images/filetree/ico_flash.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_h,
 .fm-container li span.button.ico_ext_h {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_htm,
 .fm-container li span.button.ico_ext_htm {
-    background: url(../images/filetree/ico_html.png) left top no-repeat;
+    background: url(../../images/filetree/ico_html.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_html,
 .fm-container li span.button.ico_ext_html {
-    background: url(../images/filetree/ico_html.png) left top no-repeat;
+    background: url(../../images/filetree/ico_html.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_jar,
 .fm-container li span.button.ico_ext_jar {
-    background: url(../images/filetree/ico_java.png) left top no-repeat;
+    background: url(../../images/filetree/ico_java.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_jpg,
 .fm-container li span.button.ico_ext_jpg {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_jpeg,
 .fm-container li span.button.ico_ext_jpeg {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_js,
 .fm-container li span.button.ico_ext_js {
-    background: url(../images/filetree/ico_script.png) left top no-repeat;
+    background: url(../../images/filetree/ico_script.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_lasso,
 .fm-container li span.button.ico_ext_lasso {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_log,
 .fm-container li span.button.ico_ext_log {
-    background: url(../images/filetree/ico_txt.png) left top no-repeat;
+    background: url(../../images/filetree/ico_txt.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_m4p,
 .fm-container li span.button.ico_ext_m4p {
-    background: url(../images/filetree/ico_music.png) left top no-repeat;
+    background: url(../../images/filetree/ico_music.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_m4v,
 .fm-container li span.button.ico_ext_m4v {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_mov,
 .fm-container li span.button.ico_ext_mov {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_mp3,
 .fm-container li span.button.ico_ext_mp3 {
-    background: url(../images/filetree/ico_music.png) left top no-repeat;
+    background: url(../../images/filetree/ico_music.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_mp4,
 .fm-container li span.button.ico_ext_mp4 {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_mpg,
 .fm-container li span.button.ico_ext_mpg {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_mpeg,
 .fm-container li span.button.ico_ext_mpeg {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_odp,
 .fm-container li span.button.ico_ext_odp {
-    background: url(../images/filetree/ico_ppt.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ppt.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_ods,
 .fm-container li span.button.ico_ext_ods {
-    background: url(../images/filetree/ico_xls.png) left top no-repeat;
+    background: url(../../images/filetree/ico_xls.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_odt,
 .fm-container li span.button.ico_ext_odt {
-    background: url(../images/filetree/ico_doc.png) left top no-repeat;
+    background: url(../../images/filetree/ico_doc.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_ogv,
 .fm-container li span.button.ico_ext_ogv {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_ogg,
 .fm-container li span.button.ico_ext_ogg {
-    background: url(../images/filetree/ico_music.png) left top no-repeat;
+    background: url(../../images/filetree/ico_music.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_pcx,
 .fm-container li span.button.ico_ext_pcx {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_pdf,
 .fm-container li span.button.ico_ext_pdf {
-    background: url(../images/filetree/ico_pdf.png) left top no-repeat;
+    background: url(../../images/filetree/ico_pdf.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_php,
 .fm-container li span.button.ico_ext_php {
-    background: url(../images/filetree/ico_php.png) left top no-repeat;
+    background: url(../../images/filetree/ico_php.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_png,
 .fm-container li span.button.ico_ext_png {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_ppt,
 .fm-container li span.button.ico_ext_ppt {
-    background: url(../images/filetree/ico_ppt.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ppt.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_pptx,
 .fm-container li span.button.ico_ext_pptx {
-    background: url(../images/filetree/ico_ppt.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ppt.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_psd,
 .fm-container li span.button.ico_ext_psd {
-    background: url(../images/filetree/ico_psd.png) left top no-repeat;
+    background: url(../../images/filetree/ico_psd.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_pl,
 .fm-container li span.button.ico_ext_pl {
-    background: url(../images/filetree/ico_script.png) left top no-repeat;
+    background: url(../../images/filetree/ico_script.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_py,
 .fm-container li span.button.ico_ext_py {
-    background: url(../images/filetree/ico_script.png) left top no-repeat;
+    background: url(../../images/filetree/ico_script.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_rar,
 .fm-container li span.button.ico_ext_rar {
-    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+    background: url(../../images/filetree/ico_zip.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_rb,
 .fm-container li span.button.ico_ext_rb {
-    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_rbx,
 .fm-container li span.button.ico_ext_rbx {
-    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_rhtml,
 .fm-container li span.button.ico_ext_rhtml {
-    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_rpm,
 .fm-container li span.button.ico_ext_rpm {
-    background: url(../images/filetree/ico_linux.png) left top no-repeat;
+    background: url(../../images/filetree/ico_linux.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_ruby,
 .fm-container li span.button.ico_ext_ruby {
-    background: url(../images/filetree/ico_ruby.png) left top no-repeat;
+    background: url(../../images/filetree/ico_ruby.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_sql,
 .fm-container li span.button.ico_ext_sql {
-    background: url(../images/filetree/ico_db.png) left top no-repeat;
+    background: url(../../images/filetree/ico_db.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_swf,
 .fm-container li span.button.ico_ext_swf {
-    background: url(../images/filetree/ico_flash.png) left top no-repeat;
+    background: url(../../images/filetree/ico_flash.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_tar,
 .fm-container li span.button.ico_ext_tar {
-    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+    background: url(../../images/filetree/ico_zip.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_tif,
 .fm-container li span.button.ico_ext_tif {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_tiff,
 .fm-container li span.button.ico_ext_tiff {
-    background: url(../images/filetree/ico_picture.png) left top no-repeat;
+    background: url(../../images/filetree/ico_picture.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_txt,
 .fm-container li span.button.ico_ext_txt {
-    background: url(../images/filetree/ico_txt.png) left top no-repeat;
+    background: url(../../images/filetree/ico_txt.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_vb,
 .fm-container li span.button.ico_ext_vb {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_wav,
 .fm-container li span.button.ico_ext_wav {
-    background: url(../images/filetree/ico_music.png) left top no-repeat;
+    background: url(../../images/filetree/ico_music.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_weba,
 .fm-container li span.button.ico_ext_weba {
-    background: url(../images/filetree/ico_music.png) left top no-repeat;
+    background: url(../../images/filetree/ico_music.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_webm,
 .fm-container li span.button.ico_ext_webm {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_wmv,
 .fm-container li span.button.ico_ext_wmv {
-    background: url(../images/filetree/ico_film.png) left top no-repeat;
+    background: url(../../images/filetree/ico_film.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_xls,
 .fm-container li span.button.ico_ext_xls {
-    background: url(../images/filetree/ico_xls.png) left top no-repeat;
+    background: url(../../images/filetree/ico_xls.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_xlsx,
 .fm-container li span.button.ico_ext_xlsx {
-    background: url(../images/filetree/ico_xls.png) left top no-repeat;
+    background: url(../../images/filetree/ico_xls.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_xml,
 .fm-container li span.button.ico_ext_xml {
-    background: url(../images/filetree/ico_code.png) left top no-repeat;
+    background: url(../../images/filetree/ico_code.png) left top no-repeat;
 }
 
 .fm-container .list-icon.ico_ext_zip,
 .fm-container li span.button.ico_ext_zip {
-    background: url(../images/filetree/ico_zip.png) left top no-repeat;
+    background: url(../../images/filetree/ico_zip.png) left top no-repeat;
 }
 
 
@@ -1590,266 +1590,266 @@ html[data-useragent*='MSIE 11.0'] .fm-container .fm-header button {
 }
 
 .fm-container .grid-icon.ico_file {
-    background-image: url(../images/fileicons/icon_file.png);
+    background-image: url(../../images/fileicons/icon_file.png);
 }
 
 .fm-container .grid-icon.ico_file_lock {
-    background-image: url(../images/fileicons/icon_file_lock.png);
+    background-image: url(../../images/fileicons/icon_file_lock.png);
 }
 
 .fm-container .grid-icon.ico_folder {
-    background-image: url(../images/fileicons/icon_folder.png);
+    background-image: url(../../images/fileicons/icon_folder.png);
 }
 
 .fm-container .grid-icon.ico_folder_lock {
-    background-image: url(../images/fileicons/icon_folder_lock.png);
+    background-image: url(../../images/fileicons/icon_folder_lock.png);
 }
 
 .fm-container .grid-icon.ico_folder_parent {
-    background-image: url(../images/fileicons/icon_folder_parent.png);
+    background-image: url(../../images/fileicons/icon_folder_parent.png);
 }
 
 .fm-container .grid-icon.ico_multiple {
-    background-image: url(../images/fileicons/icon_multiple.png);
+    background-image: url(../../images/fileicons/icon_multiple.png);
 }
 
 
 /** ICONS - Grid view related styles based on file extension **/
 
 .fm-container .grid-icon.ico_ext_3g2 {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_3gp {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_7z {
-    background-image: url(../images/fileicons/icon_zip.png);
+    background-image: url(../../images/fileicons/icon_zip.png);
 }
 
 .fm-container .grid-icon.ico_ext_aac {
-    background-image: url(../images/fileicons/icon_aac.png);
+    background-image: url(../../images/fileicons/icon_aac.png);
 }
 
 .fm-container .grid-icon.ico_ext_avi {
-    background-image: url(../images/fileicons/icon_avi.png);
+    background-image: url(../../images/fileicons/icon_avi.png);
 }
 
 .fm-container .grid-icon.ico_ext_bmp {
-    background-image: url(../images/fileicons/icon_bmp.png);
+    background-image: url(../../images/fileicons/icon_bmp.png);
 }
 
 .fm-container .grid-icon.ico_ext_chm {
-    background-image: url(../images/fileicons/icon_chm.png);
+    background-image: url(../../images/fileicons/icon_chm.png);
 }
 
 .fm-container .grid-icon.ico_ext_css {
-    background-image: url(../images/fileicons/icon_css.png);
+    background-image: url(../../images/fileicons/icon_css.png);
 }
 
 .fm-container .grid-icon.ico_ext_csv {
-    background-image: url(../images/fileicons/icon_txt.png);
+    background-image: url(../../images/fileicons/icon_txt.png);
 }
 
 .fm-container .grid-icon.ico_ext_dll {
-    background-image: url(../images/fileicons/icon_dll.png);
+    background-image: url(../../images/fileicons/icon_dll.png);
 }
 
 .fm-container .grid-icon.ico_ext_doc,
 .fm-container .grid-icon.ico_ext_docx {
-    background-image: url(../images/fileicons/icon_doc.png);
+    background-image: url(../../images/fileicons/icon_doc.png);
 }
 
 .fm-container .grid-icon.ico_ext_fla {
-    background-image: url(../images/fileicons/icon_fla.png);
+    background-image: url(../../images/fileicons/icon_fla.png);
 }
 
 .fm-container .grid-icon.ico_ext_gif {
-    background-image: url(../images/fileicons/icon_gif.png);
+    background-image: url(../../images/fileicons/icon_gif.png);
 }
 
 .fm-container .grid-icon.ico_ext_htm,
 .fm-container .grid-icon.ico_ext_html {
-    background-image: url(../images/fileicons/icon_html.png);
+    background-image: url(../../images/fileicons/icon_html.png);
 }
 
 .fm-container .grid-icon.ico_ext_ini {
-    background-image: url(../images/fileicons/icon_ini.png);
+    background-image: url(../../images/fileicons/icon_ini.png);
 }
 
 .fm-container .grid-icon.ico_ext_jar {
-    background-image: url(../images/fileicons/icon_jar.png);
+    background-image: url(../../images/fileicons/icon_jar.png);
 }
 
 .fm-container .grid-icon.ico_ext_jpg,
 .fm-container .grid-icon.ico_ext_jpeg {
-    background-image: url(../images/fileicons/icon_jpg.png);
+    background-image: url(../../images/fileicons/icon_jpg.png);
 }
 
 .fm-container .grid-icon.ico_ext_js {
-    background-image: url(../images/fileicons/icon_js.png);
+    background-image: url(../../images/fileicons/icon_js.png);
 }
 
 .fm-container .grid-icon.ico_ext_lasso {
-    background-image: url(../images/fileicons/icon_lasso.png);
+    background-image: url(../../images/fileicons/icon_lasso.png);
 }
 
 .fm-container .grid-icon.ico_ext_m4p {
-    background-image: url(../images/fileicons/icon_music.png);
+    background-image: url(../../images/fileicons/icon_music.png);
 }
 
 .fm-container .grid-icon.ico_ext_m4v {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_mdb {
-    background-image: url(../images/fileicons/icon_mdb.png);
+    background-image: url(../../images/fileicons/icon_mdb.png);
 }
 
 .fm-container .grid-icon.ico_ext_mov {
-    background-image: url(../images/fileicons/icon_mov.png);
+    background-image: url(../../images/fileicons/icon_mov.png);
 }
 
 .fm-container .grid-icon.ico_ext_mp3 {
-    background-image: url(../images/fileicons/icon_mp3.png);
+    background-image: url(../../images/fileicons/icon_mp3.png);
 }
 
 .fm-container .grid-icon.ico_ext_mp4 {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_mpg {
-    background-image: url(../images/fileicons/icon_mpg.png);
+    background-image: url(../../images/fileicons/icon_mpg.png);
 }
 
 .fm-container .grid-icon.ico_ext_mpeg {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_odp {
-    background-image: url(../images/fileicons/icon_odp.png);
+    background-image: url(../../images/fileicons/icon_odp.png);
 }
 
 .fm-container .grid-icon.ico_ext_ods {
-    background-image: url(../images/fileicons/icon_ods.png);
+    background-image: url(../../images/fileicons/icon_ods.png);
 }
 
 .fm-container .grid-icon.ico_ext_odt {
-    background-image: url(../images/fileicons/icon_odt.png);
+    background-image: url(../../images/fileicons/icon_odt.png);
 }
 
 .fm-container .grid-icon.ico_ext_ogg {
-    background-image: url(../images/fileicons/icon_music.png);
+    background-image: url(../../images/fileicons/icon_music.png);
 }
 
 .fm-container .grid-icon.ico_ext_pcx {
-    background-image: url(../images/fileicons/icon_image.png);
+    background-image: url(../../images/fileicons/icon_image.png);
 }
 
 .fm-container .grid-icon.ico_ext_ogv {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_pdf {
-    background-image: url(../images/fileicons/icon_pdf.png);
+    background-image: url(../../images/fileicons/icon_pdf.png);
 }
 
 .fm-container .grid-icon.ico_ext_php {
-    background-image: url(../images/fileicons/icon_php.png);
+    background-image: url(../../images/fileicons/icon_php.png);
 }
 
 .fm-container .grid-icon.ico_ext_png {
-    background-image: url(../images/fileicons/icon_png.png);
+    background-image: url(../../images/fileicons/icon_png.png);
 }
 
 .fm-container .grid-icon.ico_ext_ppt,
 .fm-container .grid-icon.ico_ext_pptx {
-    background-image: url(../images/fileicons/icon_ppt.png);
+    background-image: url(../../images/fileicons/icon_ppt.png);
 }
 
 .fm-container .grid-icon.ico_ext_py {
-    background-image: url(../images/fileicons/icon_py.png);
+    background-image: url(../../images/fileicons/icon_py.png);
 }
 
 .fm-container .grid-icon.ico_ext_rar {
-    background-image: url(../images/fileicons/icon_zip.png);
+    background-image: url(../../images/fileicons/icon_zip.png);
 }
 
 .fm-container .grid-icon.ico_ext_rb {
-    background-image: url(../images/fileicons/icon_rb.png);
+    background-image: url(../../images/fileicons/icon_rb.png);
 }
 
 .fm-container .grid-icon.ico_ext_real {
-    background-image: url(../images/fileicons/icon_real.png);
+    background-image: url(../../images/fileicons/icon_real.png);
 }
 
 .fm-container .grid-icon.ico_ext_reg {
-    background-image: url(../images/fileicons/icon_reg.png);
+    background-image: url(../../images/fileicons/icon_reg.png);
 }
 
 .fm-container .grid-icon.ico_ext_rtf {
-    background-image: url(../images/fileicons/icon_rtf.png);
+    background-image: url(../../images/fileicons/icon_rtf.png);
 }
 
 .fm-container .grid-icon.ico_ext_sql {
-    background-image: url(../images/fileicons/icon_sql.png);
+    background-image: url(../../images/fileicons/icon_sql.png);
 }
 
 .fm-container .grid-icon.ico_ext_swf {
-    background-image: url(../images/fileicons/icon_swf.png);
+    background-image: url(../../images/fileicons/icon_swf.png);
 }
 
 .fm-container .grid-icon.ico_ext_tar {
-    background-image: url(../images/fileicons/icon_zip.png);
+    background-image: url(../../images/fileicons/icon_zip.png);
 }
 
 .fm-container .grid-icon.ico_ext_tif,
 .fm-container .grid-icon.ico_ext_tiff {
-    background-image: url(../images/fileicons/icon_image.png);
+    background-image: url(../../images/fileicons/icon_image.png);
 }
 
 .fm-container .grid-icon.ico_ext_txt {
-    background-image: url(../images/fileicons/icon_txt.png);
+    background-image: url(../../images/fileicons/icon_txt.png);
 }
 
 .fm-container .grid-icon.ico_ext_vbs {
-    background-image: url(../images/fileicons/icon_vbs.png);
+    background-image: url(../../images/fileicons/icon_vbs.png);
 }
 
 .fm-container .grid-icon.ico_ext_wav {
-    background-image: url(../images/fileicons/icon_wav.png);
+    background-image: url(../../images/fileicons/icon_wav.png);
 }
 
 .fm-container .grid-icon.ico_ext_weba {
-    background-image: url(../images/fileicons/icon_music.png);
+    background-image: url(../../images/fileicons/icon_music.png);
 }
 
 .fm-container .grid-icon.ico_ext_webm {
-    background-image: url(../images/fileicons/icon_movie.png);
+    background-image: url(../../images/fileicons/icon_movie.png);
 }
 
 .fm-container .grid-icon.ico_ext_wma {
-    background-image: url(../images/fileicons/icon_wma.png);
+    background-image: url(../../images/fileicons/icon_wma.png);
 }
 
 .fm-container .grid-icon.ico_ext_wmv {
-    background-image: url(../images/fileicons/icon_wmv.png);
+    background-image: url(../../images/fileicons/icon_wmv.png);
 }
 
 .fm-container .grid-icon.ico_ext_xls,
 .fm-container .grid-icon.ico_ext_xlsx {
-    background-image: url(../images/fileicons/icon_xls.png);
+    background-image: url(../../images/fileicons/icon_xls.png);
 }
 
 .fm-container .grid-icon.ico_ext_xml {
-    background-image: url(../images/fileicons/icon_xml.png);
+    background-image: url(../../images/fileicons/icon_xml.png);
 }
 
 .fm-container .grid-icon.ico_ext_xsl {
-    background-image: url(../images/fileicons/icon_xsl.png);
+    background-image: url(../../images/fileicons/icon_xsl.png);
 }
 
 .fm-container .grid-icon.ico_ext_zip {
-    background-image: url(../images/fileicons/icon_zip.png);
+    background-image: url(../../images/fileicons/icon_zip.png);
 }
