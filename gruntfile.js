@@ -1,6 +1,19 @@
 module.exports = function(grunt) {
     grunt.initConfig({
-
+        sass: {
+            options: {
+                outputStyle: 'compressed',
+                includePaths: [
+                    'styles',
+                    'scripts'
+                ]
+            },
+            dist: {
+                files: {
+                    'styles/merged.css': 'styles/merged.scss'
+                }
+            }
+        },
         uglify: {
             options: {
                 compress: {
@@ -14,7 +27,29 @@ module.exports = function(grunt) {
                     'scripts/jquery.fileDownload/jquery.fileDownload.min.js': ['scripts/jquery.fileDownload/jquery.fileDownload.js'],
                     // lazyLoad script was modified to support IE9 & IE10
                     'scripts/lazyload/dist/lazyload.min.js': ['scripts/lazyload/dist/lazyload.js'],
-                    'scripts/purl/purl.min.js': ['scripts/purl/purl.js']
+                    'scripts/purl/purl.min.js': ['scripts/purl/purl.js'],
+                    'scripts/merged.js': [
+                        'scripts/jquery-1.11.3.min.js',
+                        'scripts/jquery-ui/jquery-ui.js',
+                        'scripts/jquery-browser.js',
+                        'scripts/knockout-3.4.0.js',
+                        'scripts/jquery-mousewheel/jquery.mousewheel.min.js',
+                        'scripts/jquery.splitter/dist/jquery-splitter.js',
+                        'scripts/jquery.contextmenu/dist/jquery.contextMenu.min.js',
+                        'scripts/alertify.js/dist/js/alertify.js',
+                        'scripts/clipboard.js/dist/clipboard.min.js',
+                        'scripts/jquery.fileDownload/jquery.fileDownload.js',
+                        'scripts/javascript-templates/js/tmpl.min.js',
+                        'scripts/toast/lib/toast.min.js',
+                        'scripts/cldrjs/cldr.js',
+                        'scripts/cldrjs/cldr/event.js',
+                        'scripts/cldrjs/cldr/supplemental.js',
+                        'scripts/globalizejs/globalize.js',
+                        'scripts/globalizejs/globalize/number.js',
+                        'scripts/globalizejs/globalize/date.js',
+                        'scripts/purl/purl.js',
+                        'scripts/filemanager.js'
+                    ]
                 }
             }
         }
@@ -23,7 +58,8 @@ module.exports = function(grunt) {
 
     // load plugins
     grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-sass');
 
     // default tasks
-    grunt.registerTask('default', ['uglify']);
+    grunt.registerTask('default', ['uglify', 'sass']);
 };

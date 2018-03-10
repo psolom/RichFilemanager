@@ -3939,6 +3939,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             contextWindow.postMessage(
             	{
                     source: 'richfilemanager',
+                    resourceObject: resourceObject,
                     preview_url: previewUrl
                 }, '*'
             );
