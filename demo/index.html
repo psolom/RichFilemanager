@@ -72,7 +72,7 @@
 
 
 	<script type="text/javascript" src="assets/jquery-1.11.3.min.js"></script>
-	<script type="text/javascript" src="//cdn.ckeditor.com/4.6.2/standard/ckeditor.js"></script>
+	<script type="text/javascript" src="//cdn.ckeditor.com/4.8.0/standard-all/ckeditor.js"></script>
 	<script type="text/javascript" src="//cdn.tinymce.com/4/tinymce.min.js"></script>
 	<script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/fancybox/2.1.5/jquery.fancybox.min.js"></script>
 	<script type="text/javascript" src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -237,6 +237,18 @@
                 }
             }
         });
+
+		// Direct usage example
+        // CKEDITOR.config.removePlugins = 'image';
+        // CKEDITOR.config.extraPlugins = 'image2';
+        // CKEDITOR.replace('editor_ckeditor', {
+        //     filebrowserBrowseUrl: './',
+        //     filebrowserUploadUrl : './connectors/php/filemanager.php?mode=upload&path=/',
+        //     filebrowserImageBrowseUrl : './',
+        //     filebrowserImageUploadUrl : './connectors/php/filemanager.php?mode=upload&path=/',
+        //     filebrowserWindowWidth  : 1200,
+        //     filebrowserWindowHeight : 800
+        // });
 	</script>
 </body>
 
