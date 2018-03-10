@@ -4649,7 +4649,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 						dropZone: $dropzone,
 						maxChunkSize: config.upload.chunkSize,
 						url: buildConnectorUrl(),
-						paramName: 'files',
+						paramName: config.upload.paramName,
 						singleFileUploads: true,
 						formData: extendRequestParams('POST', {
                             mode: 'upload',
@@ -4840,7 +4840,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					autoUpload: true,
 					dataType: 'json',
 					url: buildConnectorUrl(),
-					paramName: 'files',
+					paramName: config.upload.paramName,
 					maxChunkSize: config.upload.chunkSize
 				})
 
