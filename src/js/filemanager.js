@@ -299,14 +299,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     });
                 });
 
-                // If the server is in read only mode, set the GUI to browseOnly:
-                if (config.security.readOnly) {
-                    config.options.browseOnly = true;
-                }
-                // Set default upload parameter
-                if (!config.upload.paramName) {
-                    config.upload.paramName = 'files';
-                }
+                // Overrides client-side capabilities list to improve the compatibility for connectors.
+				// If a connector doesn't support a new feature, the plugin will mask this feature to avoid error.
+                if (serverConfig.options.capabilities) {
+                    config.options.capabilities = serverConfig.options.capabilities;
+				}
             }
         }).fail(function (xhr) {
             fm.error('Unable to perform initial request to server.');
@@ -445,6 +442,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		// reads capabilities from config files if exists else apply default settings
 		capabilities = config.options.capabilities || ['upload', 'select', 'download', 'rename', 'copy', 'move', 'delete', 'extract', 'createFolder'];
+
+        // If the server is in read only mode, set the GUI to browseOnly:
+        if (config.security.readOnly) {
+            config.options.browseOnly = true;
+        }
+
+        // Set default upload parameter
+        if (!config.upload.paramName) {
+            config.upload.paramName = 'files';
+        }
 
 		// defines sort params
 		var chunks = [];
