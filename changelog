@@ -1,3 +1,19 @@
+Version 2.7.2
+---------------------------
+- added optional connector "options.capabilities" in the initiate action #272
+- avoid loading right panel folder contents when unfolding tree if click on +(plus) icon #293
+- included resourceObject to "selectItem" callback #294
+- minified and combined assets with new grunt config #295
+- implemented customizable upload parameter name #297
+- updated russian translations (minor fixes) #292
+- updated dutch translations
+- updated PHP connector dependency to v1.2.2
+(https://github.com/servocoder/RichFilemanager-PHP/releases/tag/v1.2.2)
+
+Backward incompatible changes:
+- restructure and refactor source package files and third-party libs
+
+
 Version 2.7.1
 ---------------------------
 - implemented RFM plugin public methods "refreshFolder" and "loadFolder" #275
