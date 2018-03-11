@@ -301,7 +301,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                 // Overrides client-side capabilities list to improve the compatibility for connectors.
 				// If a connector doesn't support a new feature, the plugin will mask this feature to avoid error.
-                if (serverConfig.options.capabilities) {
+                if (serverConfig.options && serverConfig.options.capabilities) {
                     config.options.capabilities = serverConfig.options.capabilities;
 				}
             }
@@ -316,7 +316,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
     };
 
 	// localize messages based on configuration or URL value
-	var localize = function() {
+	var localize = function() {capabilities
         langModel = new LangModel();
 
 		return $.ajax()

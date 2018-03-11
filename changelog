@@ -1,3 +1,8 @@
+Version 2.7.3
+---------------------------
+- hotfix
+
+
 Version 2.7.2
 ---------------------------
 - added optional connector "options.capabilities" in the initiate action #272
