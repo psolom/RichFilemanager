@@ -1,8 +1,8 @@
-import { indexOf, lst } from "../util/misc"
+import { indexOf, lst } from "../util/misc.js"
 
-import { cmp } from "./pos"
-import { sawCollapsedSpans } from "./saw_special_spans"
-import { getLine, isLine, lineNo } from "./utils_line"
+import { cmp } from "./pos.js"
+import { sawCollapsedSpans } from "./saw_special_spans.js"
+import { getLine, isLine, lineNo } from "./utils_line.js"
 
 // TEXTMARKER SPANS
 
@@ -163,7 +163,7 @@ export function removeReadOnlyRanges(doc, from, to) {
       if (dto > 0 || !mk.inclusiveRight && !dto)
         newParts.push({from: m.to, to: p.to})
       parts.splice.apply(parts, newParts)
-      j += newParts.length - 1
+      j += newParts.length - 3
     }
   }
   return parts
@@ -245,6 +245,13 @@ export function visualLine(line) {
   let merged
   while (merged = collapsedSpanAtStart(line))
     line = merged.find(-1, true).line
+  return line
+}
+
+export function visualLineEnd(line) {
+  let merged
+  while (merged = collapsedSpanAtEnd(line))
+    line = merged.find(1, true).line
   return line
 }
 

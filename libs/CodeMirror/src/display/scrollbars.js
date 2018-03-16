@@ -1,11 +1,11 @@
-import { addClass, elt, rmClass } from "../util/dom"
-import { on } from "../util/event"
-import { scrollGap, paddingVert } from "../measurement/position_measurement"
-import { ie, ie_version, mac, mac_geMountainLion } from "../util/browser"
-import { updateHeightsInViewport } from "./update_lines"
-import { Delayed } from "../util/misc"
+import { addClass, elt, rmClass } from "../util/dom.js"
+import { on } from "../util/event.js"
+import { scrollGap, paddingVert } from "../measurement/position_measurement.js"
+import { ie, ie_version, mac, mac_geMountainLion } from "../util/browser.js"
+import { updateHeightsInViewport } from "./update_lines.js"
+import { Delayed } from "../util/misc.js"
 
-import { setScrollLeft, setScrollTop } from "./scroll_events"
+import { setScrollLeft, updateScrollTop } from "./scrolling.js"
 
 // SCROLLBARS
 
@@ -69,7 +69,7 @@ class NativeScrollbars {
       this.horiz.style.left = measure.barLeft + "px"
       let totalWidth = measure.viewWidth - measure.barLeft - (needsV ? sWidth : 0)
       this.horiz.firstChild.style.width =
-        (measure.scrollWidth - measure.clientWidth + totalWidth) + "px"
+        Math.max(0, measure.scrollWidth - measure.clientWidth + totalWidth) + "px"
     } else {
       this.horiz.style.display = ""
       this.horiz.firstChild.style.width = "0"
@@ -85,12 +85,12 @@ class NativeScrollbars {
 
   setScrollLeft(pos) {
     if (this.horiz.scrollLeft != pos) this.horiz.scrollLeft = pos
-    if (this.disableHoriz) this.enableZeroWidthBar(this.horiz, this.disableHoriz)
+    if (this.disableHoriz) this.enableZeroWidthBar(this.horiz, this.disableHoriz, "horiz")
   }
 
   setScrollTop(pos) {
     if (this.vert.scrollTop != pos) this.vert.scrollTop = pos
-    if (this.disableVert) this.enableZeroWidthBar(this.vert, this.disableVert)
+    if (this.disableVert) this.enableZeroWidthBar(this.vert, this.disableVert, "vert")
   }
 
   zeroWidthHack() {
@@ -101,17 +101,18 @@ class NativeScrollbars {
     this.disableVert = new Delayed
   }
 
-  enableZeroWidthBar(bar, delay) {
+  enableZeroWidthBar(bar, delay, type) {
     bar.style.pointerEvents = "auto"
     function maybeDisable() {
       // To find out whether the scrollbar is still visible, we
       // check whether the element under the pixel in the bottom
-      // left corner of the scrollbar box is the scrollbar box
+      // right corner of the scrollbar box is the scrollbar box
       // itself (when the bar is still visible) or its filler child
       // (when the bar is hidden). If it is still visible, we keep
       // it enabled, if it's hidden, we disable pointer events.
       let box = bar.getBoundingClientRect()
-      let elt = document.elementFromPoint(box.left + 1, box.bottom - 1)
+      let elt = type == "vert" ? document.elementFromPoint(box.right - 1, (box.top + box.bottom) / 2)
+          : document.elementFromPoint((box.right + box.left) / 2, box.bottom - 1)
       if (elt != bar) bar.style.pointerEvents = "none"
       else delay.set(1000, maybeDisable)
     }
@@ -184,7 +185,7 @@ export function initScrollbars(cm) {
     node.setAttribute("cm-not-content", "true")
   }, (pos, axis) => {
     if (axis == "horizontal") setScrollLeft(cm, pos)
-    else setScrollTop(cm, pos)
+    else updateScrollTop(cm, pos)
   }, cm)
   if (cm.display.scrollbars.addClass)
     addClass(cm.display.wrapper, cm.display.scrollbars.addClass)

@@ -1,6 +1,6 @@
-import { cleanUpLine } from "../line/line_data"
-import { indexOf } from "../util/misc"
-import { signalLater } from "../util/operation_group"
+import { cleanUpLine } from "../line/line_data.js"
+import { indexOf } from "../util/misc.js"
+import { signalLater } from "../util/operation_group.js"
 
 // The document is represented as a BTree consisting of leaves, with
 // chunk of lines in them, and branches, with up to ten leaves or
@@ -27,9 +27,10 @@ export function LeafChunk(lines) {
 }
 
 LeafChunk.prototype = {
-  chunkSize: function() { return this.lines.length },
+  chunkSize() { return this.lines.length },
+
   // Remove the n lines at offset 'at'.
-  removeInner: function(at, n) {
+  removeInner(at, n) {
     for (let i = at, e = at + n; i < e; ++i) {
       let line = this.lines[i]
       this.height -= line.height
@@ -38,19 +39,22 @@ LeafChunk.prototype = {
     }
     this.lines.splice(at, n)
   },
+
   // Helper used to collapse a small branch into a single leaf.
-  collapse: function(lines) {
+  collapse(lines) {
     lines.push.apply(lines, this.lines)
   },
+
   // Insert the given array of lines at offset 'at', count them as
   // having the given height.
-  insertInner: function(at, lines, height) {
+  insertInner(at, lines, height) {
     this.height += height
     this.lines = this.lines.slice(0, at).concat(lines).concat(this.lines.slice(at))
     for (let i = 0; i < lines.length; ++i) lines[i].parent = this
   },
+
   // Used to iterate over a part of the tree.
-  iterN: function(at, n, op) {
+  iterN(at, n, op) {
     for (let e = at + n; at < e; ++at)
       if (op(this.lines[at])) return true
   }
@@ -70,8 +74,9 @@ export function BranchChunk(children) {
 }
 
 BranchChunk.prototype = {
-  chunkSize: function() { return this.size },
-  removeInner: function(at, n) {
+  chunkSize() { return this.size },
+
+  removeInner(at, n) {
     this.size -= n
     for (let i = 0; i < this.children.length; ++i) {
       let child = this.children[i], sz = child.chunkSize()
@@ -94,10 +99,12 @@ BranchChunk.prototype = {
       this.children[0].parent = this
     }
   },
-  collapse: function(lines) {
+
+  collapse(lines) {
     for (let i = 0; i < this.children.length; ++i) this.children[i].collapse(lines)
   },
-  insertInner: function(at, lines, height) {
+
+  insertInner(at, lines, height) {
     this.size += lines.length
     this.height += height
     for (let i = 0; i < this.children.length; ++i) {
@@ -122,8 +129,9 @@ BranchChunk.prototype = {
       at -= sz
     }
   },
+
   // When a node has grown, check whether it should be split.
-  maybeSpill: function() {
+  maybeSpill() {
     if (this.children.length <= 10) return
     let me = this
     do {
@@ -144,7 +152,8 @@ BranchChunk.prototype = {
     } while (me.children.length > 10)
     me.parent.maybeSpill()
   },
-  iterN: function(at, n, op) {
+
+  iterN(at, n, op) {
     for (let i = 0; i < this.children.length; ++i) {
       let child = this.children[i], sz = child.chunkSize()
       if (at < sz) {

@@ -1,25 +1,28 @@
-import { getOrder } from "../util/bidi"
-import { ie, ie_version, webkit } from "../util/browser"
-import { elt, joinClasses } from "../util/dom"
-import { eventMixin, signal } from "../util/event"
-import { hasBadBidiRects, zeroWidthElement } from "../util/feature_detection"
-import { lst, spaceStr } from "../util/misc"
+import { getOrder } from "../util/bidi.js"
+import { ie, ie_version, webkit } from "../util/browser.js"
+import { elt, eltP, joinClasses } from "../util/dom.js"
+import { eventMixin, signal } from "../util/event.js"
+import { hasBadBidiRects, zeroWidthElement } from "../util/feature_detection.js"
+import { lst, spaceStr } from "../util/misc.js"
 
-import { getLineStyles } from "./highlight"
-import { attachMarkedSpans, compareCollapsedMarkers, detachMarkedSpans, lineIsHidden, visualLineContinued } from "./spans"
-import { getLine, lineNo, updateLineHeight } from "./utils_line"
+import { getLineStyles } from "./highlight.js"
+import { attachMarkedSpans, compareCollapsedMarkers, detachMarkedSpans, lineIsHidden, visualLineContinued } from "./spans.js"
+import { getLine, lineNo, updateLineHeight } from "./utils_line.js"
 
 // LINE DATA STRUCTURE
 
 // Line objects. These hold state related to a line, including
 // highlighting info (the styles array).
-export function Line(text, markedSpans, estimateHeight) {
-  this.text = text
-  attachMarkedSpans(this, markedSpans)
-  this.height = estimateHeight ? estimateHeight(this) : 1
+export class Line {
+  constructor(text, markedSpans, estimateHeight) {
+    this.text = text
+    attachMarkedSpans(this, markedSpans)
+    this.height = estimateHeight ? estimateHeight(this) : 1
+  }
+
+  lineNo() { return lineNo(this) }
 }
 eventMixin(Line)
-Line.prototype.lineNo = function() { return lineNo(this) }
 
 // Change the content (text, markers) of a line. Automatically
 // invalidates cached information and tries to re-estimate the
@@ -61,14 +64,11 @@ export function buildLineContent(cm, lineView) {
   // The padding-right forces the element to have a 'border', which
   // is needed on Webkit to be able to get line-level bounding
   // rectangles for it (in measureChar).
-  let content = elt("span", null, null, webkit ? "padding-right: .1px" : null)
-  let builder = {pre: elt("pre", [content], "CodeMirror-line"), content: content,
+  let content = eltP("span", null, null, webkit ? "padding-right: .1px" : null)
+  let builder = {pre: eltP("pre", [content], "CodeMirror-line"), content: content,
                  col: 0, pos: 0, cm: cm,
                  trailingSpace: false,
                  splitSpaces: (ie || webkit) && cm.getOption("lineWrapping")}
-  // hide from accessibility tree
-  content.setAttribute("role", "presentation")
-  builder.pre.setAttribute("role", "presentation")
   lineView.measure = {}
 
   // Iterate over the logical lines that make up this visual line.
@@ -78,7 +78,7 @@ export function buildLineContent(cm, lineView) {
     builder.addToken = buildToken
     // Optionally wire in some hacks into the token-rendering
     // algorithm, to deal with browser quirks.
-    if (hasBadBidiRects(cm.display.measure) && (order = getOrder(line)))
+    if (hasBadBidiRects(cm.display.measure) && (order = getOrder(line, cm.doc.direction)))
       builder.addToken = buildTokenBadBidi(builder.addToken, order)
     builder.map = []
     let allowFrontierUpdate = lineView != cm.display.externalMeasured && lineNo(line)

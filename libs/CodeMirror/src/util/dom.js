@@ -1,4 +1,4 @@
-import { ie, ios } from "./browser"
+import { ie, ios } from "./browser.js"
 
 export function classTest(cls) { return new RegExp("(^|\\s)" + cls + "(?:$|\\s)\\s*") }
 
@@ -27,6 +27,12 @@ export function elt(tag, content, className, style) {
   if (style) e.style.cssText = style
   if (typeof content == "string") e.appendChild(document.createTextNode(content))
   else if (content) for (let i = 0; i < content.length; ++i) e.appendChild(content[i])
+  return e
+}
+// wrapper for elt, which removes the elt from the accessibility tree
+export function eltP(tag, content, className, style) {
+  let e = elt(tag, content, className, style)
+  e.setAttribute("role", "presentation")
   return e
 }
 
@@ -68,8 +74,8 @@ export function activeElt() {
   } catch(e) {
     activeElement = document.body || null
   }
-  while (activeElement && activeElement.root && activeElement.root.activeElement)
-    activeElement = activeElement.root.activeElement
+  while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement)
+    activeElement = activeElement.shadowRoot.activeElement
   return activeElement
 }
 

@@ -1,13 +1,13 @@
-import { onBlur } from "../display/focus"
-import { on } from "../util/event"
+import { onBlur } from "../display/focus.js"
+import { on } from "../util/event.js"
 
 // These must be handled carefully, because naively registering a
 // handler for each editor will cause the editors to never be
 // garbage collected.
 
 function forEachCodeMirror(f) {
-  if (!document.body.getElementsByClassName) return
-  let byClass = document.body.getElementsByClassName("CodeMirror")
+  if (!document.getElementsByClassName) return
+  let byClass = document.getElementsByClassName("CodeMirror")
   for (let i = 0; i < byClass.length; i++) {
     let cm = byClass[i].CodeMirror
     if (cm) f(cm)
