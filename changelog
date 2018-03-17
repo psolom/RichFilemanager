@@ -1,3 +1,11 @@
+Version 2.7.4
+---------------------------
+- fixed CodeMirror lib missed file #301
+- updated CodeMirror package to v5.35.0
+- updated PHP connector dependency to v1.2.3
+(https://github.com/servocoder/RichFilemanager-PHP/releases/tag/v1.2.3)
+
+
 Version 2.7.3
 ---------------------------
 - hotfix

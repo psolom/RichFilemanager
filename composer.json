@@ -25,6 +25,6 @@
     "vendor-dir": "connectors/php/vendor"
   },
   "require": {
-    "servocoder/richfilemanager-php": "1.2.2"
+    "servocoder/richfilemanager-php": "1.2.3"
   }
 }
