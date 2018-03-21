@@ -4724,25 +4724,29 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					})
 
 					.on('fileuploadfail', function(e, data) {
+                        var error, xhr = data.jqXHR;
+
+                        // handle server-side errors
+                        if ($.isPlainObject(xhr.responseJSON) && xhr.responseJSON.errors) {
+                            error = formatServerError(xhr.responseJSON.errors[0]);
+                        } else {
+                            error = lg('upload_failed')
+						}
+
 						$.each(data.files, function (index, file) {
-							file.error = lg('upload_failed');
 							var $node = file.context;
-							$node.removeClass('added process').addClass('error');
+                            $node.removeClass('added process').addClass('error');
+                            $node.find('.error-message').text(error);
+                            $node.find('.button-start').remove();
 						});
 					})
 
 					.on('fileuploaddone', function(e, data) {
 						var response = data.result;
 						$.each(data.files, function (index, file) {
-							var $node = file.context;
-							// handle server-side errors
-							if(response && response.errors) {
-								$node.removeClass('added process').addClass('error');
-								$node.find('.error-message').text(formatServerError(response.errors[0]));
-								$node.find('.button-start').remove();
-							} else {
-								// remove file preview item on success upload
-								$node.remove();
+                            if(response && response.data && response.data[index]) {
+                                // remove file preview item on success upload
+                                file.context.remove();
 							}
 						});
 					})
@@ -4874,10 +4878,6 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 					$uploadButton.children('span').text(lg('action_upload'));
 					var response = data.result;
 
-					// handle server-side errors
-					if(response && response.errors) {
-						fm.error(lg('upload_failed') + "<br>" + formatServerError(response.errors[0]));
-					}
 					if(response && response.data) {
 						var resourceObject = response.data[0];
 						fmModel.removeElement(resourceObject);
@@ -4899,8 +4899,16 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				})
 
 				.on('fileuploadfail', function(e, data) {
-					// server error 500, etc.
-					fm.error(lg('upload_failed'));
+                    var error, xhr = data.jqXHR;
+
+                    // handle server-side errors
+                    if ($.isPlainObject(xhr.responseJSON) && xhr.responseJSON.errors) {
+                        error = formatServerError(xhr.responseJSON.errors[0]);
+                    } else {
+                        error = lg('upload_failed')
+                    }
+
+					fm.error(error);
 				});
 		}
 	};
