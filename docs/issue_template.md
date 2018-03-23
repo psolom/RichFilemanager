@@ -8,13 +8,13 @@
 
 **I use the following server-side connector (check one):**
 
-- [ ] PHP connector by @servocoder
-- [ ] Java connector by @fabriceci
-- [ ] Python3 Flask connector by @jsooter
-- [ ] Python3 Flask connector by @stevelittlefish
-- [ ] NodeJs connector by @jlaustill and @forestlake
-- [ ] ASP.NET Core connector by @sinanbozkus
-- [ ] ASHX connector by @richeflits
+- [ ] PHP connector by **servocoder**
+- [ ] Java connector by **fabriceci**
+- [ ] Python3 Flask connector by **jsooter**
+- [ ] Python3 Flask connector by **stevelittlefish**
+- [ ] NodeJs connector by **jlaustill** and **forestlake**
+- [ ] ASP.NET Core connector by **sinanbozkus**
+- [ ] ASHX connector by **richeflits**
 - [ ] Other (specified below)
 
 **My familiarity with the project is as follows (check one):**
