@@ -3272,20 +3272,30 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 		}
 	};
 
-	// Converts UNIX timestamp to formatted datetime string
-	var formatTimestamp = function(timestamp) {
-		// if value doesn't look like timestamp
-		if (!timestamp || timestamp <= 0) {
-			return '';
-		}
+    // Converts UNIX timestamp to formatted datetime string
+    var formatTimestamp = function (datetime) {
+        var isString = typeof datetime === "string";
+        var isInteger = typeof datetime === "number" && Math.floor(datetime) === datetime;
 
-        var date = new Date();
-        date.setTime(timestamp * 1000);
+        // invalid argument
+        if (!(isString || isInteger)) return '';
+
+        // value looks like seconds, while Date() accepts milliseconds
+        if (isInteger && datetime < 10000000000) {
+            datetime = datetime * 1000
+        }
+
+        var date = new Date(datetime);
+
+        // invalid Date() object, display datetime without formatting
+        if (!(date instanceof Date) || isNaN(date)) {
+            return datetime;
+        }
 
         // Timezone support requires "iana-tz-data" package:
         // https://github.com/globalizejs/globalize/blob/master/README.md#3-iana-time-zone-data
         return globalize.formatDate(date, config.formatter.datetime);
-	};
+    };
 
     // Format server-side response single error object
     var formatServerError = function(errorObject) {
