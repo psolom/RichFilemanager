@@ -2325,6 +2325,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                 searchOnTyping = !!config.search.typingDelay;
 
             this.value = ko.observable('');
+            this.isRendered = ko.observable(false);
 
             this.value.subscribe(function(oldValue) {
                 previousValue = oldValue;
@@ -2360,8 +2361,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.clearInput = function () {
                 // reset search string
+                previousValue = '';
                 search_model.value('');
-                previousValue = search_model.value();
+                search_model.isRendered(false);
                 delayStack.removeTimer('search');
             };
 
@@ -2411,6 +2413,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
                             var items = model.itemsModel.createItems(resourceObjects);
                             model.itemsModel.setItemsList(items);
+                            search_model.isRendered(true);
                         })
                         .load(function () {
                             return seekFolder(targetPath, searchString);
@@ -2430,6 +2433,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                         itemObject.cdo.hiddenBySearch = !matchByName;
                         itemObject.visible(visibility);
                     });
+                    search_model.isRendered(true);
                 }
             }
 
@@ -2566,7 +2570,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
             };
 
             this.getLabel = ko.pureComputed(function() {
-                var label = model.searchModel.value() ? lg('search_results') : lg('current_folder');
+                var label = model.searchModel.isRendered() ? lg('search_results') : lg('current_folder');
                 return label + ': ';
             }, this);
 
