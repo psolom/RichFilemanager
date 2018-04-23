@@ -8,8 +8,15 @@ using System.IO;
 using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-namespace RfmNetCore.Controllers
+using System.Net.Mime;
+using Microsoft.AspNetCore.Cors;
+using Microsoft.Azure.KeyVault.Models;
+
+// using MetadataExtractor;
+
+namespace API.NetCore.Controllers
 {
+    [Route("[controller]")]
     public class FileManagerController : Controller
     {
         private readonly string _webRootPath;
@@ -18,54 +25,81 @@ namespace RfmNetCore.Controllers
 
         public FileManagerController(IHostingEnvironment env)
         {
-			// FileManager Content Folder Path
-            _webPath = "fm_content_folder";
+            // FileManager Content Folder
+            _webPath = "ContentLibrary";
+            if (string.IsNullOrWhiteSpace(env.WebRootPath))
+            {
+                env.WebRootPath = Directory.GetCurrentDirectory();
+            }
             _webRootPath = Path.Combine(env.WebRootPath, _webPath);
             _allowedExtensions = new List<string> { "jpg", "jpe", "jpeg", "gif", "png", "svg", "txt", "pdf", "odp", "ods", "odt", "rtf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "csv", "ogv", "avi", "mkv", "mp4", "webm", "m4v", "ogg", "mp3", "wav", "zip", "rar", "md" };
+
         }
 
-        public IActionResult Index(string mode, string path, string name, List<IFormFile> files, string old, string @new, string source, string target, string content, bool thumbnail)
+        public IActionResult Index(string mode, string path, string name, List<IFormFile> files, string old, string @new, string source, string target, string content, bool thumbnail, string @string)
         {
-            if (!string.IsNullOrWhiteSpace(path) && path.StartsWith("/"))
-                path = path.Substring(1);
-            if (!string.IsNullOrWhiteSpace(@new) && @new.StartsWith("/"))
-                @new = @new == "/" ? string.Empty : @new.Substring(1);
-            if (!string.IsNullOrWhiteSpace(source) && source.StartsWith("/"))
-                source = source.Substring(1);
-            if (!string.IsNullOrWhiteSpace(target) && target.StartsWith("/"))
-                target = target.Substring(1);
-
-            switch (mode)
+            try
             {
-                case "initiate":
-                    return Json(Initiate());
-                case "readfolder":
-                    return Json(ReadFolder(path));
-                case "addfolder":
-                    return Json(AddFolder(path, name));
-                case "upload":
-                    return Json(Upload(path, files).Result);
-                case "rename":
-                    return Json(Rename(old, @new));
-                case "move":
-                    return Json(Move(old, @new));
-                case "copy":
-                    return Json(Copy(source, target));
-                case "savefile":
-                    return Json(SaveFile(path, content));
-                case "delete":
-                    return Json(Delete(path));
-                case "download":
-                    return Download(path);
-                case "getimage":
-                    return GetImage(path, thumbnail);
-                case "readfile":
-                    return ReadFile(path);
-                case "summarize":
-                    return Json(Summarize());
-            }
+                if (mode == null)
+                {
+                    return null;
+                }
 
-            throw new Exception("Unknown Request!");
+                if (!string.IsNullOrWhiteSpace(path) && path.StartsWith("/"))
+                    path = path.Substring(1);
+                if (!string.IsNullOrWhiteSpace(@new) && @new.StartsWith("/"))
+                    @new = @new == "/" ? string.Empty : @new.Substring(1);
+                if (!string.IsNullOrWhiteSpace(source) && source.StartsWith("/"))
+                    source = source.Substring(1);
+                if (!string.IsNullOrWhiteSpace(target) && target.StartsWith("/"))
+                    target = target.Substring(1);
+
+
+                switch (mode.ToLower(CultureInfo.CurrentCulture))
+                {
+                    case "initiate":
+                        return Json(Initiate());
+                    case "getinfo":
+                        return Json(GetInfo(path));
+                    case "readfolder":
+                        return Json(ReadFolder(path));
+                    case "addfolder":
+                        return Json(AddFolder(path, name));
+                    case "upload":
+                        return Json(Upload(path, files).Result);
+                    case "rename":
+                        return Json(Rename(old, @new));
+                    case "move":
+                        return Json(Move(old, @new));
+                    case "copy":
+                        return Json(Copy(source, target));
+                    case "savefile":
+                        return Json(SaveFile(path, content));
+                    case "delete":
+                        return Json(Delete(path));
+                    case "download":
+                        return Download(path);
+                    case "getimage":
+                        return GetImage(path, thumbnail);
+                    case "readfile":
+                        return ReadFile(path);
+                    case "summarize":
+                        return Json(Summarize());
+                    case "seekfolder":
+                        return Json(SeekFolder(path, @string));
+                }
+
+                throw new Exception("Unknown Request!");
+            }
+            catch (Exception e)
+            {
+                // returns all unhandeled exceptions and returns them in JSON format with 500.
+                // Issue #314, Cannot find file/dir message, etc
+                return new JsonResult(e.Message) {
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    ContentType = "application/json"
+                };
+            }
         }
 
         private dynamic Initiate()
@@ -98,32 +132,127 @@ namespace RfmNetCore.Controllers
 
         }
 
+        private Int32 GetUnixTimestamp(DateTime dt)
+        {
+            return (Int32)(dt.ToUniversalTime().Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        }
+
+        private dynamic SeekFolder(string path, string search)
+        {
+            if (path == null) { path = string.Empty; };
+
+            var searchPath = Path.Combine(_webRootPath, path);
+            var data = new List<dynamic>();
+
+            foreach (FileInfo file in new DirectoryInfo(searchPath).GetFiles( "*" + search + "*", SearchOption.AllDirectories))
+            {
+                IEnumerable<MetadataExtractor.Directory> md = MetadataExtractor.ImageMetadataReader.ReadMetadata(new FileStream(file.FullName, FileMode.Open));
+
+                // we could clean up this section by calling GetInfo(path)
+                var item = new
+                {
+                    Id = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), true),
+                    Type = "file",
+                    Attributes = new
+                    {
+                        Name = file.Name,
+                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), false),
+                        Readable = 1,
+                        Writable = 1,
+                        Created = GetUnixTimestamp(file.CreationTimeUtc),
+                        Modified = GetUnixTimestamp(file.LastWriteTimeUtc),
+                        Size = file.Length,
+                        Extension = file.Extension.TrimStart('.'),
+                        // Insert Height and Width logic for images  
+                        Timestamp = DateTime.Now.Subtract(file.LastWriteTime).TotalSeconds
+                    }
+                };
+                data.Add(item);
+            }
+            foreach (DirectoryInfo dir in new DirectoryInfo(searchPath).GetDirectories("*" + search + "*", SearchOption.AllDirectories))
+            {
+
+                var item = new
+                {
+                    // Id = MakeWebPath(Path.Combine(path, dir.Name), false, true),
+                    Id = MakeWebPath(Path.GetRelativePath(_webRootPath, dir.FullName)),
+                    Type = "folder",
+                    Attributes = new
+                    {
+                        Name = dir.Name,
+                        Path = MakeWebPath(dir.FullName, false),
+                        // Path = MakeWebPath(Path.Combine(_webPath, path, dir.Name), true, true),
+                        Readable = 1,
+                        Writable = 1,
+                        Created = GetUnixTimestamp(dir.CreationTimeUtc),
+                        Modified = GetUnixTimestamp(dir.LastWriteTimeUtc),
+                        Timestamp = DateTime.Now.Subtract(dir.LastWriteTime).TotalSeconds
+                    }
+                };
+                data.Add(item);
+            }
+            return new
+            {
+                Data = data
+            };
+        }
+
+        private dynamic GetInfo(string path)
+        {
+            if (path == null) { path = string.Empty; };
+
+            var filePath = Path.Combine(_webRootPath, path);
+            FileInfo file = new FileInfo(path);
+            IEnumerable<MetadataExtractor.Directory> md = MetadataExtractor.ImageMetadataReader.ReadMetadata(new FileStream(filePath, FileMode.Open));
+
+            return new
+            {
+                Data = new
+                {
+                    Id = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), true),
+                    Type = "file",
+                    Attributes = new
+                    {
+                        Name = file.Name,
+                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), false),
+                        Readable = 1,
+                        Writable = 1,
+                        Created = GetUnixTimestamp(file.CreationTimeUtc),
+                        Modified = GetUnixTimestamp(file.LastWriteTimeUtc),
+                        Size = file.Length,
+                        Extension = file.Extension.TrimStart('.'),
+                        // Insert Height and Width logic for images  
+                        Timestamp = DateTime.Now.Subtract(file.LastWriteTime).TotalSeconds
+                    }
+                }
+            };
+            
+        }
+
         private dynamic ReadFolder(string path)
         {
             if (path == null) path = string.Empty;
 
-            var rootpath = Path.Combine(_webRootPath, path);
-
-            var rootDirectory = new DirectoryInfo(rootpath);
-
-
+            var rootDirectory = new DirectoryInfo(Path.Combine(_webRootPath, path));
             var data = new List<dynamic>();
 
             foreach (var directory in rootDirectory.GetDirectories())
             {
                 var item = new
                 {
-                    Id = MakeWebPath(Path.Combine(path, directory.Name), false, true),
+                    // Id = MakeWebPath(Path.Combine(path, directory.Name), false, true),
+                    Id = MakeWebPath(Path.GetRelativePath(_webRootPath, directory.FullName)),
                     Type = "folder",
                     Attributes = new
                     {
                         Name = directory.Name,
-                        Path = MakeWebPath(Path.Combine(_webPath, path, directory.Name), true, true),
+                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, directory.FullName), directory.Name), false),
+                        // Path = MakeWebPath(Path.Combine(_webPath, path, directory.Name), true, true),
                         Readable = 1,
                         Writable = 1,
-                        Created = directory.CreationTime.ToString(CultureInfo.InvariantCulture),
-                        Modified = directory.LastWriteTime.ToString(CultureInfo.InvariantCulture),
-                        Timestamp = (int) (DateTime.Now - directory.LastWriteTime).Ticks
+                        Created = GetUnixTimestamp(directory.CreationTime),
+                        Modified = GetUnixTimestamp(directory.LastWriteTime),
+                        Timestamp = DateTime.Now.Subtract(directory.LastWriteTime).TotalSeconds
                     }
                 };
 
@@ -134,19 +263,21 @@ namespace RfmNetCore.Controllers
             {
                 var item = new
                 {
-                    Id = MakeWebPath(Path.Combine(path, file.Name)),
+                    // Id = MakeWebPath(Path.Combine(path, file.Name)),
+                    Id = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name)),
                     Type = "file",
                     Attributes = new
                     {
                         Name = file.Name,
-                        Path = MakeWebPath(Path.Combine(_webPath, path, file.Name), true),
+                        // Path = MakeWebPath(Path.Combine(_webPath, path, file.Name), true),
+                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), false),
                         Readable = 1,
                         Writable = 1,
-                        Created = file.CreationTime.ToString(CultureInfo.InvariantCulture),
-                        Modified = file.LastWriteTime.ToString(CultureInfo.InvariantCulture),
+                        Created = GetUnixTimestamp(file.CreationTime),
+                        Modified = GetUnixTimestamp(file.LastWriteTime),
                         Extension = file.Extension.Replace(".", ""),
                         Size = file.Length,
-                        Timestamp = (int) (DateTime.Now - file.LastWriteTime).Ticks
+                        Timestamp = DateTime.Now.Subtract(file.LastWriteTime).TotalSeconds,
                     }
                 };
 
@@ -170,7 +301,7 @@ namespace RfmNetCore.Controllers
 
             if (directoryExist)
             {
-                var errorResult = new  { Errors = new List<dynamic>() };
+                var errorResult = new { Errors = new List<dynamic>() };
 
                 errorResult.Errors.Add(new
                 {
@@ -204,8 +335,8 @@ namespace RfmNetCore.Controllers
                             Path = MakeWebPath(Path.Combine(_webPath, path, directory.Name), true, true),
                             Readable = 1,
                             Writable = 1,
-                            Created = DateTime.Now.ToString(CultureInfo.InvariantCulture),
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture)
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
             };
@@ -215,7 +346,7 @@ namespace RfmNetCore.Controllers
 
         private async Task<dynamic> Upload(string path, IEnumerable<IFormFile> files)
         {
-            var result = new {Data = new List<dynamic>()}; 
+            var result = new { Data = new List<dynamic>() };
 
             foreach (var file in files)
             {
@@ -259,8 +390,8 @@ namespace RfmNetCore.Controllers
                         Path = MakeWebPath(Path.Combine(_webPath, path, file.FileName), true),
                         Readable = 1,
                         Writable = 1,
-                        Created = DateTime.Now.ToString(CultureInfo.InvariantCulture),
-                        Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                        Created = GetUnixTimestamp(DateTime.Now),
+                        Modified = GetUnixTimestamp(DateTime.Now),
                         Size = file.Length
                     }
                 });
@@ -273,10 +404,16 @@ namespace RfmNetCore.Controllers
         private dynamic Rename(string old, string @new)
         {
             var oldPath = Path.Combine(_webRootPath, old);
+            FileAttributes fileAttributes = System.IO.File.GetAttributes(oldPath);
+            //if (System.IO.File.Exists(oldPath) || System.IO.Directory.Exists(oldPath))
+            //{
+            //    fileAttributes = System.IO.File.GetAttributes(oldPath);
+            //} else
+            //{
+            //    throw new Exception("File/Folder not found");
+            //}
 
-            var fileAttributes = System.IO.File.GetAttributes(oldPath);
-
-            if (fileAttributes == FileAttributes.Directory)
+            if ((fileAttributes & FileAttributes.Directory) == FileAttributes.Directory) //Fixed if the directory is compressed
             {
                 var oldDirectoryName = Path.GetDirectoryName(old).Split('\\').Last();
                 var newDirectoryPath = old.Replace(oldDirectoryName, @new);
@@ -318,8 +455,8 @@ namespace RfmNetCore.Controllers
                             Name = @new,
                             Readable = 1,
                             Writable = 1,
-                            // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
                 };
@@ -370,7 +507,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
                 };
@@ -383,7 +521,7 @@ namespace RfmNetCore.Controllers
         {
             var fileAttributes = System.IO.File.GetAttributes(Path.Combine(_webRootPath, old));
 
-            if (fileAttributes == FileAttributes.Directory)
+            if ((fileAttributes & FileAttributes.Directory) == FileAttributes.Directory) //Fixed if the directory is compressed
             {
                 var directoryName = Path.GetDirectoryName(old).Split('\\').Last();
                 var newDirectoryPath = Path.Combine(@new, directoryName);
@@ -427,7 +565,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
                 };
@@ -482,7 +621,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
                 };
@@ -495,7 +635,7 @@ namespace RfmNetCore.Controllers
         {
             var fileAttributes = System.IO.File.GetAttributes(Path.Combine(_webRootPath, source));
 
-            if (fileAttributes == FileAttributes.Directory)
+            if ((fileAttributes & FileAttributes.Directory) == FileAttributes.Directory) //Fixed if the directory is compressed
             {
                 var directoryName = Path.GetDirectoryName(source).Split('\\').Last();
                 var newDirectoryPath = Path.Combine(target, directoryName);
@@ -539,7 +679,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
                 };
@@ -590,7 +731,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                         }
                     }
                 };
@@ -633,7 +775,7 @@ namespace RfmNetCore.Controllers
         {
             var fileAttributes = System.IO.File.GetAttributes(Path.Combine(_webRootPath, path));
 
-            if (fileAttributes == FileAttributes.Directory)
+            if ((fileAttributes & FileAttributes.Directory) == FileAttributes.Directory) //Fixed if the directory is compressed
             {
                 var directoryName = Path.GetDirectoryName(path).Split('\\').Last();
 
@@ -651,7 +793,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now),
                             Path = path
                         }
                     }
@@ -679,7 +822,8 @@ namespace RfmNetCore.Controllers
                             Readable = 1,
                             Writable = 1,
                             // created date, size vb.
-                            Modified = DateTime.Now.ToString(CultureInfo.InvariantCulture),
+                            Created = GetUnixTimestamp(DateTime.Now),
+                            Modified = GetUnixTimestamp(DateTime.Now)
                             // Path = $"/{fileName}"
                         }
                     }
@@ -700,7 +844,7 @@ namespace RfmNetCore.Controllers
                 Inline = true,
                 FileName = fileName
             };
-            Response.AddHeader("Content-Disposition", cd.ToString());
+            Response.Headers.Add("Content-Disposition", cd.ToString());
 
             return File(fileBytes, "application/octet-stream");
         }
@@ -716,7 +860,7 @@ namespace RfmNetCore.Controllers
                 Inline = true,
                 FileName = fileName
             };
-            Response.AddHeader("Content-Disposition", cd.ToString());
+            Response.Headers.Add("Content-Disposition", cd.ToString());
 
             return File(fileBytes, "image/*");
         }
@@ -732,10 +876,12 @@ namespace RfmNetCore.Controllers
 
         private dynamic Summarize()
         {
-            var directories = Directory.GetDirectories(_webRootPath, "*", SearchOption.AllDirectories).Length;
+            // was searching twice?
+            // var directories = Directory.GetDirectories(_webRootPath, "*", SearchOption.AllDirectories).Length;
 
             var directoryInfo = new DirectoryInfo(_webRootPath);
             var files = directoryInfo.GetFiles("*", SearchOption.AllDirectories);
+            var directories = files.Length;
             var allSize = files.Select(f => f.Length).Sum();
 
             var result = new
@@ -756,7 +902,6 @@ namespace RfmNetCore.Controllers
 
             return result;
         }
-
 
 
         private static void DirectoryCopy(string sourceDirName, string destDirName)
