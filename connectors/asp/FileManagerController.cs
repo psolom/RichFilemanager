@@ -12,11 +12,10 @@ using System.Net.Mime;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.Azure.KeyVault.Models;
 
-// using MetadataExtractor;
-
 namespace API.NetCore.Controllers
 {
     [Route("[controller]")]
+
     public class FileManagerController : Controller
     {
         private readonly string _webRootPath;
@@ -94,8 +93,9 @@ namespace API.NetCore.Controllers
             catch (Exception e)
             {
                 // returns all unhandeled exceptions and returns them in JSON format with 500.
-                // Issue #314, Cannot find file/dir message, etc
-                return new JsonResult(e.Message) {
+                // Issue #314
+                return new JsonResult(e.Message)
+                {
                     StatusCode = StatusCodes.Status500InternalServerError,
                     ContentType = "application/json"
                 };
@@ -144,11 +144,8 @@ namespace API.NetCore.Controllers
             var searchPath = Path.Combine(_webRootPath, path);
             var data = new List<dynamic>();
 
-            foreach (FileInfo file in new DirectoryInfo(searchPath).GetFiles( "*" + search + "*", SearchOption.AllDirectories))
+            foreach (FileInfo file in new DirectoryInfo(searchPath).GetFiles("*" + search + "*", SearchOption.AllDirectories))
             {
-                IEnumerable<MetadataExtractor.Directory> md = MetadataExtractor.ImageMetadataReader.ReadMetadata(new FileStream(file.FullName, FileMode.Open));
-
-                // we could clean up this section by calling GetInfo(path)
                 var item = new
                 {
                     Id = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), true),
@@ -163,7 +160,7 @@ namespace API.NetCore.Controllers
                         Modified = GetUnixTimestamp(file.LastWriteTimeUtc),
                         Size = file.Length,
                         Extension = file.Extension.TrimStart('.'),
-                        // Insert Height and Width logic for images  
+                        // Insert Height and Width logic for images
                         Timestamp = DateTime.Now.Subtract(file.LastWriteTime).TotalSeconds
                     }
                 };
@@ -203,7 +200,6 @@ namespace API.NetCore.Controllers
 
             var filePath = Path.Combine(_webRootPath, path);
             FileInfo file = new FileInfo(path);
-            IEnumerable<MetadataExtractor.Directory> md = MetadataExtractor.ImageMetadataReader.ReadMetadata(new FileStream(filePath, FileMode.Open));
 
             return new
             {
@@ -221,12 +217,10 @@ namespace API.NetCore.Controllers
                         Modified = GetUnixTimestamp(file.LastWriteTimeUtc),
                         Size = file.Length,
                         Extension = file.Extension.TrimStart('.'),
-                        // Insert Height and Width logic for images  
                         Timestamp = DateTime.Now.Subtract(file.LastWriteTime).TotalSeconds
                     }
                 }
             };
-            
         }
 
         private dynamic ReadFolder(string path)
@@ -902,6 +896,7 @@ namespace API.NetCore.Controllers
 
             return result;
         }
+
 
 
         private static void DirectoryCopy(string sourceDirName, string destDirName)
