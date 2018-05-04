@@ -4211,8 +4211,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			mode: 'download',
 			path: resourceObject.id
 		};
-
-		$.fileDownload(buildConnectorUrl(queryParams), {
+		$.fileDownload(buildConnectorUrl(extendRequestParams('GET', queryParams)), {
 			failCallback: function (responseHtml, url, error) {
                 var message = $(responseHtml).text();
 				var messageJSON = $.parseJSON(message);
