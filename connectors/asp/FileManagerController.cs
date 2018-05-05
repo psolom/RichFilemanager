@@ -5,12 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using System.IO;
-using System.Text;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System.Net.Mime;
-using Microsoft.AspNetCore.Cors;
-using Microsoft.Azure.KeyVault.Models;
 
 namespace API.NetCore.Controllers
 {
@@ -153,7 +150,7 @@ namespace API.NetCore.Controllers
                     Attributes = new
                     {
                         Name = file.Name,
-                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), false),
+                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), true),
                         Readable = 1,
                         Writable = 1,
                         Created = GetUnixTimestamp(file.CreationTimeUtc),
@@ -171,14 +168,12 @@ namespace API.NetCore.Controllers
 
                 var item = new
                 {
-                    // Id = MakeWebPath(Path.Combine(path, dir.Name), false, true),
-                    Id = MakeWebPath(Path.GetRelativePath(_webRootPath, dir.FullName)),
+                    Id = MakeWebPath(Path.GetRelativePath(_webRootPath, dir.FullName), false, true),
                     Type = "folder",
                     Attributes = new
                     {
                         Name = dir.Name,
-                        Path = MakeWebPath(dir.FullName, false),
-                        // Path = MakeWebPath(Path.Combine(_webPath, path, dir.Name), true, true),
+                        Path = MakeWebPath(dir.FullName, true, true),
                         Readable = 1,
                         Writable = 1,
                         Created = GetUnixTimestamp(dir.CreationTimeUtc),
@@ -227,21 +222,21 @@ namespace API.NetCore.Controllers
         {
             if (path == null) path = string.Empty;
 
-            var rootDirectory = new DirectoryInfo(Path.Combine(_webRootPath, path));
+            var rootpath = Path.Combine(_webRootPath, path);
+
+            var rootDirectory = new DirectoryInfo(rootpath);
             var data = new List<dynamic>();
 
             foreach (var directory in rootDirectory.GetDirectories())
             {
                 var item = new
                 {
-                    // Id = MakeWebPath(Path.Combine(path, directory.Name), false, true),
-                    Id = MakeWebPath(Path.GetRelativePath(_webRootPath, directory.FullName)),
+                    Id = MakeWebPath(Path.Combine(path, directory.Name), false, true),
                     Type = "folder",
                     Attributes = new
                     {
                         Name = directory.Name,
-                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, directory.FullName), directory.Name), false),
-                        // Path = MakeWebPath(Path.Combine(_webPath, path, directory.Name), true, true),
+                        Path = MakeWebPath(Path.Combine(_webPath, path, directory.Name), true, true),
                         Readable = 1,
                         Writable = 1,
                         Created = GetUnixTimestamp(directory.CreationTime),
@@ -257,14 +252,12 @@ namespace API.NetCore.Controllers
             {
                 var item = new
                 {
-                    // Id = MakeWebPath(Path.Combine(path, file.Name)),
-                    Id = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name)),
+                    Id = MakeWebPath(Path.Combine(path, file.Name)),
                     Type = "file",
                     Attributes = new
                     {
                         Name = file.Name,
-                        // Path = MakeWebPath(Path.Combine(_webPath, path, file.Name), true),
-                        Path = MakeWebPath(Path.Combine(Path.GetRelativePath(_webRootPath, file.DirectoryName), file.Name), false),
+                        Path = MakeWebPath(Path.Combine(_webPath, path, file.Name), true),
                         Readable = 1,
                         Writable = 1,
                         Created = GetUnixTimestamp(file.CreationTime),
@@ -398,14 +391,8 @@ namespace API.NetCore.Controllers
         private dynamic Rename(string old, string @new)
         {
             var oldPath = Path.Combine(_webRootPath, old);
-            FileAttributes fileAttributes = System.IO.File.GetAttributes(oldPath);
-            //if (System.IO.File.Exists(oldPath) || System.IO.Directory.Exists(oldPath))
-            //{
-            //    fileAttributes = System.IO.File.GetAttributes(oldPath);
-            //} else
-            //{
-            //    throw new Exception("File/Folder not found");
-            //}
+
+            var fileAttributes = System.IO.File.GetAttributes(oldPath);
 
             if ((fileAttributes & FileAttributes.Directory) == FileAttributes.Directory) //Fixed if the directory is compressed
             {
@@ -558,7 +545,6 @@ namespace API.NetCore.Controllers
                             Name = directoryName,
                             Readable = 1,
                             Writable = 1,
-                            // created date, size vb.
                             Created = GetUnixTimestamp(DateTime.Now),
                             Modified = GetUnixTimestamp(DateTime.Now)
                         }
@@ -614,7 +600,6 @@ namespace API.NetCore.Controllers
                             Extension = Path.GetExtension(@new).Replace(".", ""),
                             Readable = 1,
                             Writable = 1,
-                            // created date, size vb.
                             Created = GetUnixTimestamp(DateTime.Now),
                             Modified = GetUnixTimestamp(DateTime.Now)
                         }
@@ -672,7 +657,6 @@ namespace API.NetCore.Controllers
                             Name = directoryName,
                             Readable = 1,
                             Writable = 1,
-                            // created date, size vb.
                             Created = GetUnixTimestamp(DateTime.Now),
                             Modified = GetUnixTimestamp(DateTime.Now)
                         }
@@ -757,7 +741,6 @@ namespace API.NetCore.Controllers
                         Extension = fileExtension,
                         Readable = 1,
                         Writable = 1
-                        // created vb.
                     }
                 }
             };
@@ -815,7 +798,6 @@ namespace API.NetCore.Controllers
                             Extension = fileExtension,
                             Readable = 1,
                             Writable = 1,
-                            // created date, size vb.
                             Created = GetUnixTimestamp(DateTime.Now),
                             Modified = GetUnixTimestamp(DateTime.Now)
                             // Path = $"/{fileName}"
@@ -870,12 +852,14 @@ namespace API.NetCore.Controllers
 
         private dynamic Summarize()
         {
-            // was searching twice?
-            // var directories = Directory.GetDirectories(_webRootPath, "*", SearchOption.AllDirectories).Length;
+            // Get Dir count
+            var directories = Directory.GetDirectories(_webRootPath, "*", SearchOption.AllDirectories).Length;
 
+            // Get file count
             var directoryInfo = new DirectoryInfo(_webRootPath);
             var files = directoryInfo.GetFiles("*", SearchOption.AllDirectories);
-            var directories = files.Length;
+            
+            // Get combined file sizes
             var allSize = files.Select(f => f.Length).Sum();
 
             var result = new
