@@ -316,7 +316,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
     };
 
 	// localize messages based on configuration or URL value
-	var localize = function() {capabilities
+	var localize = function() {
         langModel = new LangModel();
 
 		return $.ajax()
