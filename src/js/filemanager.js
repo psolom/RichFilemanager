@@ -339,9 +339,12 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 				}
 			})
 			.then(function() {
+				// append query param to prevent caching
+                var langFileUrl = langModel.buildLangFileUrl(langModel.getLang()) + '?_=' + new Date().getTime();
+
 				return $.ajax({
 					type: 'GET',
-					url: langModel.buildLangFileUrl(langModel.getLang()),
+					url: langFileUrl,
 					dataType: 'json'
 				}).done(function(jsonTrans) {
                     langModel.setTranslations(jsonTrans);
