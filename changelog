@@ -1,3 +1,14 @@
+Version 2.7.6
+---------------------------
+- improved renderer responsiveness while recursive search #315
+- added custom request params to the "downloadItem" action #318
+- enhanced .Net Core Framework connector #316 #319
+- added capability to set custom client configuration file path #329
+- prevented caching language files #332
+- updated PHP connector dependency to v1.2.6
+(https://github.com/servocoder/RichFilemanager-PHP/releases/tag/v1.2.6)
+
+
 Version 2.7.5
 ---------------------------
 - bugfix: server-side errors haven't shown on upload #305
