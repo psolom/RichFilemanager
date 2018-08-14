@@ -1,6 +1,6 @@
 {
     "ALLOWED_FILE_TYPE": "De volgende bestandtypes zijn toegestaan: %s",
-    "AUTHORIZATION_REQUIRED": "Kies eerst een dossier.",
+    "AUTHORIZATION_REQUIRED": "U bent niet gemachtigd om de filemanager te gebruiken.",
     "DIRECTORY_ALREADY_EXISTS": "De map '%s' bestaat al.",
     "DIRECTORY_EMPTY": "De map '%s' is leeg.",
     "DIRECTORY_NOT_EXIST": "De map %s bestaat niet.",
