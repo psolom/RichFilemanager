@@ -214,7 +214,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
     // Load content of specified relative folder path
     fm.loadFolder = function(path, applyTreeNode) {
-        path = '/' + trim(path, '/') + '/';
+	if (path !== '/') {
+          path = '/' + trim(path, '/') + '/';
+	}
         fmModel.loadPath(path, applyTreeNode);
     };
 
