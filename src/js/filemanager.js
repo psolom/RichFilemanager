@@ -1556,12 +1556,14 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
             this.nodeClick = function(node, e) {
                 if(!config.manager.dblClickOpen) {
+                    model.previewModel.closePreview();
                     tree_node.openNode(node, true);
                 }
             };
 
             this.nodeDblClick = function(node, e) {
                 if(config.manager.dblClickOpen) {
+                    model.previewModel.closePreview();
                     tree_node.openNode(node, true);
                 }
             };
