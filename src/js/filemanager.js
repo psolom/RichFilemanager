@@ -3632,10 +3632,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
     return shownExtensions;
   };
 
-	var buildConnectorUrl = function(params) {
-		var defaults = {
-			time: new Date().getTime()
-		};
+	var buildConnectorUrl = function(params, disableCache) {
+    var defaults = {};
+    if (typeof disableCache === 'undefined' || disableCache === false) {
+      defaults.time = new Date().getTime();
+    }
 		var queryParams = $.extend({}, params || {}, defaults);
 		return apiConnector + '?' + $.param(queryParams);
 	};
@@ -3683,7 +3684,7 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     }
                 }
                 queryParams = extendRequestParams('GET', queryParams);
-                imageUrl = buildConnectorUrl(queryParams);
+                imageUrl = buildConnectorUrl(queryParams, disableCache);
             }
             imageUrl = fm.settings.callbacks.beforeCreateImageUrl(resourceObject, imageUrl);
         }
