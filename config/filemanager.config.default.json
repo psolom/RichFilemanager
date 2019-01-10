@@ -29,7 +29,8 @@
     },
     "formatter": {
         "datetime": {
-            "skeleton": "yMMMdHm"
+            "raw": "MMM dd, y, HH:mm:ss z",
+            "timeZone": "America/New_York"
         }
     },
     "filetree": {
