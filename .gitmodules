@@ -1,0 +1,3 @@
+[submodule "libs/iana-tz-data-2018.5/iana-tz-data"]
+	path = libs/iana-tz-data-2018.5/iana-tz-data
+	url = https://github.com/rxaviers/iana-tz-data.git
