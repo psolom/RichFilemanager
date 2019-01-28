@@ -27,7 +27,7 @@ module.exports = function(grunt) {
                     'libs/lazyload/dist/lazyload.min.js': ['libs/lazyload/dist/lazyload.js'],
                     'src/js/filemanager.min.js': ['src/js/filemanager.js'],
                     'src/js/libs-main.js': [
-                        'libs/jquery-1.11.3.min.js',
+                        'libs/jquery-3.3.1.min.js',
                         <!-- drag&drop + selectable build (includes customizations for RichFilemanager) -->
                         'libs/jquery-ui/jquery-ui.js',
                         'libs/jquery-browser.js',
