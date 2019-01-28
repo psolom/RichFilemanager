@@ -30,7 +30,9 @@
     "grunt-contrib-cssmin": "^1.0.1",
     "grunt-contrib-uglify": "^1.0.1",
     "grunt-sass": "^2.1.0",
+    "node-sass": "^4.9.0",
     "npm-run-all": "^4.0.2",
+    "sass": "^1.0.0-beta.5.3",
     "uglify-js": "^3.0.27"
   },
   "dependencies": {
@@ -52,8 +54,6 @@
     "markdown-it": "^8.2.2",
     "markdown-it-footnote": "^3.0.1",
     "markdown-it-replace-link": "^1.0.0",
-    "node-sass": "^4.9.0",
-    "pyrsmk-toast": "^2.2.0",
-    "sass": "^1.0.0-beta.5.3"
+    "pyrsmk-toast": "^2.2.0"
   }
 }
