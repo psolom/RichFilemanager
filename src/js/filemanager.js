@@ -3273,7 +3273,11 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 
 		while(true) {
 			if(n < d) {
-				n = Math.round(n * 100) / 100;
+        if(n < 10) {
+          n = Math.round(n * 10) / 10;
+        } else {
+          n = Math.round(n)
+        }
 				return n + ' ' + u[c];
 			} else {
 				n /= d;
