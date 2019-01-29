@@ -362,7 +362,9 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     $.get(baseUrl + '/libs/cldrjs/cldr-numbers/' + lang + '/numbers.json'),
                     $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/likelySubtags.json'),
                     $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/timeData.json'),
-                    $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/weekData.json')
+                    $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/weekData.json'),
+                    $.get(baseUrl + '/libs/cldrjs/cldr-core/supplemental/metaZones.json'),
+                    $.get(baseUrl + '/libs/cldrjs/cldr-dates/' + lang + '/timeZoneNames.json')
                 ).fail(function () {
                     fm.error('CLDR files for "' + lang + '" language do not exist!');
                 }).then(function () {
@@ -372,6 +374,13 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
                     });
                 }).then(Globalize.load).then(function () {
                     globalize = Globalize(lang);
+                }).then(function() {
+                    return $.when($.get(baseUrl + '/libs/iana-tz-data-2018.5/iana-tz-data/iana-tz-data.json')
+                    ).fail(function () {
+                        fm.error('Failed to load IANA timeZone data!');
+                    }).then(function (tz_data) {
+                        Globalize.loadTimeZone(tz_data);
+                    });
                 });
             });
 	};
