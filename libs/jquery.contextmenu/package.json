@@ -38,7 +38,7 @@
     "karma-chrome-launcher": "^0.2.0",
     "karma-phantomjs-launcher": "^0.2.1",
     "karma-qunit": "^0.1.4",
-    "lodash": "^3.10.1",
+    "lodash": "^4.17.15",
     "qunitjs": "^1.15.0"
   },
   "description": "Management facility for context menus. Developed for a large number of triggering objects. HTML5 Polyfill",
