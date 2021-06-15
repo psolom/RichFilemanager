@@ -3899,6 +3899,15 @@ $.richFilemanagerPlugin = function(element, pluginOptions)
 			}
 		}
 
+        // tinymce 5
+		if(typeof parent.tinyMCE !== "undefined" && parent.tinyMCE.majorVersion === "5") {
+            parent.postMessage({mceAction: 'FileSelected', content: previewUrl});
+
+            setTimeout(function() {
+                parent.tinyMCE.activeEditor.windowManager.close();
+            }, 500);
+		}
+
 		if(_url_.param('ImperaviElementId')) {
 			// use Imperavi Redactor I, tested on v.10.x.x
 			if (window.opener) {
