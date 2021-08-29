@@ -3,6 +3,9 @@
   "version": "2.7.6",
   "description": "Highly customizable open-source file manager",
   "main": "scripts/filemanager.js",
+  "scripts": {
+    "build": "grunt"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/servocoder/RichFilemanager.git"
