@@ -3705,6 +3705,9 @@
     
         var buildAbsolutePath = function(path, disableCache) {
             var url = (typeof config.viewer.previewUrl === 'string') ? config.viewer.previewUrl : location.origin;
+            if (config && config.api && config.api.prevFilePath) {
+                url = url + config.api.prevFilePath;
+            }
             url = trim(url, '/') + path;
             // add timestamp-based query parameter to disable browser caching
             if (disableCache) {
@@ -3880,7 +3883,7 @@
         var selectItem = function(resourceObject) {
             var contextWindow = null,
                 previewUrl = createPreviewUrl(resourceObject, true);
-    
+
             previewUrl = fm.settings.callbacks.beforeSelectItem(resourceObject, previewUrl);
     
             // tinyMCE > 3.0 integration method
