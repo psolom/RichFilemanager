@@ -1,0 +1,180 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto');
+
+.fm-container * {
+    font-family: Roboto, Lucida Sans Unicode, Lucida Grande, sans-serif;
+}
+
+.fm-container {
+    background-color: #E5E5E5;
+    /* background-color: #ffffff; */
+    font-size: 18px;
+}
+
+.fm-container .fm-header .breadcrumbs {
+    /* color: #fff; */
+    color: black;
+}
+
+.fm-container .fm-splitter .splitter-bar-vertical {
+    width: 10px;
+}
+
+.fm-container .fm-filetree {
+    border: none;
+    color: #e0e0e0;
+    background-color: #777777;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.fm-container .fm-filetree li span.button {
+    width: 20px;
+    height: 22px;
+}
+
+.fm-container .fm-filetree li span {
+    font-size: 1rem;
+    line-height: 18px;
+}
+
+.fm-container .view-items .grid p {
+    font-size: 0.85rem;
+}
+
+.fm-container .fm-fileinfo {
+    border: none;
+    /* background-color: #E5E5E5; */
+    background-color: #FFF;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.fm-container .fm-preview .fm-preview-title h1 {
+    color: #444;
+}
+
+.fm-container .fm-preview .fm-preview-details td {
+    color: #333;
+    border-bottom: 1px dotted #efefef;
+}
+
+.fm-container .fm-preview .button-group .btn {
+    padding: 0.6em 0.6em;
+    border-radius: 5px;
+}
+
+.fm-container .button-group .btn {
+    color: #333;
+    background-color: #E8E8E8;
+    border: 1px solid #fff;
+    -moz-border-radius: 2px;
+    -webkit-border-radius: 2px;
+    border-radius: 2px;
+}
+
+.fm-container .button-group .separator {
+    padding: 3px 1px;
+    background-color: #E8E8E8;
+}
+
+.fm-container .fm-header .button-group .btn {
+    padding: 5px 3px;
+}
+
+.fm-container .fm-header .button-group select.btn {
+    padding: 4px 2px;
+}
+
+.fm-container .button-group .btn:not(.disabled):hover {
+    background-color: #C3D2F7;
+}
+
+.fm-container .input-group .input-group-input {
+    color: #000;
+    /* background-color: #E8E8E8; */
+    background-color: #FFF;
+}
+
+.fm-container .input-group .input-group-addon {
+    /* background-color: #E8E8E8; */
+    background-color: #FFF;
+}
+
+.fm-container #folder-info {
+    color: #bbb;
+}
+
+.fm-container #summary {
+    background: url(../images/summary.png) no-repeat center center;
+}
+
+/* .fm-container .list-icon.ico_folder, .fm-container li span.button.ico_folder {
+    background: url(../images/folder-32.png) left top no-repeat;
+    background-size: 18px 18px;
+}
+
+.fm-container .list-icon.ico_folder_open, .fm-container li span.button.ico_folder_open {
+    background: url(../images/opened-folder-32.png) left top no-repeat;
+    background-size: 18px 18px;
+}
+
+.fm-container .list-icon.ico_file, .fm-container li span.button.ico_file {
+    background: url(../images/file-32.png) left top no-repeat;
+    background-size: 18px 18px;
+}
+
+.fm-container .list-icon.ico_ext_png, .fm-container li span.button.ico_ext_png {
+    background: url(../images/picture-32.png) left top no-repeat;
+    background-size: 18px 18px;
+}
+
+.fm-container .list-icon.ico_ext_jpeg, .fm-container li span.button.ico_ext_jpeg {
+    background: url(../images/picture-32.png) left top no-repeat;
+    background-size: 18px 18px;
+}
+
+.fm-container .list-icon.ico_ext_jpg, .fm-container li span.button.ico_ext_jpg {
+    background: url(../images/picture-32.png) left top no-repeat;
+    background-size: 18px 18px;
+} */
+
+.fm-container #link-to-project {
+    display: none;
+    /* background: transparent url(../images/fmlogo.png) no-repeat 0 0; */
+}
+
+.fm-container .view-items .grid li {
+    width: 196px;
+    border-color: #E5E5E5;
+    -webkit-transition: background 0.3s linear;
+    -moz-transition: background 0.3s linear;
+    -o-transition: background 0.3s linear;
+    transition: background 0.3s linear;
+}
+
+.fm-container .view-items .grid li.drop-hover,
+.fm-container .view-items .list tr.drop-hover {
+    background-color: #bbbbbb;
+}
+
+.fm-container .view-items .list td {
+    border-bottom: 1px dotted #efefef;
+}
+
+.fm-popup.alertify .fm-fileupload-container #total-progress {
+    background-color: #A1ADE2;
+}
+
+.fm-popup.alertify .fm-fileupload-container #total-progress .progress-bar {
+    background-color: #333;
+}
+
+.fm-container .drag-helper-grid {
+    width: 196px;
+    -webkit-transition: background 0.3s linear;
+    -moz-transition: background 0.3s linear;
+    -o-transition: background 0.3s linear;
+    transition: background 0.3s linear;
+}
